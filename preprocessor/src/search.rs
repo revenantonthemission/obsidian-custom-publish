@@ -1,0 +1,149 @@
+use std::collections::HashMap;
+
+use lindera::dictionary::DictionaryKind;
+use lindera::mode::Mode;
+use lindera::segmenter::Segmenter;
+use lindera::tokenizer::Tokenizer;
+use serde::Serialize;
+
+use crate::types::VaultIndex;
+
+#[derive(Debug, Serialize)]
+pub struct SearchIndex {
+    pub documents: Vec<SearchDocument>,
+    pub inverted_index: HashMap<String, Vec<SearchHit>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SearchDocument {
+    pub slug: String,
+    pub title: String,
+    pub snippet: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SearchHit {
+    pub doc_idx: usize,
+    pub positions: Vec<usize>,
+}
+
+/// Build a full-text search index from all posts in the vault.
+///
+/// Uses lindera with the Korean MeCab dictionary for morphological tokenization,
+/// which correctly segments Korean text that has no spaces between morphemes.
+pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
+    let tokenizer = build_tokenizer();
+
+    let mut documents = Vec::with_capacity(index.posts.len());
+    let mut inverted_index: HashMap<String, Vec<SearchHit>> = HashMap::new();
+
+    for (doc_idx, post) in index.posts.iter().enumerate() {
+        let plain_text = strip_markdown(&post.raw_content);
+        let snippet = make_snippet(&plain_text, 200);
+
+        documents.push(SearchDocument {
+            slug: post.slug.clone(),
+            title: post.title.clone(),
+            snippet,
+        });
+
+        // Tokenize and build inverted index
+        let tokens = tokenize_text(&tokenizer, &plain_text);
+
+        // Also tokenize the title with higher implicit weight (by including it)
+        let title_tokens = tokenize_text(&tokenizer, &post.title);
+
+        let mut token_positions: HashMap<String, Vec<usize>> = HashMap::new();
+
+        // Title tokens get early positions (effectively boosted in search)
+        for (pos, token) in title_tokens.iter().enumerate() {
+            token_positions
+                .entry(token.clone())
+                .or_default()
+                .push(pos);
+        }
+
+        let offset = title_tokens.len();
+        for (pos, token) in tokens.iter().enumerate() {
+            token_positions
+                .entry(token.clone())
+                .or_default()
+                .push(offset + pos);
+        }
+
+        for (token, positions) in token_positions {
+            inverted_index
+                .entry(token)
+                .or_default()
+                .push(SearchHit { doc_idx, positions });
+        }
+    }
+
+    SearchIndex {
+        documents,
+        inverted_index,
+    }
+}
+
+/// Create a lindera tokenizer with the Korean dictionary.
+fn build_tokenizer() -> Tokenizer {
+    let dictionary = lindera::dictionary::load_embedded_dictionary(DictionaryKind::KoDic)
+        .expect("failed to load Korean dictionary");
+    let segmenter = Segmenter::new(Mode::Normal, dictionary, None);
+    Tokenizer::new(segmenter)
+}
+
+/// Tokenize text into a vec of normalized token strings.
+/// Filters out tokens shorter than 2 characters (particles, punctuation).
+fn tokenize_text(tokenizer: &Tokenizer, text: &str) -> Vec<String> {
+    let tokens = tokenizer.tokenize(text).unwrap_or_default();
+    tokens
+        .into_iter()
+        .map(|t| t.surface.to_lowercase())
+        .filter(|t: &String| t.chars().count() >= 2)
+        .filter(|t: &String| !t.chars().all(|c| c.is_ascii_punctuation() || c.is_whitespace()))
+        .collect()
+}
+
+/// Strip markdown syntax to produce plain text for indexing.
+fn strip_markdown(content: &str) -> String {
+    // Remove YAML frontmatter
+    let content = if content.starts_with("---") {
+        if let Some(end) = content[3..].find("\n---") {
+            &content[3 + end + 4..]
+        } else {
+            content
+        }
+    } else {
+        content
+    };
+
+    content
+        .lines()
+        .filter(|line| !line.starts_with('#')) // headings
+        .filter(|line| !line.starts_with("```")) // code fences
+        .filter(|line| !line.starts_with("---")) // horizontal rules
+        .map(|line| {
+            // Strip inline markdown
+            line.replace("**", "")
+                .replace('*', "")
+                .replace('`', "")
+                .replace("[[", "")
+                .replace("]]", "")
+                .replace("![[", "")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Take the first `max_chars` characters as a snippet.
+fn make_snippet(text: &str, max_chars: usize) -> String {
+    let trimmed = text.trim();
+    if trimmed.chars().count() <= max_chars {
+        trimmed.to_string()
+    } else {
+        let mut s: String = trimmed.chars().take(max_chars).collect();
+        s.push_str("...");
+        s
+    }
+}
