@@ -53,11 +53,12 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
         let word_count = count_words(&content);
         let reading_time_min = (word_count / 200).max(1);
 
-        // Collect link info
-        let forward: Vec<String> = graph.forward_links[i]
+        // Collect link info (deduplicated)
+        let mut forward: Vec<String> = graph.forward_links[i]
             .iter()
             .map(|l| l.target_slug.clone())
             .collect();
+        forward.dedup();
         let backlinks = graph.backlinks[i].clone();
 
         // Write metadata JSON
