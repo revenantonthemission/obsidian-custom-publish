@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::path::PathBuf;
 
+use obsidian_press::scanner::scan_vault;
+
 #[derive(Parser)]
 #[command(name = "obsidian-press")]
 #[command(about = "Obsidian vault to static site preprocessor")]
@@ -13,7 +15,11 @@ struct Cli {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    println!("Vault: {:?}", cli.vault);
-    println!("Output: {:?}", cli.output);
+    let index = scan_vault(&cli.vault)?;
+    println!("Scanned {} posts", index.posts.len());
+    for post in &index.posts {
+        println!("  {} ({}){}", post.slug, post.tags.join(", "),
+            if post.is_hub { " [hub]" } else { "" });
+    }
     Ok(())
 }
