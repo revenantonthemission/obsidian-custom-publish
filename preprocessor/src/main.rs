@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::path::PathBuf;
 
+use obsidian_press::linker::resolve_links;
+use obsidian_press::output::write_output;
 use obsidian_press::scanner::scan_vault;
 
 #[derive(Parser)]
@@ -15,11 +17,17 @@ struct Cli {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
+    println!("Scanning vault: {:?}", cli.vault);
     let index = scan_vault(&cli.vault)?;
-    println!("Scanned {} posts", index.posts.len());
-    for post in &index.posts {
-        println!("  {} ({}){}", post.slug, post.tags.join(", "),
-            if post.is_hub { " [hub]" } else { "" });
-    }
+    println!("Found {} posts", index.posts.len());
+
+    println!("Resolving links...");
+    let graph = resolve_links(&index);
+
+    println!("Writing output to {:?}", cli.output);
+    write_output(&index, &graph, &cli.output)?;
+
+    println!("Done.");
     Ok(())
 }
