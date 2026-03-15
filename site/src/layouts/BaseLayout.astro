@@ -1,4 +1,7 @@
 ---
+import ThemeToggle from "../islands/ThemeToggle.tsx";
+import Search from "../islands/Search.tsx";
+
 interface Props {
   title?: string;
 }
@@ -23,11 +26,13 @@ const { title = "Blog" } = Astro.props;
       <nav>
         <a href="/tags" class="site-nav-link">Tags</a>
         <a href="/graph" class="site-nav-link">Graph</a>
+        <ThemeToggle client:load />
       </nav>
     </header>
     <main class="site-main">
       <slot />
     </main>
+    <Search client:idle />
     <footer class="site-footer">
       Built with obsidian-press
     </footer>
@@ -46,4 +51,5 @@ const { title = "Blog" } = Astro.props;
   @import "../styles/global.css";
   @import "../styles/callouts.css";
   @import "../styles/diagrams.css";
+  @import "../styles/search.css";
 </style>

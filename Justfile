@@ -6,6 +6,8 @@ build: preprocess site-build
 
 preprocess:
     cargo run --release --manifest-path preprocessor/Cargo.toml -- {{vault}} {{content}}
+    cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
+    cp {{content}}/graph.json {{site_dir}}/public/graph.json
 
 dev: preprocess
     cd {{site_dir}} && bun run astro dev
