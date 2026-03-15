@@ -2,6 +2,7 @@
 import BaseLayout from "./BaseLayout.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
+import LocalGraph from "../islands/LocalGraph.tsx";
 import type { PostMeta } from "../lib/types";
 import "../styles/post.css";
 
@@ -31,6 +32,7 @@ const { meta, content } = Astro.props;
     </article>
     <aside class="post-sidebar">
       <TableOfContents content={content} />
+      <LocalGraph client:visible slug={meta.slug} />
     </aside>
   </div>
 </BaseLayout>

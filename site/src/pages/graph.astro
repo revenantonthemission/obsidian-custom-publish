@@ -1,9 +1,22 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import GraphView from "../islands/GraphView.tsx";
 ---
 
 <BaseLayout title="Graph">
   <h1>그래프 뷰</h1>
-  <p>Graph view will be rendered here.</p>
-  <div id="graph-root"></div>
+  <div class="graph-container">
+    <GraphView client:load width={800} height={600} />
+  </div>
 </BaseLayout>
+
+<style>
+  .graph-container {
+    margin-top: 1rem;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+  }
+</style>
