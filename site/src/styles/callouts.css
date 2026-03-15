@@ -1,0 +1,36 @@
+/* ── Obsidian-style callouts ── */
+.callout {
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid;
+}
+
+.callout-title {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+.callout-note {
+  background: var(--c-callout-note);
+  border-color: var(--c-callout-note-border);
+}
+
+.callout-warning {
+  background: var(--c-callout-warning);
+  border-color: var(--c-callout-warning-border);
+}
+
+.callout-tip {
+  background: var(--c-callout-note);
+  border-color: #10b981;
+}
+
+.callout-important {
+  background: var(--c-callout-warning);
+  border-color: #ef4444;
+}

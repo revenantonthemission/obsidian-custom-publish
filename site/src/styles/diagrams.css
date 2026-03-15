@@ -1,0 +1,26 @@
+/* ── Diagram styling ── */
+.diagram {
+  display: block;
+  margin: 1.5rem auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram-d2 svg,
+.diagram-typst svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Inline SVG containers */
+.diagram-d2,
+.diagram-typst {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Mermaid diagrams (rendered client-side) */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}

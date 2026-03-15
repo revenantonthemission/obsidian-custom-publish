@@ -1,0 +1,17 @@
+---
+import { getAllPostMeta, getPostMeta, getPostContent } from "../../lib/data";
+import PostLayout from "../../layouts/PostLayout.astro";
+import { marked } from "marked";
+
+export function getStaticPaths() {
+  const posts = getAllPostMeta();
+  return posts.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const meta = getPostMeta(slug!)!;
+const rawContent = getPostContent(slug!);
+const htmlContent = await marked.parse(rawContent);
+---
+
+<PostLayout meta={meta} content={htmlContent} />

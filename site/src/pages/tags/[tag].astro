@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getTagIndex } from "../../lib/data";
+
+export function getStaticPaths() {
+  const tagIndex = getTagIndex();
+  return Object.keys(tagIndex).map((tag) => ({ params: { tag } }));
+}
+
+const { tag } = Astro.params;
+const tagIndex = getTagIndex();
+const posts = tagIndex[tag!] || [];
+---
+
+<BaseLayout title={`#${tag}`}>
+  <h1>#{tag}</h1>
+  <p class="tag-count">{posts.length}개 글</p>
+  {posts.map((post) => (
+    <PostCard post={post} />
+  ))}
+</BaseLayout>
+
+<style>
+  .tag-count {
+    color: var(--c-text-muted);
+    margin-bottom: 1rem;
+  }
+</style>

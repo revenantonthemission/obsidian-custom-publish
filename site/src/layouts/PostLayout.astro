@@ -1,0 +1,36 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import TableOfContents from "../components/TableOfContents.astro";
+import BacklinkList from "../components/BacklinkList.astro";
+import type { PostMeta } from "../lib/types";
+import "../styles/post.css";
+
+interface Props {
+  meta: PostMeta;
+  content: string;
+}
+
+const { meta, content } = Astro.props;
+---
+
+<BaseLayout title={meta.title}>
+  <div class="post-layout">
+    <article>
+      <header class="post-header">
+        <h1 class="post-title">{meta.title}</h1>
+        <div class="post-meta">
+          {meta.published && <time>{meta.published}</time>}
+          <span>{meta.reading_time_min}분 읽기</span>
+          {meta.tags.map((tag) => (
+            <a href={`/tags/${tag}`} class="post-tag">{tag}</a>
+          ))}
+        </div>
+      </header>
+      <div class="post-content" set:html={content} />
+      <BacklinkList backlinks={meta.backlinks} />
+    </article>
+    <aside class="post-sidebar">
+      <TableOfContents content={content} />
+    </aside>
+  </div>
+</BaseLayout>
