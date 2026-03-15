@@ -1,17 +1,31 @@
 use regex::Regex;
+use std::path::Path;
 
 use crate::types::{LinkGraph, VaultIndex};
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
 /// Handles: frontmatter stripping, transclusion inlining, wikilink conversion,
-/// and callout conversion. Leaves LaTeX, footnotes, and Mermaid untouched.
+/// callout conversion, and diagram rendering (D2/Typst).
+/// Leaves LaTeX, footnotes, and Mermaid untouched.
 pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize) -> String {
+    transform_content_with_assets(index, _graph, post_idx, None)
+}
+
+/// Transform with an optional asset output directory for rendered diagrams.
+pub fn transform_content_with_assets(
+    index: &VaultIndex,
+    _graph: &LinkGraph,
+    post_idx: usize,
+    asset_dir: Option<&Path>,
+) -> String {
     let raw = &index.posts[post_idx].raw_content;
+    let slug = &index.posts[post_idx].slug;
     let content = strip_frontmatter(raw);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
     let content = convert_callouts(&content);
+    let content = render_diagram_blocks(&content, slug, asset_dir);
     content
 }
 
@@ -116,6 +130,48 @@ fn convert_callouts(content: &str) -> String {
     }
 
     result.join("\n")
+}
+
+/// Render D2 and Typst fenced code blocks to SVG files, replacing them with `<img>` tags.
+/// Mermaid blocks are left untouched for Astro's rehype-mermaid plugin.
+fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) -> String {
+    let fence_re = Regex::new(r"(?ms)^```(d2|typst)\n(.*?)^```").unwrap();
+    let mut counter = 0;
+
+    fence_re
+        .replace_all(content, |caps: &regex::Captures| {
+            let lang = &caps[1];
+            let source = &caps[2];
+            counter += 1;
+
+            let render_result = match lang {
+                "d2" => crate::d2::render_d2(source, None),
+                "typst" => crate::typst_render::render_typst(source),
+                _ => return caps[0].to_string(),
+            };
+
+            match render_result {
+                Ok(svg) => {
+                    if let Some(dir) = asset_dir {
+                        let filename = format!("{slug}-{lang}-{counter}.svg");
+                        let path = dir.join(&filename);
+                        if let Err(e) = std::fs::write(&path, &svg) {
+                            eprintln!("warning: failed to write {}: {e}", path.display());
+                            return format!("<!-- {lang} render failed: {e} -->");
+                        }
+                        format!(r#"<img src="/assets/{filename}" class="diagram diagram-{lang}" alt="{lang} diagram" />"#)
+                    } else {
+                        // No asset dir — inline the SVG directly
+                        format!(r#"<div class="diagram diagram-{lang}">{svg}</div>"#)
+                    }
+                }
+                Err(e) => {
+                    eprintln!("warning: {lang} rendering failed for {slug}: {e}");
+                    format!("<!-- {lang} render failed: {e} -->")
+                }
+            }
+        })
+        .to_string()
 }
 
 #[cfg(test)]
