@@ -104,11 +104,18 @@ for (const hub of hubs) {
   function initCopyButtons() {
     document.querySelectorAll("pre.shiki").forEach((pre) => {
       if (pre.parentElement?.querySelector(".copy-btn")) return;
+      if (!pre.parentNode) return;
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "code-block-wrapper";
-      pre.parentNode!.insertBefore(wrapper, pre);
-      wrapper.appendChild(pre);
+      let container: Element;
+      if (pre.parentElement?.classList.contains("code-block")) {
+        container = pre.parentElement;
+      } else {
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block-wrapper";
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+        container = wrapper;
+      }
 
       const btn = document.createElement("button");
       btn.className = "copy-btn";
@@ -117,16 +124,20 @@ for (const hub of hubs) {
 
       btn.addEventListener("click", async () => {
         const code = pre.textContent || "";
-        await navigator.clipboard.writeText(code);
-        btn.replaceChildren(createCheckSvg());
-        btn.classList.add("copied");
-        setTimeout(() => {
-          btn.replaceChildren(createCopySvg());
-          btn.classList.remove("copied");
-        }, 1500);
+        try {
+          await navigator.clipboard.writeText(code);
+          btn.replaceChildren(createCheckSvg());
+          btn.classList.add("copied");
+          setTimeout(() => {
+            btn.replaceChildren(createCopySvg());
+            btn.classList.remove("copied");
+          }, 1500);
+        } catch {
+          // Clipboard API unavailable (e.g. non-HTTPS)
+        }
       });
 
-      wrapper.appendChild(btn);
+      container.appendChild(btn);
     });
   }
   initCopyButtons();
