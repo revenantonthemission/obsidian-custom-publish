@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::LazyLock;
 
@@ -31,24 +32,25 @@ static FENCE_RE: LazyLock<Regex> =
 /// callout conversion, and diagram rendering (D2/Typst).
 /// Leaves LaTeX, footnotes, and Mermaid untouched.
 pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize) -> String {
-    transform_content_with_assets(index, _graph, post_idx, None)
+    transform_content_with_assets(index, _graph, post_idx, None).0
 }
 
 /// Transform with an optional asset output directory for rendered diagrams.
+/// Returns `(transformed_content, set_of_referenced_attachment_filenames)`.
 pub fn transform_content_with_assets(
     index: &VaultIndex,
     _graph: &LinkGraph,
     post_idx: usize,
     asset_dir: Option<&Path>,
-) -> String {
+) -> (String, HashSet<String>) {
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
     let content = strip_frontmatter(raw);
-    let content = resolve_transclusions(&content, index);
+    let (content, referenced) = resolve_transclusions_tracked(&content, index);
     let content = convert_wikilinks(&content, index);
     let content = convert_callouts(&content);
     let content = render_diagram_blocks(&content, slug, asset_dir);
-    content
+    (content, referenced)
 }
 
 /// Remove YAML frontmatter delimited by `---`.
@@ -64,7 +66,7 @@ fn strip_frontmatter(content: &str) -> String {
 }
 
 /// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
-fn transform_outside_fences(content: &str, f: impl Fn(&str) -> String) -> String {
+fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_fence = false;
 
@@ -103,13 +105,16 @@ fn is_image_reference(name: &str) -> bool {
 }
 
 /// Replace `![[Note Name]]` with the body content of the referenced note,
-/// or emit `<img>` tags for image embeds.
-fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
-    transform_outside_fences(content, |line| {
+/// or emit `<img>` tags for image embeds. Returns the transformed content
+/// and a set of referenced attachment filenames.
+fn resolve_transclusions_tracked(content: &str, index: &VaultIndex) -> (String, HashSet<String>) {
+    let mut referenced = HashSet::new();
+    let result = transform_outside_fences(content, |line| {
         TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
             let name = caps[1].trim();
             if is_image_reference(name) {
                 if index.attachment_map.contains_key(name) {
+                    referenced.insert(name.to_string());
                     let stem = &name[..name.rfind('.').unwrap()];
                     let escaped_stem = html_escape(stem);
                     format!(r#"<img src="/assets/{name}" alt="{escaped_stem}" />"#)
@@ -125,7 +130,8 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
             }
         })
         .to_string()
-    })
+    });
+    (result, referenced)
 }
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
