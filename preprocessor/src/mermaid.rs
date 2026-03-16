@@ -5,7 +5,8 @@ use tempfile::NamedTempFile;
 /// Render Mermaid source to SVG via the `mmdc` CLI.
 ///
 /// Writes source to a temp file, runs mmdc to produce SVG output.
-pub fn render_mermaid(source: &str) -> Result<String> {
+/// `theme` is a Mermaid theme name (e.g. "default" for light, "dark" for dark).
+pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
     let mut input = NamedTempFile::with_suffix(".mmd")
         .context("failed to create temp input file")?;
     input
@@ -23,6 +24,8 @@ pub fn render_mermaid(source: &str) -> Result<String> {
         .arg(&output_path)
         .arg("-b")
         .arg("transparent")
+        .arg("-t")
+        .arg(theme)
         .output()
         .context("failed to spawn mmdc — is @mermaid-js/mermaid-cli installed?")?;
 

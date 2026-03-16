@@ -19,8 +19,24 @@
   margin-bottom: 1.5rem;
 }
 
-/* Mermaid diagrams (rendered client-side) */
-.mermaid {
+/* Mermaid diagrams */
+.diagram-mermaid {
   text-align: center;
-  margin: 1.5rem 0;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Diagram light/dark theme switching ── */
+
+/* Default (light): show light, hide dark */
+.diagram-dark { display: none !important; }
+.diagram-light { display: block; }
+
+/* Explicit dark mode */
+[data-theme="dark"] .diagram-light { display: none !important; }
+[data-theme="dark"] .diagram-dark { display: block; }
+
+/* System dark mode preference (no explicit theme set) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .diagram-light { display: none !important; }
+  :root:not([data-theme="light"]) .diagram-dark { display: block; }
 }
