@@ -4,11 +4,17 @@ import type { PostMeta, GraphData } from "./types";
 
 const CONTENT_DIR = path.resolve("../content");
 
+// Module-level caches to avoid redundant filesystem reads during SSG builds
+let _allPostMeta: PostMeta[] | null = null;
+let _graph: GraphData | null = null;
+
 export function getAllPostMeta(): PostMeta[] {
+  if (_allPostMeta) return _allPostMeta;
+
   const metaDir = path.join(CONTENT_DIR, "meta");
   if (!fs.existsSync(metaDir)) return [];
 
-  return fs
+  _allPostMeta = fs
     .readdirSync(metaDir)
     .filter((f) => f.endsWith(".json"))
     .map((f) => {
@@ -16,11 +22,11 @@ export function getAllPostMeta(): PostMeta[] {
       return JSON.parse(raw) as PostMeta;
     })
     .sort((a, b) => {
-      // Sort by published date descending, nulls last
       if (!a.published) return 1;
       if (!b.published) return -1;
       return b.published.localeCompare(a.published);
     });
+  return _allPostMeta;
 }
 
 export function getPostMeta(slug: string): PostMeta | null {
@@ -36,9 +42,38 @@ export function getPostContent(slug: string): string {
 }
 
 export function getGraph(): GraphData {
+  if (_graph) return _graph;
+
   const filePath = path.join(CONTENT_DIR, "graph.json");
   if (!fs.existsSync(filePath)) return { nodes: [], edges: [] };
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  _graph = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  return _graph;
+}
+
+/** Get the 2-hop neighborhood subgraph for a given post slug. */
+export function getLocalGraph(slug: string): GraphData {
+  const full = getGraph();
+  const adj = new Map<string, Set<string>>();
+  for (const e of full.edges) {
+    if (!adj.has(e.source)) adj.set(e.source, new Set());
+    if (!adj.has(e.target)) adj.set(e.target, new Set());
+    adj.get(e.source)!.add(e.target);
+    adj.get(e.target)!.add(e.source);
+  }
+
+  const nearby = new Set<string>([slug]);
+  for (const n of adj.get(slug) || []) nearby.add(n);
+  const hop1 = [...nearby];
+  for (const n of hop1) {
+    for (const m of adj.get(n) || []) nearby.add(m);
+  }
+
+  const nodes = full.nodes.filter((n) => nearby.has(n.slug));
+  const slugSet = new Set(nodes.map((n) => n.slug));
+  const edges = full.edges.filter(
+    (e) => slugSet.has(e.source) && slugSet.has(e.target)
+  );
+  return { nodes, edges };
 }
 
 export function getHubs(): PostMeta[] {

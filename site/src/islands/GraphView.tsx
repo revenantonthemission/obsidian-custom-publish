@@ -9,7 +9,7 @@ import {
   type SimulationLinkDatum,
 } from "d3-force";
 import { select } from "d3-selection";
-import { zoom, zoomIdentity } from "d3-zoom";
+import { zoom } from "d3-zoom";
 import type { GraphData } from "../lib/types";
 
 interface GraphNode extends SimulationNodeDatum {

@@ -4,7 +4,7 @@ import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
 import HubNav from "../components/HubNav.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
-import { sanitizeTag, getGraph, getPostMeta, getHubs } from "../lib/data";
+import { sanitizeTag, getLocalGraph, getPostMeta, getHubs } from "../lib/data";
 import type { PostMeta } from "../lib/types";
 import "../styles/post.css";
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const { meta, content } = Astro.props;
-const graphData = getGraph();
+const localGraphData = getLocalGraph(meta.slug);
 
 // Check if this post belongs to a hub (is linked from a hub's forward_links)
 const hubs = getHubs();
@@ -52,7 +52,7 @@ for (const hub of hubs) {
     </article>
     <aside class="post-sidebar">
       <TableOfContents content={content} />
-      <LocalGraph client:visible slug={meta.slug} data={graphData} />
+      <LocalGraph client:visible slug={meta.slug} data={localGraphData} />
     </aside>
   </div>
 </BaseLayout>
