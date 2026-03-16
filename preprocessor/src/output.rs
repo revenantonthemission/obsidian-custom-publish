@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::search::build_search_index;
 use crate::transform::transform_content_with_assets;
-use crate::types::{LinkGraph, VaultIndex};
+use crate::types::{is_korean, LinkGraph, VaultIndex};
 
 /// Per-post metadata written to `meta/{slug}.json`.
 #[derive(Debug, Serialize)]
@@ -126,7 +126,3 @@ fn count_words(text: &str) -> usize {
         .sum()
 }
 
-fn is_korean(c: char) -> bool {
-    // Hangul syllables, Jamo, compatibility Jamo
-    matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
-}

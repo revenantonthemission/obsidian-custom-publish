@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import {
   forceSimulation,
   forceLink,
@@ -8,6 +8,7 @@ import {
   type SimulationNodeDatum,
   type SimulationLinkDatum,
 } from "d3-force";
+import type { GraphData, GraphNode as RawGraphNode } from "../lib/types";
 
 interface GraphNode extends SimulationNodeDatum {
   slug: string;
@@ -17,17 +18,16 @@ interface GraphNode extends SimulationNodeDatum {
   backlink_count: number;
 }
 
-interface GraphEdge {
-  source: string | GraphNode;
-  target: string | GraphNode;
-}
+type GraphLink = SimulationLinkDatum<GraphNode>;
 
-interface GraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
+/** A link after d3 has resolved source/target to node objects. */
+interface ResolvedLink {
+  source: GraphNode;
+  target: GraphNode;
 }
 
 interface Props {
+  data: GraphData;
   width?: number;
   height?: number;
 }
@@ -51,15 +51,8 @@ function getNodeRadius(node: GraphNode): number {
   return Math.max(4, Math.min(12, 4 + node.backlink_count * 2));
 }
 
-export default function GraphView({ width = 800, height = 600 }: Props) {
+export default function GraphView({ data, width = 800, height = 600 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [data, setData] = useState<GraphData | null>(null);
-
-  useEffect(() => {
-    fetch("/graph.json")
-      .then((r) => r.json())
-      .then((d: GraphData) => setData(d));
-  }, []);
 
   useEffect(() => {
     if (!data || !canvasRef.current) return;
@@ -71,14 +64,14 @@ export default function GraphView({ width = 800, height = 600 }: Props) {
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    const nodes = data.nodes.map((n) => ({ ...n }));
-    const links = data.edges.map((e) => ({ ...e }));
+    const nodes: GraphNode[] = data.nodes.map((n) => ({ ...n }));
+    const links: GraphLink[] = data.edges.map((e) => ({ ...e }));
 
     const sim = forceSimulation(nodes)
       .force(
         "link",
-        forceLink<GraphNode, SimulationLinkDatum<GraphNode>>(links as any)
-          .id((d: any) => d.slug)
+        forceLink<GraphNode, GraphLink>(links)
+          .id((d) => d.slug)
           .distance(80)
       )
       .force("charge", forceManyBody().strength(-200))
@@ -91,10 +84,10 @@ export default function GraphView({ width = 800, height = 600 }: Props) {
       // Draw edges
       ctx.strokeStyle = "rgba(150, 150, 150, 0.3)";
       ctx.lineWidth = 1;
-      for (const link of links as any[]) {
+      for (const link of links as unknown as ResolvedLink[]) {
         ctx.beginPath();
-        ctx.moveTo(link.source.x, link.source.y);
-        ctx.lineTo(link.target.x, link.target.y);
+        ctx.moveTo(link.source.x!, link.source.y!);
+        ctx.lineTo(link.target.x!, link.target.y!);
         ctx.stroke();
       }
 
