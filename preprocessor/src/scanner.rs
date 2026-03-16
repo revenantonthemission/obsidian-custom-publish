@@ -101,6 +101,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         posts,
         slug_map,
         name_map,
+        attachment_map: HashMap::new(), // placeholder, populated in Task 2
     })
 }
 

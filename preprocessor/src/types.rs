@@ -27,6 +27,8 @@ pub struct VaultIndex {
     pub slug_map: HashMap<String, usize>,
     /// original filename (without .md) -> index into posts
     pub name_map: HashMap<String, usize>,
+    /// image filename (e.g. "diagram.png") -> absolute path in vault
+    pub attachment_map: HashMap<String, PathBuf>,
 }
 
 // --- Link resolution types (Pass 2) ---
