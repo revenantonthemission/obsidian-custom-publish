@@ -33,7 +33,6 @@ Note: iCloud path uses tildes (`iCloud~md~obsidian`), not dots.
 - `Vec::dedup()` only removes consecutive duplicates — always `sort()` first
 - lindera token field is `surface`, not `text`; feature is `embed-ko-dic`
 - Compile regexes with `LazyLock`, not inside functions
-- `comrak` and `rayon` are unused deps (removal pending)
 
 ## Astro Gotchas
 - Preprocessor outputs raw HTML (callout divs, wikilink anchors) — `rehype-raw` is required in the unified pipeline

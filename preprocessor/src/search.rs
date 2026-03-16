@@ -28,7 +28,7 @@ pub struct SearchDocument {
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchHit {
     pub doc_idx: usize,
-    pub positions: Vec<usize>,
+    pub count: usize,
 }
 
 /// Build a full-text search index from all posts in the vault.
@@ -57,29 +57,22 @@ pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
         // Also tokenize the title with higher implicit weight (by including it)
         let title_tokens = tokenize_text(&tokenizer, &post.title);
 
-        let mut token_positions: HashMap<String, Vec<usize>> = HashMap::new();
+        let mut token_counts: HashMap<String, usize> = HashMap::new();
 
-        // Title tokens get early positions (effectively boosted in search)
-        for (pos, token) in title_tokens.iter().enumerate() {
-            token_positions
-                .entry(token.clone())
-                .or_default()
-                .push(pos);
+        // Title tokens count double (boosted)
+        for token in &title_tokens {
+            *token_counts.entry(token.clone()).or_default() += 2;
         }
 
-        let offset = title_tokens.len();
-        for (pos, token) in tokens.iter().enumerate() {
-            token_positions
-                .entry(token.clone())
-                .or_default()
-                .push(offset + pos);
+        for token in &tokens {
+            *token_counts.entry(token.clone()).or_default() += 1;
         }
 
-        for (token, positions) in token_positions {
+        for (token, count) in token_counts {
             inverted_index
                 .entry(token)
                 .or_default()
-                .push(SearchHit { doc_idx, positions });
+                .push(SearchHit { doc_idx, count });
         }
     }
 

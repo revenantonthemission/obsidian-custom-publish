@@ -45,5 +45,5 @@ export interface SearchDocument {
 
 export interface SearchHit {
   doc_idx: number;
-  positions: number[];
+  count: number;
 }

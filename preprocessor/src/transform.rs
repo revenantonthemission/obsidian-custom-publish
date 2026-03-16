@@ -5,6 +5,14 @@ use regex::Regex;
 
 use crate::types::{LinkGraph, VaultIndex};
 
+/// Escape HTML special characters to prevent XSS.
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
 static TRANSCLUSION_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"!\[\[(.+?)\]\]").unwrap());
 
@@ -78,7 +86,7 @@ fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
 
         if let Some(&target_idx) = index.name_map.get(target_name) {
             let slug = &index.posts[target_idx].slug;
-            let display = alias.unwrap_or(target_name);
+            let display = html_escape(alias.unwrap_or(target_name));
             format!(r#"<a href="/posts/{slug}">{display}</a>"#)
         } else {
             // Unresolved link — render as plain text
@@ -130,7 +138,7 @@ fn convert_callouts(content: &str) -> String {
 
             result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
             if !title.is_empty() {
-                result.push(format!(r#"<div class="callout-title">{title}</div>"#));
+                result.push(format!(r#"<div class="callout-title">{}</div>"#, html_escape(&title)));
             }
             for body_line in &body_lines {
                 result.push(format!("<p>{body_line}</p>"));

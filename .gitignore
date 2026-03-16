@@ -7,3 +7,5 @@ dist/
 *.tfstate
 *.tfstate.backup
 *.tfvars
+site/public/search-index.json
+site/public/graph.json

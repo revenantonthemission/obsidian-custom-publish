@@ -8,7 +8,7 @@ interface SearchDocument {
 
 interface SearchHit {
   doc_idx: number;
-  positions: number[];
+  count: number;
 }
 
 interface SearchIndex {
@@ -52,7 +52,8 @@ export default function Search() {
       if (!index) {
         fetch("/search-index.json")
           .then((r) => r.json())
-          .then((data: SearchIndex) => setIndex(data));
+          .then((data: SearchIndex) => setIndex(data))
+          .catch(() => {});
       }
     }
   }, [open]);
@@ -89,7 +90,7 @@ export default function Search() {
           for (const hit of hits) {
             scores.set(
               hit.doc_idx,
-              (scores.get(hit.doc_idx) || 0) + hit.positions.length
+              (scores.get(hit.doc_idx) || 0) + hit.count
             );
           }
         }

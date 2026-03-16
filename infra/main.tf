@@ -7,6 +7,14 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    bucket         = "obsidian-blog-tfstate"
+    key            = "obsidian-blog/terraform.tfstate"
+    region         = "ap-northeast-2"
+    use_lockfile = true
+    encrypt      = true
+  }
 }
 
 provider "aws" {
