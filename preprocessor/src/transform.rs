@@ -93,12 +93,31 @@ fn transform_outside_fences(content: &str, f: impl Fn(&str) -> String) -> String
     result
 }
 
-/// Replace `![[Note Name]]` with the body content of the referenced note.
+const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
+
+fn is_image_reference(name: &str) -> bool {
+    if let Some(dot_pos) = name.rfind('.') {
+        let ext = &name[dot_pos + 1..];
+        IMAGE_EXTENSIONS.contains(&ext.to_lowercase().as_str())
+    } else {
+        false
+    }
+}
+
+/// Replace `![[Note Name]]` with the body content of the referenced note,
+/// or emit `<img>` tags for image embeds.
 fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
     transform_outside_fences(content, |line| {
         TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
             let name = caps[1].trim();
-            if let Some(&target_idx) = index.name_map.get(name) {
+            if is_image_reference(name) {
+                if index.attachment_map.contains_key(name) {
+                    let stem = &name[..name.rfind('.').unwrap()];
+                    format!(r#"<img src="/assets/{name}" alt="{stem}" />"#)
+                } else {
+                    format!("<!-- image not found: {name} -->")
+                }
+            } else if let Some(&target_idx) = index.name_map.get(name) {
                 let target_content = &index.posts[target_idx].raw_content;
                 strip_frontmatter(target_content)
             } else {
