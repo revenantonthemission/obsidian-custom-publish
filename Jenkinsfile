@@ -1,20 +1,16 @@
 pipeline {
-    agent {
-        docker {
-            image 'rust:latest'
-            args '-v $HOME/.cargo/registry:/usr/local/cargo/registry'
-        }
+    agent any
+
+    triggers {
+        cron('H 0 * * *')
     }
 
     environment {
         AWS_REGION  = 'ap-northeast-2'
-        S3_BUCKET   = credentials('s3-blog-bucket')
-        CF_DIST_ID  = credentials('cloudfront-dist-id')
-        VAULT_PATH  = './vault/Areas/Notes'
-    }
-
-    tools {
-        nodejs 'node-22'
+        AWS_PROFILE = 'mfa'
+        S3_BUCKET   = 'obsidian-custom-s3'
+        CF_DIST_ID  = 'E35HZFVGD0OJ04'
+        VAULT_PATH  = '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'
     }
 
     stages {
@@ -22,21 +18,21 @@ pipeline {
             steps { checkout scm }
         }
 
-        stage('Install Tools') {
+        stage('Install Dependencies') {
             steps {
-                sh '''
-                    curl -fsSL https://d2lang.com/install.sh | sh -s --
-                    cd site && npm ci
-                '''
+                sh 'cd site && npm ci'
             }
         }
 
         stage('Preprocess') {
             steps {
+                sh 'rm -rf content/posts content/meta content/assets'
                 sh 'cargo build --release -p obsidian-press'
-                sh './target/release/obsidian-press ${VAULT_PATH} ./content'
+                sh './target/release/obsidian-press "${VAULT_PATH}" ./content'
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
+                sh 'mkdir -p site/public/assets'
+                sh 'cp -r content/assets/* site/public/assets/ 2>/dev/null || true'
             }
         }
 
@@ -47,12 +43,9 @@ pipeline {
         }
 
         stage('Deploy') {
-            when { branch 'main' }
             steps {
-                withAWS(credentials: 'aws-blog-deploy', region: "${AWS_REGION}") {
-                    sh "aws s3 sync site/dist/ s3://${S3_BUCKET} --delete"
-                    sh "aws cloudfront create-invalidation --distribution-id ${CF_DIST_ID} --paths '/*'"
-                }
+                sh "aws s3 sync site/dist/ s3://${S3_BUCKET} --delete"
+                sh "aws cloudfront create-invalidation --distribution-id ${CF_DIST_ID} --paths '/*'"
             }
         }
     }
