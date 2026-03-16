@@ -179,6 +179,24 @@ img {
 }
 .site-nav-link:hover { color: var(--c-text); }
 
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-icon svg {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.site-title,
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .site-main {
   flex: 1;
   width: 100%;
