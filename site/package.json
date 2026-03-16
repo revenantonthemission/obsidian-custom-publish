@@ -21,6 +21,8 @@
     "d3-selection": "^3.0.0",
     "d3-zoom": "^3.0.0",
     "katex": "^0.16.38",
+    "lucide-preact": "^0.577.0",
+    "lucide-static": "^0.577.0",
     "preact": "^10.29.0",
     "rehype-katex": "^7.0.1",
     "rehype-raw": "^7.0.0",
