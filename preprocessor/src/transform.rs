@@ -272,7 +272,7 @@ fn render_single_diagram(
                     eprintln!("warning: failed to write {}: {e}", path.display());
                     return format!("<!-- {lang} render failed: {e} -->");
                 }
-                format!(r#"<img src="/assets/{filename}" class="diagram diagram-{lang}" alt="{lang} diagram" />"#)
+                format!(r#"<img src="/assets/{filename}" class="diagram diagram-{lang}" alt="" />"#)
             } else {
                 format!(r#"<div class="diagram diagram-{lang}">{svg}</div>"#)
             }
@@ -317,7 +317,7 @@ fn render_themed_diagram(
                         continue;
                     }
                     parts.push(format!(
-                        r#"<img src="/assets/{filename}" class="diagram diagram-{lang} diagram-{variant}" alt="{lang} diagram" />"#
+                        r#"<img src="/assets/{filename}" class="diagram diagram-{lang} diagram-{variant}" alt="" />"#
                     ));
                 } else {
                     parts.push(format!(

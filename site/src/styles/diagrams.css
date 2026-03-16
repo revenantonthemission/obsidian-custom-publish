@@ -25,6 +25,11 @@
   margin-bottom: 1.5rem;
 }
 
+/* Diagrams inside figures: hide captions */
+.image-figure:has(.diagram) figcaption {
+  display: none;
+}
+
 /* ── Diagram light/dark theme switching ── */
 
 /* Default (light): show light, hide dark */
