@@ -10,7 +10,7 @@ pipeline {
         AWS_REGION  = 'ap-northeast-2'
         S3_BUCKET   = credentials('s3-blog-bucket')
         CF_DIST_ID  = credentials('cloudfront-dist-id')
-        VAULT_PATH  = './vault'
+        VAULT_PATH  = './vault/Areas/Notes'
     }
 
     tools {
