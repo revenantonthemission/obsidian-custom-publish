@@ -8,7 +8,9 @@ import {
   type SimulationNodeDatum,
   type SimulationLinkDatum,
 } from "d3-force";
-import type { GraphData, GraphNode as RawGraphNode } from "../lib/types";
+import { select } from "d3-selection";
+import { zoom, zoomIdentity } from "d3-zoom";
+import type { GraphData } from "../lib/types";
 
 interface GraphNode extends SimulationNodeDatum {
   slug: string;
@@ -20,7 +22,6 @@ interface GraphNode extends SimulationNodeDatum {
 
 type GraphLink = SimulationLinkDatum<GraphNode>;
 
-/** A link after d3 has resolved source/target to node objects. */
 interface ResolvedLink {
   source: GraphNode;
   target: GraphNode;
@@ -52,21 +53,66 @@ function getNodeRadius(node: GraphNode): number {
 }
 
 export default function GraphView({ data, width = 800, height = 600 }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (!data || !canvasRef.current) return;
+    if (!data || !svgRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d")!;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    const svg = select(svgRef.current);
+    svg.selectAll("*").remove();
 
     const nodes: GraphNode[] = data.nodes.map((n) => ({ ...n }));
     const links: GraphLink[] = data.edges.map((e) => ({ ...e }));
 
+    // Container group for zoom/pan
+    const g = svg.append("g");
+
+    // Zoom behavior
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 4])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+    svg.call(zoomBehavior);
+
+    // Draw edges
+    const linkElements = g
+      .append("g")
+      .attr("class", "links")
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("stroke", "rgba(150, 150, 150, 0.3)")
+      .attr("stroke-width", 1);
+
+    // Draw nodes
+    const nodeElements = g
+      .append("g")
+      .attr("class", "nodes")
+      .selectAll("circle")
+      .data(nodes)
+      .join("circle")
+      .attr("r", (d) => getNodeRadius(d))
+      .attr("fill", (d) => getNodeColor(d))
+      .attr("cursor", "pointer")
+      .on("click", (_event, d) => {
+        window.location.href = `/posts/${d.slug}`;
+      });
+
+    // Draw labels
+    const labelElements = g
+      .append("g")
+      .attr("class", "labels")
+      .selectAll("text")
+      .data(nodes)
+      .join("text")
+      .text((d) => d.title)
+      .attr("font-size", "11px")
+      .attr("text-anchor", "middle")
+      .attr("fill", "var(--c-text, #1c1917)")
+      .attr("pointer-events", "none");
+
+    // Simulation
     const sim = forceSimulation(nodes)
       .force(
         "link",
@@ -79,68 +125,30 @@ export default function GraphView({ data, width = 800, height = 600 }: Props) {
       .force("collide", forceCollide().radius(20));
 
     sim.on("tick", () => {
-      ctx.clearRect(0, 0, width, height);
+      linkElements
+        .attr("x1", (d) => (d as unknown as ResolvedLink).source.x!)
+        .attr("y1", (d) => (d as unknown as ResolvedLink).source.y!)
+        .attr("x2", (d) => (d as unknown as ResolvedLink).target.x!)
+        .attr("y2", (d) => (d as unknown as ResolvedLink).target.y!);
 
-      // Draw edges
-      ctx.strokeStyle = "rgba(150, 150, 150, 0.3)";
-      ctx.lineWidth = 1;
-      for (const link of links as unknown as ResolvedLink[]) {
-        ctx.beginPath();
-        ctx.moveTo(link.source.x!, link.source.y!);
-        ctx.lineTo(link.target.x!, link.target.y!);
-        ctx.stroke();
-      }
+      nodeElements.attr("cx", (d) => d.x!).attr("cy", (d) => d.y!);
 
-      // Draw nodes
-      for (const node of nodes) {
-        const r = getNodeRadius(node);
-        ctx.beginPath();
-        ctx.arc(node.x!, node.y!, r, 0, Math.PI * 2);
-        ctx.fillStyle = getNodeColor(node);
-        ctx.fill();
-      }
-
-      // Draw labels
-      ctx.fillStyle = getComputedStyle(document.documentElement)
-        .getPropertyValue("--c-text")
-        .trim() || "#1c1917";
-      ctx.font = "11px sans-serif";
-      ctx.textAlign = "center";
-      for (const node of nodes) {
-        ctx.fillText(node.title, node.x!, node.y! + getNodeRadius(node) + 12);
-      }
+      labelElements
+        .attr("x", (d) => d.x!)
+        .attr("y", (d) => d.y! + getNodeRadius(d) + 14);
     });
-
-    // Click to navigate
-    const handleClick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      for (const node of nodes) {
-        const dx = x - node.x!;
-        const dy = y - node.y!;
-        if (dx * dx + dy * dy < 144) {
-          window.location.href = `/posts/${node.slug}`;
-          break;
-        }
-      }
-    };
-    canvas.addEventListener("click", handleClick);
 
     return () => {
       sim.stop();
-      canvas.removeEventListener("click", handleClick);
     };
   }, [data, width, height]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        width: `${width}px`,
-        height: `${height}px`,
-        cursor: "pointer",
-      }}
+    <svg
+      ref={svgRef}
+      width={width}
+      height={height}
+      style={{ cursor: "grab" }}
     />
   );
 }

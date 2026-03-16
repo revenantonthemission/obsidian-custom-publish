@@ -1,0 +1,79 @@
+---
+import type { PostMeta } from "../lib/types";
+
+interface Props {
+  hub: PostMeta;
+  current?: PostMeta;
+  children: PostMeta[];
+}
+
+const { hub, current, children } = Astro.props;
+
+// Find prev/next if viewing a child post within this hub
+let prev: PostMeta | undefined;
+let next: PostMeta | undefined;
+if (current) {
+  const idx = children.findIndex((c) => c.slug === current.slug);
+  if (idx > 0) prev = children[idx - 1];
+  if (idx >= 0 && idx < children.length - 1) next = children[idx + 1];
+}
+---
+
+<nav class="hub-nav" aria-label="Hub navigation">
+  <div class="hub-breadcrumb">
+    <a href="/">홈</a>
+    <span class="hub-sep">/</span>
+    <a href={`/hubs/${hub.slug}`}>{hub.title}</a>
+    {current && (
+      <>
+        <span class="hub-sep">/</span>
+        <span class="hub-current">{current.title}</span>
+      </>
+    )}
+  </div>
+
+  {current && (prev || next) && (
+    <div class="hub-prevnext">
+      {prev ? (
+        <a href={`/posts/${prev.slug}`} class="hub-prev">&larr; {prev.title}</a>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <a href={`/posts/${next.slug}`} class="hub-next">{next.title} &rarr;</a>
+      )}
+    </div>
+  )}
+</nav>
+
+<style>
+  .hub-nav {
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .hub-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .hub-sep {
+    color: var(--c-text-muted);
+  }
+  .hub-current {
+    color: var(--c-text-muted);
+  }
+  .hub-prevnext {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    gap: 1rem;
+  }
+  .hub-prev, .hub-next {
+    color: var(--c-accent);
+  }
+  .hub-next {
+    margin-left: auto;
+    text-align: right;
+  }
+</style>
