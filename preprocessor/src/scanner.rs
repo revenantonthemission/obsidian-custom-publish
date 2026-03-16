@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use crate::types::{is_korean, PostMeta, VaultIndex};
@@ -97,11 +97,13 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .map(|(i, p)| (p.title.clone(), i))
         .collect();
 
+    let attachment_map = scan_attachments(vault_path);
+
     Ok(VaultIndex {
         posts,
         slug_map,
         name_map,
-        attachment_map: HashMap::new(), // placeholder, populated in Task 2
+        attachment_map,
     })
 }
 
@@ -134,6 +136,34 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
     } else {
         (RawFrontmatter::default(), content)
     }
+}
+
+const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
+
+fn scan_attachments(vault_path: &Path) -> HashMap<String, PathBuf> {
+    let attachment_dir = vault_path.join("attachment");
+    let mut map = HashMap::new();
+
+    if !attachment_dir.is_dir() {
+        return map;
+    }
+
+    if let Ok(entries) = std::fs::read_dir(&attachment_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if IMAGE_EXTENSIONS.contains(&ext.to_lowercase().as_str()) {
+                        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                            map.insert(name.to_string(), path);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    map
 }
 
 /// Check if a walkdir entry should be skipped (hidden or drafts).

@@ -34,3 +34,12 @@ fn test_scan_vault_detects_hub_pages() {
     let hub = index.posts.iter().find(|p| p.slug == "hub-page").unwrap();
     assert!(hub.is_hub);
 }
+
+#[test]
+fn test_scan_vault_indexes_attachments() {
+    let vault = Path::new("../fixtures/vault");
+    let index = scan_vault(vault).unwrap();
+    assert!(index.attachment_map.contains_key("test-image.png"));
+    let path = &index.attachment_map["test-image.png"];
+    assert!(path.exists());
+}
