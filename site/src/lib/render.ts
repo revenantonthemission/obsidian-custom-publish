@@ -13,7 +13,7 @@ const processor = unified()
   .use(remarkMath)
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw) // Pass through raw HTML from preprocessor (callout divs, wikilink anchors)
-  .use(rehypeKatex)
+  .use(rehypeKatex, { strict: false })
   .use(rehypeStringify);
 
 export async function renderMarkdown(md: string): Promise<string> {

@@ -81,11 +81,15 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         });
     }
 
-    let slug_map: HashMap<String, usize> = posts
-        .iter()
-        .enumerate()
-        .map(|(i, p)| (p.slug.clone(), i))
-        .collect();
+    let mut slug_map: HashMap<String, usize> = HashMap::new();
+    for (i, p) in posts.iter().enumerate() {
+        if let Some(prev) = slug_map.insert(p.slug.clone(), i) {
+            eprintln!(
+                "warning: slug collision '{}' — '{}' overwrites '{}'",
+                p.slug, p.title, posts[prev].title
+            );
+        }
+    }
 
     let name_map: HashMap<String, usize> = posts
         .iter()
@@ -101,8 +105,19 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 }
 
 /// Convert a filename into a URL-safe slug.
+/// Keeps alphanumeric, Korean characters, and hyphens. Strips everything else.
 fn slugify(name: &str) -> String {
-    name.to_lowercase().replace(' ', "-")
+    name.to_lowercase()
+        .replace(' ', "-")
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '-' || is_korean(*c))
+        .collect::<String>()
+        .trim_matches('-')
+        .to_string()
+}
+
+fn is_korean(c: char) -> bool {
+    matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
 }
 
 /// Split content into frontmatter and body.

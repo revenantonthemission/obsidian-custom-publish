@@ -1,5 +1,6 @@
 ---
 import type { PostMeta } from "../lib/types";
+import { sanitizeTag } from "../lib/data";
 
 interface Props {
   post: PostMeta;
@@ -16,7 +17,7 @@ const { post } = Astro.props;
   </div>
   <div class="post-card-tags">
     {post.tags.slice(0, 3).map((tag) => (
-      <a href={`/tags/${tag}`} class="post-tag">{tag}</a>
+      <a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a>
     ))}
   </div>
 </article>
