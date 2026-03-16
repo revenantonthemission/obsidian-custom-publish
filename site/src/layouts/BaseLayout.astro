@@ -27,6 +27,7 @@ const { title = "Blog" } = Astro.props;
     />
   </head>
   <body>
+    <div class="reading-progress" aria-hidden="true"></div>
     <Header />
     <main class="site-main">
       <slot />
@@ -34,11 +35,30 @@ const { title = "Blog" } = Astro.props;
     <Search client:idle />
     <Footer />
 
+    <button class="back-to-top" aria-label="맨 위로" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
     <script is:inline>
-      // Apply saved theme before paint to prevent flash
+      // Theme
       const saved = localStorage.getItem("theme");
       if (saved) {
         document.documentElement.setAttribute("data-theme", saved);
+      }
+
+      // Reading progress bar
+      const progressBar = document.querySelector(".reading-progress");
+      if (progressBar) {
+        window.addEventListener("scroll", () => {
+          const h = document.documentElement.scrollHeight - window.innerHeight;
+          progressBar.style.width = h > 0 ? (window.scrollY / h * 100) + "%" : "0%";
+        }, { passive: true });
+      }
+
+      // Back-to-top button
+      const btt = document.querySelector(".back-to-top");
+      if (btt) {
+        window.addEventListener("scroll", () => {
+          btt.classList.toggle("visible", window.scrollY > 400);
+        }, { passive: true });
       }
     </script>
   </body>

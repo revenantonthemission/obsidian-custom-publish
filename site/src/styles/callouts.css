@@ -1,9 +1,18 @@
 /* ── Obsidian-style callouts ── */
+
+/* ── Light-mode defaults ── */
+:root {
+  --callout-bg: #f5f5f4;
+  --callout-border: #a8a29e;
+}
+
+/* ── Base callout ── */
 .callout {
   border-radius: var(--radius);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
-  border-left: 4px solid;
+  border-left: 4px solid var(--callout-border);
+  background: var(--callout-bg);
 }
 
 .callout-title {
@@ -15,22 +24,181 @@
   margin-bottom: 0;
 }
 
-.callout-note {
-  background: var(--c-callout-note);
-  border-color: var(--c-callout-note-border);
+/* ── Blue group: note, info, abstract, todo ── */
+.callout-note,
+.callout-info,
+.callout-abstract,
+.callout-todo {
+  --callout-bg: #dbeafe;
+  --callout-border: #3b82f6;
 }
 
-.callout-warning {
-  background: var(--c-callout-warning);
-  border-color: var(--c-callout-warning-border);
+/* ── Yellow group: warning, attention, caution ── */
+.callout-warning,
+.callout-attention,
+.callout-caution {
+  --callout-bg: #fef3c7;
+  --callout-border: #f59e0b;
 }
 
-.callout-tip {
-  background: var(--c-callout-note);
-  border-color: #10b981;
+/* ── Green group: tip, success, done, check ── */
+.callout-tip,
+.callout-success,
+.callout-done,
+.callout-check {
+  --callout-bg: #dcfce7;
+  --callout-border: #22c55e;
 }
 
+/* ── Red group: danger, failure, bug, important ── */
+.callout-danger,
+.callout-failure,
+.callout-bug,
 .callout-important {
-  background: var(--c-callout-warning);
-  border-color: #ef4444;
+  --callout-bg: #fee2e2;
+  --callout-border: #ef4444;
+}
+
+/* ── Purple group: question, help, faq ── */
+.callout-question,
+.callout-help,
+.callout-faq {
+  --callout-bg: #f3e8ff;
+  --callout-border: #a855f7;
+}
+
+/* ── Grey group: quote, cite, example ── */
+.callout-quote,
+.callout-cite,
+.callout-example {
+  --callout-bg: #f5f5f4;
+  --callout-border: #a8a29e;
+}
+
+/* ── Dark mode ── */
+[data-theme="dark"] .callout-note,
+[data-theme="dark"] .callout-info,
+[data-theme="dark"] .callout-abstract,
+[data-theme="dark"] .callout-todo {
+  --callout-bg: #1e3a5f;
+  --callout-border: #3b82f6;
+}
+
+[data-theme="dark"] .callout-warning,
+[data-theme="dark"] .callout-attention,
+[data-theme="dark"] .callout-caution {
+  --callout-bg: #422006;
+  --callout-border: #f59e0b;
+}
+
+[data-theme="dark"] .callout-tip,
+[data-theme="dark"] .callout-success,
+[data-theme="dark"] .callout-done,
+[data-theme="dark"] .callout-check {
+  --callout-bg: #052e16;
+  --callout-border: #22c55e;
+}
+
+[data-theme="dark"] .callout-danger,
+[data-theme="dark"] .callout-failure,
+[data-theme="dark"] .callout-bug,
+[data-theme="dark"] .callout-important {
+  --callout-bg: #450a0a;
+  --callout-border: #ef4444;
+}
+
+[data-theme="dark"] .callout-question,
+[data-theme="dark"] .callout-help,
+[data-theme="dark"] .callout-faq {
+  --callout-bg: #2e1065;
+  --callout-border: #a855f7;
+}
+
+[data-theme="dark"] .callout-quote,
+[data-theme="dark"] .callout-cite,
+[data-theme="dark"] .callout-example {
+  --callout-bg: #1c1917;
+  --callout-border: #a8a29e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .callout-note,
+  :root:not([data-theme="light"]) .callout-info,
+  :root:not([data-theme="light"]) .callout-abstract,
+  :root:not([data-theme="light"]) .callout-todo {
+    --callout-bg: #1e3a5f;
+    --callout-border: #3b82f6;
+  }
+
+  :root:not([data-theme="light"]) .callout-warning,
+  :root:not([data-theme="light"]) .callout-attention,
+  :root:not([data-theme="light"]) .callout-caution {
+    --callout-bg: #422006;
+    --callout-border: #f59e0b;
+  }
+
+  :root:not([data-theme="light"]) .callout-tip,
+  :root:not([data-theme="light"]) .callout-success,
+  :root:not([data-theme="light"]) .callout-done,
+  :root:not([data-theme="light"]) .callout-check {
+    --callout-bg: #052e16;
+    --callout-border: #22c55e;
+  }
+
+  :root:not([data-theme="light"]) .callout-danger,
+  :root:not([data-theme="light"]) .callout-failure,
+  :root:not([data-theme="light"]) .callout-bug,
+  :root:not([data-theme="light"]) .callout-important {
+    --callout-bg: #450a0a;
+    --callout-border: #ef4444;
+  }
+
+  :root:not([data-theme="light"]) .callout-question,
+  :root:not([data-theme="light"]) .callout-help,
+  :root:not([data-theme="light"]) .callout-faq {
+    --callout-bg: #2e1065;
+    --callout-border: #a855f7;
+  }
+
+  :root:not([data-theme="light"]) .callout-quote,
+  :root:not([data-theme="light"]) .callout-cite,
+  :root:not([data-theme="light"]) .callout-example {
+    --callout-bg: #1c1917;
+    --callout-border: #a8a29e;
+  }
+}
+
+/* ── Collapsible callouts ── */
+details.callout {
+  cursor: default;
+}
+
+details.callout > summary.callout-title {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+details.callout > summary.callout-title::before {
+  content: "\25B6";
+  font-size: 0.7em;
+  transition: transform 0.2s;
+}
+
+details[open].callout > summary.callout-title::before {
+  transform: rotate(90deg);
+}
+
+details.callout > summary.callout-title::-webkit-details-marker {
+  display: none;
+}
+
+.callout-body {
+  margin-top: 0.5rem;
+}
+
+.callout-body p:last-child {
+  margin-bottom: 0;
 }

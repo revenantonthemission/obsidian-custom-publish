@@ -6,6 +6,7 @@ import remarkRehype from "remark-rehype";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import rehypeShiki from "@shikijs/rehype";
+import { transformerMetaHighlight } from "@shikijs/transformers";
 import rehypeStringify from "rehype-stringify";
 import { visit } from "unist-util-visit";
 import type { Root, Element } from "hast";
@@ -109,6 +110,7 @@ const processor = unified()
       dark: "github-dark",
     },
     defaultColor: false,
+    transformers: [transformerMetaHighlight()],
   })
   .use(rehypeCodeFilename)
   .use(rehypeImageCaption)

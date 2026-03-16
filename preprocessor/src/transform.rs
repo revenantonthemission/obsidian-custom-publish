@@ -20,7 +20,7 @@ static WIKILINK_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]").unwrap());
 
 static CALLOUT_START_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]\s*(.*)$").unwrap());
+    LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
 static FENCE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst)\n(.*?)^```").unwrap());
@@ -119,7 +119,8 @@ fn convert_callouts(content: &str) -> String {
     while let Some(line) = lines.next() {
         if let Some(caps) = callout_start.captures(line) {
             let callout_type = caps[1].to_lowercase();
-            let title = caps[2].trim().to_string();
+            let collapse_marker = caps.get(2).map(|m| m.as_str());
+            let title = caps[3].trim().to_string();
 
             // Collect callout body lines (lines starting with `> `)
             let mut body_lines = Vec::new();
@@ -136,14 +137,44 @@ fn convert_callouts(content: &str) -> String {
                 }
             }
 
-            result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
-            if !title.is_empty() {
-                result.push(format!(r#"<div class="callout-title">{}</div>"#, html_escape(&title)));
+            match collapse_marker {
+                Some("-") | Some("+") => {
+                    let open_attr = if collapse_marker == Some("+") { " open" } else { "" };
+                    result.push(format!(
+                        r#"<details class="callout callout-{callout_type}"{open_attr}>"#
+                    ));
+                    if !title.is_empty() {
+                        result.push(format!(
+                            r#"<summary class="callout-title">{}</summary>"#,
+                            html_escape(&title)
+                        ));
+                    } else {
+                        result.push(format!(
+                            r#"<summary class="callout-title">{}</summary>"#,
+                            callout_type
+                        ));
+                    }
+                    result.push(r#"<div class="callout-body">"#.to_string());
+                    for body_line in &body_lines {
+                        result.push(format!("<p>{body_line}</p>"));
+                    }
+                    result.push("</div>".to_string());
+                    result.push("</details>".to_string());
+                }
+                _ => {
+                    result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
+                    if !title.is_empty() {
+                        result.push(format!(
+                            r#"<div class="callout-title">{}</div>"#,
+                            html_escape(&title)
+                        ));
+                    }
+                    for body_line in &body_lines {
+                        result.push(format!("<p>{body_line}</p>"));
+                    }
+                    result.push("</div>".to_string());
+                }
             }
-            for body_line in &body_lines {
-                result.push(format!("<p>{body_line}</p>"));
-            }
-            result.push("</div>".to_string());
         } else {
             result.push(line.to_string());
         }
