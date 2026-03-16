@@ -38,6 +38,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Compile regexes with `LazyLock`, not inside functions
 - Regex transforms in `transform.rs` must use `transform_outside_fences()` to skip fenced code blocks
 - Korean (Hangul) is alphabetic, not logographic — don't count syllable blocks as individual words
+- `![[image.png]]` embeds are NOT yet handled — preprocessor treats them as note transclusions, outputs plain text
 
 ## Astro Gotchas
 - Preprocessor outputs raw HTML (callout divs, wikilink anchors) — `rehype-raw` is required in the unified pipeline
@@ -47,6 +48,10 @@ Image attachments live in `Areas/Notes/attachment/`.
 - `rehype-slug` generates heading IDs — TOC component depends on these `id` attributes
 - D2 and Mermaid diagrams are dual-rendered (light/dark SVGs); CSS `.diagram-light`/`.diagram-dark` toggles visibility. Typst has no theme support.
 - `set:html` in PostLayout trusts vault content — revisit if vault ever accepts third-party content
+- BaseLayout uses `<style is:global>` — scoped styles don't match `set:html` content (callout divs, diagram imgs, code blocks)
+- Rehype wraps `<img>` with non-empty `alt` in `<figure>` + `<figcaption>` — use `alt=""` for decorative images (diagrams)
+- Icon libraries: `lucide-static` (build-time SVG via `set:html`) + `lucide-preact` (interactive islands only)
+- Homepage renders `Passion Project.md` from vault; "이번주에 작성된 포스트" section is dynamically replaced with recent posts
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
