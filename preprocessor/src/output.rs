@@ -58,6 +58,7 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
             .iter()
             .map(|l| l.target_slug.clone())
             .collect();
+        forward.sort();
         forward.dedup();
         let backlinks = graph.backlinks[i].clone();
 

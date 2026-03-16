@@ -66,11 +66,14 @@ impl LinkGraph {
             }
         }
 
-        // Deduplicate edges (A->B and B->A count as one undirected edge for the graph)
-        edges.dedup_by(|a, b| {
-            (a.source == b.source && a.target == b.target)
-                || (a.source == b.target && a.target == b.source)
-        });
+        // Normalize edges so source < target, then sort and dedup
+        for edge in &mut edges {
+            if edge.source > edge.target {
+                std::mem::swap(&mut edge.source, &mut edge.target);
+            }
+        }
+        edges.sort_by(|a, b| (&a.source, &a.target).cmp(&(&b.source, &b.target)));
+        edges.dedup_by(|a, b| a.source == b.source && a.target == b.target);
 
         GraphJson { nodes, edges }
     }

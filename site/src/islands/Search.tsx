@@ -65,6 +65,11 @@ export default function Search() {
       return;
     }
 
+    const timer = setTimeout(() => runSearch(query, index), 200);
+    return () => clearTimeout(timer);
+  }, [query, index]);
+
+  const runSearch = (query: string, index: SearchIndex) => {
     const q = query.toLowerCase().trim();
     const tokens = q.split(/\s+/);
     const scores = new Map<number, number>();
@@ -101,7 +106,7 @@ export default function Search() {
 
     setResults(sorted);
     setSelected(0);
-  }, [query, index]);
+  };
 
   const navigate = (slug: string) => {
     setOpen(false);
