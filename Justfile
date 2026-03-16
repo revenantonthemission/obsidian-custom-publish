@@ -1,6 +1,9 @@
 vault       := env("VAULT_PATH", "./fixtures/vault")
 content     := "./content"
 site_dir    := "./site"
+aws_profile := env("AWS_PROFILE", "mfa")
+s3_bucket   := env("S3_BUCKET", "obsidian-custom-s3")
+cf_dist_id  := env("CF_DIST_ID", "E35HZFVGD0OJ04")
 
 build: preprocess site-build
 
@@ -10,14 +13,14 @@ preprocess:
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
 
 dev: preprocess
-    cd {{site_dir}} && bun run astro dev
+    cd {{site_dir}} && npx astro dev
 
 site-build:
-    cd {{site_dir}} && bun run astro build
+    cd {{site_dir}} && npx astro build
 
 deploy: build
-    aws s3 sync {{site_dir}}/dist/ s3://$S3_BUCKET --delete
-    aws cloudfront create-invalidation --distribution-id $CF_DIST_ID --paths "/*"
+    AWS_PROFILE={{aws_profile}} aws s3 sync {{site_dir}}/dist/ s3://{{s3_bucket}} --delete
+    AWS_PROFILE={{aws_profile}} aws cloudfront create-invalidation --distribution-id {{cf_dist_id}} --paths "/*"
 
 test:
     cd preprocessor && cargo test
