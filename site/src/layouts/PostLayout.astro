@@ -47,6 +47,9 @@ for (const hub of hubs) {
           ))}
         </div>
       </header>
+      {/* SECURITY: set:html trusts the vault content. rehype-raw passes through HTML from the
+          preprocessor (callout divs, wikilink anchors). This is safe for a personal vault but
+          must be revisited if the vault ever accepts third-party content. */}
       <div class="post-content" set:html={content} />
       <BacklinkList backlinks={meta.backlinks} />
     </article>

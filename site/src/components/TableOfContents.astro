@@ -11,18 +11,14 @@ interface Heading {
 
 const { content } = Astro.props;
 
-// Extract headings from rendered HTML content
-const headingRegex = /<h([2-4])(?:\s+id="([^"]*)")?[^>]*>(.*?)<\/h[2-4]>/gi;
+// Extract headings from rendered HTML content — relies on rehype-slug for id attributes
+const headingRegex = /<h([2-4])\s+id="([^"]*)"[^>]*>(.*?)<\/h[2-4]>/gi;
 const headings: Heading[] = [];
 let match;
 while ((match = headingRegex.exec(content)) !== null) {
   const depth = parseInt(match[1]);
-  // Strip any inner HTML tags from heading text
   const text = match[3].replace(/<[^>]+>/g, "").trim();
-  const id = match[2] || text
-    .toLowerCase()
-    .replace(/[^\w\s가-힣-]/g, "")
-    .replace(/\s+/g, "-");
+  const id = match[2];
   headings.push({ depth, text, id });
 }
 ---

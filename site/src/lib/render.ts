@@ -7,6 +7,7 @@ import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import rehypeShiki from "@shikijs/rehype";
 import { transformerMetaHighlight } from "@shikijs/transformers";
+import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
 import { visit } from "unist-util-visit";
 import type { Root, Element } from "hast";
@@ -112,6 +113,7 @@ const processor = unified()
     defaultColor: false,
     transformers: [transformerMetaHighlight()],
   })
+  .use(rehypeSlug)
   .use(rehypeCodeFilename)
   .use(rehypeImageCaption)
   .use(rehypeTableWrapper)

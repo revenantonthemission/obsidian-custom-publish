@@ -63,37 +63,71 @@ fn strip_frontmatter(content: &str) -> String {
     }
 }
 
+/// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
+fn transform_outside_fences(content: &str, f: impl Fn(&str) -> String) -> String {
+    let mut result = String::with_capacity(content.len());
+    let mut in_fence = false;
+
+    for line in content.lines() {
+        if line.starts_with("```") {
+            in_fence = !in_fence;
+            result.push_str(line);
+            result.push('\n');
+        } else if in_fence {
+            result.push_str(line);
+            result.push('\n');
+        } else {
+            result.push_str(&f(line));
+            result.push('\n');
+        }
+    }
+
+    // Remove trailing newline added by iteration
+    if content.ends_with('\n') || result.ends_with('\n') {
+        result.truncate(result.trim_end_matches('\n').len());
+        if content.ends_with('\n') {
+            result.push('\n');
+        }
+    }
+
+    result
+}
+
 /// Replace `![[Note Name]]` with the body content of the referenced note.
 fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
-    TRANSCLUSION_RE.replace_all(content, |caps: &regex::Captures| {
-        let name = caps[1].trim();
-        if let Some(&target_idx) = index.name_map.get(name) {
-            let target_content = &index.posts[target_idx].raw_content;
-            strip_frontmatter(target_content)
-        } else {
-            // Leave as plain text if target not found
-            format!("{name}")
-        }
+    transform_outside_fences(content, |line| {
+        TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
+            let name = caps[1].trim();
+            if let Some(&target_idx) = index.name_map.get(name) {
+                let target_content = &index.posts[target_idx].raw_content;
+                strip_frontmatter(target_content)
+            } else {
+                // Leave as plain text if target not found
+                format!("{name}")
+            }
+        })
+        .to_string()
     })
-    .to_string()
 }
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
 fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
-    WIKILINK_RE.replace_all(content, |caps: &regex::Captures| {
-        let target_name = caps[1].trim();
-        let alias = caps.get(2).map(|m| m.as_str().trim());
+    transform_outside_fences(content, |line| {
+        WIKILINK_RE.replace_all(line, |caps: &regex::Captures| {
+            let target_name = caps[1].trim();
+            let alias = caps.get(2).map(|m| m.as_str().trim());
 
-        if let Some(&target_idx) = index.name_map.get(target_name) {
-            let slug = &index.posts[target_idx].slug;
-            let display = html_escape(alias.unwrap_or(target_name));
-            format!(r#"<a href="/posts/{slug}">{display}</a>"#)
-        } else {
-            // Unresolved link — render as plain text
-            alias.unwrap_or(target_name).to_string()
-        }
+            if let Some(&target_idx) = index.name_map.get(target_name) {
+                let slug = &index.posts[target_idx].slug;
+                let display = html_escape(alias.unwrap_or(target_name));
+                format!(r#"<a href="/posts/{slug}">{display}</a>"#)
+            } else {
+                // Unresolved link — render as plain text
+                alias.unwrap_or(target_name).to_string()
+            }
+        })
+        .to_string()
     })
-    .to_string()
 }
 
 /// Convert Obsidian callout syntax to HTML divs.
@@ -240,5 +274,16 @@ mod tests {
     fn test_strip_frontmatter_no_frontmatter() {
         let input = "Just content";
         assert_eq!(strip_frontmatter(input), "Just content");
+    }
+
+    #[test]
+    fn test_transform_outside_fences_preserves_code_blocks() {
+        let input = "before [[link]]\n```\n[[inside fence]]\n```\nafter [[link]]";
+        let result = transform_outside_fences(input, |line| {
+            line.replace("[[link]]", "REPLACED")
+        });
+        assert!(result.contains("before REPLACED"));
+        assert!(result.contains("[[inside fence]]"));
+        assert!(result.contains("after REPLACED"));
     }
 }

@@ -26,9 +26,7 @@ pipeline {
             steps {
                 sh '''
                     curl -fsSL https://d2lang.com/install.sh | sh -s --
-                    curl -fsSL https://bun.sh/install | bash
-                    export PATH="$HOME/.bun/bin:$PATH"
-                    cd site && bun install
+                    cd site && npm ci
                 '''
             }
         }
@@ -44,10 +42,7 @@ pipeline {
 
         stage('Build Site') {
             steps {
-                sh '''
-                    export PATH="$HOME/.bun/bin:$PATH"
-                    cd site && bun run astro build
-                '''
+                sh 'cd site && npx astro build'
             }
         }
 

@@ -14,6 +14,8 @@ interface SearchHit {
 interface SearchIndex {
   documents: SearchDocument[];
   inverted_index: Record<string, SearchHit[]>;
+  /** Sorted keys for binary search prefix matching — built on first load */
+  _sortedKeys?: string[];
 }
 
 interface Result {
@@ -83,16 +85,29 @@ export default function Search() {
       }
     }
 
-    // Inverted index matching
+    // Build sorted keys on first search for efficient prefix matching
+    if (!index._sortedKeys) {
+      index._sortedKeys = Object.keys(index.inverted_index).sort();
+    }
+    const keys = index._sortedKeys;
+
+    // Inverted index matching — prefix scan via binary search
     for (const token of tokens) {
-      for (const [term, hits] of Object.entries(index.inverted_index)) {
-        if (term.includes(token)) {
-          for (const hit of hits) {
-            scores.set(
-              hit.doc_idx,
-              (scores.get(hit.doc_idx) || 0) + hit.count
-            );
-          }
+      // Binary search for first key >= token
+      let lo = 0, hi = keys.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (keys[mid] < token) lo = mid + 1;
+        else hi = mid;
+      }
+      // Scan forward while keys start with the token prefix
+      for (let i = lo; i < keys.length && keys[i].startsWith(token); i++) {
+        const hits = index.inverted_index[keys[i]];
+        for (const hit of hits) {
+          scores.set(
+            hit.doc_idx,
+            (scores.get(hit.doc_idx) || 0) + hit.count
+          );
         }
       }
     }
