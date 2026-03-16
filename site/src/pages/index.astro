@@ -1,64 +1,40 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
-import { getAllPostMeta, getHubs } from "../lib/data";
+import { getAllPostMeta, getPostContent } from "../lib/data";
+import { renderMarkdown } from "../lib/render";
 
-const posts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 20);
-const hubs = getHubs();
+const slug = "passion-project";
+const rawContent = getPostContent(slug);
+const htmlContent = await renderMarkdown(rawContent);
+
+// Split at "이번주에 작성된 포스트" heading, replace with dynamic recent posts
+const recentHeadingRe = /<h2[^>]*>이번주에 작성된 포스트[^<]*<\/h2>[\s\S]*?(?=<h2|$)/;
+const beforeAndAfter = htmlContent.split(recentHeadingRe);
+const contentBefore = beforeAndAfter[0] ?? htmlContent;
+const contentAfter = beforeAndAfter[1] ?? "";
+
+const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 20);
 ---
 
-<BaseLayout title="Blog">
-  {hubs.length > 0 && (
-    <section class="hubs-section">
-      <h2>허브</h2>
-      <div class="hub-list">
-        {hubs.map((hub) => (
-          <a href={`/hubs/${hub.slug}`} class="hub-card">
-            <span class="hub-title">{hub.title}</span>
-            <span class="hub-tags">{hub.tags.join(", ")}</span>
-          </a>
-        ))}
-      </div>
-    </section>
-  )}
+<BaseLayout title="Passion Project">
+  <div class="home-content post-content" set:html={contentBefore} />
 
-  <section>
+  <section class="recent-posts">
     <h2>최근 글</h2>
-    {posts.map((post) => (
+    {recentPosts.map((post) => (
       <PostCard post={post} />
     ))}
   </section>
+
+  {contentAfter && <div class="home-content post-content" set:html={contentAfter} />}
 </BaseLayout>
 
 <style>
-  .hubs-section {
-    margin-bottom: 2.5rem;
+  .home-content {
+    margin-bottom: 2rem;
   }
-  .hub-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.75rem;
-  }
-  .hub-card {
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius);
-    color: var(--c-text);
-    text-decoration: none;
-  }
-  .hub-card:hover {
-    border-color: var(--c-accent);
-    text-decoration: none;
-  }
-  .hub-title {
-    font-weight: 600;
-  }
-  .hub-tags {
-    font-size: 0.8rem;
-    color: var(--c-text-muted);
-    margin-top: 0.25rem;
+  .recent-posts {
+    margin-bottom: 2rem;
   }
 </style>
