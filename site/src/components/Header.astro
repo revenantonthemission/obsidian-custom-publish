@@ -1,0 +1,12 @@
+---
+import ThemeToggle from "../islands/ThemeToggle.tsx";
+---
+
+<header class="site-header">
+  <a href="/" class="site-title">obsidian-press</a>
+  <nav>
+    <a href="/tags" class="site-nav-link">Tags</a>
+    <a href="/graph" class="site-nav-link">Graph</a>
+    <ThemeToggle client:load />
+  </nav>
+</header>

@@ -2,8 +2,9 @@
 import BaseLayout from "./BaseLayout.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
+import HubNav from "../components/HubNav.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
-import { sanitizeTag, getGraph } from "../lib/data";
+import { sanitizeTag, getGraph, getPostMeta, getHubs } from "../lib/data";
 import type { PostMeta } from "../lib/types";
 import "../styles/post.css";
 
@@ -14,9 +15,26 @@ interface Props {
 
 const { meta, content } = Astro.props;
 const graphData = getGraph();
+
+// Check if this post belongs to a hub (is linked from a hub's forward_links)
+const hubs = getHubs();
+let parentHub: PostMeta | undefined;
+let hubChildren: PostMeta[] = [];
+for (const hub of hubs) {
+  if (hub.forward_links?.includes(meta.slug)) {
+    parentHub = hub;
+    hubChildren = (hub.forward_links || [])
+      .map((s) => getPostMeta(s))
+      .filter((m): m is PostMeta => m !== null);
+    break;
+  }
+}
 ---
 
 <BaseLayout title={meta.title}>
+  {parentHub && (
+    <HubNav hub={parentHub} current={meta} children={hubChildren} />
+  )}
   <div class="post-layout">
     <article>
       <header class="post-header">

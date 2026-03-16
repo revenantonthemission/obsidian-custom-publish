@@ -1,7 +1,6 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import PostCard from "../../components/PostCard.astro";
-import { getHubs, getPostMeta, getAllPostMeta } from "../../lib/data";
+import HubLayout from "../../layouts/HubLayout.astro";
+import { getHubs, getPostMeta } from "../../lib/data";
 import type { PostMeta } from "../../lib/types";
 
 export function getStaticPaths() {
@@ -12,46 +11,10 @@ export function getStaticPaths() {
 const { slug } = Astro.params;
 const hub = getPostMeta(slug!)!;
 
-// Child posts: posts that have this hub as forward_link target,
-// or posts linked from the hub's forward_links
 const childSlugs = hub.forward_links || [];
 const children: PostMeta[] = childSlugs
   .map((s) => getPostMeta(s))
   .filter((m): m is PostMeta => m !== null);
 ---
 
-<BaseLayout title={hub.title}>
-  <header class="hub-header">
-    <h1>{hub.title}</h1>
-    <div class="hub-progress">
-      {children.length}개 글
-    </div>
-  </header>
-
-  <section>
-    {children.map((post) => (
-      <PostCard post={post} />
-    ))}
-  </section>
-
-  {children.length === 0 && (
-    <p class="empty-state">이 허브에 연결된 글이 아직 없습니다.</p>
-  )}
-</BaseLayout>
-
-<style>
-  .hub-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--c-border);
-  }
-  .hub-progress {
-    color: var(--c-text-muted);
-    font-size: 0.9rem;
-    margin-top: 0.25rem;
-  }
-  .empty-state {
-    color: var(--c-text-muted);
-    font-style: italic;
-  }
-</style>
+<HubLayout hub={hub} children={children} />

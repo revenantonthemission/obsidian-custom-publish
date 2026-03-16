@@ -1,5 +1,6 @@
 ---
-import ThemeToggle from "../islands/ThemeToggle.tsx";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
 import Search from "../islands/Search.tsx";
 
 interface Props {
@@ -26,21 +27,12 @@ const { title = "Blog" } = Astro.props;
     />
   </head>
   <body>
-    <header class="site-header">
-      <a href="/" class="site-title">obsidian-press</a>
-      <nav>
-        <a href="/tags" class="site-nav-link">Tags</a>
-        <a href="/graph" class="site-nav-link">Graph</a>
-        <ThemeToggle client:load />
-      </nav>
-    </header>
+    <Header />
     <main class="site-main">
       <slot />
     </main>
     <Search client:idle />
-    <footer class="site-footer">
-      Built with obsidian-press
-    </footer>
+    <Footer />
 
     <script is:inline>
       // Apply saved theme before paint to prevent flash
