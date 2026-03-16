@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::types::{LinkGraph, VaultIndex};
+use crate::types::{LinkGraph, VaultIndex, IMAGE_EXTENSIONS};
 
 /// Escape HTML special characters to prevent XSS.
 fn html_escape(s: &str) -> String {
@@ -93,8 +93,6 @@ fn transform_outside_fences(content: &str, f: impl Fn(&str) -> String) -> String
     result
 }
 
-const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
-
 fn is_image_reference(name: &str) -> bool {
     if let Some(dot_pos) = name.rfind('.') {
         let ext = &name[dot_pos + 1..];
@@ -113,7 +111,8 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
             if is_image_reference(name) {
                 if index.attachment_map.contains_key(name) {
                     let stem = &name[..name.rfind('.').unwrap()];
-                    format!(r#"<img src="/assets/{name}" alt="{stem}" />"#)
+                    let escaped_stem = html_escape(stem);
+                    format!(r#"<img src="/assets/{name}" alt="{escaped_stem}" />"#)
                 } else {
                     format!("<!-- image not found: {name} -->")
                 }

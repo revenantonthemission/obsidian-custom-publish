@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::types::{is_korean, PostMeta, VaultIndex};
+use crate::types::{is_korean, PostMeta, VaultIndex, IMAGE_EXTENSIONS};
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -137,8 +137,6 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
         (RawFrontmatter::default(), content)
     }
 }
-
-const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
 
 fn scan_attachments(vault_path: &Path) -> HashMap<String, PathBuf> {
     let attachment_dir = vault_path.join("attachment");
