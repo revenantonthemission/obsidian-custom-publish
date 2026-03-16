@@ -45,7 +45,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 
     for entry in WalkDir::new(vault_path)
         .into_iter()
-        .filter_entry(|e| !is_hidden(e))
+        .filter_entry(|e| !is_excluded(e))
     {
         let entry = entry.context("failed to read directory entry")?;
         let path = entry.path();
@@ -135,10 +135,10 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
     }
 }
 
-/// Check if a walkdir entry is hidden (starts with `.`).
-fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+/// Check if a walkdir entry should be skipped (hidden or drafts).
+fn is_excluded(entry: &walkdir::DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .is_some_and(|s| s.starts_with('.'))
+        .is_some_and(|s| s.starts_with('.') || s == "Drafts")
 }
