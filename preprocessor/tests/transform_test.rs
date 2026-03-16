@@ -72,3 +72,34 @@ fn test_unresolved_wikilinks_become_plain_text() {
     // Should contain the text without brackets
     assert!(result.contains("Nonexistent Page"));
 }
+
+#[test]
+fn test_image_embed_produces_img_tag() {
+    let (index, graph) = fixture_setup();
+    let post_idx = index.slug_map["post-with-image"];
+    let result = transform_content(&index, &graph, post_idx);
+    assert!(
+        result.contains(r#"<img src="/assets/test-image.png" alt="test-image" />"#),
+        "Expected <img> tag, got: {result}"
+    );
+}
+
+#[test]
+fn test_missing_image_embed_produces_warning_comment() {
+    let (index, graph) = fixture_setup();
+    let post_idx = index.slug_map["post-with-image"];
+    let result = transform_content(&index, &graph, post_idx);
+    assert!(
+        result.contains("<!-- image not found: nonexistent-image.png -->"),
+        "Expected HTML warning comment, got: {result}"
+    );
+}
+
+#[test]
+fn test_transclusions_still_work_after_image_support() {
+    let (index, graph) = fixture_setup();
+    let post_idx = index.slug_map["post-with-transclusion"];
+    let result = transform_content(&index, &graph, post_idx);
+    assert!(!result.contains("![[Simple Post]]"));
+    assert!(result.contains("simple post with no special syntax"));
+}

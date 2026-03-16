@@ -38,7 +38,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Compile regexes with `LazyLock`, not inside functions
 - Regex transforms in `transform.rs` must use `transform_outside_fences()` to skip fenced code blocks
 - Korean (Hangul) is alphabetic, not logographic — don't count syllable blocks as individual words
-- `![[image.png]]` embeds are NOT yet handled — preprocessor treats them as note transclusions, outputs plain text
+- `![[image.png]]` embeds are resolved to `<img>` tags; only referenced images are copied from `attachment/` to output assets
 
 ## Astro Gotchas
 - Preprocessor outputs raw HTML (callout divs, wikilink anchors) — `rehype-raw` is required in the unified pipeline

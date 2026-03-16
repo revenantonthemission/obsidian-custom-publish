@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+pub const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
+
 /// Returns true if the character is a Korean Hangul syllable, Jamo, or compatibility Jamo.
 pub fn is_korean(c: char) -> bool {
     matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
@@ -27,6 +29,8 @@ pub struct VaultIndex {
     pub slug_map: HashMap<String, usize>,
     /// original filename (without .md) -> index into posts
     pub name_map: HashMap<String, usize>,
+    /// image filename (e.g. "diagram.png") -> absolute path in vault
+    pub attachment_map: HashMap<String, PathBuf>,
 }
 
 // --- Link resolution types (Pass 2) ---

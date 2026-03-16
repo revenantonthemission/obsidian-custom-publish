@@ -41,8 +41,11 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
     fs::create_dir_all(&assets_dir).context("failed to create assets dir")?;
 
     // Write each post
+    let mut all_referenced: std::collections::HashSet<String> = std::collections::HashSet::new();
+
     for (i, post) in index.posts.iter().enumerate() {
-        let content = transform_content_with_assets(index, graph, i, Some(&assets_dir));
+        let (content, referenced) = transform_content_with_assets(index, graph, i, Some(&assets_dir));
+        all_referenced.extend(referenced);
 
         // Write transformed markdown
         let md_path = posts_dir.join(format!("{}.md", post.slug));
@@ -84,6 +87,16 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
             .with_context(|| format!("failed to write {}", meta_path.display()))?;
     }
 
+    // Copy referenced attachments
+    for filename in &all_referenced {
+        if let Some(src_path) = index.attachment_map.get(filename.as_str()) {
+            let dst_path = assets_dir.join(filename);
+            if let Err(e) = fs::copy(src_path, &dst_path) {
+                eprintln!("warning: failed to copy attachment {filename}: {e}");
+            }
+        }
+    }
+
     // Write graph.json
     let graph_json = graph.to_graph_json(index);
     let graph_path = output_dir.join("graph.json");
@@ -103,9 +116,10 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
     .context("failed to write search-index.json")?;
 
     println!(
-        "Output written: {} posts, {} meta files",
+        "Output written: {} posts, {} meta files, {} attachments copied",
         index.posts.len(),
-        index.posts.len()
+        index.posts.len(),
+        all_referenced.len()
     );
 
     Ok(())
