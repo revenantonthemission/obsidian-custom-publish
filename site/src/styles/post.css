@@ -80,3 +80,109 @@
 .backlinks li {
   margin-bottom: 0.4rem;
 }
+
+/* ── Code block with filename ── */
+.code-block {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.code-block pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.code-filename {
+  padding: 0.4rem 1rem;
+  font-family: var(--font-code);
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  background: var(--c-code-bg);
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* ── Image figures ── */
+.image-figure {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.image-figure img {
+  display: block;
+  margin: 0 auto;
+}
+
+.image-figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+
+/* ── Responsive tables ── */
+.table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.table-wrapper th {
+  background: var(--c-code-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.table-wrapper tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Footnotes ── */
+.footnotes {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--c-border);
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+}
+
+.footnotes ol {
+  padding-left: 1.5rem;
+}
+
+.footnotes li {
+  margin-bottom: 0.5rem;
+}
+
+.footnotes li p {
+  margin: 0;
+  display: inline;
+}
+
+sup a[data-footnote-ref] {
+  color: var(--c-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a[data-footnote-backref] {
+  color: var(--c-accent);
+  text-decoration: none;
+  margin-left: 0.25rem;
+}
