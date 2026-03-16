@@ -116,9 +116,10 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
     .context("failed to write search-index.json")?;
 
     println!(
-        "Output written: {} posts, {} meta files",
+        "Output written: {} posts, {} meta files, {} attachments copied",
         index.posts.len(),
-        index.posts.len()
+        index.posts.len(),
+        all_referenced.len()
     );
 
     Ok(())
