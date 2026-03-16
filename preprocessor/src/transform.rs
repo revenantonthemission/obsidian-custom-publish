@@ -23,7 +23,7 @@ static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
 static FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst)\n(.*?)^```").unwrap());
+    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)\n(.*?)^```").unwrap());
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -197,6 +197,7 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
             let render_result = match lang {
                 "d2" => crate::d2::render_d2(source, None),
                 "typst" => crate::typst_render::render_typst(source),
+                "mermaid" => crate::mermaid::render_mermaid(source),
                 _ => return caps[0].to_string(),
             };
 

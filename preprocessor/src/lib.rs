@@ -1,5 +1,6 @@
 pub mod d2;
 pub mod linker;
+pub mod mermaid;
 pub mod output;
 pub mod scanner;
 pub mod search;
