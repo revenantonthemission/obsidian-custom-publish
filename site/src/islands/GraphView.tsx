@@ -52,14 +52,20 @@ function getNodeRadius(node: GraphNode): number {
   return Math.max(4, Math.min(12, 4 + node.backlink_count * 2));
 }
 
-export default function GraphView({ data, width = 800, height = 600 }: Props) {
+export default function GraphView({ data, width, height }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
+    // Use container dimensions if no explicit size provided
+    const container = svgRef.current.parentElement;
+    const w = width || container?.clientWidth || 800;
+    const h = height || container?.clientHeight || 600;
+
     const svg = select(svgRef.current);
     svg.selectAll("*").remove();
+    svg.attr("width", w).attr("height", h);
 
     const nodes: GraphNode[] = data.nodes.map((n) => ({ ...n }));
     const links: GraphLink[] = data.edges.map((e) => ({ ...e }));
@@ -121,7 +127,7 @@ export default function GraphView({ data, width = 800, height = 600 }: Props) {
           .distance(80)
       )
       .force("charge", forceManyBody().strength(-200))
-      .force("center", forceCenter(width / 2, height / 2))
+      .force("center", forceCenter(w / 2, h / 2))
       .force("collide", forceCollide().radius(20));
 
     sim.on("tick", () => {
@@ -146,8 +152,8 @@ export default function GraphView({ data, width = 800, height = 600 }: Props) {
   return (
     <svg
       ref={svgRef}
-      width={width}
-      height={height}
+      width={width || "100%"}
+      height={height || "100%"}
       style={{ cursor: "grab" }}
     />
   );

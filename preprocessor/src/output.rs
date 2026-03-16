@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::search::build_search_index;
 use crate::transform::transform_content_with_assets;
-use crate::types::{is_korean, LinkGraph, VaultIndex};
+use crate::types::{LinkGraph, VaultIndex};
 
 /// Per-post metadata written to `meta/{slug}.json`.
 #[derive(Debug, Serialize)]
@@ -112,17 +112,10 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
 }
 
 /// Count words in content (handles both Korean and English).
-/// Korean characters each count as a word since they're logographic.
+/// Korean (Hangul) is alphabetic, not logographic — space-separated tokens are words.
 fn count_words(text: &str) -> usize {
     text.split_whitespace()
-        .map(|word| {
-            let korean_chars = word.chars().filter(|c| is_korean(*c)).count();
-            if korean_chars > 0 {
-                korean_chars
-            } else {
-                1
-            }
-        })
-        .sum()
+        .filter(|w| !w.is_empty())
+        .count()
 }
 

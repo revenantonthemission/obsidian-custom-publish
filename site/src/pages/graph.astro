@@ -9,7 +9,7 @@ const graphData = getGraph();
 <BaseLayout title="Graph">
   <h1>그래프 뷰</h1>
   <div class="graph-container">
-    <GraphView client:load data={graphData} width={800} height={600} />
+    <GraphView client:load data={graphData} />
   </div>
 </BaseLayout>
 
@@ -19,7 +19,7 @@ const graphData = getGraph();
     border: 1px solid var(--c-border);
     border-radius: var(--radius);
     overflow: hidden;
-    display: flex;
-    justify-content: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
   }
 </style>
