@@ -45,13 +45,19 @@ export function getHubs(): PostMeta[] {
   return getAllPostMeta().filter((p) => p.is_hub);
 }
 
+/** Sanitize a tag for use as a URL path segment. */
+export function sanitizeTag(tag: string): string {
+  return tag.replace(/\//g, "-").replace(/\s+/g, "-").toLowerCase();
+}
+
 export function getTagIndex(): Record<string, PostMeta[]> {
   const all = getAllPostMeta();
   const index: Record<string, PostMeta[]> = {};
   for (const post of all) {
     for (const tag of post.tags) {
-      if (!index[tag]) index[tag] = [];
-      index[tag].push(post);
+      const safe = sanitizeTag(tag);
+      if (!index[safe]) index[safe] = [];
+      index[safe].push(post);
     }
   }
   return index;

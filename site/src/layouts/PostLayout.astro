@@ -3,6 +3,7 @@ import BaseLayout from "./BaseLayout.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
+import { sanitizeTag } from "../lib/data";
 import type { PostMeta } from "../lib/types";
 import "../styles/post.css";
 
@@ -23,7 +24,7 @@ const { meta, content } = Astro.props;
           {meta.published && <time>{meta.published}</time>}
           <span>{meta.reading_time_min}분 읽기</span>
           {meta.tags.map((tag) => (
-            <a href={`/tags/${tag}`} class="post-tag">{tag}</a>
+            <a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a>
           ))}
         </div>
       </header>

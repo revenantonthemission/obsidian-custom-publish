@@ -111,7 +111,12 @@ resource "aws_cloudfront_distribution" "site" {
     }
   }
 
+  aliases = var.domain_name != "" ? [var.domain_name] : []
+
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.domain_name == "" ? true : false
+    acm_certificate_arn            = var.domain_name != "" ? var.acm_certificate_arn : null
+    ssl_support_method             = var.domain_name != "" ? "sni-only" : null
+    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : "TLSv1"
   }
 }
