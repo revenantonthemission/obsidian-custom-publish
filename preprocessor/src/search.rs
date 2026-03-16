@@ -1,12 +1,16 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use lindera::dictionary::DictionaryKind;
 use lindera::mode::Mode;
 use lindera::segmenter::Segmenter;
 use lindera::tokenizer::Tokenizer;
+use regex::Regex;
 use serde::Serialize;
 
 use crate::types::VaultIndex;
+
+static HTML_TAG_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
 
 #[derive(Debug, Serialize)]
 pub struct SearchIndex {
@@ -107,7 +111,7 @@ fn tokenize_text(tokenizer: &Tokenizer, text: &str) -> Vec<String> {
 
 /// Strip markdown syntax to produce plain text for indexing.
 fn strip_markdown(content: &str) -> String {
-    // Remove YAML frontmatter
+    // 1. Remove YAML frontmatter
     let content = if content.starts_with("---") {
         if let Some(end) = content[3..].find("\n---") {
             &content[3 + end + 4..]
@@ -118,22 +122,51 @@ fn strip_markdown(content: &str) -> String {
         content
     };
 
-    content
-        .lines()
-        .filter(|line| !line.starts_with('#')) // headings
-        .filter(|line| !line.starts_with("```")) // code fences
-        .filter(|line| !line.starts_with("---")) // horizontal rules
-        .map(|line| {
-            // Strip inline markdown
-            line.replace("**", "")
-                .replace('*', "")
-                .replace('`', "")
-                .replace("[[", "")
-                .replace("]]", "")
-                .replace("![[", "")
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+    let mut result = Vec::new();
+    let mut in_code_fence = false;
+
+    for line in content.lines() {
+        // 2. Track and skip fenced code blocks entirely
+        if line.starts_with("```") {
+            in_code_fence = !in_code_fence;
+            continue;
+        }
+        if in_code_fence {
+            continue;
+        }
+
+        // 3. Skip horizontal rules (---, ***, ___)
+        let trimmed = line.trim();
+        if (trimmed.starts_with("---") || trimmed.starts_with("***") || trimmed.starts_with("___"))
+            && trimmed.chars().all(|c| c == '-' || c == '*' || c == '_' || c == ' ')
+            && trimmed.len() >= 3
+        {
+            continue;
+        }
+
+        // 4. Strip heading markers but keep text
+        let line = if trimmed.starts_with('#') {
+            trimmed.trim_start_matches('#').trim_start()
+        } else {
+            line
+        };
+
+        // 5. Strip HTML tags (callout divs, anchors, etc.)
+        let line = HTML_TAG_RE.replace_all(line, "");
+
+        // 6. Strip inline markdown
+        let line = line
+            .replace("**", "")
+            .replace('*', "")
+            .replace('`', "")
+            .replace("![[", "")
+            .replace("[[", "")
+            .replace("]]", "");
+
+        result.push(line);
+    }
+
+    result.join("\n")
 }
 
 /// Take the first `max_chars` characters as a snippet.

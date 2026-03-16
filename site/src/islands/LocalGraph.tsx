@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import {
   forceSimulation,
   forceLink,
@@ -8,6 +8,7 @@ import {
   type SimulationNodeDatum,
   type SimulationLinkDatum,
 } from "d3-force";
+import type { GraphData } from "../lib/types";
 
 interface GraphNode extends SimulationNodeDatum {
   slug: string;
@@ -22,13 +23,17 @@ interface GraphEdge {
   target: string;
 }
 
-interface GraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
+type GraphLink = SimulationLinkDatum<GraphNode>;
+
+/** A link after d3 has resolved source/target to node objects. */
+interface ResolvedLink {
+  source: GraphNode;
+  target: GraphNode;
 }
 
 interface Props {
   slug: string;
+  data: GraphData;
 }
 
 /** Filter graph to 2-hop neighborhood of the given slug. */
@@ -61,16 +66,9 @@ function getNeighborhood(data: GraphData, center: string) {
   return { nodes, edges };
 }
 
-export default function LocalGraph({ slug }: Props) {
+export default function LocalGraph({ slug, data }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [data, setData] = useState<GraphData | null>(null);
   const size = 240;
-
-  useEffect(() => {
-    fetch("/graph.json")
-      .then((r) => r.json())
-      .then((d: GraphData) => setData(d));
-  }, []);
 
   useEffect(() => {
     if (!data || !canvasRef.current) return;
@@ -85,13 +83,13 @@ export default function LocalGraph({ slug }: Props) {
     canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
-    const links = edges.map((e) => ({ ...e }));
+    const links: GraphLink[] = edges.map((e) => ({ ...e }));
 
-    const sim = forceSimulation(nodes)
+    const sim = forceSimulation(nodes as GraphNode[])
       .force(
         "link",
-        forceLink<GraphNode, SimulationLinkDatum<GraphNode>>(links as any)
-          .id((d: any) => d.slug)
+        forceLink<GraphNode, GraphLink>(links)
+          .id((d) => d.slug)
           .distance(50)
       )
       .force("charge", forceManyBody().strength(-120))
@@ -103,14 +101,14 @@ export default function LocalGraph({ slug }: Props) {
 
       ctx.strokeStyle = "rgba(150, 150, 150, 0.3)";
       ctx.lineWidth = 1;
-      for (const link of links as any[]) {
+      for (const link of links as unknown as ResolvedLink[]) {
         ctx.beginPath();
-        ctx.moveTo(link.source.x, link.source.y);
-        ctx.lineTo(link.target.x, link.target.y);
+        ctx.moveTo(link.source.x!, link.source.y!);
+        ctx.lineTo(link.target.x!, link.target.y!);
         ctx.stroke();
       }
 
-      for (const node of nodes) {
+      for (const node of nodes as GraphNode[]) {
         const isCurrent = node.slug === slug;
         ctx.beginPath();
         ctx.arc(node.x!, node.y!, isCurrent ? 6 : 4, 0, Math.PI * 2);
@@ -128,7 +126,7 @@ export default function LocalGraph({ slug }: Props) {
           .trim() || "#1c1917";
       ctx.font = "10px sans-serif";
       ctx.textAlign = "center";
-      for (const node of nodes) {
+      for (const node of nodes as GraphNode[]) {
         ctx.fillText(node.title, node.x!, node.y! + 14);
       }
     });
@@ -137,7 +135,7 @@ export default function LocalGraph({ slug }: Props) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      for (const node of nodes) {
+      for (const node of nodes as GraphNode[]) {
         const dx = x - node.x!;
         const dy = y - node.y!;
         if (dx * dx + dy * dy < 100 && node.slug !== slug) {

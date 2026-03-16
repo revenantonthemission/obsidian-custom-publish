@@ -1,12 +1,15 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import GraphView from "../islands/GraphView.tsx";
+import { getGraph } from "../lib/data";
+
+const graphData = getGraph();
 ---
 
 <BaseLayout title="Graph">
   <h1>그래프 뷰</h1>
   <div class="graph-container">
-    <GraphView client:load width={800} height={600} />
+    <GraphView client:load data={graphData} width={800} height={600} />
   </div>
 </BaseLayout>
 

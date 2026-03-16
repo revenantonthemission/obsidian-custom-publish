@@ -2,6 +2,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+/// Returns true if the character is a Korean Hangul syllable, Jamo, or compatibility Jamo.
+pub fn is_korean(c: char) -> bool {
+    matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostMeta {
     pub slug: String,

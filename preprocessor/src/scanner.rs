@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use walkdir::WalkDir;
 
-use crate::types::{PostMeta, VaultIndex};
+use crate::types::{is_korean, PostMeta, VaultIndex};
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -114,10 +114,6 @@ fn slugify(name: &str) -> String {
         .collect::<String>()
         .trim_matches('-')
         .to_string()
-}
-
-fn is_korean(c: char) -> bool {
-    matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
 }
 
 /// Split content into frontmatter and body.

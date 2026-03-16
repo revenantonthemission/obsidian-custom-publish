@@ -1,7 +1,21 @@
-use regex::Regex;
 use std::path::Path;
+use std::sync::LazyLock;
+
+use regex::Regex;
 
 use crate::types::{LinkGraph, VaultIndex};
+
+static TRANSCLUSION_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"!\[\[(.+?)\]\]").unwrap());
+
+static WIKILINK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]").unwrap());
+
+static CALLOUT_START_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]\s*(.*)$").unwrap());
+
+static FENCE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst)\n(.*?)^```").unwrap());
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -43,8 +57,7 @@ fn strip_frontmatter(content: &str) -> String {
 
 /// Replace `![[Note Name]]` with the body content of the referenced note.
 fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
-    let re = Regex::new(r"!\[\[(.+?)\]\]").unwrap();
-    re.replace_all(content, |caps: &regex::Captures| {
+    TRANSCLUSION_RE.replace_all(content, |caps: &regex::Captures| {
         let name = caps[1].trim();
         if let Some(&target_idx) = index.name_map.get(name) {
             let target_content = &index.posts[target_idx].raw_content;
@@ -59,8 +72,7 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
 fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
-    let re = Regex::new(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]").unwrap();
-    re.replace_all(content, |caps: &regex::Captures| {
+    WIKILINK_RE.replace_all(content, |caps: &regex::Captures| {
         let target_name = caps[1].trim();
         let alias = caps.get(2).map(|m| m.as_str().trim());
 
@@ -92,7 +104,7 @@ fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
 /// </div>
 /// ```
 fn convert_callouts(content: &str) -> String {
-    let callout_start = Regex::new(r"^>\s*\[!(\w+)\]\s*(.*)$").unwrap();
+    let callout_start = &*CALLOUT_START_RE;
     let mut result = Vec::new();
     let mut lines = content.lines().peekable();
 
@@ -135,10 +147,9 @@ fn convert_callouts(content: &str) -> String {
 /// Render D2 and Typst fenced code blocks to SVG files, replacing them with `<img>` tags.
 /// Mermaid blocks are left untouched for Astro's rehype-mermaid plugin.
 fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) -> String {
-    let fence_re = Regex::new(r"(?ms)^```(d2|typst)\n(.*?)^```").unwrap();
     let mut counter = 0;
 
-    fence_re
+    FENCE_RE
         .replace_all(content, |caps: &regex::Captures| {
             let lang = &caps[1];
             let source = &caps[2];
