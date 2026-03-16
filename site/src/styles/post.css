@@ -95,6 +95,43 @@
   border-radius: 0;
 }
 
+/* ── Copy button ── */
+.code-block-wrapper {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--c-code-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 0.3rem;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.code-block-wrapper:hover .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  color: var(--c-text);
+}
+
+.copy-btn.copied {
+  color: #22c55e;
+  opacity: 1;
+}
+
 .code-filename {
   padding: 0.4rem 1rem;
   font-family: var(--font-code);
