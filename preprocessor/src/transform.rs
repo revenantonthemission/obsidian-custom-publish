@@ -137,28 +137,28 @@ fn convert_callouts(content: &str) -> String {
                 }
             }
 
+            // Join body lines as raw markdown — don't wrap in <p>,
+            // let the remark/rehype pipeline handle paragraph detection.
+            // This preserves code fences, lists, and other block elements inside callouts.
+            let body = body_lines.join("\n");
+
             match collapse_marker {
                 Some("-") | Some("+") => {
                     let open_attr = if collapse_marker == Some("+") { " open" } else { "" };
                     result.push(format!(
                         r#"<details class="callout callout-{callout_type}"{open_attr}>"#
                     ));
-                    if !title.is_empty() {
-                        result.push(format!(
-                            r#"<summary class="callout-title">{}</summary>"#,
-                            html_escape(&title)
-                        ));
+                    let summary = if !title.is_empty() {
+                        html_escape(&title)
                     } else {
-                        result.push(format!(
-                            r#"<summary class="callout-title">{}</summary>"#,
-                            callout_type
-                        ));
-                    }
-                    result.push(r#"<div class="callout-body">"#.to_string());
-                    for body_line in &body_lines {
-                        result.push(format!("<p>{body_line}</p>"));
-                    }
-                    result.push("</div>".to_string());
+                        callout_type.clone()
+                    };
+                    result.push(format!(
+                        r#"<summary class="callout-title">{summary}</summary>"#
+                    ));
+                    result.push(String::new()); // blank line so markdown parser kicks in
+                    result.push(body);
+                    result.push(String::new());
                     result.push("</details>".to_string());
                 }
                 _ => {
@@ -169,9 +169,9 @@ fn convert_callouts(content: &str) -> String {
                             html_escape(&title)
                         ));
                     }
-                    for body_line in &body_lines {
-                        result.push(format!("<p>{body_line}</p>"));
-                    }
+                    result.push(String::new()); // blank line so markdown parser kicks in
+                    result.push(body);
+                    result.push(String::new());
                     result.push("</div>".to_string());
                 }
             }
