@@ -217,8 +217,18 @@ fn convert_callouts(content: &str) -> String {
     result.join("\n")
 }
 
-/// Render D2 and Typst fenced code blocks to SVG files, replacing them with `<img>` tags.
-/// Mermaid blocks are left untouched for Astro's rehype-mermaid plugin.
+/// Theme pair for dual-rendering diagrams (light + dark variants).
+struct ThemePair {
+    light: &'static str,
+    dark: &'static str,
+}
+
+const D2_THEMES: ThemePair = ThemePair { light: "0", dark: "200" };
+const MERMAID_THEMES: ThemePair = ThemePair { light: "default", dark: "dark" };
+
+/// Render D2, Typst, and Mermaid fenced code blocks to SVG.
+/// D2 and Mermaid are dual-rendered (light + dark) and wrapped in theme-gated markup.
+/// Typst diagrams are rendered once (no theme support).
 fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) -> String {
     let mut counter = 0;
 
@@ -228,36 +238,100 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
             let source = &caps[2];
             counter += 1;
 
-            let render_result = match lang {
-                "d2" => crate::d2::render_d2(source, None),
-                "typst" => crate::typst_render::render_typst(source),
-                "mermaid" => crate::mermaid::render_mermaid(source),
-                _ => return caps[0].to_string(),
-            };
-
-            match render_result {
-                Ok(svg) => {
-                    if let Some(dir) = asset_dir {
-                        let filename = format!("{slug}-{lang}-{counter}.svg");
-                        let path = dir.join(&filename);
-                        if let Err(e) = std::fs::write(&path, &svg) {
-                            eprintln!("warning: failed to write {}: {e}", path.display());
-                            return format!("<!-- {lang} render failed: {e} -->");
-                        }
-                        format!(r#"<img src="/assets/{filename}" class="diagram diagram-{lang}" alt="{lang} diagram" />"#)
-                    } else {
-                        // No asset dir — inline the SVG directly
-                        format!(r#"<div class="diagram diagram-{lang}">{svg}</div>"#)
-                    }
-                }
-                Err(e) => {
-                    eprintln!("warning: {lang} rendering failed for {slug}: {e}");
-                    // Fall back to a code block so the source is still visible
-                    format!("```{lang}\n{source}```")
-                }
+            match lang {
+                "d2" => render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
+                    crate::d2::render_d2(src, theme, None)
+                }),
+                "mermaid" => render_themed_diagram(lang, source, slug, counter, asset_dir, &MERMAID_THEMES, |src, theme| {
+                    crate::mermaid::render_mermaid(src, theme)
+                }),
+                "typst" => render_single_diagram(lang, source, slug, counter, asset_dir, |src| {
+                    crate::typst_render::render_typst(src)
+                }),
+                _ => caps[0].to_string(),
             }
         })
         .to_string()
+}
+
+/// Render a diagram once (no theming). Used for Typst.
+fn render_single_diagram(
+    lang: &str,
+    source: &str,
+    slug: &str,
+    counter: usize,
+    asset_dir: Option<&Path>,
+    render_fn: impl Fn(&str) -> anyhow::Result<String>,
+) -> String {
+    match render_fn(source) {
+        Ok(svg) => {
+            if let Some(dir) = asset_dir {
+                let filename = format!("{slug}-{lang}-{counter}.svg");
+                let path = dir.join(&filename);
+                if let Err(e) = std::fs::write(&path, &svg) {
+                    eprintln!("warning: failed to write {}: {e}", path.display());
+                    return format!("<!-- {lang} render failed: {e} -->");
+                }
+                format!(r#"<img src="/assets/{filename}" class="diagram diagram-{lang}" alt="{lang} diagram" />"#)
+            } else {
+                format!(r#"<div class="diagram diagram-{lang}">{svg}</div>"#)
+            }
+        }
+        Err(e) => {
+            eprintln!("warning: {lang} rendering failed for {slug}: {e}");
+            format!("```{lang}\n{source}```")
+        }
+    }
+}
+
+/// Render a diagram twice (light + dark), wrap in theme-gated markup.
+fn render_themed_diagram(
+    lang: &str,
+    source: &str,
+    slug: &str,
+    counter: usize,
+    asset_dir: Option<&Path>,
+    themes: &ThemePair,
+    render_fn: impl Fn(&str, &str) -> anyhow::Result<String>,
+) -> String {
+    let light_result = render_fn(source, themes.light);
+    let dark_result = render_fn(source, themes.dark);
+
+    // If both fail, fall back to source code
+    if light_result.is_err() && dark_result.is_err() {
+        let e = light_result.unwrap_err();
+        eprintln!("warning: {lang} rendering failed for {slug}: {e}");
+        return format!("```{lang}\n{source}```");
+    }
+
+    let mut parts = Vec::new();
+
+    for (variant, result) in [("light", light_result), ("dark", dark_result)] {
+        match result {
+            Ok(svg) => {
+                if let Some(dir) = asset_dir {
+                    let filename = format!("{slug}-{lang}-{counter}-{variant}.svg");
+                    let path = dir.join(&filename);
+                    if let Err(e) = std::fs::write(&path, &svg) {
+                        eprintln!("warning: failed to write {}: {e}", path.display());
+                        continue;
+                    }
+                    parts.push(format!(
+                        r#"<img src="/assets/{filename}" class="diagram diagram-{lang} diagram-{variant}" alt="{lang} diagram" />"#
+                    ));
+                } else {
+                    parts.push(format!(
+                        r#"<div class="diagram diagram-{lang} diagram-{variant}">{svg}</div>"#
+                    ));
+                }
+            }
+            Err(e) => {
+                eprintln!("warning: {lang} {variant} theme rendering failed for {slug}: {e}");
+            }
+        }
+    }
+
+    parts.join("\n")
 }
 
 #[cfg(test)]

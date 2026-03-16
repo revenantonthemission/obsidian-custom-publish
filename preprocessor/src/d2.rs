@@ -5,11 +5,12 @@ use std::process::{Command, Stdio};
 /// Render D2 source to SVG via the `d2` CLI.
 ///
 /// Pipes source through stdin and reads SVG from stdout (`d2 - -`).
+/// `theme` is a D2 theme ID (e.g. 0 for default light, 200 for Terminal dark).
 /// Optionally accepts a font path for Korean text rendering.
-pub fn render_d2(source: &str, font_path: Option<&str>) -> Result<String> {
+pub fn render_d2(source: &str, theme: &str, font_path: Option<&str>) -> Result<String> {
     let mut cmd = Command::new("d2");
     cmd.arg("-").arg("-"); // stdin -> stdout
-    cmd.arg("--theme").arg("200"); // terminal theme, clean
+    cmd.arg("--theme").arg(theme);
     cmd.stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
