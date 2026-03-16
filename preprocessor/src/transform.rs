@@ -217,7 +217,8 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
                 }
                 Err(e) => {
                     eprintln!("warning: {lang} rendering failed for {slug}: {e}");
-                    format!("<!-- {lang} render failed: {e} -->")
+                    // Fall back to a code block so the source is still visible
+                    format!("```{lang}\n{source}```")
                 }
             }
         })

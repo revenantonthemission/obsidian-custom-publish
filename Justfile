@@ -11,6 +11,8 @@ preprocess:
     cargo run --release --manifest-path preprocessor/Cargo.toml -- {{vault}} {{content}}
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
+    mkdir -p {{site_dir}}/public/assets
+    cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
 
 dev: preprocess
     cd {{site_dir}} && npx astro dev
