@@ -5,7 +5,7 @@ use regex::Regex;
 use crate::types::{GraphEdge, GraphJson, GraphNode, Link, LinkGraph, VaultIndex};
 
 static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]").unwrap());
+    LazyLock::new(|| Regex::new(r"\[\[([^\]#|]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]").unwrap());
 
 /// Parse all wikilinks in the vault and build forward/back link maps.
 pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
@@ -18,7 +18,8 @@ pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
     for (i, post) in index.posts.iter().enumerate() {
         for cap in wikilink_re.captures_iter(&post.raw_content) {
             let target_name = cap[1].trim();
-            let alias = cap.get(2).map(|m| m.as_str().trim().to_string());
+            let heading = cap.get(2).map(|m| m.as_str().trim().to_string());
+            let alias = cap.get(3).map(|m| m.as_str().trim().to_string());
 
             // Resolve target name to a post via name_map
             if let Some(&target_idx) = index.name_map.get(target_name) {
@@ -28,6 +29,7 @@ pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
                 forward_links[i].push(Link {
                     target_slug: target_slug.clone(),
                     alias,
+                    heading,
                 });
 
                 // Add backlink if not already present

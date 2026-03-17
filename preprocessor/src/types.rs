@@ -27,6 +27,10 @@ pub struct VaultIndex {
     pub slug_map: HashMap<String, usize>,
     /// original filename (without .md) -> index into posts
     pub name_map: HashMap<String, usize>,
+    /// slug -> list of heading slugs (in document order, with -1/-2 suffixes for duplicates)
+    pub heading_map: HashMap<String, Vec<String>>,
+    /// title -> (block_id -> paragraph text without the ^block-id annotation)
+    pub block_map: HashMap<String, HashMap<String, String>>,
 }
 
 // --- Link resolution types (Pass 2) ---
@@ -35,6 +39,7 @@ pub struct VaultIndex {
 pub struct Link {
     pub target_slug: String,
     pub alias: Option<String>,
+    pub heading: Option<String>,
 }
 
 #[derive(Debug)]

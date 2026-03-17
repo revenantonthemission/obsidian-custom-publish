@@ -31,6 +31,8 @@ pipeline {
                 sh './target/release/obsidian-press "${VAULT_PATH}" ./content'
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
+                sh 'cp content/previews.json site/public/previews.json'
+                sh 'cp content/nav-tree.json site/public/nav-tree.json'
                 sh 'mkdir -p site/public/assets'
                 sh 'cp -r content/assets/* site/public/assets/ 2>/dev/null || true'
             }

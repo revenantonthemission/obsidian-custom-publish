@@ -47,3 +47,15 @@ export interface SearchHit {
   doc_idx: number;
   count: number;
 }
+
+export interface NavTreeNode {
+  slug: string;
+  title: string;
+  is_hub: boolean;
+  children: NavTreeNode[];
+}
+
+export interface NavTreeData {
+  roots: NavTreeNode[];
+  orphans: NavTreeNode[];
+}
