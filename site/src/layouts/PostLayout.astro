@@ -7,9 +7,11 @@ import LocalGraph from "../islands/LocalGraph.tsx";
 import NavTreeIsland from "../islands/NavTree.tsx";
 import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta } from "../lib/data";
 import type { PostMeta } from "../lib/types";
+import MobileSidebar from "../islands/MobileSidebar.tsx";
 import "../styles/post.css";
 import "../styles/link-preview.css";
 import "../styles/nav-tree.css";
+import "../styles/mobile-sidebar.css";
 
 interface Props {
   meta: PostMeta;
@@ -238,4 +240,5 @@ if (meta.hub_parent) {
   initLinkPreviews();
   document.addEventListener("astro:after-swap", initLinkPreviews);
 </script>
+<MobileSidebar client:visible content={content} currentSlug={meta.slug} />
 </BaseLayout>

@@ -39,3 +39,7 @@
   margin: 0;
   color: var(--c-text-muted, #444);
 }
+
+@media (max-width: 767px) {
+  .link-preview-tooltip { display: none !important; }
+}
