@@ -44,7 +44,7 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
 
     // Write each post
     for (i, post) in index.posts.iter().enumerate() {
-        let (content, images) = transform_content_with_assets(index, graph, i, Some(&assets_dir));
+        let (content, images) = transform_content_with_assets(index, i, Some(&assets_dir));
 
         // Write transformed markdown
         let md_path = posts_dir.join(format!("{}.md", post.slug));

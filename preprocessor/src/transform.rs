@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
-use crate::types::{LinkGraph, VaultIndex};
+use crate::types::VaultIndex;
 
 /// Escape HTML special characters to prevent XSS.
 fn html_escape(s: &str) -> String {
@@ -25,8 +25,8 @@ static FENCE_RE: LazyLock<Regex> =
 /// Handles: frontmatter stripping, image embed conversion, transclusion inlining,
 /// wikilink conversion, callout conversion, and diagram rendering (D2/Typst).
 /// Leaves LaTeX, footnotes, and Mermaid untouched.
-pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize) -> String {
-    transform_content_with_assets(index, _graph, post_idx, None).0
+pub fn transform_content(index: &VaultIndex, post_idx: usize) -> String {
+    transform_content_with_assets(index, post_idx, None).0
 }
 
 /// Transform with an optional asset output directory for rendered diagrams.
@@ -34,7 +34,6 @@ pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize
 /// Returns `(transformed_content, referenced_image_filenames)`.
 pub fn transform_content_with_assets(
     index: &VaultIndex,
-    _graph: &LinkGraph,
     post_idx: usize,
     asset_dir: Option<&Path>,
 ) -> (String, Vec<String>) {

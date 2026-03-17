@@ -1,19 +1,16 @@
-use obsidian_press::linker::resolve_links;
 use obsidian_press::scanner::scan_vault;
 use obsidian_press::transform::transform_content;
 use std::path::Path;
 
-fn fixture_setup() -> (obsidian_press::types::VaultIndex, obsidian_press::types::LinkGraph) {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
-    let graph = resolve_links(&index);
-    (index, graph)
+fn fixture_setup() -> obsidian_press::types::VaultIndex {
+    scan_vault(Path::new("../fixtures/vault")).unwrap()
 }
 
 #[test]
 fn test_block_id_replaced_with_anchor() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["simple-post"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         result.contains(r#"<span id="^intro"></span>"#),
         "Block ID should be replaced with invisible anchor. Got: {result}"
@@ -26,9 +23,9 @@ fn test_block_id_replaced_with_anchor() {
 
 #[test]
 fn test_block_ref_link() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-block-refs"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         result.contains(r#"<a href="/posts/simple-post#^intro">Simple Post</a>"#),
         "Block ref should link with #^block-id fragment and show note title only. Got: {result}"
@@ -37,9 +34,9 @@ fn test_block_ref_link() {
 
 #[test]
 fn test_block_ref_with_alias() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-block-refs"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         result.contains(r#"<a href="/posts/simple-post#^intro-text">intro text link</a>"#),
         "Block ref with alias should use alias text. Got: {result}"
@@ -48,9 +45,9 @@ fn test_block_ref_with_alias() {
 
 #[test]
 fn test_block_transclusion() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-block-refs"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         !result.contains("![[Simple Post#^intro]]"),
         "Block transclusion syntax should be replaced"
