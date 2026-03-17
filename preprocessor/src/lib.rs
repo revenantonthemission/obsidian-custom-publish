@@ -4,6 +4,7 @@ pub mod mermaid;
 pub mod output;
 pub mod scanner;
 pub mod search;
+pub mod syntax;
 pub mod transform;
 pub mod typst_render;
 pub mod types;

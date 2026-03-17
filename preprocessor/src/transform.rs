@@ -3,6 +3,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
+use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
 use crate::types::{LinkGraph, VaultIndex};
 
 /// Escape HTML special characters to prevent XSS.
@@ -12,19 +13,6 @@ fn html_escape(s: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
 }
-
-static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"!\[\[([^\]|]+?\.(png|jpg|jpeg|gif|svg|webp))(?:\|(\d+(?:x\d+)?))?\]\]").unwrap()
-});
-
-static TRANSCLUSION_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"!\[\[([^\]#]+?)(?:#\^([a-zA-Z0-9-]+))?\]\]").unwrap());
-
-static BLOCK_ID_LINE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\s\^([a-zA-Z0-9-]+)\s*$").unwrap());
-
-static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]#|]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]").unwrap());
 
 static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
@@ -107,7 +95,7 @@ fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) ->
 /// Replace `^block-id` annotations at the end of lines with invisible anchor spans.
 fn inject_block_anchors(content: &str) -> String {
     transform_outside_fences(content, |line| {
-        BLOCK_ID_LINE_RE
+        BLOCK_ID_RE
             .replace(line, |caps: &regex::Captures| {
                 let block_id = &caps[1];
                 format!(r#" <span id="^{block_id}"></span>"#)
