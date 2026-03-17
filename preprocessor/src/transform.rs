@@ -18,7 +18,10 @@ static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 static TRANSCLUSION_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"!\[\[(.+?)\]\]").unwrap());
+    LazyLock::new(|| Regex::new(r"!\[\[([^\]#]+?)(?:#\^([a-zA-Z0-9-]+))?\]\]").unwrap());
+
+static BLOCK_ID_LINE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s\^([a-zA-Z0-9-]+)\s*$").unwrap());
 
 static WIKILINK_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[\[([^\]#|]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]").unwrap());
@@ -53,6 +56,7 @@ pub fn transform_content_with_assets(
     let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
+    let content = inject_block_anchors(&content);
     let content = convert_callouts(&content);
     let content = render_diagram_blocks(&content, slug, asset_dir);
     (content, images)
@@ -100,6 +104,18 @@ fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) ->
     result
 }
 
+/// Replace `^block-id` annotations at the end of lines with invisible anchor spans.
+fn inject_block_anchors(content: &str) -> String {
+    transform_outside_fences(content, |line| {
+        BLOCK_ID_LINE_RE
+            .replace(line, |caps: &regex::Captures| {
+                let block_id = &caps[1];
+                format!(r#" <span id="^{block_id}"></span>"#)
+            })
+            .to_string()
+    })
+}
+
 /// Convert `![[image.png|size]]` embeds to HTML `<img>` tags.
 ///
 /// Returns `(transformed_content, list_of_referenced_image_filenames)`.
@@ -134,12 +150,32 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
     (result, images)
 }
 
-/// Replace `![[Note Name]]` with the body content of the referenced note.
+/// Replace `![[Note Name]]` or `![[Note Name#^block-id]]` with the referenced content.
+/// Full-note transclusions inline the entire body; block transclusions inline just
+/// the paragraph that carries the `^block-id` annotation.
 fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
     transform_outside_fences(content, |line| {
         TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
             let name = caps[1].trim();
-            if let Some(&target_idx) = index.name_map.get(name) {
+
+            // Skip image file extensions — IMAGE_EMBED_RE handles those
+            if IMAGE_EMBED_RE.is_match(&caps[0]) {
+                return caps[0].to_string();
+            }
+
+            let block_id = caps.get(2).map(|m| m.as_str());
+
+            if let Some(block_id) = block_id {
+                // Block transclusion: inline the specific paragraph
+                if let Some(blocks) = index.block_map.get(name) {
+                    if let Some(text) = blocks.get(block_id) {
+                        return text.clone();
+                    }
+                }
+                // Block not found — leave as plain text
+                format!("{name}#^{block_id}")
+            } else if let Some(&target_idx) = index.name_map.get(name) {
+                // Full-note transclusion
                 let target_content = &index.posts[target_idx].raw_content;
                 strip_frontmatter(target_content)
             } else {
@@ -163,29 +199,37 @@ fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
             if let Some(&target_idx) = index.name_map.get(target_name) {
                 let slug = &index.posts[target_idx].slug;
 
-                // Validate heading fragment against heading_map
-                let fragment = heading_raw.and_then(|h| {
-                    let h_slug = crate::scanner::slugify_heading(h);
-                    let valid = index.heading_map
-                        .get(slug.as_str())
-                        .is_some_and(|headings| headings.contains(&h_slug));
-                    if !valid {
-                        eprintln!("warning: heading '{h}' not found in '{target_name}'");
+                // Determine fragment: block reference (^id) or heading reference
+                let (fragment, is_block_ref) = match heading_raw {
+                    Some(h) if h.starts_with('^') => {
+                        // Block reference — use as-is, no slugification needed
+                        (Some(format!("#{h}")), true)
                     }
-                    valid.then(|| format!("#{h_slug}"))
-                });
+                    Some(h) => {
+                        // Heading reference — slugify and validate
+                        let h_slug = crate::scanner::slugify_heading(h);
+                        let valid = index.heading_map
+                            .get(slug.as_str())
+                            .is_some_and(|headings| headings.contains(&h_slug));
+                        if !valid {
+                            eprintln!("warning: heading '{h}' not found in '{target_name}'");
+                        }
+                        (valid.then(|| format!("#{h_slug}")), false)
+                    }
+                    None => (None, false),
+                };
 
                 let href = match &fragment {
                     Some(frag) => format!("/posts/{slug}{frag}"),
                     None => format!("/posts/{slug}"),
                 };
-                let display = match (alias, heading_raw) {
-                    (Some(a), _) => html_escape(a),
-                    (None, Some(h)) if fragment.is_some() => {
+                let display = match (alias, heading_raw, is_block_ref) {
+                    (Some(a), _, _) => html_escape(a),
+                    (None, Some(h), false) if fragment.is_some() => {
                         format!("{} &gt; {}", html_escape(target_name), html_escape(h))
                     }
-                    (None, Some(_)) => html_escape(target_name), // heading invalid, show note name only
-                    (None, None) => html_escape(target_name),
+                    (None, Some(_), _) => html_escape(target_name), // block ref or invalid heading: show note name only
+                    (None, None, _) => html_escape(target_name),
                 };
                 format!(r#"<a href="{href}">{display}</a>"#)
             } else {

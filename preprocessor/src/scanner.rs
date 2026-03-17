@@ -11,6 +11,9 @@ use crate::types::{is_korean, PostMeta, VaultIndex};
 static HEADING_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^#{1,6}\s+(.+)$").unwrap());
 
+static BLOCK_ID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s\^([a-zA-Z0-9-]+)\s*$").unwrap());
+
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
 #[derive(Debug, Deserialize, Default)]
@@ -79,6 +82,20 @@ fn extract_headings(content: &str) -> Vec<String> {
     slugs
 }
 
+/// Extract block ID annotations (`^block-id`) from markdown content.
+/// Returns a map of block_id -> the line text (without the `^block-id` suffix).
+fn extract_blocks(content: &str) -> HashMap<String, String> {
+    let mut blocks = HashMap::new();
+    for line in content.lines() {
+        if let Some(cap) = BLOCK_ID_RE.captures(line) {
+            let block_id = cap[1].to_string();
+            let text = BLOCK_ID_RE.replace(line, "").trim().to_string();
+            blocks.insert(block_id, text);
+        }
+    }
+    blocks
+}
+
 /// Scan an Obsidian vault directory and build an index of all posts.
 pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
     let mut posts = Vec::new();
@@ -145,11 +162,20 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         })
         .collect();
 
+    let block_map: HashMap<String, HashMap<String, String>> = posts
+        .iter()
+        .map(|p| {
+            let (_fm, body) = parse_frontmatter(&p.raw_content);
+            (p.title.clone(), extract_blocks(body))
+        })
+        .collect();
+
     Ok(VaultIndex {
         posts,
         slug_map,
         name_map,
         heading_map,
+        block_map,
     })
 }
 
