@@ -358,12 +358,14 @@ fn extract_first_sentence(text: &str) -> String {
             return text[..end].to_string();
         }
     }
-    // No sentence end found; truncate at 150 chars
-    if text.len() <= 150 {
+    // No sentence end found; truncate at ~150 characters (not bytes)
+    let char_count = text.chars().count();
+    if char_count <= 150 {
         return text.to_string();
     }
-    // Find a word boundary near 150
-    let truncated = &text[..150];
+    // Find byte index of the 150th character
+    let byte_idx = text.char_indices().nth(150).map(|(i, _)| i).unwrap_or(text.len());
+    let truncated = &text[..byte_idx];
     if let Some(last_space) = truncated.rfind(' ') {
         format!("{}...", &text[..last_space])
     } else {
