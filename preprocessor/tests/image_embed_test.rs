@@ -1,7 +1,9 @@
 use obsidian_press::linker::resolve_links;
+use obsidian_press::output::write_output;
 use obsidian_press::scanner::scan_vault;
 use obsidian_press::transform::{transform_content, transform_content_with_assets};
 use std::path::Path;
+use tempfile::TempDir;
 
 fn fixture_setup() -> (obsidian_press::types::VaultIndex, obsidian_press::types::LinkGraph) {
     let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
@@ -55,7 +57,7 @@ fn test_image_embed_not_treated_as_transclusion() {
 }
 
 #[test]
-fn test_image_files_copied_to_assets() {
+fn test_image_files_returned_by_transform() {
     let (index, graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
 
@@ -73,4 +75,17 @@ fn test_image_files_copied_to_assets() {
 
     // Clean up
     let _ = std::fs::remove_dir_all(&tmp_dir);
+}
+
+#[test]
+fn test_image_files_copied_to_assets_by_write_output() {
+    let (index, graph) = fixture_setup();
+    let tmp = TempDir::new().unwrap();
+    write_output(&index, &graph, tmp.path()).unwrap();
+
+    let asset_path = tmp.path().join("assets/test-image.png");
+    assert!(
+        asset_path.exists(),
+        "Image file should be physically copied to assets/ directory by write_output"
+    );
 }
