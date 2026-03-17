@@ -5,51 +5,17 @@ import {
   forceManyBody,
   forceCenter,
   forceCollide,
-  type SimulationNodeDatum,
-  type SimulationLinkDatum,
 } from "d3-force";
 import { select } from "d3-selection";
 import { zoom } from "d3-zoom";
 import type { GraphData } from "../lib/types";
-
-interface GraphNode extends SimulationNodeDatum {
-  slug: string;
-  title: string;
-  tags: string[];
-  is_hub: boolean;
-  backlink_count: number;
-}
-
-type GraphLink = SimulationLinkDatum<GraphNode>;
-
-interface ResolvedLink {
-  source: GraphNode;
-  target: GraphNode;
-}
+import type { GraphNode, GraphLink, ResolvedLink } from "../lib/graphUtils";
+import { getNodeColor, getNodeRadius } from "../lib/graphUtils";
 
 interface Props {
   data: GraphData;
   width?: number;
   height?: number;
-}
-
-const HUB_COLORS: Record<string, string> = {
-  os: "#3b82f6",
-  web: "#10b981",
-  db: "#f59e0b",
-  network: "#8b5cf6",
-};
-
-function getNodeColor(node: GraphNode): string {
-  if (node.is_hub) return "#ef4444";
-  for (const tag of node.tags) {
-    if (HUB_COLORS[tag]) return HUB_COLORS[tag];
-  }
-  return "#6b7280";
-}
-
-function getNodeRadius(node: GraphNode): number {
-  return Math.max(4, Math.min(12, 4 + node.backlink_count * 2));
 }
 
 export default function GraphView({ data, width, height }: Props) {
