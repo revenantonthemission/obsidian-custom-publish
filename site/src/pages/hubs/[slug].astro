@@ -1,0 +1,20 @@
+---
+import HubLayout from "../../layouts/HubLayout.astro";
+import { getHubs, getPostMeta } from "../../lib/data";
+import type { PostMeta } from "../../lib/types";
+
+export function getStaticPaths() {
+  const hubs = getHubs();
+  return hubs.map((h) => ({ params: { slug: h.slug } }));
+}
+
+const { slug } = Astro.params;
+const hub = getPostMeta(slug!)!;
+
+const childSlugs = hub.forward_links || [];
+const children: PostMeta[] = childSlugs
+  .map((s) => getPostMeta(s))
+  .filter((m): m is PostMeta => m !== null);
+---
+
+<HubLayout hub={hub} children={children} />

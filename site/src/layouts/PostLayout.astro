@@ -1,0 +1,244 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import TableOfContents from "../components/TableOfContents.astro";
+import BacklinkList from "../components/BacklinkList.astro";
+import HubNav from "../components/HubNav.astro";
+import LocalGraph from "../islands/LocalGraph.tsx";
+import NavTreeIsland from "../islands/NavTree.tsx";
+import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta } from "../lib/data";
+import type { PostMeta } from "../lib/types";
+import MobileSidebar from "../islands/MobileSidebar.tsx";
+import "../styles/post.css";
+import "../styles/link-preview.css";
+import "../styles/nav-tree.css";
+import "../styles/mobile-sidebar.css";
+
+interface Props {
+  meta: PostMeta;
+  content: string;
+}
+
+const { meta, content } = Astro.props;
+const localGraphData = getLocalGraph(meta.slug);
+
+// Use hub_parent field directly instead of scanning all hubs' forward_links
+let parentHub: PostMeta | undefined;
+let hubChildren: PostMeta[] = [];
+if (meta.hub_parent) {
+  const allMeta = getAllPostMeta();
+  parentHub = allMeta.find((p) => p.title === meta.hub_parent);
+  if (parentHub) {
+    hubChildren = (parentHub.forward_links || [])
+      .map((s) => getPostMeta(s))
+      .filter((m): m is PostMeta => m !== null);
+  }
+}
+---
+
+<BaseLayout title={meta.title}>
+  {parentHub && (
+    <HubNav hub={parentHub} current={meta} children={hubChildren} />
+  )}
+  <div class="post-layout">
+    <article>
+      <header class="post-header">
+        <h1 class="post-title">{meta.title}</h1>
+        <div class="post-meta">
+          {meta.published && <time>{meta.published}</time>}
+          <span>{meta.reading_time_min}분 읽기</span>
+          {meta.tags.map((tag) => (
+            <a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a>
+          ))}
+        </div>
+      </header>
+      {/* SECURITY: set:html trusts the vault content. rehype-raw passes through HTML from the
+          preprocessor (callout divs, wikilink anchors). This is safe for a personal vault but
+          must be revisited if the vault ever accepts third-party content. */}
+      <div class="post-content" set:html={content} />
+      <BacklinkList backlinks={meta.backlinks} />
+    </article>
+    <aside class="post-sidebar">
+      <NavTreeIsland client:visible currentSlug={meta.slug} />
+      <TableOfContents content={content} />
+      <LocalGraph client:visible slug={meta.slug} data={localGraphData} />
+    </aside>
+  </div>
+<script>
+  function createCopySvg() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    const rect = document.createElementNS(ns, "rect");
+    rect.setAttribute("width", "14");
+    rect.setAttribute("height", "14");
+    rect.setAttribute("x", "8");
+    rect.setAttribute("y", "8");
+    rect.setAttribute("rx", "2");
+    rect.setAttribute("ry", "2");
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2");
+    svg.appendChild(rect);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function createCheckSvg() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    const polyline = document.createElementNS(ns, "polyline");
+    polyline.setAttribute("points", "20 6 9 17 4 12");
+    svg.appendChild(polyline);
+    return svg;
+  }
+
+  function initCopyButtons() {
+    document.querySelectorAll("pre.shiki").forEach((pre) => {
+      if (pre.parentElement?.querySelector(".copy-btn")) return;
+      if (!pre.parentNode) return;
+
+      let container: Element;
+      if (pre.parentElement?.classList.contains("code-block")) {
+        container = pre.parentElement;
+      } else {
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block-wrapper";
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+        container = wrapper;
+      }
+
+      const btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.ariaLabel = "Copy code";
+      btn.appendChild(createCopySvg());
+
+      btn.addEventListener("click", async () => {
+        const code = pre.textContent || "";
+        try {
+          await navigator.clipboard.writeText(code);
+          btn.replaceChildren(createCheckSvg());
+          btn.classList.add("copied");
+          setTimeout(() => {
+            btn.replaceChildren(createCopySvg());
+            btn.classList.remove("copied");
+          }, 1500);
+        } catch {
+          // Clipboard API unavailable (e.g. non-HTTPS)
+        }
+      });
+
+      container.appendChild(btn);
+    });
+  }
+  initCopyButtons();
+  document.addEventListener("astro:after-swap", initCopyButtons);
+</script>
+<script>
+  let previewData: Record<string, { title: string; tags: string[]; summary: string }> | null = null;
+  let tooltip: HTMLDivElement | null = null;
+  let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function ensurePreviewData() {
+    if (previewData) return previewData;
+    try {
+      const res = await fetch("/previews.json");
+      previewData = await res.json();
+    } catch {
+      previewData = {};
+    }
+    return previewData;
+  }
+
+  function createTooltip() {
+    if (tooltip) return tooltip;
+    tooltip = document.createElement("div");
+    tooltip.className = "link-preview-tooltip";
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  function showPreview(anchor: HTMLAnchorElement) {
+    const href = anchor.getAttribute("href") || "";
+    const match = href.match(/^\/posts\/(.+?)(?:#|$)/);
+    if (!match) return;
+    const slug = match[1];
+
+    hoverTimer = setTimeout(async () => {
+      const data = await ensurePreviewData();
+      if (!data) return;
+      const preview = data[slug];
+      if (!preview) return;
+
+      const tip = createTooltip();
+      tip.replaceChildren();
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "preview-title";
+      titleEl.textContent = preview.title;
+      tip.appendChild(titleEl);
+
+      if (preview.tags.length) {
+        const tagsEl = document.createElement("div");
+        tagsEl.className = "preview-tags";
+        for (const tag of preview.tags) {
+          const tagSpan = document.createElement("span");
+          tagSpan.textContent = tag;
+          tagsEl.appendChild(tagSpan);
+        }
+        tip.appendChild(tagsEl);
+      }
+
+      const summaryEl = document.createElement("p");
+      summaryEl.className = "preview-summary";
+      summaryEl.textContent = preview.summary;
+      tip.appendChild(summaryEl);
+
+      const rect = anchor.getBoundingClientRect();
+      const tipWidth = 280;
+      let left = rect.left + window.scrollX;
+      let top = rect.top + window.scrollY - 8;
+
+      tip.style.left = `${Math.min(left, window.innerWidth - tipWidth - 16)}px`;
+      tip.style.top = `${top}px`;
+      tip.style.transform = "translateY(-100%)";
+      tip.classList.add("visible");
+    }, 300);
+  }
+
+  function hidePreview() {
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+    }
+    if (tooltip) {
+      tooltip.classList.remove("visible");
+    }
+  }
+
+  function initLinkPreviews() {
+    document.querySelectorAll('a[href^="/posts/"]').forEach((a) => {
+      a.addEventListener("mouseenter", () => showPreview(a as HTMLAnchorElement));
+      a.addEventListener("mouseleave", hidePreview);
+    });
+  }
+
+  initLinkPreviews();
+  document.addEventListener("astro:after-swap", initLinkPreviews);
+</script>
+<MobileSidebar client:visible content={content} currentSlug={meta.slug} />
+</BaseLayout>

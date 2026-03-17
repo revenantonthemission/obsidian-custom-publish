@@ -1,0 +1,64 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import HubNav from "../components/HubNav.astro";
+import HubProgress from "../components/HubProgress.astro";
+import PostCard from "../components/PostCard.astro";
+import type { PostMeta } from "../lib/types";
+
+interface Props {
+  hub: PostMeta;
+  children: PostMeta[];
+}
+
+const { hub, children } = Astro.props;
+---
+
+<BaseLayout title={hub.title}>
+  <HubNav hub={hub} children={children} />
+
+  <header class="hub-header">
+    <h1>{hub.title}</h1>
+    <HubProgress total={children.length} />
+    {hub.tags.length > 0 && (
+      <div class="hub-tags">
+        {hub.tags.map((tag) => (
+          <span class="hub-tag">{tag}</span>
+        ))}
+      </div>
+    )}
+  </header>
+
+  <section>
+    {children.map((post) => (
+      <PostCard post={post} />
+    ))}
+  </section>
+
+  {children.length === 0 && (
+    <p class="empty-state">이 허브에 연결된 글이 아직 없습니다.</p>
+  )}
+</BaseLayout>
+
+<style>
+  .hub-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .hub-tags {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+  .hub-tag {
+    background: var(--c-code-bg);
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+  }
+  .empty-state {
+    color: var(--c-text-muted);
+    font-style: italic;
+  }
+</style>

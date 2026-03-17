@@ -1,0 +1,25 @@
+---
+import { getPostMeta } from "../lib/data";
+
+interface Props {
+  backlinks: string[];
+}
+
+const { backlinks } = Astro.props;
+const backlinkMetas = backlinks
+  .map((slug) => getPostMeta(slug))
+  .filter((m) => m !== null);
+---
+
+{backlinkMetas.length > 0 && (
+  <section class="backlinks">
+    <h2>이 페이지를 참조하는 글</h2>
+    <ul>
+      {backlinkMetas.map((meta) => (
+        <li>
+          <a href={`/posts/${meta.slug}`}>{meta.title}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

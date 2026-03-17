@@ -1,0 +1,40 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
+import { getAllPostMeta, getPostContent } from "../lib/data";
+import { renderMarkdown } from "../lib/render";
+
+const slug = "passion-project";
+const rawContent = getPostContent(slug);
+const htmlContent = await renderMarkdown(rawContent);
+
+// Split at "이번주에 작성된 포스트" heading, replace with dynamic recent posts
+const recentHeadingRe = /<h2[^>]*>이번주에 작성된 포스트[^<]*<\/h2>[\s\S]*?(?=<h2|$)/;
+const beforeAndAfter = htmlContent.split(recentHeadingRe);
+const contentBefore = beforeAndAfter[0] ?? htmlContent;
+const contentAfter = beforeAndAfter[1] ?? "";
+
+const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 20);
+---
+
+<BaseLayout title="Passion Project">
+  <div class="home-content post-content" set:html={contentBefore} />
+
+  <section class="recent-posts">
+    <h2>최근 글</h2>
+    {recentPosts.map((post) => (
+      <PostCard post={post} />
+    ))}
+  </section>
+
+  {contentAfter && <div class="home-content post-content" set:html={contentAfter} />}
+</BaseLayout>
+
+<style>
+  .home-content {
+    margin-bottom: 2rem;
+  }
+  .recent-posts {
+    margin-bottom: 2rem;
+  }
+</style>

@@ -3,3 +3,10 @@ target/
 node_modules/
 dist/
 .DS_Store
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+site/public/search-index.json
+site/public/graph.json
+site/public/assets/

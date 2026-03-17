@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import GraphView from "../islands/GraphView.tsx";
+import { getGraph } from "../lib/data";
+
+const graphData = getGraph();
+---
+
+<BaseLayout title="Graph">
+  <h1>그래프 뷰</h1>
+  <p class="graph-hint">핀치하여 확대</p>
+  <div class="graph-container">
+    <GraphView client:load data={graphData} />
+  </div>
+</BaseLayout>
+
+<style>
+  .graph-container {
+    margin-top: 1rem;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .graph-hint {
+    display: none;
+    color: var(--c-text-muted);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 767px) {
+    .graph-container {
+      aspect-ratio: 3 / 4;
+    }
+    .graph-hint {
+      display: block;
+    }
+  }
+</style>

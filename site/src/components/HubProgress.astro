@@ -1,0 +1,23 @@
+---
+interface Props {
+  total: number;
+}
+
+const { total } = Astro.props;
+---
+
+<div class="hub-progress">
+  <span class="hub-progress-count">{total}</span>개 글
+</div>
+
+<style>
+  .hub-progress {
+    color: var(--c-text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+  .hub-progress-count {
+    font-weight: 600;
+    color: var(--c-text);
+  }
+</style>

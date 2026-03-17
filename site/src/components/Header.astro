@@ -1,0 +1,33 @@
+---
+import ThemeToggle from "../islands/ThemeToggle.tsx";
+import MobileNav from "../islands/MobileNav.tsx";
+import { Split, Tags, Waypoints } from "lucide-static";
+---
+
+<header class="site-header">
+  <a href="/" class="site-title">
+    <span class="nav-icon" set:html={Split} />
+    obsidian-press
+  </a>
+  <nav class="desktop-nav">
+    <a href="/tags" class="site-nav-link">
+      <span class="nav-icon" set:html={Tags} />
+      Tags
+    </a>
+    <a href="/graph" class="site-nav-link">
+      <span class="nav-icon" set:html={Waypoints} />
+      Graph
+    </a>
+    <ThemeToggle client:load />
+  </nav>
+  <div class="mobile-nav">
+    <ThemeToggle client:load />
+    <MobileNav
+      client:load
+      links={[
+        { href: "/tags", label: "Tags" },
+        { href: "/graph", label: "Graph" },
+      ]}
+    />
+  </div>
+</header>

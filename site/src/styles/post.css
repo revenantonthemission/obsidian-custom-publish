@@ -1,0 +1,306 @@
+/* ── Post layout ── */
+.post-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 960px) {
+  .post-layout {
+    grid-template-columns: 1fr var(--sidebar-width);
+  }
+}
+
+/* ── Article ── */
+.post-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.post-title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--c-text-muted);
+  font-size: 0.875rem;
+}
+
+.post-tag {
+  background: var(--c-code-bg);
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+}
+.post-tag:hover {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+/* ── Sidebar ── */
+.post-sidebar {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .post-sidebar {
+    display: block;
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+  }
+}
+
+/* ── Backlinks ── */
+.backlinks {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--c-border);
+}
+
+.backlinks h2 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+.backlinks ul {
+  list-style: none;
+  padding: 0;
+}
+
+.backlinks li {
+  margin-bottom: 0.4rem;
+}
+
+/* ── Inline KaTeX size match ── */
+.post-content > p .katex,
+.post-content > li .katex {
+  font-size: 1em;
+}
+
+/* ── Code block with filename ── */
+.code-block {
+  position: relative;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.code-block pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  padding: 1rem;
+}
+
+/* ── Copy button ── */
+.code-block-wrapper {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--c-code-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 0.35rem;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.code-block-wrapper:hover .copy-btn,
+.code-block:hover .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  color: var(--c-text);
+  background: var(--c-border);
+}
+
+.copy-btn.copied {
+  color: #22c55e;
+  opacity: 1;
+}
+
+.code-filename {
+  padding: 0.4rem 1rem;
+  font-family: var(--font-code);
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  background: var(--c-code-bg);
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* ── Language badge ── */
+.code-block pre.shiki[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.4rem;
+  right: 2.75rem;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hide language badge when filename is shown — filename already implies language */
+.code-block .code-filename ~ pre.shiki[data-language]::before {
+  display: none;
+}
+
+/* Also show language badge on standalone code blocks (not wrapped in .code-block) */
+.code-block-wrapper > pre.shiki[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.4rem;
+  right: 2.75rem;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Image figures ── */
+.image-figure {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.image-figure img {
+  display: block;
+  margin: 0 auto;
+}
+
+.image-figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+
+/* ── Responsive tables ── */
+.table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.table-wrapper th {
+  background: var(--c-code-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.table-wrapper tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Footnotes ── */
+.footnotes {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--c-border);
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+}
+
+.footnotes ol {
+  padding-left: 1.5rem;
+}
+
+.footnotes li {
+  margin-bottom: 0.5rem;
+}
+
+.footnotes li p {
+  margin: 0;
+  display: inline;
+}
+
+sup a[data-footnote-ref] {
+  color: var(--c-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a[data-footnote-backref] {
+  color: var(--c-accent);
+  text-decoration: none;
+  margin-left: 0.25rem;
+}
+
+/* ── Code line highlighting ── */
+.shiki .line.highlighted {
+  background-color: rgba(101, 117, 133, 0.16);
+  display: inline-block;
+  width: 100%;
+  margin: 0 -1rem;
+  padding: 0 1rem;
+}
+
+[data-theme="dark"] .shiki .line.highlighted {
+  background-color: rgba(101, 117, 133, 0.24);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shiki .line.highlighted {
+    background-color: rgba(101, 117, 133, 0.24);
+  }
+}
+
+/* ── Responsive: Post ── */
+@media (max-width: 479px) {
+  .post-title { font-size: 1.5rem; }
+  .post-meta { font-size: 0.8rem; }
+  pre.shiki, .code-block pre { padding: 0.75rem; }
+  .code-block pre.shiki[data-language]::before,
+  .code-block-wrapper > pre.shiki[data-language]::before { display: none; }
+  .copy-btn { padding: 0.5rem; }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .post-title { font-size: 1.75rem; }
+}

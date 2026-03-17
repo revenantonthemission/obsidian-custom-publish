@@ -1,0 +1,47 @@
+/* ── Diagram styling ── */
+.diagram {
+  display: block;
+  margin: 1.5rem auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram-d2 svg,
+.diagram-typst svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Inline SVG containers */
+.diagram-d2,
+.diagram-typst {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Mermaid diagrams */
+.diagram-mermaid {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Diagrams inside figures: hide captions */
+.image-figure:has(.diagram) figcaption {
+  display: none;
+}
+
+/* ── Diagram light/dark theme switching ── */
+
+/* Default (light): show light, hide dark */
+.diagram-dark { display: none !important; }
+.diagram-light { display: block; }
+
+/* Explicit dark mode */
+[data-theme="dark"] .diagram-light { display: none !important; }
+[data-theme="dark"] .diagram-dark { display: block; }
+
+/* System dark mode preference (no explicit theme set) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .diagram-light { display: none !important; }
+  :root:not([data-theme="light"]) .diagram-dark { display: block; }
+}
