@@ -1,7 +1,9 @@
 pub mod d2;
 pub mod linker;
 pub mod mermaid;
+pub mod nav_tree;
 pub mod output;
+pub mod preview;
 pub mod scanner;
 pub mod search;
 pub mod syntax;
