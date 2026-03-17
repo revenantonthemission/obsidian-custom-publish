@@ -194,7 +194,7 @@ fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
                         // Heading reference — slugify and validate
                         let h_slug = crate::scanner::slugify_heading(h);
                         let valid = index.heading_map
-                            .get(slug.as_str())
+                            .get(target_name)
                             .is_some_and(|headings| headings.contains(&h_slug));
                         if !valid {
                             eprintln!("warning: heading '{h}' not found in '{target_name}'");

@@ -156,7 +156,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .iter()
         .map(|p| {
             let (_fm, body) = parse_frontmatter(&p.raw_content);
-            (p.slug.clone(), extract_headings(body))
+            (p.title.clone(), extract_headings(body))
         })
         .collect();
 
