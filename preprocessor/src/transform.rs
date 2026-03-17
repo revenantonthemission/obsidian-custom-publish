@@ -3,7 +3,8 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::types::{LinkGraph, VaultIndex};
+use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
+use crate::types::VaultIndex;
 
 /// Escape HTML special characters to prevent XSS.
 fn html_escape(s: &str) -> String {
@@ -12,19 +13,6 @@ fn html_escape(s: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
 }
-
-static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"!\[\[([^\]|]+?\.(png|jpg|jpeg|gif|svg|webp))(?:\|(\d+(?:x\d+)?))?\]\]").unwrap()
-});
-
-static TRANSCLUSION_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"!\[\[([^\]#]+?)(?:#\^([a-zA-Z0-9-]+))?\]\]").unwrap());
-
-static BLOCK_ID_LINE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\s\^([a-zA-Z0-9-]+)\s*$").unwrap());
-
-static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]#|]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]").unwrap());
 
 static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
@@ -37,8 +25,8 @@ static FENCE_RE: LazyLock<Regex> =
 /// Handles: frontmatter stripping, image embed conversion, transclusion inlining,
 /// wikilink conversion, callout conversion, and diagram rendering (D2/Typst).
 /// Leaves LaTeX, footnotes, and Mermaid untouched.
-pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize) -> String {
-    transform_content_with_assets(index, _graph, post_idx, None).0
+pub fn transform_content(index: &VaultIndex, post_idx: usize) -> String {
+    transform_content_with_assets(index, post_idx, None).0
 }
 
 /// Transform with an optional asset output directory for rendered diagrams.
@@ -46,7 +34,6 @@ pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize
 /// Returns `(transformed_content, referenced_image_filenames)`.
 pub fn transform_content_with_assets(
     index: &VaultIndex,
-    _graph: &LinkGraph,
     post_idx: usize,
     asset_dir: Option<&Path>,
 ) -> (String, Vec<String>) {
@@ -107,7 +94,7 @@ fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) ->
 /// Replace `^block-id` annotations at the end of lines with invisible anchor spans.
 fn inject_block_anchors(content: &str) -> String {
     transform_outside_fences(content, |line| {
-        BLOCK_ID_LINE_RE
+        BLOCK_ID_RE
             .replace(line, |caps: &regex::Captures| {
                 let block_id = &caps[1];
                 format!(r#" <span id="^{block_id}"></span>"#)
@@ -207,7 +194,7 @@ fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
                         // Heading reference — slugify and validate
                         let h_slug = crate::scanner::slugify_heading(h);
                         let valid = index.heading_map
-                            .get(slug.as_str())
+                            .get(target_name)
                             .is_some_and(|headings| headings.contains(&h_slug));
                         if !valid {
                             eprintln!("warning: heading '{h}' not found in '{target_name}'");

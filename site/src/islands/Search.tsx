@@ -1,22 +1,8 @@
 import { useState, useEffect, useRef } from "preact/hooks";
+import type { SearchIndex, SearchDocument, SearchHit } from "../lib/types";
 
-interface SearchDocument {
-  slug: string;
-  title: string;
-  snippet: string;
-}
-
-interface SearchHit {
-  doc_idx: number;
-  count: number;
-}
-
-interface SearchIndex {
-  documents: SearchDocument[];
-  inverted_index: Record<string, SearchHit[]>;
-  /** Sorted keys for binary search prefix matching — built on first load */
-  _sortedKeys?: string[];
-}
+/** Extended SearchIndex with mutable cache for sorted keys (binary search optimization). */
+type IndexWithCache = SearchIndex & { _sortedKeys?: string[] };
 
 interface Result {
   slug: string;
@@ -30,7 +16,7 @@ export default function Search() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [selected, setSelected] = useState(0);
-  const [index, setIndex] = useState<SearchIndex | null>(null);
+  const [index, setIndex] = useState<IndexWithCache | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcut to open
@@ -54,7 +40,7 @@ export default function Search() {
       if (!index) {
         fetch("/search-index.json")
           .then((r) => r.json())
-          .then((data: SearchIndex) => setIndex(data))
+          .then((data: IndexWithCache) => setIndex(data))
           .catch(() => {});
       }
     }
@@ -72,7 +58,7 @@ export default function Search() {
     return () => clearTimeout(timer);
   }, [query, index]);
 
-  const runSearch = (query: string, index: SearchIndex) => {
+  const runSearch = (query: string, index: IndexWithCache) => {
     const q = query.toLowerCase().trim();
     const tokens = q.split(/\s+/);
     const scores = new Map<number, number>();

@@ -1,11 +1,5 @@
-use std::sync::LazyLock;
-
-use regex::Regex;
-
+use crate::syntax::WIKILINK_RE;
 use crate::types::{GraphEdge, GraphJson, GraphNode, Link, LinkGraph, VaultIndex};
-
-static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]#|]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]").unwrap());
 
 /// Parse all wikilinks in the vault and build forward/back link maps.
 pub fn resolve_links(index: &VaultIndex) -> LinkGraph {

@@ -13,9 +13,9 @@ fn fixture_setup() -> (obsidian_press::types::VaultIndex, obsidian_press::types:
 
 #[test]
 fn test_image_embed_basic() {
-    let (index, graph) = fixture_setup();
+    let (index, _graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         result.contains(r#"<img src="/assets/test-image.png" alt="" />"#),
         "Expected basic image embed tag, got:\n{result}"
@@ -24,9 +24,9 @@ fn test_image_embed_basic() {
 
 #[test]
 fn test_image_embed_with_width() {
-    let (index, graph) = fixture_setup();
+    let (index, _graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         result.contains(r#"width="300""#),
         "Expected width attribute, got:\n{result}"
@@ -35,9 +35,9 @@ fn test_image_embed_with_width() {
 
 #[test]
 fn test_image_embed_with_dimensions() {
-    let (index, graph) = fixture_setup();
+    let (index, _graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(
         result.contains(r#"width="300" height="200""#),
         "Expected width and height attributes, got:\n{result}"
@@ -46,9 +46,9 @@ fn test_image_embed_with_dimensions() {
 
 #[test]
 fn test_image_embed_not_treated_as_transclusion() {
-    let (index, graph) = fixture_setup();
+    let (index, _graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     // Image filenames should NOT appear as plain text (which is what transclusion does for unresolved names)
     assert!(
         !result.contains("test-image.png\n"),
@@ -58,14 +58,14 @@ fn test_image_embed_not_treated_as_transclusion() {
 
 #[test]
 fn test_image_files_returned_by_transform() {
-    let (index, graph) = fixture_setup();
+    let (index, _graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
 
     let tmp_dir = std::env::temp_dir().join("obsidian-press-test-assets");
     let _ = std::fs::remove_dir_all(&tmp_dir);
     std::fs::create_dir_all(&tmp_dir).unwrap();
 
-    let (_content, images) = transform_content_with_assets(&index, &graph, post_idx, Some(&tmp_dir));
+    let (_content, images) = transform_content_with_assets(&index, post_idx, Some(&tmp_dir));
 
     // Should report the referenced image filename
     assert!(

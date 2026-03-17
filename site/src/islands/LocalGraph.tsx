@@ -5,25 +5,10 @@ import {
   forceManyBody,
   forceCenter,
   forceCollide,
-  type SimulationNodeDatum,
-  type SimulationLinkDatum,
 } from "d3-force";
 import type { GraphData } from "../lib/types";
-
-interface GraphNode extends SimulationNodeDatum {
-  slug: string;
-  title: string;
-  tags: string[];
-  is_hub: boolean;
-  backlink_count: number;
-}
-
-type GraphLink = SimulationLinkDatum<GraphNode>;
-
-interface ResolvedLink {
-  source: GraphNode;
-  target: GraphNode;
-}
+import type { GraphNode, GraphLink, ResolvedLink } from "../lib/graphUtils";
+import { getNodeColor } from "../lib/graphUtils";
 
 interface Props {
   slug: string;
@@ -74,11 +59,7 @@ export default function LocalGraph({ slug, data }: Props) {
         const isCurrent = node.slug === slug;
         ctx.beginPath();
         ctx.arc(node.x!, node.y!, isCurrent ? 6 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isCurrent
-          ? "#2563eb"
-          : node.is_hub
-            ? "#ef4444"
-            : "#6b7280";
+        ctx.fillStyle = isCurrent ? "#2563eb" : getNodeColor(node);
         ctx.fill();
       }
 

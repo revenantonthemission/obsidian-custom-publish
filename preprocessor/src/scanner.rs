@@ -6,13 +6,11 @@ use std::path::Path;
 use std::sync::LazyLock;
 use walkdir::WalkDir;
 
+use crate::syntax::BLOCK_ID_RE;
 use crate::types::{is_korean, PostMeta, VaultIndex};
 
 static HEADING_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^#{1,6}\s+(.+)$").unwrap());
-
-static BLOCK_ID_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\s\^([a-zA-Z0-9-]+)\s*$").unwrap());
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -158,7 +156,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .iter()
         .map(|p| {
             let (_fm, body) = parse_frontmatter(&p.raw_content);
-            (p.slug.clone(), extract_headings(body))
+            (p.title.clone(), extract_headings(body))
         })
         .collect();
 
