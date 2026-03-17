@@ -42,12 +42,30 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
 
     // Write each post
     for (i, post) in index.posts.iter().enumerate() {
-        let content = transform_content_with_assets(index, graph, i, Some(&assets_dir));
+        let (content, images) = transform_content_with_assets(index, graph, i, Some(&assets_dir));
 
         // Write transformed markdown
         let md_path = posts_dir.join(format!("{}.md", post.slug));
         fs::write(&md_path, &content)
             .with_context(|| format!("failed to write {}", md_path.display()))?;
+
+        // Copy referenced images from vault attachment/ directory to assets/
+        for image_filename in &images {
+            let dest = assets_dir.join(image_filename);
+            if !dest.exists() {
+                if let Some(src) = find_attachment(&post.file_path, image_filename) {
+                    if let Err(e) = fs::copy(&src, &dest) {
+                        eprintln!(
+                            "warning: failed to copy image {} -> {}: {e}",
+                            src.display(),
+                            dest.display()
+                        );
+                    }
+                } else {
+                    eprintln!("warning: attachment not found: {image_filename}");
+                }
+            }
+        }
 
         // Calculate stats
         let word_count = count_words(&content);
@@ -117,5 +135,17 @@ fn count_words(text: &str) -> usize {
     text.split_whitespace()
         .filter(|w| !w.is_empty())
         .count()
+}
+
+/// Walk up from the post's directory looking for `attachment/{filename}`.
+fn find_attachment(post_path: &Path, filename: &str) -> Option<std::path::PathBuf> {
+    let mut dir = post_path.parent()?;
+    loop {
+        let candidate = dir.join("attachment").join(filename);
+        if candidate.exists() {
+            return Some(candidate);
+        }
+        dir = dir.parent()?;
+    }
 }
 

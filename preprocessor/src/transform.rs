@@ -13,6 +13,10 @@ fn html_escape(s: &str) -> String {
         .replace('"', "&quot;")
 }
 
+static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"!\[\[([^\]|]+?\.(png|jpg|jpeg|gif|svg|webp))(?:\|(\d+(?:x\d+)?))?\]\]").unwrap()
+});
+
 static TRANSCLUSION_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"!\[\[(.+?)\]\]").unwrap());
 
@@ -27,28 +31,31 @@ static FENCE_RE: LazyLock<Regex> =
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
-/// Handles: frontmatter stripping, transclusion inlining, wikilink conversion,
-/// callout conversion, and diagram rendering (D2/Typst).
+/// Handles: frontmatter stripping, image embed conversion, transclusion inlining,
+/// wikilink conversion, callout conversion, and diagram rendering (D2/Typst).
 /// Leaves LaTeX, footnotes, and Mermaid untouched.
 pub fn transform_content(index: &VaultIndex, _graph: &LinkGraph, post_idx: usize) -> String {
-    transform_content_with_assets(index, _graph, post_idx, None)
+    transform_content_with_assets(index, _graph, post_idx, None).0
 }
 
 /// Transform with an optional asset output directory for rendered diagrams.
+///
+/// Returns `(transformed_content, referenced_image_filenames)`.
 pub fn transform_content_with_assets(
     index: &VaultIndex,
     _graph: &LinkGraph,
     post_idx: usize,
     asset_dir: Option<&Path>,
-) -> String {
+) -> (String, Vec<String>) {
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
     let content = strip_frontmatter(raw);
+    let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
     let content = convert_callouts(&content);
     let content = render_diagram_blocks(&content, slug, asset_dir);
-    content
+    (content, images)
 }
 
 /// Remove YAML frontmatter delimited by `---`.
@@ -64,7 +71,7 @@ fn strip_frontmatter(content: &str) -> String {
 }
 
 /// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
-fn transform_outside_fences(content: &str, f: impl Fn(&str) -> String) -> String {
+fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_fence = false;
 
@@ -91,6 +98,40 @@ fn transform_outside_fences(content: &str, f: impl Fn(&str) -> String) -> String
     }
 
     result
+}
+
+/// Convert `![[image.png|size]]` embeds to HTML `<img>` tags.
+///
+/// Returns `(transformed_content, list_of_referenced_image_filenames)`.
+fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
+    let mut images = Vec::new();
+    let result = transform_outside_fences(content, |line| {
+        IMAGE_EMBED_RE
+            .replace_all(line, |caps: &regex::Captures| {
+                let filename = &caps[1];
+                images.push(filename.to_string());
+                let size = caps.get(3).map(|m| m.as_str());
+                match size {
+                    Some(s) if s.contains('x') => {
+                        let parts: Vec<&str> = s.splitn(2, 'x').collect();
+                        format!(
+                            r#"<img src="/assets/{filename}" alt="" width="{}" height="{}" />"#,
+                            parts[0], parts[1]
+                        )
+                    }
+                    Some(w) => {
+                        format!(r#"<img src="/assets/{filename}" alt="" width="{w}" />"#)
+                    }
+                    None => {
+                        format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                    }
+                }
+            })
+            .to_string()
+    });
+    images.sort();
+    images.dedup();
+    (result, images)
 }
 
 /// Replace `![[Note Name]]` with the body content of the referenced note.
