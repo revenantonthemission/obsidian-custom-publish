@@ -139,7 +139,10 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 
     let heading_map: HashMap<String, Vec<String>> = posts
         .iter()
-        .map(|p| (p.slug.clone(), extract_headings(&p.raw_content)))
+        .map(|p| {
+            let (_fm, body) = parse_frontmatter(&p.raw_content);
+            (p.slug.clone(), extract_headings(body))
+        })
         .collect();
 
     Ok(VaultIndex {

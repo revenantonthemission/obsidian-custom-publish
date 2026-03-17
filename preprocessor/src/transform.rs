@@ -162,15 +162,29 @@ fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
 
             if let Some(&target_idx) = index.name_map.get(target_name) {
                 let slug = &index.posts[target_idx].slug;
-                let fragment = heading_raw
-                    .map(|h| format!("#{}", crate::scanner::slugify_heading(h)));
+
+                // Validate heading fragment against heading_map
+                let fragment = heading_raw.and_then(|h| {
+                    let h_slug = crate::scanner::slugify_heading(h);
+                    let valid = index.heading_map
+                        .get(slug.as_str())
+                        .is_some_and(|headings| headings.contains(&h_slug));
+                    if !valid {
+                        eprintln!("warning: heading '{h}' not found in '{target_name}'");
+                    }
+                    valid.then(|| format!("#{h_slug}"))
+                });
+
                 let href = match &fragment {
                     Some(frag) => format!("/posts/{slug}{frag}"),
                     None => format!("/posts/{slug}"),
                 };
                 let display = match (alias, heading_raw) {
                     (Some(a), _) => html_escape(a),
-                    (None, Some(h)) => format!("{} &gt; {}", html_escape(target_name), html_escape(h)),
+                    (None, Some(h)) if fragment.is_some() => {
+                        format!("{} &gt; {}", html_escape(target_name), html_escape(h))
+                    }
+                    (None, Some(_)) => html_escape(target_name), // heading invalid, show note name only
                     (None, None) => html_escape(target_name),
                 };
                 format!(r#"<a href="{href}">{display}</a>"#)
