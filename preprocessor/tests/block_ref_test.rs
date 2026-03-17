@@ -30,8 +30,8 @@ fn test_block_ref_link() {
     let post_idx = index.slug_map["post-with-block-refs"];
     let result = transform_content(&index, &graph, post_idx);
     assert!(
-        result.contains(r#"<a href="/posts/simple-post#^intro">"#),
-        "Block ref should produce link with #^block-id fragment. Got: {result}"
+        result.contains(r#"<a href="/posts/simple-post#^intro">Simple Post</a>"#),
+        "Block ref should link with #^block-id fragment and show note title only. Got: {result}"
     );
 }
 

@@ -153,16 +153,14 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
 /// Replace `![[Note Name]]` or `![[Note Name#^block-id]]` with the referenced content.
 /// Full-note transclusions inline the entire body; block transclusions inline just
 /// the paragraph that carries the `^block-id` annotation.
+///
+/// Note: `convert_image_embeds` must run BEFORE this function in the pipeline,
+/// so image embeds (`![[file.png]]`) are already converted to `<img>` tags
+/// and won't match TRANSCLUSION_RE.
 fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
     transform_outside_fences(content, |line| {
         TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
             let name = caps[1].trim();
-
-            // Skip image file extensions — IMAGE_EMBED_RE handles those
-            if IMAGE_EMBED_RE.is_match(&caps[0]) {
-                return caps[0].to_string();
-            }
-
             let block_id = caps.get(2).map(|m| m.as_str());
 
             if let Some(block_id) = block_id {
