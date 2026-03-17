@@ -1,10 +1,15 @@
 use anyhow::{Context, Result};
+use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::LazyLock;
 use walkdir::WalkDir;
 
 use crate::types::{is_korean, PostMeta, VaultIndex};
+
+static HEADING_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?m)^#{1,6}\s+(.+)$").unwrap());
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -37,6 +42,41 @@ where
             format!("{other:?}")
         }
     }))
+}
+
+/// Convert a heading into a URL-safe slug (matching rehype-slug behavior).
+/// Keeps alphanumeric, Korean characters, and hyphens. Strips everything else.
+pub fn slugify_heading(heading: &str) -> String {
+    heading
+        .to_lowercase()
+        .replace(' ', "-")
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '-' || is_korean(*c))
+        .collect::<String>()
+        .trim_matches('-')
+        .to_string()
+}
+
+/// Extract all headings from markdown content and return their slugs.
+/// Handles duplicate headings by appending -1, -2, etc. (matching rehype-slug).
+fn extract_headings(content: &str) -> Vec<String> {
+    let mut slugs = Vec::new();
+    let mut counts: HashMap<String, usize> = HashMap::new();
+
+    for cap in HEADING_RE.captures_iter(content) {
+        let raw = cap[1].trim();
+        let base_slug = slugify_heading(raw);
+        let count = counts.entry(base_slug.clone()).or_insert(0);
+        let slug = if *count == 0 {
+            base_slug.clone()
+        } else {
+            format!("{base_slug}-{count}")
+        };
+        *count += 1;
+        slugs.push(slug);
+    }
+
+    slugs
 }
 
 /// Scan an Obsidian vault directory and build an index of all posts.
@@ -97,10 +137,16 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .map(|(i, p)| (p.title.clone(), i))
         .collect();
 
+    let heading_map: HashMap<String, Vec<String>> = posts
+        .iter()
+        .map(|p| (p.slug.clone(), extract_headings(&p.raw_content)))
+        .collect();
+
     Ok(VaultIndex {
         posts,
         slug_map,
         name_map,
+        heading_map,
     })
 }
 

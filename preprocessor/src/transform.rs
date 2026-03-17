@@ -21,7 +21,7 @@ static TRANSCLUSION_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"!\[\[(.+?)\]\]").unwrap());
 
 static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]").unwrap());
+    LazyLock::new(|| Regex::new(r"\[\[([^\]#|]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]").unwrap());
 
 static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
@@ -152,16 +152,28 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
 }
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
+/// Supports heading fragments: `[[Note#Heading]]` and `[[Note#Heading|alias]]`.
 fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
     transform_outside_fences(content, |line| {
         WIKILINK_RE.replace_all(line, |caps: &regex::Captures| {
             let target_name = caps[1].trim();
-            let alias = caps.get(2).map(|m| m.as_str().trim());
+            let heading_raw = caps.get(2).map(|m| m.as_str().trim());
+            let alias = caps.get(3).map(|m| m.as_str().trim());
 
             if let Some(&target_idx) = index.name_map.get(target_name) {
                 let slug = &index.posts[target_idx].slug;
-                let display = html_escape(alias.unwrap_or(target_name));
-                format!(r#"<a href="/posts/{slug}">{display}</a>"#)
+                let fragment = heading_raw
+                    .map(|h| format!("#{}", crate::scanner::slugify_heading(h)));
+                let href = match &fragment {
+                    Some(frag) => format!("/posts/{slug}{frag}"),
+                    None => format!("/posts/{slug}"),
+                };
+                let display = match (alias, heading_raw) {
+                    (Some(a), _) => html_escape(a),
+                    (None, Some(h)) => format!("{} &gt; {}", html_escape(target_name), html_escape(h)),
+                    (None, None) => html_escape(target_name),
+                };
+                format!(r#"<a href="{href}">{display}</a>"#)
             } else {
                 // Unresolved link — render as plain text
                 alias.unwrap_or(target_name).to_string()
