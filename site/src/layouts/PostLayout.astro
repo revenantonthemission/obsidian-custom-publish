@@ -4,10 +4,12 @@ import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
 import HubNav from "../components/HubNav.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
+import NavTreeIsland from "../islands/NavTree.tsx";
 import { sanitizeTag, getLocalGraph, getPostMeta, getHubs } from "../lib/data";
 import type { PostMeta } from "../lib/types";
 import "../styles/post.css";
 import "../styles/link-preview.css";
+import "../styles/nav-tree.css";
 
 interface Props {
   meta: PostMeta;
@@ -55,6 +57,7 @@ for (const hub of hubs) {
       <BacklinkList backlinks={meta.backlinks} />
     </article>
     <aside class="post-sidebar">
+      <NavTreeIsland client:visible currentSlug={meta.slug} />
       <TableOfContents content={content} />
       <LocalGraph client:visible slug={meta.slug} data={localGraphData} />
     </aside>
