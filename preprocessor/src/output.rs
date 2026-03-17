@@ -1,10 +1,12 @@
 use anyhow::{Context, Result};
+use regex::Regex;
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
+use std::sync::LazyLock;
 
 use crate::search::build_search_index;
-use crate::transform::transform_content_with_assets;
+use crate::transform::{strip_frontmatter, transform_content_with_assets};
 use crate::types::{LinkGraph, VaultIndex};
 
 /// Per-post metadata written to `meta/{slug}.json`.
@@ -120,6 +122,26 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
     )
     .context("failed to write search-index.json")?;
 
+    // Write previews.json
+    let mut previews = serde_json::Map::new();
+    for post in &index.posts {
+        let stripped = strip_markdown_for_preview(&post.raw_content);
+        let summary = extract_first_sentence(&stripped);
+        let entry = serde_json::json!({
+            "title": post.title,
+            "tags": post.tags,
+            "summary": summary,
+        });
+        previews.insert(post.slug.clone(), entry);
+    }
+    let previews_path = output_dir.join("previews.json");
+    fs::write(
+        &previews_path,
+        serde_json::to_string_pretty(&serde_json::Value::Object(previews))
+            .context("failed to serialize previews")?,
+    )
+    .context("failed to write previews.json")?;
+
     println!(
         "Output written: {} posts, {} meta files",
         index.posts.len(),
@@ -135,6 +157,80 @@ fn count_words(text: &str) -> usize {
     text.split_whitespace()
         .filter(|w| !w.is_empty())
         .count()
+}
+
+/// Compiled regexes for stripping markdown syntax.
+static RE_INLINE_MARKDOWN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(\*{1,2}|_{1,2}|`|~~)").unwrap());
+static RE_WIKILINK: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]").unwrap());
+static RE_MARKDOWN_LINK: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[([^\]]*)\]\([^)]*\)").unwrap());
+static RE_HTML_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
+static RE_BLOCK_REF: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*\^[\w-]+\s*$").unwrap());
+static RE_MULTI_SPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+
+/// Strip markdown/HTML from raw content to produce plain text for previews.
+fn strip_markdown_for_preview(content: &str) -> String {
+    let body = strip_frontmatter(content);
+    let lines: Vec<&str> = body
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            // Skip headings, code fences, blockquotes, horizontal rules, empty lines
+            !trimmed.starts_with('#')
+                && !trimmed.starts_with("```")
+                && !trimmed.starts_with('>')
+                && !trimmed.starts_with("---")
+                && !trimmed.is_empty()
+        })
+        .collect();
+    let joined = lines.join(" ");
+
+    // Strip wikilinks: [[target|display]] -> display, [[target]] -> target
+    let text = RE_WIKILINK.replace_all(&joined, |caps: &regex::Captures| {
+        caps.get(2)
+            .or_else(|| caps.get(1))
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default()
+    });
+    // Strip markdown links: [text](url) -> text
+    let text = RE_MARKDOWN_LINK.replace_all(&text, "$1");
+    // Strip HTML tags
+    let text = RE_HTML_TAG.replace_all(&text, "");
+    // Strip inline markdown: **, *, `, ~~
+    let text = RE_INLINE_MARKDOWN.replace_all(&text, "");
+    // Strip block references
+    let text = RE_BLOCK_REF.replace_all(&text, "");
+    // Normalize whitespace
+    let text = RE_MULTI_SPACE.replace_all(&text, " ");
+    text.trim().to_string()
+}
+
+/// Extract the first sentence from plain text.
+/// Finds the first `.` or `。` after at least 10 chars, or truncates at 150 chars.
+fn extract_first_sentence(text: &str) -> String {
+    if text.is_empty() {
+        return String::new();
+    }
+    // Look for sentence-ending punctuation after at least 10 chars
+    for (i, ch) in text.char_indices() {
+        if i >= 10 && (ch == '.' || ch == '。') {
+            let end = i + ch.len_utf8();
+            return text[..end].to_string();
+        }
+    }
+    // No sentence end found; truncate at 150 chars
+    if text.len() <= 150 {
+        return text.to_string();
+    }
+    // Find a word boundary near 150
+    let truncated = &text[..150];
+    if let Some(last_space) = truncated.rfind(' ') {
+        format!("{}...", &text[..last_space])
+    } else {
+        format!("{}...", truncated)
+    }
 }
 
 /// Walk up from the post's directory looking for `attachment/{filename}`.

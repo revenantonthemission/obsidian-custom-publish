@@ -63,7 +63,7 @@ pub fn transform_content_with_assets(
 }
 
 /// Remove YAML frontmatter delimited by `---`.
-fn strip_frontmatter(content: &str) -> String {
+pub fn strip_frontmatter(content: &str) -> String {
     if !content.starts_with("---") {
         return content.to_string();
     }
