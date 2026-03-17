@@ -13,6 +13,7 @@ preprocess:
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
     cp {{content}}/previews.json {{site_dir}}/public/previews.json
+    cp {{content}}/nav-tree.json {{site_dir}}/public/nav-tree.json
     mkdir -p {{site_dir}}/public/assets
     cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
 
