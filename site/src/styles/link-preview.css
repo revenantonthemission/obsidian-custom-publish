@@ -3,8 +3,8 @@
   z-index: 100;
   width: 280px;
   padding: 12px 16px;
-  background: var(--bg-secondary, #fff);
-  border: 1px solid var(--border-color, #e0e0e0);
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e0e0e0);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 0.875rem;
@@ -32,10 +32,10 @@
 
 .link-preview-tooltip .preview-tags span {
   font-size: 0.75rem;
-  color: var(--text-muted, #666);
+  color: var(--c-text-muted, #666);
 }
 
 .link-preview-tooltip .preview-summary {
   margin: 0;
-  color: var(--text-secondary, #444);
+  color: var(--c-text-muted, #444);
 }
