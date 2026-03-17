@@ -81,6 +81,12 @@
   margin-bottom: 0.4rem;
 }
 
+/* ── Inline KaTeX size match ── */
+.post-content > p .katex,
+.post-content > li .katex {
+  font-size: 1em;
+}
+
 /* ── Code block with filename ── */
 .code-block {
   position: relative;
@@ -88,12 +94,14 @@
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .code-block pre {
   margin: 0;
   border: none;
   border-radius: 0;
+  padding: 1rem;
 }
 
 /* ── Copy button ── */
@@ -108,15 +116,15 @@
   background: var(--c-code-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
-  padding: 0.3rem;
+  padding: 0.35rem;
   cursor: pointer;
   color: var(--c-text-muted);
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition: opacity 0.2s, color 0.2s, background 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 2;
 }
 
 .code-block-wrapper:hover .copy-btn,
@@ -127,6 +135,7 @@
 
 .copy-btn:hover {
   color: var(--c-text);
+  background: var(--c-border);
 }
 
 .copy-btn.copied {
@@ -141,6 +150,43 @@
   color: var(--c-text-muted);
   background: var(--c-code-bg);
   border-bottom: 1px solid var(--c-border);
+}
+
+/* ── Language badge ── */
+.code-block pre.shiki[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.4rem;
+  right: 2.75rem;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hide language badge when filename is shown — filename already implies language */
+.code-block .code-filename ~ pre.shiki[data-language]::before {
+  display: none;
+}
+
+/* Also show language badge on standalone code blocks (not wrapped in .code-block) */
+.code-block-wrapper > pre.shiki[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.4rem;
+  right: 2.75rem;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ── Image figures ── */
