@@ -290,3 +290,17 @@ a[data-footnote-backref] {
     background-color: rgba(101, 117, 133, 0.24);
   }
 }
+
+/* ── Responsive: Post ── */
+@media (max-width: 479px) {
+  .post-title { font-size: 1.5rem; }
+  .post-meta { font-size: 0.8rem; }
+  pre.shiki, .code-block pre { padding: 0.75rem; }
+  .code-block pre.shiki[data-language]::before,
+  .code-block-wrapper > pre.shiki[data-language]::before { display: none; }
+  .copy-btn { padding: 0.5rem; }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .post-title { font-size: 1.75rem; }
+}

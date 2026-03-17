@@ -280,3 +280,41 @@ img {
 .back-to-top:hover {
   background: var(--c-code-bg);
 }
+
+/* ── Responsive: Phone ── */
+@media (max-width: 479px) {
+  .site-main {
+    padding: 1.5rem 1rem;
+  }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.2rem; }
+  h3 { font-size: 1.05rem; }
+  .back-to-top {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  .site-footer {
+    padding: 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* ── Responsive: Small tablet ── */
+@media (min-width: 480px) and (max-width: 767px) {
+  .site-main {
+    padding: 2rem 1.25rem;
+  }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  .back-to-top {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+}
+
+/* ── Responsive: Touch targets ── */
+@media (max-width: 767px) {
+  .site-nav-link {
+    padding: 0.5rem 0.75rem;
+  }
+}
