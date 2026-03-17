@@ -6,16 +6,16 @@ use crate::types::{LinkGraph, VaultIndex};
 
 #[derive(Debug, Serialize)]
 pub struct NavTreeNode {
-    slug: String,
-    title: String,
-    is_hub: bool,
-    children: Vec<NavTreeNode>,
+    pub slug: String,
+    pub title: String,
+    pub is_hub: bool,
+    pub children: Vec<NavTreeNode>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct NavTree {
-    roots: Vec<NavTreeNode>,
-    orphans: Vec<NavTreeNode>,
+    pub roots: Vec<NavTreeNode>,
+    pub orphans: Vec<NavTreeNode>,
 }
 
 /// Build a navigation tree from hub/hub_parent relationships.
