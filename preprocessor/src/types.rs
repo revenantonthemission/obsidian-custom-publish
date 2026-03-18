@@ -15,6 +15,7 @@ pub struct PostMeta {
     pub tags: Vec<String>,
     pub created: Option<String>,
     pub published: Option<String>,
+    pub updated: Option<String>,
     pub is_hub: bool,
     pub hub_parent: Option<String>,
     pub raw_content: String,

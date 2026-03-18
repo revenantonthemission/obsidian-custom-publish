@@ -2,6 +2,7 @@
 import BaseLayout from "./BaseLayout.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
+import RelatedPosts from "../components/RelatedPosts.astro";
 import HubNav from "../components/HubNav.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
 import NavTreeIsland from "../islands/NavTree.tsx";
@@ -50,6 +51,9 @@ if (meta.hub_parent) {
         <h1 class="post-title">{meta.title}</h1>
         <div class="post-meta">
           {meta.published && <time datetime={meta.published}>{meta.published}</time>}
+          {meta.updated && meta.updated !== meta.published && (
+            <span>수정: <time datetime={meta.updated}>{meta.updated}</time></span>
+          )}
           <span>{meta.reading_time_min}분 읽기</span>
           {meta.tags.map((tag) => (
             <a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a>
@@ -60,6 +64,7 @@ if (meta.hub_parent) {
           preprocessor (callout divs, wikilink anchors). This is safe for a personal vault but
           must be revisited if the vault ever accepts third-party content. */}
       <div class="post-content" set:html={content} />
+      <RelatedPosts slugs={meta.related_posts ?? []} />
       <BacklinkList backlinks={meta.backlinks} />
     </article>
     <aside class="post-sidebar">

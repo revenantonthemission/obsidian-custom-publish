@@ -3,6 +3,7 @@ use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
+use std::process::Command;
 use std::sync::LazyLock;
 use walkdir::WalkDir;
 
@@ -123,6 +124,8 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 
         let title = filename.clone();
 
+        let updated = git_last_modified(path);
+
         posts.push(PostMeta {
             slug,
             title,
@@ -130,6 +133,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             tags: frontmatter.tags,
             created: frontmatter.created,
             published: frontmatter.published,
+            updated,
             is_hub: frontmatter.is_hub,
             hub_parent: frontmatter.hub_parent,
             raw_content: content,
@@ -206,6 +210,19 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
     } else {
         (RawFrontmatter::default(), content)
     }
+}
+
+/// Get the last git commit date for a file as `YYYY-MM-DD`, or `None` if unavailable.
+fn git_last_modified(file_path: &Path) -> Option<String> {
+    let output = Command::new("git")
+        .args(["log", "-1", "--format=%cs", "--", file_path.to_str()?])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let date = String::from_utf8(output.stdout).ok()?.trim().to_string();
+    if date.is_empty() { None } else { Some(date) }
 }
 
 /// Check if a walkdir entry should be skipped (hidden or drafts).
