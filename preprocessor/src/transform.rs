@@ -18,7 +18,7 @@ static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
 static FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)\n(.*?)^```").unwrap());
+    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:\s+(\w+))?\n(.*?)^```").unwrap());
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -339,22 +339,45 @@ struct ThemePair {
 const D2_THEMES: ThemePair = ThemePair { light: "0", dark: "200" };
 const MERMAID_THEMES: ThemePair = ThemePair { light: "default", dark: "dark" };
 
-/// Render D2, Typst, and Mermaid fenced code blocks to SVG.
-/// D2 and Mermaid are dual-rendered (light + dark) and wrapped in theme-gated markup.
-/// Typst diagrams are rendered once (no theme support).
+/// Render D2, Typst, and Mermaid fenced code blocks to HTML.
+///
+/// D2 supports an optional format specifier in the info string (e.g. `` ```d2 png ``):
+/// - `svg` (default) — dual-rendered light + dark, inline or asset file
+/// - `png` / `gif`  — single render, always written to asset file, `<img>` tag
+/// - `pdf` / `pptx` — single render, written to asset file, `<a download>` link
+/// - `txt` / `ascii` — single render, wrapped in `<pre>` block
+///
+/// Mermaid and Typst ignore the format specifier.
 fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) -> String {
+    use crate::d2::D2Format;
     let mut counter = 0;
 
     FENCE_RE
         .replace_all(content, |caps: &regex::Captures| {
             let lang = &caps[1];
-            let source = &caps[2];
+            // caps[2] = optional format word; caps[3] = diagram source
+            let fmt_str = caps.get(2).map(|m| m.as_str()).unwrap_or("svg");
+            let source = &caps[3];
             counter += 1;
 
             match lang {
-                "d2" => render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
-                    crate::d2::render_d2(src, theme, None)
-                }),
+                "d2" => {
+                    let format = D2Format::from_str(fmt_str);
+                    match format {
+                        D2Format::Svg => {
+                            render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
+                                crate::d2::render_d2(src, theme, None)
+                            })
+                        }
+                        _ if format.is_text_art() => {
+                            render_d2_text(source, slug, counter, format)
+                        }
+                        _ => {
+                            // Binary or download formats (png, gif, pdf, pptx)
+                            render_d2_binary(source, slug, counter, asset_dir, format)
+                        }
+                    }
+                }
                 "mermaid" => render_themed_diagram(lang, source, slug, counter, asset_dir, &MERMAID_THEMES, |src, theme| {
                     crate::mermaid::render_mermaid(src, theme)
                 }),
@@ -365,6 +388,67 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
             }
         })
         .to_string()
+}
+
+/// Render a D2 diagram to a binary format (png, gif, pdf, pptx).
+/// Always writes to an asset file. PNG/GIF become `<img>` tags; PDF/PPTX become download links.
+fn render_d2_binary(
+    source: &str,
+    slug: &str,
+    counter: usize,
+    asset_dir: Option<&Path>,
+    format: crate::d2::D2Format,
+) -> String {
+    match crate::d2::render_d2_bytes(source, format, None, None) {
+        Ok(bytes) => {
+            let ext = format.extension();
+            let filename = format!("{slug}-d2-{counter}.{ext}");
+
+            if let Some(dir) = asset_dir {
+                let path = dir.join(&filename);
+                if let Err(e) = std::fs::write(&path, &bytes) {
+                    eprintln!("warning: failed to write {}: {e}", path.display());
+                    return format!("<!-- d2 {ext} render failed: {e} -->");
+                }
+            }
+
+            match format {
+                crate::d2::D2Format::Pdf | crate::d2::D2Format::Pptx => {
+                    let label = ext.to_uppercase();
+                    format!(r#"<a href="/assets/{filename}" download class="diagram-download">{label} 다운로드</a>"#)
+                }
+                _ => {
+                    format!(r#"<img src="/assets/{filename}" class="diagram diagram-d2" alt="" />"#)
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("warning: d2 {format:?} rendering failed for {slug}: {e}");
+            format!("```d2\n{source}```")
+        }
+    }
+}
+
+/// Render a D2 diagram to ASCII/text art and wrap in a `<pre>` block.
+fn render_d2_text(
+    source: &str,
+    slug: &str,
+    counter: usize,
+    format: crate::d2::D2Format,
+) -> String {
+    match crate::d2::render_d2_bytes(source, format, None, None) {
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(text) => format!(r#"<pre class="diagram diagram-d2-ascii">{}</pre>"#, html_escape(&text)),
+            Err(e) => {
+                eprintln!("warning: d2 ascii output was not UTF-8 for {slug}: {e}");
+                format!("<!-- d2 ascii render failed: not UTF-8 -->")
+            }
+        },
+        Err(e) => {
+            eprintln!("warning: d2 text rendering failed for {slug}-{counter}: {e}");
+            format!("```d2\n{source}```")
+        }
+    }
 }
 
 /// Render a diagram once (no theming). Used for Typst.
