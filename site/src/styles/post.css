@@ -318,6 +318,33 @@ a[data-footnote-backref] {
   }
 }
 
+/* ── Heading fold toggle ── */
+.heading-fold-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6em;
+  color: var(--c-text-muted);
+  padding: 0 0.4rem 0 0;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+  transform: rotate(90deg);
+  vertical-align: middle;
+}
+
+h2:hover .heading-fold-toggle,
+h3:hover .heading-fold-toggle,
+.heading-fold-toggle:focus-visible {
+  opacity: 1;
+}
+
+h2.collapsed .heading-fold-toggle,
+h3.collapsed .heading-fold-toggle {
+  transform: rotate(0deg);
+  opacity: 1;
+}
+
 /* ── Responsive: Post ── */
 @media (max-width: 479px) {
   .post-title { font-size: 1.5rem; }

@@ -159,5 +159,9 @@
   color: var(--c-text);
 }
 
+.mobile-sidebar-body .toc-item a.toc-active {
+  color: var(--c-accent);
+  font-weight: 600;
+}
 .mobile-sidebar-body .toc-depth-3 { padding-left: 1rem; }
 .mobile-sidebar-body .toc-depth-4 { padding-left: 2rem; }
