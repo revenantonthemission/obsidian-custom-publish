@@ -46,6 +46,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                sh 'aws sts get-caller-identity > /dev/null 2>&1 || (echo "ERROR: AWS credentials expired or invalid" && exit 1)'
                 sh "aws s3 sync site/dist/ s3://${S3_BUCKET} --delete"
                 sh "aws cloudfront create-invalidation --distribution-id ${CF_DIST_ID} --paths '/*'"
             }

@@ -68,7 +68,7 @@ export default function GraphView({ data, width, height }: Props) {
       .attr("fill", (d) => getNodeColor(d))
       .attr("cursor", "pointer")
       .on("click", (_event, d) => {
-        window.location.href = `/posts/${d.slug}`;
+        window.location.href = d.is_hub ? `/hubs/${d.slug}` : `/posts/${d.slug}`;
       });
 
     // Draw labels

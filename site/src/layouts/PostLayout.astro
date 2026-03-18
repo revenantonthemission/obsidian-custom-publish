@@ -44,7 +44,7 @@ if (meta.hub_parent) {
       <header class="post-header">
         <h1 class="post-title">{meta.title}</h1>
         <div class="post-meta">
-          {meta.published && <time>{meta.published}</time>}
+          {meta.published && <time datetime={meta.published}>{meta.published}</time>}
           <span>{meta.reading_time_min}분 읽기</span>
           {meta.tags.map((tag) => (
             <a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a>
@@ -146,7 +146,6 @@ if (meta.hub_parent) {
     });
   }
   initCopyButtons();
-  document.addEventListener("astro:after-swap", initCopyButtons);
 </script>
 <script>
   let previewData: Record<string, { title: string; tags: string[]; summary: string }> | null = null;
@@ -238,7 +237,6 @@ if (meta.hub_parent) {
   }
 
   initLinkPreviews();
-  document.addEventListener("astro:after-swap", initLinkPreviews);
 </script>
 <MobileSidebar client:visible content={content} currentSlug={meta.slug} />
 </BaseLayout>

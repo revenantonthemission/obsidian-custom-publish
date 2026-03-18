@@ -91,7 +91,7 @@ export default function MobileSidebar({ content, currentSlug }: Props) {
       fetch("/nav-tree.json")
         .then((r) => r.json())
         .then((data: NavTreeData) => setNavTree(data))
-        .catch(() => {});
+        .catch(() => setNavTree({ roots: [], orphans: [] }));
     }
   }, [open]);
 

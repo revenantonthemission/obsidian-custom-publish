@@ -93,6 +93,10 @@ fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) ->
         }
     }
 
+    if in_fence {
+        eprintln!("warning: unclosed code fence detected — transforms skipped after opening fence");
+    }
+
     // Remove trailing newline added by iteration
     if content.ends_with('\n') || result.ends_with('\n') {
         result.truncate(result.trim_end_matches('\n').len());

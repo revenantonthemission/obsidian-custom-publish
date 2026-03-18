@@ -62,9 +62,9 @@
   .post-sidebar {
     display: block;
     position: sticky;
-    top: 2rem;
+    top: 3.5rem;
     align-self: start;
-    max-height: calc(100dvh - 4rem);
+    max-height: calc(100dvh - 4.5rem);
     overflow-y: auto;
   }
 }
@@ -177,7 +177,8 @@
 }
 
 /* ── Language badge ── */
-.code-block pre.shiki[data-language]::before {
+.code-block pre.shiki[data-language]::before,
+.code-block-wrapper > pre.shiki[data-language]::before {
   content: attr(data-language);
   position: absolute;
   top: 0.4rem;
@@ -195,22 +196,6 @@
 /* Hide language badge when filename is shown — filename already implies language */
 .code-block .code-filename ~ pre.shiki[data-language]::before {
   display: none;
-}
-
-/* Also show language badge on standalone code blocks (not wrapped in .code-block) */
-.code-block-wrapper > pre.shiki[data-language]::before {
-  content: attr(data-language);
-  position: absolute;
-  top: 0.4rem;
-  right: 2.75rem;
-  font-family: var(--font-code);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-text-muted);
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: 1;
 }
 
 /* ── Image figures ── */

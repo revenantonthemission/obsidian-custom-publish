@@ -82,7 +82,7 @@ export default function LocalGraph({ slug, data }: Props) {
         const dx = x - node.x!;
         const dy = y - node.y!;
         if (dx * dx + dy * dy < 100 && node.slug !== slug) {
-          window.location.href = `/posts/${node.slug}`;
+          window.location.href = node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`;
           break;
         }
       }
