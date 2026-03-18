@@ -222,6 +222,24 @@
   font-style: italic;
 }
 
+/* ── Image & diagram auto-scaling ── */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Diagrams: don't stretch beyond natural size, allow shrinking */
+.post-content img.diagram {
+  width: auto;
+  max-width: 100%;
+}
+
+/* Images with inline width/height: respect the attribute but scale down */
+.post-content img[width] {
+  max-width: 100%;
+  height: auto;
+}
+
 /* ── Responsive tables ── */
 .table-wrapper {
   overflow-x: auto;
