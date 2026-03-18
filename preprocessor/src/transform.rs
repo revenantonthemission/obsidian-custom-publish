@@ -69,7 +69,20 @@ fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) ->
     for line in content.lines() {
         if line.starts_with("```") {
             in_fence = !in_fence;
-            result.push_str(line);
+            if !in_fence {
+                // Closing fence — pass through as-is
+                result.push_str(line);
+            } else {
+                // Opening fence — lowercase the language identifier for Shiki
+                let lang_part = line.trim_start_matches('`');
+                if lang_part.is_empty() {
+                    result.push_str(line);
+                } else {
+                    let backticks = &line[..line.len() - lang_part.len()];
+                    result.push_str(backticks);
+                    result.push_str(&lang_part.to_lowercase());
+                }
+            }
             result.push('\n');
         } else if in_fence {
             result.push_str(line);
@@ -455,5 +468,26 @@ mod tests {
         assert!(result.contains("before REPLACED"));
         assert!(result.contains("[[inside fence]]"));
         assert!(result.contains("after REPLACED"));
+    }
+
+    #[test]
+    fn test_fence_language_lowercased() {
+        let input = "```C\nint x = 1;\n```\n";
+        let result = transform_outside_fences(input, |line| line.to_string());
+        assert!(result.starts_with("```c\n"), "Expected lowercase lang, got: {result}");
+    }
+
+    #[test]
+    fn test_fence_language_already_lowercase() {
+        let input = "```rust\nlet x = 1;\n```\n";
+        let result = transform_outside_fences(input, |line| line.to_string());
+        assert!(result.starts_with("```rust\n"));
+    }
+
+    #[test]
+    fn test_fence_no_language() {
+        let input = "```\nplain code\n```\n";
+        let result = transform_outside_fences(input, |line| line.to_string());
+        assert!(result.starts_with("```\n"));
     }
 }
