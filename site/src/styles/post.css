@@ -99,8 +99,6 @@
 
 /* ── KaTeX display math overflow ── */
 .post-content .katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
   width: 100%;
 }
 
