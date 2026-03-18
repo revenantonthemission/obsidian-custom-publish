@@ -19,6 +19,7 @@
 .post-content {
   overflow-wrap: break-word;
   word-break: break-word;
+  overflow-x: auto;
 }
 
 .post-header {
@@ -100,6 +101,14 @@
 .post-content .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
+  width: 100%;
+}
+
+/* On mobile, left-align overflowing formulas so the start is visible */
+@media (max-width: 767px) {
+  .post-content .katex-display > .katex {
+    text-align: left;
+  }
 }
 
 /* ── Code block with filename ── */
@@ -220,6 +229,26 @@
   font-size: 0.85rem;
   color: var(--c-text-muted);
   font-style: italic;
+}
+
+/* ── Image & diagram auto-scaling ── */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Diagrams: render at readable size, scroll horizontally on mobile */
+.post-content img.diagram {
+  height: auto;
+  min-width: 600px;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Images with inline width/height: respect the attribute but scale down */
+.post-content img[width] {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ── Responsive tables ── */
