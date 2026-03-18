@@ -236,10 +236,10 @@
   height: auto;
 }
 
-/* Diagrams: don't stretch beyond natural size, allow shrinking */
+/* Diagrams: always fill container width, scale proportionally */
 .post-content img.diagram {
-  width: auto;
-  max-width: 100%;
+  width: 100%;
+  height: auto;
 }
 
 /* Images with inline width/height: respect the attribute but scale down */
