@@ -2,13 +2,15 @@
 .diagram {
   display: block;
   margin: 1.5rem auto;
+  min-width: 600px;
   max-width: 100%;
+  width: 100%;
   height: auto;
 }
 
 .diagram-d2 svg,
 .diagram-typst svg {
-  max-width: 100%;
+  width: 100%;
   height: auto;
 }
 
@@ -17,6 +19,7 @@
 .diagram-typst {
   text-align: center;
   margin-bottom: 1.5rem;
+  min-width: 600px;
 }
 
 /* Mermaid diagrams */

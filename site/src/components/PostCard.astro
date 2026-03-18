@@ -12,7 +12,7 @@ const { post } = Astro.props;
 <article class="post-card">
   <a href={`/posts/${post.slug}`} class="post-card-title">{post.title}</a>
   <div class="post-card-meta">
-    {post.published && <time>{post.published}</time>}
+    {post.published && <time datetime={post.published}>{post.published}</time>}
     <span>{post.reading_time_min}분 읽기</span>
   </div>
   <div class="post-card-tags">
@@ -48,7 +48,19 @@ const { post } = Astro.props;
   }
   .post-card-tags {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.4rem;
     margin-top: 0.4rem;
+  }
+  .post-tag {
+    background: var(--c-code-bg);
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+  }
+  .post-tag:hover {
+    color: var(--c-accent);
+    text-decoration: none;
   }
 </style>

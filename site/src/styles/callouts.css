@@ -13,6 +13,9 @@
   margin-bottom: 1.5rem;
   border-left: 4px solid var(--callout-border);
   background: var(--callout-bg);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .callout-title {

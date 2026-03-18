@@ -5,6 +5,7 @@ use std::path::Path;
 
 use crate::nav_tree::build_nav_tree;
 use crate::preview::build_previews;
+use crate::related::compute_related;
 use crate::search::build_search_index;
 use crate::transform::transform_content_with_assets;
 use crate::types::{LinkGraph, VaultIndex};
@@ -17,12 +18,14 @@ struct OutputMeta {
     tags: Vec<String>,
     created: Option<String>,
     published: Option<String>,
+    updated: Option<String>,
     backlinks: Vec<String>,
     forward_links: Vec<String>,
     is_hub: bool,
     hub_parent: Option<String>,
     reading_time_min: usize,
     word_count: usize,
+    related_posts: Vec<String>,
 }
 
 /// Write all preprocessor output to the given directory.
@@ -41,6 +44,9 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
     fs::create_dir_all(&posts_dir).context("failed to create posts dir")?;
     fs::create_dir_all(&meta_dir).context("failed to create meta dir")?;
     fs::create_dir_all(&assets_dir).context("failed to create assets dir")?;
+
+    // Pre-compute related posts for all posts (top 5)
+    let all_related = compute_related(index, graph, 5);
 
     // Write each post
     for (i, post) in index.posts.iter().enumerate() {
@@ -89,12 +95,14 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
             tags: post.tags.clone(),
             created: post.created.clone(),
             published: post.published.clone(),
+            updated: post.updated.clone(),
             backlinks,
             forward_links: forward,
             is_hub: post.is_hub,
             hub_parent: post.hub_parent.clone(),
             reading_time_min,
             word_count,
+            related_posts: all_related[i].clone(),
         };
 
         let meta_path = meta_dir.join(format!("{}.json", post.slug));

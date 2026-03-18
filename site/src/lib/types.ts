@@ -6,12 +6,14 @@ export interface PostMeta {
   tags: string[];
   created: string | null;
   published: string | null;
+  updated: string | null;
   backlinks: string[];
   forward_links: string[];
   is_hub: boolean;
   hub_parent: string | null;
   reading_time_min: number;
   word_count: number;
+  related_posts?: string[];
 }
 
 export interface GraphData {

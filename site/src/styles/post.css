@@ -12,6 +12,16 @@
 }
 
 /* ── Article ── */
+.post-layout > article {
+  min-width: 0;
+}
+
+.post-content {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
 .post-header {
   margin-bottom: 2rem;
   padding-bottom: 1rem;
@@ -52,9 +62,9 @@
   .post-sidebar {
     display: block;
     position: sticky;
-    top: 2rem;
+    top: 3.5rem;
     align-self: start;
-    max-height: calc(100dvh - 4rem);
+    max-height: calc(100dvh - 4.5rem);
     overflow-y: auto;
   }
 }
@@ -85,6 +95,18 @@
 .post-content > p .katex,
 .post-content > li .katex {
   font-size: 1em;
+}
+
+/* ── KaTeX display math overflow ── */
+.post-content .katex-display {
+  width: 100%;
+}
+
+/* On mobile, left-align overflowing formulas so the start is visible */
+@media (max-width: 767px) {
+  .post-content .katex-display > .katex {
+    text-align: left;
+  }
 }
 
 /* ── Code block with filename ── */
@@ -153,7 +175,8 @@
 }
 
 /* ── Language badge ── */
-.code-block pre.shiki[data-language]::before {
+.code-block pre.shiki[data-language]::before,
+.code-block-wrapper > pre.shiki[data-language]::before {
   content: attr(data-language);
   position: absolute;
   top: 0.4rem;
@@ -173,22 +196,6 @@
   display: none;
 }
 
-/* Also show language badge on standalone code blocks (not wrapped in .code-block) */
-.code-block-wrapper > pre.shiki[data-language]::before {
-  content: attr(data-language);
-  position: absolute;
-  top: 0.4rem;
-  right: 2.75rem;
-  font-family: var(--font-code);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-text-muted);
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: 1;
-}
-
 /* ── Image figures ── */
 .image-figure {
   margin: 1.5rem 0;
@@ -205,6 +212,26 @@
   font-size: 0.85rem;
   color: var(--c-text-muted);
   font-style: italic;
+}
+
+/* ── Image & diagram auto-scaling ── */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Diagrams: render at readable size, scroll horizontally on mobile */
+.post-content img.diagram {
+  height: auto;
+  min-width: 600px;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Images with inline width/height: respect the attribute but scale down */
+.post-content img[width] {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ── Responsive tables ── */
@@ -289,6 +316,33 @@ a[data-footnote-backref] {
   :root:not([data-theme="light"]) .shiki .line.highlighted {
     background-color: rgba(101, 117, 133, 0.24);
   }
+}
+
+/* ── Heading fold toggle ── */
+.heading-fold-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6em;
+  color: var(--c-text-muted);
+  padding: 0 0.4rem 0 0;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+  transform: rotate(90deg);
+  vertical-align: middle;
+}
+
+h2:hover .heading-fold-toggle,
+h3:hover .heading-fold-toggle,
+.heading-fold-toggle:focus-visible {
+  opacity: 1;
+}
+
+h2.collapsed .heading-fold-toggle,
+h3.collapsed .heading-fold-toggle {
+  transform: rotate(0deg);
+  opacity: 1;
 }
 
 /* ── Responsive: Post ── */

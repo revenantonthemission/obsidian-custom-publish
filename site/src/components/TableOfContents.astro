@@ -61,6 +61,10 @@ while ((match = headingRegex.exec(content)) !== null) {
   .toc-item a:hover {
     color: var(--c-accent);
   }
+  .toc-item a.toc-active {
+    color: var(--c-accent);
+    font-weight: 600;
+  }
   .toc-depth-3 { padding-left: 1rem; }
   .toc-depth-4 { padding-left: 2rem; }
 </style>

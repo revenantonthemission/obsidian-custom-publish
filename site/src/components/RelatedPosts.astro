@@ -1,0 +1,63 @@
+---
+import { getPostMeta } from "../lib/data";
+
+interface Props {
+  slugs: string[];
+}
+
+const { slugs } = Astro.props;
+const metas = slugs.map((s) => getPostMeta(s)).filter((m) => m !== null);
+---
+
+{metas.length > 0 && (
+  <section class="related-posts">
+    <h2>관련 글</h2>
+    <ul>
+      {metas.map((meta) => (
+        <li>
+          <a href={`/posts/${meta.slug}`}>{meta.title}</a>
+          {meta.tags.length > 0 && (
+            <span class="related-tags">{meta.tags.slice(0, 3).join(", ")}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<style>
+  .related-posts {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--c-border);
+  }
+  .related-posts h2 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--c-text-muted);
+  }
+  .related-posts ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .related-posts li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .related-posts a {
+    color: var(--c-text);
+    text-decoration: none;
+  }
+  .related-posts a:hover {
+    color: var(--c-accent);
+  }
+  .related-tags {
+    font-size: 0.78rem;
+    color: var(--c-text-muted);
+  }
+</style>

@@ -58,6 +58,42 @@ resource "aws_s3_bucket_policy" "site" {
   })
 }
 
+# ── Access Log Bucket ──
+# CloudFront requires ACLs enabled on the log bucket (legacy delivery mechanism)
+
+resource "aws_s3_bucket" "logs" {
+  bucket = "${var.bucket_name}-logs"
+}
+
+resource "aws_s3_bucket_ownership_controls" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "logs" {
+  depends_on = [aws_s3_bucket_ownership_controls.logs]
+  bucket     = aws_s3_bucket.logs.id
+  acl        = "log-delivery-write"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    id     = "expire-old-logs"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
 # ── CloudFront ──
 
 resource "aws_cloudfront_origin_access_control" "site" {
@@ -139,6 +175,12 @@ resource "aws_cloudfront_distribution" "site" {
     response_code         = 404
     response_page_path    = "/404.html"
     error_caching_min_ttl = 60
+  }
+
+  logging_config {
+    bucket          = aws_s3_bucket.logs.bucket_domain_name
+    prefix          = "cloudfront/"
+    include_cookies = false
   }
 
   restrictions {
