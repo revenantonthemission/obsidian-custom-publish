@@ -7,6 +7,7 @@ const CONTENT_DIR = path.resolve("../content");
 // Module-level caches to avoid redundant filesystem reads during SSG builds
 let _allPostMeta: PostMeta[] | null = null;
 let _graph: GraphData | null = null;
+let _previews: Record<string, { title: string; tags: string[]; summary: string }> | null = null;
 
 export function getAllPostMeta(): PostMeta[] {
   if (_allPostMeta) return _allPostMeta;
@@ -96,4 +97,14 @@ export function getTagIndex(): Record<string, PostMeta[]> {
     }
   }
   return index;
+}
+
+/** Load previews.json (slug → {title, tags, summary}) for post card summaries. */
+export function getPreviewSummary(slug: string): string {
+  if (!_previews) {
+    const filePath = path.resolve("public/previews.json");
+    if (!fs.existsSync(filePath)) return "";
+    _previews = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  }
+  return _previews?.[slug]?.summary ?? "";
 }

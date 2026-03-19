@@ -19,7 +19,7 @@ export default function Search() {
   const [index, setIndex] = useState<IndexWithCache | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut to open
+  // Keyboard shortcut and custom event to open
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -28,8 +28,13 @@ export default function Search() {
       }
       if (e.key === "Escape") setOpen(false);
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("open-search", openHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("open-search", openHandler);
+    };
   }, []);
 
   // Focus input when opened

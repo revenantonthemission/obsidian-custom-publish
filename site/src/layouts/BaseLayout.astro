@@ -63,7 +63,7 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
     <Search client:idle />
     <Footer />
 
-    <button class="back-to-top" aria-label="맨 위로" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+    <button class="back-to-top" aria-label="맨 위로">↑</button>
 
     <script is:inline>
       // Reading progress bar
@@ -78,6 +78,9 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
       // Back-to-top button
       const btt = document.querySelector(".back-to-top");
       if (btt) {
+        btt.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
         window.addEventListener("scroll", () => {
           btt.classList.toggle("visible", window.scrollY > 400);
         }, { passive: true });
