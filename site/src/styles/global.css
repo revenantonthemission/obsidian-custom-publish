@@ -106,9 +106,9 @@ h1, h2, h3, h4 {
   font-weight: 650;
 }
 
-h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
-h2 { font-size: 1.35rem; margin-top: 2rem; margin-bottom: 0.5rem; }
-h3 { font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.4rem; }
+h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.5rem; }
+h3 { font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.4rem; }
 
 p { margin-bottom: 1rem; }
 
@@ -300,9 +300,9 @@ img {
   .site-main {
     padding: 1.5rem 1rem;
   }
-  h1 { font-size: 1.4rem; }
-  h2 { font-size: 1.2rem; }
-  h3 { font-size: 1.05rem; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
   .site-footer {
     padding: 1rem;
     font-size: 0.8rem;
@@ -314,8 +314,8 @@ img {
   .site-main {
     padding: 2rem 1.25rem;
   }
-  h1 { font-size: 1.6rem; }
-  h2 { font-size: 1.3rem; }
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.35rem; }
 }
 
 /* ── Responsive: Touch targets ── */

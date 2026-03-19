@@ -1,6 +1,6 @@
 ---
 import type { PostMeta } from "../lib/types";
-import { sanitizeTag } from "../lib/data";
+import { sanitizeTag, formatDateKo } from "../lib/data";
 
 interface Props {
   post: PostMeta;
@@ -13,7 +13,7 @@ const { post, summary } = Astro.props;
 <article class="post-card">
   <a href={`/posts/${post.slug}`} class="post-card-title">{post.title}</a>
   <div class="post-card-meta">
-    {post.published && <time datetime={post.published}>{post.published}</time>}
+    {post.published && <time datetime={post.published}>{formatDateKo(post.published)}</time>}
     <span>{post.reading_time_min}분 읽기</span>
   </div>
   {summary && <p class="post-card-summary">{summary}</p>}

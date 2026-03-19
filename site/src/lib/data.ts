@@ -99,6 +99,12 @@ export function getTagIndex(): Record<string, PostMeta[]> {
   return index;
 }
 
+/** Format an ISO date string (e.g. "2024-03-15") to Korean locale (e.g. "2024년 3월 15일"). */
+export function formatDateKo(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
+}
+
 /** Load previews.json (slug → {title, tags, summary}) for post card summaries. */
 export function getPreviewSummary(slug: string): string {
   if (!_previews) {
