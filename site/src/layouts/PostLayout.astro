@@ -6,7 +6,7 @@ import RelatedPosts from "../components/RelatedPosts.astro";
 import HubNav from "../components/HubNav.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
 import NavTreeIsland from "../islands/NavTree.tsx";
-import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta } from "../lib/data";
+import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta, formatDateKo } from "../lib/data";
 import type { PostMeta } from "../lib/types";
 import MobileSidebar from "../islands/MobileSidebar.tsx";
 import "../styles/post.css";
@@ -50,9 +50,9 @@ if (meta.hub_parent) {
       <header class="post-header">
         <h1 class="post-title">{meta.title}</h1>
         <div class="post-meta">
-          {meta.published && <time datetime={meta.published}>{meta.published}</time>}
+          {meta.published && <time datetime={meta.published}>{formatDateKo(meta.published)}</time>}
           {meta.updated && meta.updated !== meta.published && (
-            <span>수정: <time datetime={meta.updated}>{meta.updated}</time></span>
+            <span>수정: <time datetime={meta.updated}>{formatDateKo(meta.updated)}</time></span>
           )}
           <span>{meta.reading_time_min}분 읽기</span>
           {meta.tags.map((tag) => (
