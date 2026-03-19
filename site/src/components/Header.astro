@@ -1,7 +1,7 @@
 ---
 import ThemeToggle from "../islands/ThemeToggle.tsx";
 import MobileNav from "../islands/MobileNav.tsx";
-import { Split, Tags, Waypoints } from "lucide-static";
+import { Split, Tags, Waypoints, Search } from "lucide-static";
 ---
 
 <header class="site-header">
@@ -18,9 +18,16 @@ import { Split, Tags, Waypoints } from "lucide-static";
       <span class="nav-icon" set:html={Waypoints} />
       Graph
     </a>
+    <button class="search-trigger" aria-label="검색 열기" data-search-open>
+      <span class="nav-icon" set:html={Search} />
+      <kbd>⌘K</kbd>
+    </button>
     <ThemeToggle client:load />
   </nav>
   <div class="mobile-nav">
+    <button class="search-trigger mobile" aria-label="검색 열기" data-search-open>
+      <span class="nav-icon" set:html={Search} />
+    </button>
     <ThemeToggle client:load />
     <MobileNav
       client:load
@@ -31,3 +38,47 @@ import { Split, Tags, Waypoints } from "lucide-static";
     />
   </div>
 </header>
+
+<script>
+  document.querySelectorAll("[data-search-open]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("open-search"));
+    });
+  });
+</script>
+
+<style>
+  .search-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: none;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    color: var(--c-text-muted);
+    font-size: 0.85rem;
+    transition: background 0.15s, color 0.15s;
+  }
+  .search-trigger:hover {
+    color: var(--c-text);
+    background: var(--c-code-bg);
+  }
+  .search-trigger kbd {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    padding: 0.1em 0.35em;
+    border: 1px solid var(--c-border);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-text-muted);
+  }
+  .search-trigger.mobile kbd {
+    display: none;
+  }
+  .search-trigger .nav-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+</style>

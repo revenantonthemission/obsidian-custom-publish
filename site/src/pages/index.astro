@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
-import { getAllPostMeta, getPostContent } from "../lib/data";
+import { getAllPostMeta, getPostContent, getPreviewSummary } from "../lib/data";
 import { renderMarkdown } from "../lib/render";
 
 const slug = "passion-project";
@@ -23,7 +23,7 @@ const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 20);
   <section class="recent-posts">
     <h2>최근 글</h2>
     {recentPosts.map((post) => (
-      <PostCard post={post} />
+      <PostCard post={post} summary={getPreviewSummary(post.slug)} />
     ))}
   </section>
 

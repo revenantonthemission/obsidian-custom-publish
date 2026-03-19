@@ -121,6 +121,8 @@ export default function GraphView({ data, width, height }: Props) {
       width={width || "100%"}
       height={height || "100%"}
       style={{ cursor: "grab" }}
+      aria-label="모든 글의 연결 관계를 보여주는 그래프"
+      role="img"
     />
   );
 }

@@ -110,6 +110,8 @@ export default function LocalGraph({ slug, data }: Props) {
       </h3>
       <canvas
         ref={canvasRef}
+        aria-label="현재 글과 연결된 글들의 관계를 보여주는 로컬 그래프"
+        role="img"
         style={{ width: `${size}px`, height: `${size}px`, cursor: "pointer" }}
       />
     </div>
