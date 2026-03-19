@@ -1,16 +1,13 @@
 use std::collections::HashMap;
-use std::sync::LazyLock;
 
 use lindera::dictionary::DictionaryKind;
 use lindera::mode::Mode;
 use lindera::segmenter::Segmenter;
 use lindera::tokenizer::Tokenizer;
-use regex::Regex;
 use serde::Serialize;
 
+use crate::syntax::HTML_TAG_RE;
 use crate::types::VaultIndex;
-
-static HTML_TAG_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
 
 #[derive(Debug, Serialize)]
 pub struct SearchIndex {

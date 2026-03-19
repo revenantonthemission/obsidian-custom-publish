@@ -26,3 +26,8 @@ pub static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
 /// Groups: 1=note name, 2=block ID (optional).
 pub static TRANSCLUSION_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"!\[\[([^\]#]+?)(?:#\^([a-zA-Z0-9-]+))?\]\]").unwrap());
+
+/// Matches HTML tags (opening, closing, and self-closing).
+/// Used by preview and search modules for stripping HTML from plain text.
+pub static HTML_TAG_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());

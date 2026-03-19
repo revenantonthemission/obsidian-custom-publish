@@ -197,7 +197,7 @@ pub fn render_d2_bytes(
     child
         .stdin
         .take()
-        .unwrap()
+        .context("d2 process stdin was not piped")?
         .write_all(source.as_bytes())
         .context("failed to write to d2 stdin")?;
 

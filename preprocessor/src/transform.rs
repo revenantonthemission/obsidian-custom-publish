@@ -133,11 +133,13 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
                 let size = caps.get(3).map(|m| m.as_str());
                 match size {
                     Some(s) if s.contains('x') => {
-                        let parts: Vec<&str> = s.splitn(2, 'x').collect();
-                        format!(
-                            r#"<img src="/assets/{filename}" alt="" width="{}" height="{}" />"#,
-                            parts[0], parts[1]
-                        )
+                        if let Some((w, h)) = s.split_once('x') {
+                            format!(
+                                r#"<img src="/assets/{filename}" alt="" width="{w}" height="{h}" />"#,
+                            )
+                        } else {
+                            format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                        }
                     }
                     Some(w) => {
                         format!(r#"<img src="/assets/{filename}" alt="" width="{w}" />"#)
