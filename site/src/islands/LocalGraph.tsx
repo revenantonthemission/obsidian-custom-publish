@@ -44,7 +44,7 @@ export default function LocalGraph({ slug, data }: Props) {
       .force("collide", forceCollide().radius(15));
 
     const styles = getComputedStyle(document.documentElement);
-    const accentColor = styles.getPropertyValue("--c-accent").trim() || "#2563eb";
+    const accentColor = styles.getPropertyValue("--c-accent").trim() || "#0d9488";
     const textColor = styles.getPropertyValue("--c-text").trim() || "#1c1917";
     const borderColor = styles.getPropertyValue("--c-border").trim() || "#e7e5e4";
 
