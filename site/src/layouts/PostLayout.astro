@@ -38,7 +38,7 @@ if (meta.hub_parent) {
 
 <BaseLayout
   title={meta.title}
-  description={`${meta.title} — ${meta.tags.join(", ")}`}
+  description={meta.description || `${meta.title} — ${meta.tags.join(", ")}`}
   ogType="article"
   canonicalUrl={`/posts/${meta.slug}`}
 >

@@ -91,6 +91,24 @@
   margin-bottom: 0.4rem;
 }
 
+/* ── Highlighted text (==text==) ── */
+.post-content mark {
+  background: rgba(255, 208, 0, 0.25);
+  color: inherit;
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .post-content mark {
+  background: rgba(255, 208, 0, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .post-content mark {
+    background: rgba(255, 208, 0, 0.18);
+  }
+}
+
 /* ── Inline KaTeX size match ── */
 .post-content > p .katex,
 .post-content > li .katex {

@@ -22,10 +22,11 @@ pub static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"!\[\[([^\]|]+?\.(png|jpg|jpeg|gif|svg|webp))(?:\|(\d+(?:x\d+)?))?\]\]").unwrap()
 });
 
-/// Matches transclusions: `![[Note Name]]` or `![[Note Name#^block-id]]`.
-/// Groups: 1=note name, 2=block ID (optional).
-pub static TRANSCLUSION_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"!\[\[([^\]#]+?)(?:#\^([a-zA-Z0-9-]+))?\]\]").unwrap());
+/// Matches transclusions: `![[Note Name]]`, `![[Note Name#^block-id]]`, or `![[Note Name#Heading]]`.
+/// Groups: 1=note name, 2=block ID (optional, with `^` prefix stripped), 3=heading (optional).
+pub static TRANSCLUSION_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"!\[\[([^\]#]+?)(?:#(?:\^([a-zA-Z0-9-]+)|([^\]]+?)))?\]\]").unwrap()
+});
 
 /// Matches HTML tags (opening, closing, and self-closing).
 /// Used by preview and search modules for stripping HTML from plain text.

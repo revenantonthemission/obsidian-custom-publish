@@ -27,6 +27,8 @@ struct RawFrontmatter {
     is_hub: bool,
     #[serde(default)]
     hub_parent: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
 }
 
 /// Deserializes a YAML value that may be a date, integer, or string into `Option<String>`.
@@ -136,6 +138,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             updated,
             is_hub: frontmatter.is_hub,
             hub_parent: frontmatter.hub_parent,
+            description: frontmatter.description,
             raw_content: content,
         });
     }

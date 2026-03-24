@@ -13,6 +13,12 @@ Embedding another note:
 
 End of transclusion test.
 
+Heading-level transclusion:
+
+![[Simple Post#Introduction]]
+
+End of heading transclusion.
+
 ## Image Embeds
 
 A basic image embed: ![[test-image.png]]

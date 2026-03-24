@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@astrojs/preact": "^5.0.0",
+    "@astrojs/rss": "^4.0.17",
     "@astrojs/sitemap": "^3.7.1",
     "@shikijs/rehype": "^4.0.2",
     "@shikijs/transformers": "^4.0.2",

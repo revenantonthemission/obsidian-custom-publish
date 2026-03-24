@@ -6,6 +6,14 @@ use regex::Regex;
 use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
 use crate::types::VaultIndex;
 
+/// Matches Obsidian comments: `%%inline%%` or block `%%\n...\n%%`.
+static INLINE_COMMENT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"%%(.+?)%%").unwrap());
+
+/// Matches `==highlighted text==` for conversion to `<mark>` tags.
+static HIGHLIGHT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"==([^=\n]+?)==").unwrap());
+
 /// Escape HTML special characters to prevent XSS.
 fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
@@ -40,10 +48,12 @@ pub fn transform_content_with_assets(
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
     let content = strip_frontmatter(raw);
+    let content = strip_comments(&content);
     let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
     let content = inject_block_anchors(&content);
+    let content = convert_highlights(&content);
     let content = convert_callouts(&content);
     let content = render_diagram_blocks(&content, slug, asset_dir);
     (content, images)
@@ -59,6 +69,48 @@ pub fn strip_frontmatter(content: &str) -> String {
     } else {
         content.to_string()
     }
+}
+
+/// Strip Obsidian comments (`%%...%%`) from content.
+///
+/// Handles both inline comments (`some %%hidden%% text`) and block comments
+/// (a `%%` line starts a multi-line comment that ends at the next `%%` line).
+fn strip_comments(content: &str) -> String {
+    // First: strip block comments (%%\n...\n%%)
+    let mut result = String::with_capacity(content.len());
+    let mut in_block_comment = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed == "%%" {
+            in_block_comment = !in_block_comment;
+            continue;
+        }
+        if in_block_comment {
+            continue;
+        }
+        result.push_str(line);
+        result.push('\n');
+    }
+
+    // Preserve original trailing-newline behavior
+    if !content.ends_with('\n') && result.ends_with('\n') {
+        result.pop();
+    }
+
+    // Then: strip inline comments (%%hidden%%)
+    INLINE_COMMENT_RE.replace_all(&result, "").to_string()
+}
+
+/// Convert `==highlighted text==` to `<mark>` tags.
+fn convert_highlights(content: &str) -> String {
+    transform_outside_fences(content, |line| {
+        HIGHLIGHT_RE
+            .replace_all(line, |caps: &regex::Captures| {
+                format!("<mark>{}</mark>", &caps[1])
+            })
+            .to_string()
+    })
 }
 
 /// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
@@ -156,9 +208,13 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
     (result, images)
 }
 
-/// Replace `![[Note Name]]` or `![[Note Name#^block-id]]` with the referenced content.
-/// Full-note transclusions inline the entire body; block transclusions inline just
-/// the paragraph that carries the `^block-id` annotation.
+/// Replace `![[Note Name]]`, `![[Note Name#^block-id]]`, or `![[Note Name#Heading]]`
+/// with the referenced content.
+///
+/// - Full-note transclusions inline the entire body.
+/// - Block transclusions inline just the paragraph carrying the `^block-id` annotation.
+/// - Heading transclusions inline everything from the heading to the next heading
+///   of the same or higher level.
 ///
 /// Note: `convert_image_embeds` must run BEFORE this function in the pipeline,
 /// so image embeds (`![[file.png]]`) are already converted to `<img>` tags
@@ -168,6 +224,7 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
         TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
             let name = caps[1].trim();
             let block_id = caps.get(2).map(|m| m.as_str());
+            let heading = caps.get(3).map(|m| m.as_str().trim());
 
             if let Some(block_id) = block_id {
                 // Block transclusion: inline the specific paragraph
@@ -176,19 +233,70 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
                         return text.clone();
                     }
                 }
-                // Block not found — leave as plain text
                 format!("{name}#^{block_id}")
+            } else if let Some(heading) = heading {
+                // Heading transclusion: inline content under a specific heading
+                if let Some(&target_idx) = index.name_map.get(name) {
+                    let target_content = &index.posts[target_idx].raw_content;
+                    let body = strip_frontmatter(target_content);
+                    extract_heading_section(&body, heading)
+                        .unwrap_or_else(|| {
+                            eprintln!("warning: heading '{heading}' not found in '{name}'");
+                            format!("{name}#{heading}")
+                        })
+                } else {
+                    format!("{name}#{heading}")
+                }
             } else if let Some(&target_idx) = index.name_map.get(name) {
                 // Full-note transclusion
                 let target_content = &index.posts[target_idx].raw_content;
                 strip_frontmatter(target_content)
             } else {
-                // Leave as plain text if target not found
                 format!("{name}")
             }
         })
         .to_string()
     })
+}
+
+/// Extract the section under a heading: everything from the heading line (inclusive)
+/// to the next heading of the same or higher level (exclusive).
+pub fn extract_heading_section(content: &str, heading: &str) -> Option<String> {
+    static HEADING_LEVEL_RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"^(#{1,6})\s+(.+)$").unwrap());
+
+    let mut found = false;
+    let mut level = 0;
+    let mut section_lines = Vec::new();
+
+    for line in content.lines() {
+        if let Some(caps) = HEADING_LEVEL_RE.captures(line) {
+            let hashes = caps[1].len();
+            let text = caps[2].trim();
+
+            if !found {
+                // Look for the matching heading (case-insensitive)
+                if text.eq_ignore_ascii_case(heading) {
+                    found = true;
+                    level = hashes;
+                    section_lines.push(line.to_string());
+                }
+            } else if hashes <= level {
+                // Hit a same-or-higher-level heading — stop
+                break;
+            } else {
+                section_lines.push(line.to_string());
+            }
+        } else if found {
+            section_lines.push(line.to_string());
+        }
+    }
+
+    if found {
+        Some(section_lines.join("\n"))
+    } else {
+        None
+    }
 }
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.

@@ -11,6 +11,7 @@ export interface PostMeta {
   forward_links: string[];
   is_hub: boolean;
   hub_parent: string | null;
+  description: string | null;
   reading_time_min: number;
   word_count: number;
   related_posts?: string[];
