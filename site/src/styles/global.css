@@ -84,21 +84,24 @@ pre.shiki span {
 
 /* ── Skip link ── */
 .skip-link {
-  position: absolute;
-  top: -100%;
-  left: 1rem;
+  position: fixed;
+  top: -3rem;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 300;
   padding: 0.5rem 1rem;
   background: var(--c-accent);
   color: #fff;
-  border-radius: var(--radius);
+  border-radius: 0 0 var(--radius) var(--radius);
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
+  transition: top 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .skip-link:focus {
-  top: 0.5rem;
+  top: 0;
   color: #fff;
   text-decoration: none;
 }
@@ -320,6 +323,24 @@ img {
 
 .back-to-top:hover {
   background: var(--c-code-bg);
+}
+
+/* ── Skeleton shimmer ── */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--c-code-bg) 25%,
+    var(--c-border) 50%,
+    var(--c-code-bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
 }
 
 /* ── Reduced motion ── */

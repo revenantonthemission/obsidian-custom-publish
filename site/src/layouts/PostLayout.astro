@@ -162,6 +162,12 @@ if (meta.hub_parent) {
   let tooltip: HTMLDivElement | null = null;
   let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Mobile bottom card elements
+  let mobileCard: HTMLDivElement | null = null;
+  let mobileBackdrop: HTMLDivElement | null = null;
+
+  const isMobile = window.matchMedia("(max-width: 767px)");
+
   async function ensurePreviewData() {
     if (previewData) return previewData;
     try {
@@ -172,6 +178,8 @@ if (meta.hub_parent) {
     }
     return previewData;
   }
+
+  // ── Desktop: hover tooltip ──
 
   function createTooltip() {
     if (tooltip) return tooltip;
@@ -239,10 +247,86 @@ if (meta.hub_parent) {
     }
   }
 
+  // ── Mobile: tap to show bottom card ──
+
+  function createMobileCard() {
+    if (mobileCard) return;
+    mobileBackdrop = document.createElement("div");
+    mobileBackdrop.className = "link-preview-backdrop";
+    mobileBackdrop.addEventListener("click", hideMobilePreview);
+    document.body.appendChild(mobileBackdrop);
+
+    mobileCard = document.createElement("div");
+    mobileCard.className = "link-preview-mobile";
+    document.body.appendChild(mobileCard);
+  }
+
+  function hideMobilePreview() {
+    mobileCard?.classList.remove("visible");
+    mobileBackdrop?.classList.remove("visible");
+  }
+
+  async function showMobilePreview(anchor: HTMLAnchorElement, e: Event) {
+    const href = anchor.getAttribute("href") || "";
+    const match = href.match(/^\/posts\/(.+?)(?:#|$)/);
+    if (!match) return;
+
+    const slug = match[1];
+    const data = await ensurePreviewData();
+    if (!data) return;
+    const preview = data[slug];
+    if (!preview) return;
+
+    // Preview available — prevent navigation, show card
+    e.preventDefault();
+    createMobileCard();
+    if (!mobileCard || !mobileBackdrop) return;
+
+    mobileCard.replaceChildren();
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "preview-title";
+    titleEl.textContent = preview.title;
+    mobileCard.appendChild(titleEl);
+
+    if (preview.tags.length) {
+      const tagsEl = document.createElement("div");
+      tagsEl.className = "preview-tags";
+      for (const tag of preview.tags) {
+        const tagSpan = document.createElement("span");
+        tagSpan.textContent = tag;
+        tagsEl.appendChild(tagSpan);
+      }
+      mobileCard.appendChild(tagsEl);
+    }
+
+    const summaryEl = document.createElement("p");
+    summaryEl.className = "preview-summary";
+    summaryEl.textContent = preview.summary;
+    mobileCard.appendChild(summaryEl);
+
+    const visitLink = document.createElement("a");
+    visitLink.className = "preview-visit";
+    visitLink.href = href;
+    visitLink.textContent = "방문 →";
+    mobileCard.appendChild(visitLink);
+
+    mobileBackdrop.classList.add("visible");
+    // Force reflow before adding visible class for transition
+    mobileCard.offsetHeight;
+    mobileCard.classList.add("visible");
+  }
+
+  // ── Init ──
+
   function initLinkPreviews() {
     document.querySelectorAll('a[href^="/posts/"]').forEach((a) => {
-      a.addEventListener("mouseenter", () => showPreview(a as HTMLAnchorElement));
-      a.addEventListener("mouseleave", hidePreview);
+      if (isMobile.matches) {
+        a.addEventListener("click", (e) => showMobilePreview(a as HTMLAnchorElement, e));
+      } else {
+        a.addEventListener("mouseenter", () => showPreview(a as HTMLAnchorElement));
+        a.addEventListener("mouseleave", hidePreview);
+      }
     });
   }
 
@@ -269,6 +353,16 @@ if (meta.hub_parent) {
     headings.forEach((h) => observer.observe(h));
   }
   initTocHighlight();
+</script>
+<script>
+  // Wrap diagrams in scrollable container for mobile
+  document.querySelectorAll('.post-content .diagram, .post-content .diagram-d2, .post-content .diagram-typst').forEach((el) => {
+    if (el.parentElement?.classList.contains('diagram-wrapper')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'diagram-wrapper';
+    el.parentNode?.insertBefore(wrapper, el);
+    wrapper.appendChild(el);
+  });
 </script>
 <script>
   function initHeadingFold() {

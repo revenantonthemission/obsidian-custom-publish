@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import {
   forceSimulation,
   forceLink,
@@ -17,6 +17,7 @@ interface Props {
 
 export default function LocalGraph({ slug, data }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [ready, setReady] = useState(false);
   const size = 240;
 
   useEffect(() => {
@@ -47,6 +48,8 @@ export default function LocalGraph({ slug, data }: Props) {
     const accentColor = styles.getPropertyValue("--c-accent").trim() || "#0d9488";
     const textColor = styles.getPropertyValue("--c-text").trim() || "#1c1917";
     const borderColor = styles.getPropertyValue("--c-border").trim() || "#e7e5e4";
+
+    setReady(true);
 
     sim.on("tick", () => {
       ctx.clearRect(0, 0, size, size);
@@ -110,11 +113,22 @@ export default function LocalGraph({ slug, data }: Props) {
       >
         로컬 그래프
       </h3>
+      {!ready && (
+        <div
+          class="skeleton"
+          style={{ width: `${size}px`, height: `${size}px` }}
+        />
+      )}
       <canvas
         ref={canvasRef}
         aria-label="현재 글과 연결된 글들의 관계를 보여주는 로컬 그래프"
         role="img"
-        style={{ width: `${size}px`, height: `${size}px`, cursor: "pointer" }}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          cursor: "pointer",
+          display: ready ? "block" : "none",
+        }}
       />
     </div>
   );

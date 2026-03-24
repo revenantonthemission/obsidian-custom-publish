@@ -42,24 +42,29 @@
   }
 }
 
+/* On post pages (mobile sidebar present), move back-to-top to left side */
+@media (max-width: 959px) {
+  body:has(.mobile-sidebar-btn) .back-to-top {
+    right: auto;
+    left: 1rem;
+  }
+}
+
 @media (max-width: 479px) {
-  .back-to-top {
-    bottom: 7.5rem;
-    right: 1rem;
+  body:has(.mobile-sidebar-btn) .back-to-top {
+    left: 1rem;
   }
 }
 
 @media (min-width: 480px) and (max-width: 767px) {
-  .back-to-top {
-    bottom: 8rem;
-    right: 1.5rem;
+  body:has(.mobile-sidebar-btn) .back-to-top {
+    left: 1.5rem;
   }
 }
 
 @media (min-width: 768px) and (max-width: 959px) {
-  .back-to-top {
-    bottom: 8.5rem;
-    right: 2rem;
+  body:has(.mobile-sidebar-btn) .back-to-top {
+    left: 2rem;
   }
 }
 

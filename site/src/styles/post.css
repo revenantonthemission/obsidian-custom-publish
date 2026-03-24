@@ -238,10 +238,9 @@
   height: auto;
 }
 
-/* Diagrams: render at readable size, scroll horizontally on mobile */
+/* Diagrams: scale to fit viewport, scroll wrapper handles overflow */
 .post-content img.diagram {
   height: auto;
-  min-width: 600px;
   max-width: 100%;
   width: 100%;
 }
@@ -337,18 +336,24 @@ a[data-footnote-backref] {
 }
 
 /* ── Heading fold toggle ── */
+.post-content h2,
+.post-content h3 {
+  position: relative;
+}
+
 .heading-fold-toggle {
+  position: absolute;
+  left: -1.25rem;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
   background: none;
   border: none;
   cursor: pointer;
   font-size: 0.6em;
   color: var(--c-text-muted);
-  padding: 0 0.4rem 0 0;
+  padding: 0;
   opacity: 0;
   transition: opacity 0.15s, transform 0.15s;
-  display: inline-block;
-  transform: rotate(90deg);
-  vertical-align: middle;
 }
 
 h2:hover .heading-fold-toggle,
@@ -359,7 +364,7 @@ h3:hover .heading-fold-toggle,
 
 h2.collapsed .heading-fold-toggle,
 h3.collapsed .heading-fold-toggle {
-  transform: rotate(0deg);
+  transform: translateY(-50%) rotate(0deg);
   opacity: 1;
 }
 
