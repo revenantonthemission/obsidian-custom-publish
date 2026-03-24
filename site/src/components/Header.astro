@@ -2,6 +2,14 @@
 import ThemeToggle from "../islands/ThemeToggle.tsx";
 import MobileNav from "../islands/MobileNav.tsx";
 import { Split, Tags, Waypoints, Search } from "lucide-static";
+
+interface Props {
+  pathname?: string;
+}
+
+const { pathname = "" } = Astro.props;
+const isCurrent = (href: string) =>
+  pathname === href || pathname.startsWith(href + "/") ? "page" : undefined;
 ---
 
 <header class="site-header">
@@ -10,11 +18,11 @@ import { Split, Tags, Waypoints, Search } from "lucide-static";
     obsidian-press
   </a>
   <nav class="desktop-nav">
-    <a href="/tags" class="site-nav-link">
+    <a href="/tags" class="site-nav-link" aria-current={isCurrent("/tags")}>
       <span class="nav-icon" set:html={Tags} />
       Tags
     </a>
-    <a href="/graph" class="site-nav-link">
+    <a href="/graph" class="site-nav-link" aria-current={isCurrent("/graph")}>
       <span class="nav-icon" set:html={Waypoints} />
       Graph
     </a>
@@ -31,6 +39,7 @@ import { Split, Tags, Waypoints, Search } from "lucide-static";
     <ThemeToggle client:load />
     <MobileNav
       client:load
+      pathname={pathname}
       links={[
         { href: "/tags", label: "Tags" },
         { href: "/graph", label: "Graph" },

@@ -56,9 +56,10 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
     </script>
   </head>
   <body>
+    <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
     <div class="reading-progress" aria-hidden="true"></div>
-    <Header />
-    <main class="site-main">
+    <Header pathname={Astro.url.pathname} />
+    <main id="main-content" class="site-main">
       <slot />
     </main>
     <Search client:idle />
