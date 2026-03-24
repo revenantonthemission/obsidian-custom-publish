@@ -12,7 +12,7 @@ interface Heading {
 const { content } = Astro.props;
 
 // Extract headings from rendered HTML content — relies on rehype-slug for id attributes
-const headingRegex = /<h([2-4])\s+id="([^"]*)"[^>]*>(.*?)<\/h[2-4]>/gi;
+const headingRegex = /<h([1-6])\s+id="([^"]*)"[^>]*>(.*?)<\/h[1-6]>/gi;
 const headings: Heading[] = [];
 let match;
 while ((match = headingRegex.exec(content)) !== null) {
@@ -65,6 +65,9 @@ while ((match = headingRegex.exec(content)) !== null) {
     color: var(--c-accent);
     font-weight: 600;
   }
+  .toc-depth-1 { font-weight: 600; }
   .toc-depth-3 { padding-left: 1rem; }
   .toc-depth-4 { padding-left: 2rem; }
+  .toc-depth-5 { padding-left: 3rem; }
+  .toc-depth-6 { padding-left: 4rem; }
 </style>

@@ -14,17 +14,23 @@ const beforeAndAfter = htmlContent.split(recentHeadingRe);
 const contentBefore = beforeAndAfter[0] ?? htmlContent;
 const contentAfter = beforeAndAfter[1] ?? "";
 
-const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 20);
+const today = new Date().toISOString().slice(0, 10);
+const recentPosts = getAllPostMeta()
+  .filter((p) => !p.is_hub && p.published === today);
 ---
 
 <BaseLayout title="Passion Project">
   <div class="home-content post-content" set:html={contentBefore} />
 
   <section class="recent-posts">
-    <h2>최근 글</h2>
-    {recentPosts.map((post) => (
-      <PostCard post={post} summary={getPreviewSummary(post.slug)} />
-    ))}
+    <h2>오늘 발행된 글</h2>
+    {recentPosts.length > 0 ? (
+      recentPosts.map((post) => (
+        <PostCard post={post} summary={getPreviewSummary(post.slug)} />
+      ))
+    ) : (
+      <p class="no-posts">오늘 발행된 글이 없습니다.</p>
+    )}
   </section>
 
   {contentAfter && <div class="home-content post-content" set:html={contentAfter} />}
@@ -36,5 +42,9 @@ const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 20);
   }
   .recent-posts {
     margin-bottom: 2rem;
+  }
+  .no-posts {
+    color: var(--c-text-muted);
+    font-size: 0.9rem;
   }
 </style>

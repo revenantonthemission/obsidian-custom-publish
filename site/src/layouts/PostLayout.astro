@@ -334,7 +334,7 @@ if (meta.hub_parent) {
 </script>
 <script>
   function initTocHighlight() {
-    const headings = document.querySelectorAll('.post-content h2[id], .post-content h3[id], .post-content h4[id]');
+    const headings = document.querySelectorAll('.post-content h1[id], .post-content h2[id], .post-content h3[id], .post-content h4[id], .post-content h5[id], .post-content h6[id]');
     if (!headings.length) return;
 
     const observer = new IntersectionObserver((entries) => {

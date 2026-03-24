@@ -296,6 +296,10 @@
 }
 
 .footnotes li {
+  scroll-margin-top: 3.5rem;
+}
+
+.footnotes li {
   margin-bottom: 0.5rem;
 }
 
@@ -308,6 +312,7 @@ sup a[data-footnote-ref] {
   color: var(--c-accent);
   text-decoration: none;
   font-weight: 600;
+  scroll-margin-top: 3.5rem;
 }
 
 a[data-footnote-backref] {

@@ -13,7 +13,7 @@ const isCurrent = (href: string) =>
 ---
 
 <header class="site-header">
-  <a href="/" class="site-title">
+  <a href="/" class="site-title" aria-current={pathname === "/" ? "page" : undefined}>
     <span class="nav-icon" set:html={Split} />
     obsidian-press
   </a>
