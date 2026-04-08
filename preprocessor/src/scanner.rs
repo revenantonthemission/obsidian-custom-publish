@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use chrono::{DateTime, Local};
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -97,6 +98,90 @@ fn extract_blocks(content: &str) -> HashMap<String, String> {
     blocks
 }
 
+/// Stamp `published: YYYY-MM-DD` (today, local timezone) into vault files that either
+/// lack a `published` field or were modified after their existing `published` date.
+/// Returns the number of files stamped.
+pub fn stamp_published_dates(vault_path: &Path) -> Result<usize> {
+    let today = Local::now().format("%Y-%m-%d").to_string();
+    let mut count = 0;
+
+    for entry in WalkDir::new(vault_path)
+        .into_iter()
+        .filter_entry(|e| !is_excluded(e))
+    {
+        let entry = entry.context("failed to read directory entry")?;
+        let path = entry.path();
+
+        if !path.is_file() || path.extension().is_none_or(|ext| ext != "md") {
+            continue;
+        }
+
+        let content = std::fs::read_to_string(path)
+            .with_context(|| format!("failed to read {}", path.display()))?;
+
+        if !content.starts_with("---") {
+            // No frontmatter — add one with published
+            let stamped = format!("---\npublished: {today}\n---\n{content}");
+            std::fs::write(path, stamped)
+                .with_context(|| format!("failed to write {}", path.display()))?;
+            count += 1;
+            continue;
+        }
+
+        if let Some(end) = content[3..].find("\n---") {
+            let yaml_block = &content[3..3 + end];
+
+            // Find existing published date
+            let existing_published = yaml_block
+                .lines()
+                .find(|l| l.trim_start().starts_with("published:"))
+                .and_then(|l| l.split_once(':'))
+                .map(|(_, v)| v.trim().to_string());
+
+            match existing_published {
+                Some(pub_date) => {
+                    // Check if file was modified after the published date
+                    let mtime_date = file_modified_date(path);
+                    if mtime_date.as_deref() <= Some(pub_date.as_str()) {
+                        continue; // not modified since last publish
+                    }
+
+                    // Replace existing published date with today
+                    let stamped = content.replace(
+                        &format!("published: {pub_date}"),
+                        &format!("published: {today}"),
+                    );
+                    std::fs::write(path, stamped)
+                        .with_context(|| format!("failed to write {}", path.display()))?;
+                    count += 1;
+                }
+                None => {
+                    // No published field — insert before the closing `---`
+                    let before_close = 3 + end;
+                    let stamped = format!(
+                        "{}\npublished: {today}{}",
+                        &content[..before_close],
+                        &content[before_close..]
+                    );
+                    std::fs::write(path, stamped)
+                        .with_context(|| format!("failed to write {}", path.display()))?;
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    Ok(count)
+}
+
+/// Get the file modification date as `YYYY-MM-DD` in local timezone, or `None` if unavailable.
+fn file_modified_date(file_path: &Path) -> Option<String> {
+    let metadata = std::fs::metadata(file_path).ok()?;
+    let modified = metadata.modified().ok()?;
+    let local: DateTime<Local> = modified.into();
+    Some(local.format("%Y-%m-%d").to_string())
+}
+
 /// Scan an Obsidian vault directory and build an index of all posts.
 pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
     let mut posts = Vec::new();
@@ -128,12 +213,14 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 
         let updated = git_last_modified(path);
 
+        let created = frontmatter.created.or_else(|| file_created_date(path));
+
         posts.push(PostMeta {
             slug,
             title,
             file_path: path.to_path_buf(),
             tags: frontmatter.tags,
-            created: frontmatter.created,
+            created,
             published: frontmatter.published,
             updated,
             is_hub: frontmatter.is_hub,
@@ -226,6 +313,14 @@ fn git_last_modified(file_path: &Path) -> Option<String> {
     }
     let date = String::from_utf8(output.stdout).ok()?.trim().to_string();
     if date.is_empty() { None } else { Some(date) }
+}
+
+/// Get the file creation date (birthtime) as `YYYY-MM-DD` in local timezone, or `None` if unavailable.
+fn file_created_date(file_path: &Path) -> Option<String> {
+    let metadata = std::fs::metadata(file_path).ok()?;
+    let created = metadata.created().ok()?;
+    let local: DateTime<Local> = created.into();
+    Some(local.format("%Y-%m-%d").to_string())
 }
 
 /// Check if a walkdir entry should be skipped (hidden or drafts).

@@ -1,6 +1,11 @@
 use anyhow::{Context, Result, bail};
+use regex::Regex;
 use std::io::Write;
+use std::sync::LazyLock;
 use tempfile::NamedTempFile;
+
+static INIT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
 
 /// Infer and prepend a Mermaid diagram-type header when one is missing.
 ///
@@ -48,12 +53,40 @@ fn ensure_mermaid_header(source: &str) -> String {
     source.to_string()
 }
 
+/// Inject the desired theme into the source's `%%{init}%%` directive,
+/// or strip it and let the `-t` CLI flag handle theming.
+///
+/// When a `%%{init}%%` directive sets its own theme, the `-t` CLI flag
+/// conflicts and can break diagram type detection. We resolve this by
+/// replacing the theme inside the directive so `-t` is not needed.
+fn apply_theme_to_source(source: &str, theme: &str) -> (String, bool) {
+    if !source.contains("%%{") {
+        return (source.to_string(), false);
+    }
+
+    let result = INIT_RE.replace(source, |caps: &regex::Captures| {
+        let init_block = &caps[0];
+        // Replace 'theme': '...' or "theme": "..." with the desired theme
+        let re_theme = Regex::new(r#"(['"])theme\1\s*:\s*(['"])[^'"]*\2"#).unwrap();
+        if re_theme.is_match(init_block) {
+            re_theme.replace(init_block, format!("'theme': '{theme}'")).to_string()
+        } else {
+            // No theme key — inject one after the opening %%{init: {
+            init_block.replacen("{", &format!("{{ 'theme': '{theme}',"), 2)
+        }
+    });
+
+    (result.to_string(), true)
+}
+
 /// Render Mermaid source to SVG via the `mmdc` CLI.
 ///
 /// Writes source to a temp file, runs mmdc to produce SVG output.
 /// `theme` is a Mermaid theme name (e.g. "default" for light, "dark" for dark).
 pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
     let source = ensure_mermaid_header(source);
+    let (source, has_init) = apply_theme_to_source(&source, theme);
+
     let mut input = NamedTempFile::with_suffix(".mmd")
         .context("failed to create temp input file")?;
     input
@@ -64,15 +97,20 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
         .context("failed to create temp output file")?;
     let output_path = output_file.path().to_path_buf();
 
-    let result = std::process::Command::new("mmdc")
-        .arg("-i")
+    let mut cmd = std::process::Command::new("mmdc");
+    cmd.arg("-i")
         .arg(input.path())
         .arg("-o")
         .arg(&output_path)
         .arg("-b")
-        .arg("transparent")
-        .arg("-t")
-        .arg(theme)
+        .arg("transparent");
+
+    // Only pass -t when there's no %%{init}%% directive (avoid conflicts)
+    if !has_init {
+        cmd.arg("-t").arg(theme);
+    }
+
+    let result = cmd
         .output()
         .context("failed to spawn mmdc — is @mermaid-js/mermaid-cli installed?")?;
 
