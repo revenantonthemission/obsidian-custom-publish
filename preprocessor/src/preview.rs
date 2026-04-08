@@ -2,6 +2,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
+use crate::syntax::HTML_TAG_RE;
 use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
 
@@ -12,7 +13,6 @@ static RE_WIKILINK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]").unwrap());
 static RE_MARKDOWN_LINK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[([^\]]*)\]\([^)]*\)").unwrap());
-static RE_HTML_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
 static RE_BLOCK_REF: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*\^[\w-]+\s*$").unwrap());
 static RE_MULTI_SPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
@@ -59,7 +59,7 @@ fn strip_markdown_for_preview(content: &str) -> String {
     // Strip markdown links: [text](url) -> text
     let text = RE_MARKDOWN_LINK.replace_all(&text, "$1");
     // Strip HTML tags
-    let text = RE_HTML_TAG.replace_all(&text, "");
+    let text = HTML_TAG_RE.replace_all(&text, "");
     // Strip inline markdown: **, *, `, ~~
     let text = RE_INLINE_MARKDOWN.replace_all(&text, "");
     // Strip block references

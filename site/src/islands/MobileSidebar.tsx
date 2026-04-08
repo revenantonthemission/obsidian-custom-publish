@@ -123,21 +123,27 @@ export default function MobileSidebar({ content, currentSlug }: Props) {
         <div class="mobile-sidebar-overlay" onClick={() => setOpen(false)}>
           <div class="mobile-sidebar-card" onClick={(e) => e.stopPropagation()}>
             <div class="mobile-sidebar-header">
-              <div class="mobile-sidebar-tabs">
+              <div class="mobile-sidebar-tabs" role="tablist" aria-label="사이드바 탭">
                 <button
+                  role="tab"
+                  aria-selected={tab === "toc"}
+                  aria-controls="panel-toc"
                   class={`mobile-sidebar-tab ${tab === "toc" ? "active" : ""}`}
                   onClick={() => setTab("toc")}
                 >
                   목차
                 </button>
                 <button
+                  role="tab"
+                  aria-selected={tab === "nav"}
+                  aria-controls="panel-nav"
                   class={`mobile-sidebar-tab ${tab === "nav" ? "active" : ""}`}
                   onClick={() => setTab("nav")}
                 >
                   탐색
                 </button>
               </div>
-              <button class="mobile-sidebar-close" onClick={() => setOpen(false)}>
+              <button class="mobile-sidebar-close" aria-label="사이드바 닫기" onClick={() => setOpen(false)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -148,43 +154,47 @@ export default function MobileSidebar({ content, currentSlug }: Props) {
 
             <div class="mobile-sidebar-body">
               {tab === "toc" && (
-                toc.length > 0 ? (
-                  <ul class="toc-list">
-                    {toc.map((entry) => (
-                      <li key={entry.id} class={`toc-item toc-depth-${entry.depth}`}>
-                        <a href={`#${entry.id}`} onClick={(e) => {
-                          e.preventDefault();
-                          handleTocClick(entry.id);
-                        }}>
-                          {entry.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ color: "var(--c-text-muted)", fontSize: "0.875rem" }}>
-                    이 글에는 목차가 없습니다.
-                  </p>
-                )
+                <div id="panel-toc" role="tabpanel" aria-label="목차">
+                  {toc.length > 0 ? (
+                    <ul class="toc-list">
+                      {toc.map((entry) => (
+                        <li key={entry.id} class={`toc-item toc-depth-${entry.depth}`}>
+                          <a href={`#${entry.id}`} onClick={(e) => {
+                            e.preventDefault();
+                            handleTocClick(entry.id);
+                          }}>
+                            {entry.text}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ color: "var(--c-text-muted)", fontSize: "0.875rem" }}>
+                      이 글에는 목차가 없습니다.
+                    </p>
+                  )}
+                </div>
               )}
 
               {tab === "nav" && (
-                navTree && navTree.roots.length > 0 ? (
-                  <ul class="nav-tree-root">
-                    {navTree.roots.map((root) => (
-                      <TreeNode
-                        key={root.slug}
-                        node={root}
-                        currentSlug={currentSlug}
-                        defaultOpen={isAncestor(root, currentSlug)}
-                      />
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ color: "var(--c-text-muted)", fontSize: "0.875rem" }}>
-                    탐색 트리를 불러오는 중...
-                  </p>
-                )
+                <div id="panel-nav" role="tabpanel" aria-label="탐색">
+                  {navTree && navTree.roots.length > 0 ? (
+                    <ul class="nav-tree-root">
+                      {navTree.roots.map((root) => (
+                        <TreeNode
+                          key={root.slug}
+                          node={root}
+                          currentSlug={currentSlug}
+                          defaultOpen={isAncestor(root, currentSlug)}
+                        />
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ color: "var(--c-text-muted)", fontSize: "0.875rem" }}>
+                      탐색 트리를 불러오는 중...
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>

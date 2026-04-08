@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import {
   forceSimulation,
   forceLink,
@@ -17,6 +17,7 @@ interface Props {
 
 export default function LocalGraph({ slug, data }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [ready, setReady] = useState(false);
   const size = 240;
 
   useEffect(() => {
@@ -43,10 +44,17 @@ export default function LocalGraph({ slug, data }: Props) {
       .force("center", forceCenter(size / 2, size / 2))
       .force("collide", forceCollide().radius(15));
 
+    const styles = getComputedStyle(document.documentElement);
+    const accentColor = styles.getPropertyValue("--c-accent").trim() || "#0d9488";
+    const textColor = styles.getPropertyValue("--c-text").trim() || "#1c1917";
+    const borderColor = styles.getPropertyValue("--c-border").trim() || "#e7e5e4";
+
+    setReady(true);
+
     sim.on("tick", () => {
       ctx.clearRect(0, 0, size, size);
 
-      ctx.strokeStyle = "rgba(150, 150, 150, 0.3)";
+      ctx.strokeStyle = borderColor;
       ctx.lineWidth = 1;
       for (const link of links as unknown as ResolvedLink[]) {
         ctx.beginPath();
@@ -59,14 +67,11 @@ export default function LocalGraph({ slug, data }: Props) {
         const isCurrent = node.slug === slug;
         ctx.beginPath();
         ctx.arc(node.x!, node.y!, isCurrent ? 6 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isCurrent ? "#2563eb" : getNodeColor(node);
+        ctx.fillStyle = isCurrent ? accentColor : getNodeColor(node);
         ctx.fill();
       }
 
-      ctx.fillStyle =
-        getComputedStyle(document.documentElement)
-          .getPropertyValue("--c-text")
-          .trim() || "#1c1917";
+      ctx.fillStyle = textColor;
       ctx.font = "10px sans-serif";
       ctx.textAlign = "center";
       for (const node of nodes) {
@@ -108,9 +113,22 @@ export default function LocalGraph({ slug, data }: Props) {
       >
         로컬 그래프
       </h3>
+      {!ready && (
+        <div
+          class="skeleton"
+          style={{ width: `${size}px`, height: `${size}px` }}
+        />
+      )}
       <canvas
         ref={canvasRef}
-        style={{ width: `${size}px`, height: `${size}px`, cursor: "pointer" }}
+        aria-label="현재 글과 연결된 글들의 관계를 보여주는 로컬 그래프"
+        role="img"
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          cursor: "pointer",
+          display: ready ? "block" : "none",
+        }}
       />
     </div>
   );

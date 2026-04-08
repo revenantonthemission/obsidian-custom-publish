@@ -1,4 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
+import { Sun, Moon } from "lucide-preact";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
@@ -27,13 +28,15 @@ export default function ThemeToggle() {
         background: "none",
         border: "1px solid var(--c-border)",
         borderRadius: "var(--radius)",
-        padding: "0.35em 0.6em",
+        padding: "0.35em 0.5em",
         cursor: "pointer",
         color: "var(--c-text)",
-        fontSize: "0.9rem",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      {theme === "light" ? "\u263E" : "\u2600"}
+      {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
     </button>
   );
 }

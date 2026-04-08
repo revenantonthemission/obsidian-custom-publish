@@ -2,9 +2,10 @@ import { useState } from "preact/hooks";
 
 interface Props {
   links: { href: string; label: string }[];
+  pathname?: string;
 }
 
-export default function MobileNav({ links }: Props) {
+export default function MobileNav({ links, pathname = "" }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,7 +34,16 @@ export default function MobileNav({ links }: Props) {
       {open && (
         <div class="mobile-nav-dropdown">
           {links.map((link) => (
-            <a key={link.href} href={link.href} class="mobile-nav-link">
+            <a
+              key={link.href}
+              href={link.href}
+              class="mobile-nav-link"
+              aria-current={
+                pathname === link.href || pathname.startsWith(link.href + "/")
+                  ? "page"
+                  : undefined
+              }
+            >
               {link.label}
             </a>
           ))}

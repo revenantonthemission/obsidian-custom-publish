@@ -2,7 +2,6 @@
 .diagram {
   display: block;
   margin: 1.5rem auto;
-  min-width: 600px;
   max-width: 100%;
   width: 100%;
   height: auto;
@@ -19,13 +18,25 @@
 .diagram-typst {
   text-align: center;
   margin-bottom: 1.5rem;
-  min-width: 600px;
 }
 
 /* Mermaid diagrams */
 .diagram-mermaid {
   text-align: center;
   margin-bottom: 1.5rem;
+}
+
+/* Scrollable wrapper for diagrams that overflow on mobile */
+.diagram-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.diagram-wrapper .diagram,
+.diagram-wrapper .diagram-d2,
+.diagram-wrapper .diagram-typst {
+  min-width: 600px;
+  margin-bottom: 0;
 }
 
 /* Diagrams inside figures: hide captions */

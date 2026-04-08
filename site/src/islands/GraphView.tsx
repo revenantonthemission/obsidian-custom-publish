@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import {
   forceSimulation,
   forceLink,
@@ -20,6 +20,7 @@ interface Props {
 
 export default function GraphView({ data, width, height }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
@@ -46,6 +47,7 @@ export default function GraphView({ data, width, height }: Props) {
         g.attr("transform", event.transform);
       });
     svg.call(zoomBehavior);
+    setReady(true);
 
     // Draw edges
     const linkElements = g
@@ -116,11 +118,21 @@ export default function GraphView({ data, width, height }: Props) {
   }, [data, width, height]);
 
   return (
-    <svg
-      ref={svgRef}
-      width={width || "100%"}
-      height={height || "100%"}
-      style={{ cursor: "grab" }}
-    />
+    <>
+      {!ready && (
+        <div
+          class="skeleton"
+          style={{ width: "100%", height: "100%" }}
+        />
+      )}
+      <svg
+        ref={svgRef}
+        width={width || "100%"}
+        height={height || "100%"}
+        style={{ cursor: "grab", display: ready ? "block" : "none" }}
+        aria-label="모든 글의 연결 관계를 보여주는 그래프"
+        role="img"
+      />
+    </>
   );
 }

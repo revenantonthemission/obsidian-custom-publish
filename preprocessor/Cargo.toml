@@ -11,6 +11,7 @@ serde_yaml = "0.9"
 walkdir = "2"
 clap = { version = "4", features = ["derive"] }
 regex = "1"
+chrono = "0.4"
 tempfile = "3"
 lindera = { version = "2", features = ["embed-ko-dic"] }
 

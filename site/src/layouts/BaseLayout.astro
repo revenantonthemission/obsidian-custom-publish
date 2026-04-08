@@ -33,11 +33,13 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <link rel="canonical" href={fullUrl} />
+    <link rel="alternate" type="application/rss+xml" title="obsidian-press RSS" href="/rss.xml" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+      crossorigin
     />
     <link
       rel="stylesheet"
@@ -55,15 +57,16 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
     </script>
   </head>
   <body>
+    <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
     <div class="reading-progress" aria-hidden="true"></div>
-    <Header />
-    <main class="site-main">
+    <Header pathname={Astro.url.pathname} />
+    <main id="main-content" class="site-main">
       <slot />
     </main>
     <Search client:idle />
     <Footer />
 
-    <button class="back-to-top" aria-label="맨 위로" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+    <button class="back-to-top" aria-label="맨 위로">↑</button>
 
     <script is:inline>
       // Reading progress bar
@@ -78,6 +81,9 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
       // Back-to-top button
       const btt = document.querySelector(".back-to-top");
       if (btt) {
+        btt.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
         window.addEventListener("scroll", () => {
           btt.classList.toggle("visible", window.scrollY > 400);
         }, { passive: true });

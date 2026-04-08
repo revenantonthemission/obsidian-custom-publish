@@ -18,6 +18,7 @@ pub struct PostMeta {
     pub updated: Option<String>,
     pub is_hub: bool,
     pub hub_parent: Option<String>,
+    pub description: Option<String>,
     pub raw_content: String,
 }
 

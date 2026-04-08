@@ -17,9 +17,10 @@ export default function Search() {
   const [results, setResults] = useState<Result[]>([]);
   const [selected, setSelected] = useState(0);
   const [index, setIndex] = useState<IndexWithCache | null>(null);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut to open
+  // Keyboard shortcut and custom event to open
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -28,8 +29,13 @@ export default function Search() {
       }
       if (e.key === "Escape") setOpen(false);
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("open-search", openHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("open-search", openHandler);
+    };
   }, []);
 
   // Focus input when opened
@@ -37,11 +43,13 @@ export default function Search() {
     if (open) {
       inputRef.current?.focus();
       // Lazy-load index on first open
-      if (!index) {
+      if (!index && !loading) {
+        setLoading(true);
         fetch("/search-index.json")
           .then((r) => r.json())
           .then((data: IndexWithCache) => setIndex(data))
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => setLoading(false));
       }
     }
   }, [open]);
@@ -156,6 +164,9 @@ export default function Search() {
               </li>
             ))}
           </ul>
+        )}
+        {loading && (
+          <div class="search-empty">검색 인덱스 로딩 중...</div>
         )}
         {query && results.length === 0 && index && (
           <div class="search-empty">결과 없음</div>

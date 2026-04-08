@@ -6,6 +6,14 @@ use regex::Regex;
 use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
 use crate::types::VaultIndex;
 
+/// Matches Obsidian comments: `%%inline%%` or block `%%\n...\n%%`.
+static INLINE_COMMENT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"%%(.+?)%%").unwrap());
+
+/// Matches `==highlighted text==` for conversion to `<mark>` tags.
+static HIGHLIGHT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"==([^=\n]+?)==").unwrap());
+
 /// Escape HTML special characters to prevent XSS.
 fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
@@ -18,7 +26,7 @@ static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
 static FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)\n(.*?)^```").unwrap());
+    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:\s+(\w+))?\n(.*?)^```").unwrap());
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -40,10 +48,12 @@ pub fn transform_content_with_assets(
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
     let content = strip_frontmatter(raw);
+    let content = strip_comments(&content);
     let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
     let content = inject_block_anchors(&content);
+    let content = convert_highlights(&content);
     let content = convert_callouts(&content);
     let content = render_diagram_blocks(&content, slug, asset_dir);
     (content, images)
@@ -59,6 +69,48 @@ pub fn strip_frontmatter(content: &str) -> String {
     } else {
         content.to_string()
     }
+}
+
+/// Strip Obsidian comments (`%%...%%`) from content.
+///
+/// Handles both inline comments (`some %%hidden%% text`) and block comments
+/// (a `%%` line starts a multi-line comment that ends at the next `%%` line).
+fn strip_comments(content: &str) -> String {
+    // First: strip block comments (%%\n...\n%%)
+    let mut result = String::with_capacity(content.len());
+    let mut in_block_comment = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed == "%%" {
+            in_block_comment = !in_block_comment;
+            continue;
+        }
+        if in_block_comment {
+            continue;
+        }
+        result.push_str(line);
+        result.push('\n');
+    }
+
+    // Preserve original trailing-newline behavior
+    if !content.ends_with('\n') && result.ends_with('\n') {
+        result.pop();
+    }
+
+    // Then: strip inline comments (%%hidden%%)
+    INLINE_COMMENT_RE.replace_all(&result, "").to_string()
+}
+
+/// Convert `==highlighted text==` to `<mark>` tags.
+fn convert_highlights(content: &str) -> String {
+    transform_outside_fences(content, |line| {
+        HIGHLIGHT_RE
+            .replace_all(line, |caps: &regex::Captures| {
+                format!("<mark>{}</mark>", &caps[1])
+            })
+            .to_string()
+    })
 }
 
 /// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
@@ -133,11 +185,13 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
                 let size = caps.get(3).map(|m| m.as_str());
                 match size {
                     Some(s) if s.contains('x') => {
-                        let parts: Vec<&str> = s.splitn(2, 'x').collect();
-                        format!(
-                            r#"<img src="/assets/{filename}" alt="" width="{}" height="{}" />"#,
-                            parts[0], parts[1]
-                        )
+                        if let Some((w, h)) = s.split_once('x') {
+                            format!(
+                                r#"<img src="/assets/{filename}" alt="" width="{w}" height="{h}" />"#,
+                            )
+                        } else {
+                            format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                        }
                     }
                     Some(w) => {
                         format!(r#"<img src="/assets/{filename}" alt="" width="{w}" />"#)
@@ -154,9 +208,13 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
     (result, images)
 }
 
-/// Replace `![[Note Name]]` or `![[Note Name#^block-id]]` with the referenced content.
-/// Full-note transclusions inline the entire body; block transclusions inline just
-/// the paragraph that carries the `^block-id` annotation.
+/// Replace `![[Note Name]]`, `![[Note Name#^block-id]]`, or `![[Note Name#Heading]]`
+/// with the referenced content.
+///
+/// - Full-note transclusions inline the entire body.
+/// - Block transclusions inline just the paragraph carrying the `^block-id` annotation.
+/// - Heading transclusions inline everything from the heading to the next heading
+///   of the same or higher level.
 ///
 /// Note: `convert_image_embeds` must run BEFORE this function in the pipeline,
 /// so image embeds (`![[file.png]]`) are already converted to `<img>` tags
@@ -166,6 +224,7 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
         TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
             let name = caps[1].trim();
             let block_id = caps.get(2).map(|m| m.as_str());
+            let heading = caps.get(3).map(|m| m.as_str().trim());
 
             if let Some(block_id) = block_id {
                 // Block transclusion: inline the specific paragraph
@@ -174,19 +233,70 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
                         return text.clone();
                     }
                 }
-                // Block not found — leave as plain text
                 format!("{name}#^{block_id}")
+            } else if let Some(heading) = heading {
+                // Heading transclusion: inline content under a specific heading
+                if let Some(&target_idx) = index.name_map.get(name) {
+                    let target_content = &index.posts[target_idx].raw_content;
+                    let body = strip_frontmatter(target_content);
+                    extract_heading_section(&body, heading)
+                        .unwrap_or_else(|| {
+                            eprintln!("warning: heading '{heading}' not found in '{name}'");
+                            format!("{name}#{heading}")
+                        })
+                } else {
+                    format!("{name}#{heading}")
+                }
             } else if let Some(&target_idx) = index.name_map.get(name) {
                 // Full-note transclusion
                 let target_content = &index.posts[target_idx].raw_content;
                 strip_frontmatter(target_content)
             } else {
-                // Leave as plain text if target not found
                 format!("{name}")
             }
         })
         .to_string()
     })
+}
+
+/// Extract the section under a heading: everything from the heading line (inclusive)
+/// to the next heading of the same or higher level (exclusive).
+pub fn extract_heading_section(content: &str, heading: &str) -> Option<String> {
+    static HEADING_LEVEL_RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"^(#{1,6})\s+(.+)$").unwrap());
+
+    let mut found = false;
+    let mut level = 0;
+    let mut section_lines = Vec::new();
+
+    for line in content.lines() {
+        if let Some(caps) = HEADING_LEVEL_RE.captures(line) {
+            let hashes = caps[1].len();
+            let text = caps[2].trim();
+
+            if !found {
+                // Look for the matching heading (case-insensitive)
+                if text.eq_ignore_ascii_case(heading) {
+                    found = true;
+                    level = hashes;
+                    section_lines.push(line.to_string());
+                }
+            } else if hashes <= level {
+                // Hit a same-or-higher-level heading — stop
+                break;
+            } else {
+                section_lines.push(line.to_string());
+            }
+        } else if found {
+            section_lines.push(line.to_string());
+        }
+    }
+
+    if found {
+        Some(section_lines.join("\n"))
+    } else {
+        None
+    }
 }
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
@@ -339,22 +449,45 @@ struct ThemePair {
 const D2_THEMES: ThemePair = ThemePair { light: "0", dark: "200" };
 const MERMAID_THEMES: ThemePair = ThemePair { light: "default", dark: "dark" };
 
-/// Render D2, Typst, and Mermaid fenced code blocks to SVG.
-/// D2 and Mermaid are dual-rendered (light + dark) and wrapped in theme-gated markup.
-/// Typst diagrams are rendered once (no theme support).
+/// Render D2, Typst, and Mermaid fenced code blocks to HTML.
+///
+/// D2 supports an optional format specifier in the info string (e.g. `` ```d2 png ``):
+/// - `svg` (default) — dual-rendered light + dark, inline or asset file
+/// - `png` / `gif`  — single render, always written to asset file, `<img>` tag
+/// - `pdf` / `pptx` — single render, written to asset file, `<a download>` link
+/// - `txt` / `ascii` — single render, wrapped in `<pre>` block
+///
+/// Mermaid and Typst ignore the format specifier.
 fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) -> String {
+    use crate::d2::D2Format;
     let mut counter = 0;
 
     FENCE_RE
         .replace_all(content, |caps: &regex::Captures| {
             let lang = &caps[1];
-            let source = &caps[2];
+            // caps[2] = optional format word; caps[3] = diagram source
+            let fmt_str = caps.get(2).map(|m| m.as_str()).unwrap_or("svg");
+            let source = &caps[3];
             counter += 1;
 
             match lang {
-                "d2" => render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
-                    crate::d2::render_d2(src, theme, None)
-                }),
+                "d2" => {
+                    let format = D2Format::from_str(fmt_str);
+                    match format {
+                        D2Format::Svg => {
+                            render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
+                                crate::d2::render_d2(src, theme, None)
+                            })
+                        }
+                        _ if format.is_text_art() => {
+                            render_d2_text(source, slug, counter, format)
+                        }
+                        _ => {
+                            // Binary or download formats (png, gif, pdf, pptx)
+                            render_d2_binary(source, slug, counter, asset_dir, format)
+                        }
+                    }
+                }
                 "mermaid" => render_themed_diagram(lang, source, slug, counter, asset_dir, &MERMAID_THEMES, |src, theme| {
                     crate::mermaid::render_mermaid(src, theme)
                 }),
@@ -365,6 +498,67 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
             }
         })
         .to_string()
+}
+
+/// Render a D2 diagram to a binary format (png, gif, pdf, pptx).
+/// Always writes to an asset file. PNG/GIF become `<img>` tags; PDF/PPTX become download links.
+fn render_d2_binary(
+    source: &str,
+    slug: &str,
+    counter: usize,
+    asset_dir: Option<&Path>,
+    format: crate::d2::D2Format,
+) -> String {
+    match crate::d2::render_d2_bytes(source, format, None, None) {
+        Ok(bytes) => {
+            let ext = format.extension();
+            let filename = format!("{slug}-d2-{counter}.{ext}");
+
+            if let Some(dir) = asset_dir {
+                let path = dir.join(&filename);
+                if let Err(e) = std::fs::write(&path, &bytes) {
+                    eprintln!("warning: failed to write {}: {e}", path.display());
+                    return format!("<!-- d2 {ext} render failed: {e} -->");
+                }
+            }
+
+            match format {
+                crate::d2::D2Format::Pdf | crate::d2::D2Format::Pptx => {
+                    let label = ext.to_uppercase();
+                    format!(r#"<a href="/assets/{filename}" download class="diagram-download">{label} 다운로드</a>"#)
+                }
+                _ => {
+                    format!(r#"<img src="/assets/{filename}" class="diagram diagram-d2" alt="" />"#)
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("warning: d2 {format:?} rendering failed for {slug}: {e}");
+            format!("```d2\n{source}```")
+        }
+    }
+}
+
+/// Render a D2 diagram to ASCII/text art and wrap in a `<pre>` block.
+fn render_d2_text(
+    source: &str,
+    slug: &str,
+    counter: usize,
+    format: crate::d2::D2Format,
+) -> String {
+    match crate::d2::render_d2_bytes(source, format, None, None) {
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(text) => format!(r#"<pre class="diagram diagram-d2-ascii">{}</pre>"#, html_escape(&text)),
+            Err(e) => {
+                eprintln!("warning: d2 ascii output was not UTF-8 for {slug}: {e}");
+                format!("<!-- d2 ascii render failed: not UTF-8 -->")
+            }
+        },
+        Err(e) => {
+            eprintln!("warning: d2 text rendering failed for {slug}-{counter}: {e}");
+            format!("```d2\n{source}```")
+        }
+    }
 }
 
 /// Render a diagram once (no theming). Used for Typst.

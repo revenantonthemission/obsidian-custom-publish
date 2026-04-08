@@ -23,9 +23,19 @@ dev: preprocess
 site-build:
     cd {{site_dir}} && npx astro build
 
-deploy: build
+deploy: deploy-preprocess site-build
     AWS_PROFILE={{aws_profile}} aws s3 sync {{site_dir}}/dist/ s3://{{s3_bucket}} --delete
     AWS_PROFILE={{aws_profile}} aws cloudfront create-invalidation --distribution-id {{cf_dist_id}} --paths "/*"
+
+deploy-preprocess:
+    rm -rf {{content}}/posts {{content}}/meta {{content}}/assets
+    cargo run --release --manifest-path preprocessor/Cargo.toml -- --stamp-published {{vault}} {{content}}
+    cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
+    cp {{content}}/graph.json {{site_dir}}/public/graph.json
+    cp {{content}}/previews.json {{site_dir}}/public/previews.json
+    cp {{content}}/nav-tree.json {{site_dir}}/public/nav-tree.json
+    mkdir -p {{site_dir}}/public/assets
+    cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
 
 test:
     cd preprocessor && cargo test
