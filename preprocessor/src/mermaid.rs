@@ -7,6 +7,10 @@ use tempfile::NamedTempFile;
 static INIT_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
 
+static THEME_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?:'theme'\s*:\s*'[^']*'|"theme"\s*:\s*"[^"]*")"#).unwrap()
+});
+
 /// Infer and prepend a Mermaid diagram-type header when one is missing.
 ///
 /// Older vault notes may omit the type keyword (e.g. `sequenceDiagram`)
@@ -67,9 +71,8 @@ fn apply_theme_to_source(source: &str, theme: &str) -> (String, bool) {
     let result = INIT_RE.replace(source, |caps: &regex::Captures| {
         let init_block = &caps[0];
         // Replace 'theme': '...' or "theme": "..." with the desired theme
-        let re_theme = Regex::new(r#"(['"])theme\1\s*:\s*(['"])[^'"]*\2"#).unwrap();
-        if re_theme.is_match(init_block) {
-            re_theme.replace(init_block, format!("'theme': '{theme}'")).to_string()
+        if THEME_RE.is_match(init_block) {
+            THEME_RE.replace(init_block, format!("'theme': '{theme}'")).to_string()
         } else {
             // No theme key — inject one after the opening %%{init: {
             init_block.replacen("{", &format!("{{ 'theme': '{theme}',"), 2)

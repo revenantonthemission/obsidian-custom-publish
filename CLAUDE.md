@@ -53,13 +53,13 @@ Image attachments live in `Areas/Notes/attachment/`.
 - BaseLayout uses `<style is:global>` — scoped styles don't match `set:html` content (callout divs, diagram imgs, code blocks)
 - Rehype wraps `<img>` with non-empty `alt` in `<figure>` + `<figcaption>` — use `alt=""` for decorative images (diagrams)
 - Icon libraries: `lucide-static` (build-time SVG via `set:html`) + `lucide-preact` (interactive islands only)
-- Homepage renders `Passion Project.md` from vault; "이번주에 작성된 포스트" section is dynamically replaced with recent posts
+- Homepage renders `Passion Project.md` from vault; "이번주에 작성된 포스트" section is dynamically replaced with today's published posts ("오늘 발행된 글")
 - CSS variables use `--c-` prefix: `--c-text-muted`, `--c-border`, `--c-accent`, `--c-surface`, etc. Never use unprefixed names.
 - Inline KaTeX overridden to `font-size: 1em` in post.css (default `1.21em` is too large for Pretendard body text)
 - Shiki code blocks get `data-language` via custom transformer in render.ts — CSS `::before` pseudo-element renders language badge
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
-- 45 Rust integration tests using `fixtures/vault/` (9 test markdown files)
+- 54 Rust tests (6 unit + 48 integration) using `fixtures/vault/` (10 test markdown files)
 - Tests run against real fixture data, not mocks
 - `cargo test` from `preprocessor/` directory (tests use relative path `../fixtures/vault`)
