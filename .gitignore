@@ -10,4 +10,5 @@ dist/
 site/public/search-index.json
 site/public/graph.json
 site/public/assets/
-fixtures/
+fixtures/vault/attachment/*.png
+!fixtures/vault/attachment/test-image.png
