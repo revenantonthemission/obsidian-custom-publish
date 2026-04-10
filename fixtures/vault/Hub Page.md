@@ -11,6 +11,6 @@ published: 2025-01-01
 
 This is a hub page linking to child posts:
 
-- [[Simple Post]]
+- [[Simple Post]] @2020-01-01
 - [[Post With Links]]
 - [[Post With Callouts]]
