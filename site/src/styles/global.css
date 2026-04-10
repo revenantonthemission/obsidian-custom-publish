@@ -352,6 +352,14 @@ img {
   }
 }
 
+/* ── Theme transition ── */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, box-shadow 300ms ease !important;
+}
+
 /* ── Responsive: Phone ── */
 @media (max-width: 479px) {
   .site-main {
