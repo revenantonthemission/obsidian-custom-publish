@@ -13,9 +13,11 @@ export interface SolarCache {
 }
 
 const GEO_KEY = "geo";
+const GEO_DENIED_KEY = "geo-denied";
 const SOLAR_KEY = "solar";
 const MANUAL_KEY = "theme-manual";
 const GEO_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const GEO_DENIED_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const DEFAULT_SUNRISE_HOUR = 6;
 const DEFAULT_SUNRISE_MIN = 30;
@@ -35,10 +37,28 @@ export function getCachedGeo(): GeoCache | null {
   }
 }
 
+/** Check if user previously denied geolocation and denial is still fresh. */
+function isGeoDenialActive(): boolean {
+  try {
+    const raw = localStorage.getItem(GEO_DENIED_KEY);
+    if (!raw) return false;
+    const ts = parseInt(raw, 10);
+    if (isNaN(ts)) return false;
+    return Date.now() - ts < GEO_DENIED_MAX_AGE_MS;
+  } catch {
+    return false;
+  }
+}
+
 /** Request geolocation and cache the result. Returns coordinates or null on failure. */
 export function requestGeoAndCache(): Promise<GeoCache | null> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    // Don't re-prompt if user previously denied (within 30-day window)
+    if (isGeoDenialActive()) {
       resolve(null);
       return;
     }
@@ -50,9 +70,17 @@ export function requestGeoAndCache(): Promise<GeoCache | null> {
           ts: Date.now(),
         };
         localStorage.setItem(GEO_KEY, JSON.stringify(geo));
+        // Clear any stale denial marker since user granted
+        localStorage.removeItem(GEO_DENIED_KEY);
         resolve(geo);
       },
-      () => resolve(null),
+      (err) => {
+        // Remember denials so we don't keep prompting
+        if (err.code === err.PERMISSION_DENIED) {
+          localStorage.setItem(GEO_DENIED_KEY, String(Date.now()));
+        }
+        resolve(null);
+      },
       { timeout: 10000 }
     );
   });
