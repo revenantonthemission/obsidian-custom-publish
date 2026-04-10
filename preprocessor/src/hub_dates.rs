@@ -7,6 +7,7 @@
 
 use regex::Regex;
 use std::sync::LazyLock;
+use crate::transform::transform_outside_fences;
 use crate::types::VaultIndex;
 
 /// Matches a list-item prefix followed by a post wikilink anchor.
@@ -16,19 +17,34 @@ use crate::types::VaultIndex;
 ///   2 = the full `<a href="/posts/SLUG">DISPLAY</a>` tag
 ///   3 = slug (from the href)
 ///   4 = optional trailing ` @YYYY-MM-DD` annotation (with leading space)
+///
+/// Relies on `convert_wikilinks()` emitting `<a href="/posts/{slug}">display</a>`
+/// with no class attribute and plain-text display (no nested tags). If that
+/// output format changes, this regex must be updated.
 static LIST_ITEM_POST_LINK_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r##"(?m)^(\s*(?:[+\-*]|\d+\.)\s+)(<a href="/posts/([^"#]+?)">[^<]*</a>)(\s@\d{4}-\d{2}-\d{2})?"##,
+        r##"^(\s*(?:[+\-*]|\d+\.)\s+)(<a href="/posts/([^"#]+?)">[^<]*</a>)(\s@\d{4}-\d{2}-\d{2})?"##,
     )
     .unwrap()
 });
 
-/// Parse an ISO date string (`YYYY-MM-DD`) and return `YYYY년 M월 D일`.
+/// Parsed ISO date components with the Korean-formatted display string.
+struct ParsedDate {
+    /// Canonical `YYYY-MM-DD` form — always zero-padded, suitable for HTML `datetime`.
+    iso: String,
+    /// `YYYY년 M월 D일` form — no zero-padding, for display.
+    korean: String,
+}
+
+/// Parse an ISO-ish date string (`YYYY-MM-DD` or `YYYY-M-D`) into normalized
+/// ISO + Korean-formatted display forms.
 ///
-/// Returns `None` if the input does not match the ISO format or contains
-/// non-numeric parts. Month and day are NOT zero-padded in the output.
-fn format_date_ko(iso: &str) -> Option<String> {
-    let parts: Vec<&str> = iso.split('-').collect();
+/// Returns `None` if the input does not have three dash-separated numeric
+/// parts or if month/day are outside the basic 1-12 / 1-31 ranges. Does not
+/// check per-month day limits (e.g., Feb 30 passes); inputs come from
+/// author-written YAML frontmatter and are trusted.
+fn parse_date(s: &str) -> Option<ParsedDate> {
+    let parts: Vec<&str> = s.split('-').collect();
     if parts.len() != 3 {
         return None;
     }
@@ -40,7 +56,10 @@ fn format_date_ko(iso: &str) -> Option<String> {
         return None;
     }
 
-    Some(format!("{year}년 {month}월 {day}일"))
+    Some(ParsedDate {
+        iso: format!("{year:04}-{month:02}-{day:02}"),
+        korean: format!("{year}년 {month}월 {day}일"),
+    })
 }
 
 /// Augment list-item wikilinks in hub-file content with publish dates.
@@ -52,38 +71,9 @@ fn format_date_ko(iso: &str) -> Option<String> {
 ///
 /// If the target post has no `published` field (or parsing fails), the line
 /// is left unchanged. Wikilinks outside list items are not touched.
-/// Code fences are skipped.
+/// Code fences are skipped via `transform_outside_fences`.
 pub fn augment_hub_child_links(content: &str, index: &VaultIndex) -> String {
-    let mut result = String::with_capacity(content.len());
-    let mut in_fence = false;
-    let mut first = true;
-
-    for line in content.lines() {
-        if !first {
-            result.push('\n');
-        }
-        first = false;
-
-        if line.starts_with("```") {
-            in_fence = !in_fence;
-            result.push_str(line);
-            continue;
-        }
-
-        if in_fence {
-            result.push_str(line);
-            continue;
-        }
-
-        result.push_str(&augment_line(line, index));
-    }
-
-    // Preserve trailing newline if the original had one
-    if content.ends_with('\n') {
-        result.push('\n');
-    }
-
-    result
+    transform_outside_fences(content, |line| augment_line(line, index))
 }
 
 /// Transform a single non-fenced line. Returns the original line if no
@@ -103,7 +93,7 @@ fn augment_line(line: &str, index: &VaultIndex) -> String {
         return line.to_string();
     };
 
-    let Some(korean) = format_date_ko(published) else {
+    let Some(parsed) = parse_date(published) else {
         return line.to_string();
     };
 
@@ -112,8 +102,13 @@ fn augment_line(line: &str, index: &VaultIndex) -> String {
     let match_end = caps.get(0).unwrap().end();
     let tail = &line[match_end..];
 
+    // Use normalized ISO from `parsed` (not the raw `published` field) so the
+    // datetime attribute is always canonical YYYY-MM-DD and safe against
+    // drift in frontmatter formatting.
     format!(
-        r#"{prefix}{anchor} <time class="hub-child-date" datetime="{published}">{korean}</time>{tail}"#
+        r#"{prefix}{anchor} <time class="hub-child-date" datetime="{iso}">{korean}</time>{tail}"#,
+        iso = parsed.iso,
+        korean = parsed.korean,
     )
 }
 
@@ -121,34 +116,45 @@ fn augment_line(line: &str, index: &VaultIndex) -> String {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_format_date_ko_basic() {
-        assert_eq!(
-            format_date_ko("2026-03-16"),
-            Some("2026년 3월 16일".to_string())
-        );
+    fn parsed_pair(iso: &str, korean: &str) -> (String, String) {
+        let p = parse_date(iso).unwrap();
+        assert_eq!(p.iso, iso);
+        assert_eq!(p.korean, korean);
+        (p.iso, p.korean)
     }
 
     #[test]
-    fn test_format_date_ko_strips_zero_padding() {
-        assert_eq!(
-            format_date_ko("2026-03-05"),
-            Some("2026년 3월 5일".to_string())
-        );
-        assert_eq!(
-            format_date_ko("2026-01-01"),
-            Some("2026년 1월 1일".to_string())
-        );
+    fn test_parse_date_basic() {
+        parsed_pair("2026-03-16", "2026년 3월 16일");
     }
 
     #[test]
-    fn test_format_date_ko_invalid_input() {
-        assert_eq!(format_date_ko(""), None);
-        assert_eq!(format_date_ko("invalid"), None);
-        assert_eq!(format_date_ko("2026-13-01"), None);
-        assert_eq!(format_date_ko("2026-03"), None);
-        assert_eq!(format_date_ko("2026-03-32"), None);
-        assert_eq!(format_date_ko("abcd-ef-gh"), None);
+    fn test_parse_date_korean_strips_zero_padding() {
+        let p = parse_date("2026-03-05").unwrap();
+        assert_eq!(p.korean, "2026년 3월 5일");
+        assert_eq!(p.iso, "2026-03-05");
+
+        let p = parse_date("2026-01-01").unwrap();
+        assert_eq!(p.korean, "2026년 1월 1일");
+        assert_eq!(p.iso, "2026-01-01");
+    }
+
+    #[test]
+    fn test_parse_date_iso_normalizes_shorthand() {
+        // Shorthand YYYY-M-D input should canonicalize to zero-padded ISO
+        let p = parse_date("2026-1-1").unwrap();
+        assert_eq!(p.iso, "2026-01-01");
+        assert_eq!(p.korean, "2026년 1월 1일");
+    }
+
+    #[test]
+    fn test_parse_date_invalid_input() {
+        assert!(parse_date("").is_none());
+        assert!(parse_date("invalid").is_none());
+        assert!(parse_date("2026-13-01").is_none());
+        assert!(parse_date("2026-03").is_none());
+        assert!(parse_date("2026-03-32").is_none());
+        assert!(parse_date("abcd-ef-gh").is_none());
     }
 
     #[test]
@@ -317,5 +323,61 @@ mod tests {
         let input = r#"- <a href="/posts/foo">Foo</a>"#;
         let result = augment_hub_child_links(input, &index);
         assert_eq!(result, input, "line with unparseable date should be unchanged");
+    }
+
+    #[test]
+    fn test_augment_preserves_tail_after_stripped_annotation() {
+        let index = make_test_index(vec![make_post("oop", "OOP", Some("2026-03-16"))]);
+        let input = r#"- <a href="/posts/oop">OOP</a> @2025-01-01 — a description"#;
+        let result = augment_hub_child_links(input, &index);
+        assert!(result.contains("— a description"), "tail text should be preserved: {result}");
+        assert!(!result.contains("@2025-01-01"), "manual annotation should be stripped: {result}");
+        assert!(result.contains(r#"datetime="2026-03-16""#));
+    }
+
+    #[test]
+    fn test_augment_multiple_consecutive_items() {
+        let index = make_test_index(vec![
+            make_post("a", "A", Some("2026-01-01")),
+            make_post("b", "B", Some("2026-02-02")),
+        ]);
+        let input = "- <a href=\"/posts/a\">A</a>\n- <a href=\"/posts/b\">B</a>";
+        let result = augment_hub_child_links(input, &index);
+        assert!(result.contains("2026년 1월 1일"), "first item date missing: {result}");
+        assert!(result.contains("2026년 2월 2일"), "second item date missing: {result}");
+    }
+
+    #[test]
+    fn test_augment_skips_fenced_code_blocks() {
+        let index = make_test_index(vec![make_post("foo", "Foo", Some("2026-01-15"))]);
+        let input = "```html\n- <a href=\"/posts/foo\">Foo</a>\n```";
+        let result = augment_hub_child_links(input, &index);
+        assert!(
+            !result.contains("hub-child-date"),
+            "content inside code fence must not be augmented: {result}"
+        );
+    }
+
+    #[test]
+    fn test_augment_ignores_continuation_line_wikilinks() {
+        // A CommonMark list item continuation line (indented but no bullet)
+        // should NOT match — only the bulleted line is eligible.
+        let index = make_test_index(vec![make_post("foo", "Foo", Some("2026-01-15"))]);
+        let input = "- some intro\n  <a href=\"/posts/foo\">Foo</a>";
+        let result = augment_hub_child_links(input, &index);
+        assert_eq!(result, input, "continuation line without bullet should be untouched");
+    }
+
+    #[test]
+    fn test_augment_iso_output_is_normalized() {
+        // Shorthand YYYY-M-D in frontmatter should be canonicalized in datetime attribute
+        let index = make_test_index(vec![make_post("foo", "Foo", Some("2026-1-5"))]);
+        let input = r#"- <a href="/posts/foo">Foo</a>"#;
+        let result = augment_hub_child_links(input, &index);
+        assert!(
+            result.contains(r#"datetime="2026-01-05""#),
+            "datetime attribute should be canonical YYYY-MM-DD, got: {result}"
+        );
+        assert!(result.contains("2026년 1월 5일"));
     }
 }

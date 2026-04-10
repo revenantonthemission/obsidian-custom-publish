@@ -120,7 +120,7 @@ fn convert_highlights(content: &str) -> String {
 }
 
 /// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
-fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) -> String {
+pub(crate) fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_fence = false;
 
