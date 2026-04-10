@@ -1,5 +1,17 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useCallback } from "preact/hooks";
 import { Sun, Moon } from "lucide-preact";
+import {
+  getCachedGeo,
+  requestGeoAndCache,
+  getCachedSolar,
+  fetchAndCacheSolar,
+  getSolarTheme,
+  msUntilNextBoundary,
+  isManualOverrideActive,
+  setManualOverride,
+  clearManualOverride,
+} from "../lib/solar";
+import type { SolarCache, GeoCache } from "../lib/solar";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
@@ -10,6 +22,19 @@ function getInitialTheme(): "light" | "dark" {
     : "light";
 }
 
+/** Add .theme-transitioning to <html>, wait for transition, then remove. */
+function withTransition(apply: () => void): void {
+  const el = document.documentElement;
+  el.classList.add("theme-transitioning");
+  apply();
+  const cleanup = () => {
+    el.classList.remove("theme-transitioning");
+    el.removeEventListener("transitionend", cleanup);
+  };
+  el.addEventListener("transitionend", cleanup);
+  setTimeout(() => el.classList.remove("theme-transitioning"), 350);
+}
+
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
 
@@ -18,7 +43,59 @@ export default function ThemeToggle() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggle = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+  useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+
+    async function initSolar() {
+      let geo = getCachedGeo();
+      if (!geo) {
+        geo = await requestGeoAndCache();
+      }
+
+      let solar = getCachedSolar();
+      if (!solar && geo) {
+        solar = await fetchAndCacheSolar(geo.lat, geo.lng);
+      }
+
+      if (!isManualOverrideActive(solar)) {
+        clearManualOverride();
+        const solarTheme = getSolarTheme(solar);
+        if (solarTheme !== theme) {
+          withTransition(() => setTheme(solarTheme));
+        }
+      }
+
+      scheduleBoundary(solar, geo);
+    }
+
+    function scheduleBoundary(solar: SolarCache | null, geo: GeoCache | null) {
+      const ms = msUntilNextBoundary(solar);
+      timerId = setTimeout(async () => {
+        clearManualOverride();
+
+        let freshSolar = solar;
+        if (geo) {
+          freshSolar = await fetchAndCacheSolar(geo.lat, geo.lng);
+        }
+
+        const solarTheme = getSolarTheme(freshSolar);
+        withTransition(() => setTheme(solarTheme));
+
+        scheduleBoundary(freshSolar, geo);
+      }, ms);
+    }
+
+    initSolar();
+
+    return () => {
+      if (timerId !== null) clearTimeout(timerId);
+    };
+  }, []);
+
+  const toggle = useCallback(() => {
+    setManualOverride();
+    withTransition(() => setTheme((t) => (t === "light" ? "dark" : "light")));
+  }, []);
 
   return (
     <button

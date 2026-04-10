@@ -44,17 +44,23 @@ export default function LocalGraph({ slug, data }: Props) {
       .force("center", forceCenter(size / 2, size / 2))
       .force("collide", forceCollide().radius(15));
 
-    const styles = getComputedStyle(document.documentElement);
-    const accentColor = styles.getPropertyValue("--c-accent").trim() || "#0d9488";
-    const textColor = styles.getPropertyValue("--c-text").trim() || "#1c1917";
-    const borderColor = styles.getPropertyValue("--c-border").trim() || "#e7e5e4";
+    /** Read current theme colors from CSS variables. */
+    function readThemeColors() {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        accent: styles.getPropertyValue("--c-accent").trim() || "#0d9488",
+        text: styles.getPropertyValue("--c-text").trim() || "#1c1917",
+        border: styles.getPropertyValue("--c-border").trim() || "#e7e5e4",
+      };
+    }
 
+    let colors = readThemeColors();
     setReady(true);
 
     sim.on("tick", () => {
       ctx.clearRect(0, 0, size, size);
 
-      ctx.strokeStyle = borderColor;
+      ctx.strokeStyle = colors.border;
       ctx.lineWidth = 1;
       for (const link of links as unknown as ResolvedLink[]) {
         ctx.beginPath();
@@ -67,16 +73,26 @@ export default function LocalGraph({ slug, data }: Props) {
         const isCurrent = node.slug === slug;
         ctx.beginPath();
         ctx.arc(node.x!, node.y!, isCurrent ? 6 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isCurrent ? accentColor : getNodeColor(node);
+        ctx.fillStyle = isCurrent ? colors.accent : getNodeColor(node);
         ctx.fill();
       }
 
-      ctx.fillStyle = textColor;
+      ctx.fillStyle = colors.text;
       ctx.font = "10px sans-serif";
       ctx.textAlign = "center";
       for (const node of nodes) {
         ctx.fillText(node.title, node.x!, node.y! + 14);
       }
+    });
+
+    // Re-render canvas when theme changes
+    const observer = new MutationObserver(() => {
+      colors = readThemeColors();
+      sim.alpha(0.1).restart();
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
     });
 
     const handleClick = (e: MouseEvent) => {
@@ -86,7 +102,7 @@ export default function LocalGraph({ slug, data }: Props) {
       for (const node of nodes) {
         const dx = x - node.x!;
         const dy = y - node.y!;
-        const HIT_RADIUS_SQ = 100; // 10px squared
+        const HIT_RADIUS_SQ = 100;
         if (dx * dx + dy * dy < HIT_RADIUS_SQ && node.slug !== slug) {
           window.location.href = node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`;
           break;
@@ -97,6 +113,7 @@ export default function LocalGraph({ slug, data }: Props) {
 
     return () => {
       sim.stop();
+      observer.disconnect();
       canvas.removeEventListener("click", handleClick);
     };
   }, [data, slug]);
