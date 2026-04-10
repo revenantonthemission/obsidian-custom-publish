@@ -48,7 +48,10 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Tags may contain `/` — sanitized to `-` via `sanitizeTag()` in `data.ts`
 - Korean filenames produce slugs with special chars — slugify strips non-alphanumeric except Korean + hyphens
 - `rehype-slug` generates heading IDs — TOC component depends on these `id` attributes
-- D2 and Mermaid diagrams are dual-rendered (light/dark SVGs); CSS `.diagram-light`/`.diagram-dark` toggles visibility. Typst has no theme support.
+- D2 and Mermaid diagrams are dual-rendered (light/dark SVGs); themed pairs wrapped in `.diagram-container`, CSS crossfades via `opacity` (not `display`). Typst has no theme support.
+- BaseLayout.astro `<script is:inline>` blocks must be ES5 (no const/let, no arrow functions) — they run before any polyfills
+- Preact island `.tsx` files trigger spurious `JSX.IntrinsicElements` TS errors in IDE — `npx astro build` is the source of truth
+- `SVGSVGElement` has no `offsetHeight` — use `getBoundingClientRect()` to trigger reflow on SVG elements
 - `set:html` in PostLayout trusts vault content — revisit if vault ever accepts third-party content
 - BaseLayout uses `<style is:global>` — scoped styles don't match `set:html` content (callout divs, diagram imgs, code blocks)
 - Rehype wraps `<img>` with non-empty `alt` in `<figure>` + `<figcaption>` — use `alt=""` for decorative images (diagrams)
@@ -60,6 +63,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
-- 54 Rust tests (6 unit + 48 integration) using `fixtures/vault/` (10 test markdown files)
+- 55 Rust tests (7 unit + 48 integration) using `fixtures/vault/` (10 test markdown files)
 - Tests run against real fixture data, not mocks
 - `cargo test` from `preprocessor/` directory (tests use relative path `../fixtures/vault`)
+- Diagram rendering tests use inline closures for `render_fn` parameter (no real CLI spawn) — see `test_render_themed_diagram_wraps_in_container`
