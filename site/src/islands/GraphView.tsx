@@ -56,7 +56,7 @@ export default function GraphView({ data, width, height }: Props) {
       .selectAll("line")
       .data(links)
       .join("line")
-      .attr("stroke", "rgba(150, 150, 150, 0.3)")
+      .attr("stroke", "var(--c-border, rgba(150, 150, 150, 0.3))")
       .attr("stroke-width", 1);
 
     // Draw nodes
@@ -112,8 +112,20 @@ export default function GraphView({ data, width, height }: Props) {
         .attr("y", (d) => d.y! + getNodeRadius(d) + 14);
     });
 
+    // Force SVG repaint when theme changes so CSS variables re-resolve
+    const observer = new MutationObserver(() => {
+      svg.style("display", "none");
+      svgRef.current!.getBoundingClientRect();
+      svg.style("display", null);
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
     return () => {
       sim.stop();
+      observer.disconnect();
     };
   }, [data, width, height]);
 
