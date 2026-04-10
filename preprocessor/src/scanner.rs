@@ -1,18 +1,13 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Local};
-use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
-use std::sync::LazyLock;
 use walkdir::WalkDir;
 
-use crate::syntax::BLOCK_ID_RE;
+use crate::syntax::{BLOCK_ID_RE, HEADING_RE};
 use crate::types::{is_korean, PostMeta, VaultIndex};
-
-static HEADING_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?m)^#{1,6}\s+(.+)$").unwrap());
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -69,7 +64,7 @@ fn extract_headings(content: &str) -> Vec<String> {
     let mut counts: HashMap<String, usize> = HashMap::new();
 
     for cap in HEADING_RE.captures_iter(content) {
-        let raw = cap[1].trim();
+        let raw = cap[2].trim();
         let base_slug = slugify_heading(raw);
         let count = counts.entry(base_slug.clone()).or_insert(0);
         let slug = if *count == 0 {
@@ -185,6 +180,8 @@ fn file_modified_date(file_path: &Path) -> Option<String> {
 /// Scan an Obsidian vault directory and build an index of all posts.
 pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
     let mut posts = Vec::new();
+    let mut heading_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut block_map: HashMap<String, HashMap<String, String>> = HashMap::new();
 
     for entry in WalkDir::new(vault_path)
         .into_iter()
@@ -207,13 +204,17 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             .to_string();
 
         let slug = slugify(&filename);
-        let (frontmatter, _body) = parse_frontmatter(&content);
+        let (frontmatter, body) = parse_frontmatter(&content);
 
         let title = filename.clone();
 
         let updated = git_last_modified(path);
 
         let created = frontmatter.created.or_else(|| file_created_date(path));
+
+        // Extract headings and blocks during initial scan to avoid re-parsing
+        let headings = extract_headings(body);
+        let blocks = extract_blocks(body);
 
         posts.push(PostMeta {
             slug,
@@ -228,7 +229,12 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             description: frontmatter.description,
             raw_content: content,
         });
+        heading_map.insert(posts.last().unwrap().title.clone(), headings);
+        block_map.insert(posts.last().unwrap().title.clone(), blocks);
     }
+
+    // Sort by slug for deterministic output across runs
+    posts.sort_by(|a, b| a.slug.cmp(&b.slug));
 
     let mut slug_map: HashMap<String, usize> = HashMap::new();
     for (i, p) in posts.iter().enumerate() {
@@ -246,22 +252,6 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .map(|(i, p)| (p.title.clone(), i))
         .collect();
 
-    let heading_map: HashMap<String, Vec<String>> = posts
-        .iter()
-        .map(|p| {
-            let (_fm, body) = parse_frontmatter(&p.raw_content);
-            (p.title.clone(), extract_headings(body))
-        })
-        .collect();
-
-    let block_map: HashMap<String, HashMap<String, String>> = posts
-        .iter()
-        .map(|p| {
-            let (_fm, body) = parse_frontmatter(&p.raw_content);
-            (p.title.clone(), extract_blocks(body))
-        })
-        .collect();
-
     Ok(VaultIndex {
         posts,
         slug_map,
@@ -272,15 +262,9 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 }
 
 /// Convert a filename into a URL-safe slug.
-/// Keeps alphanumeric, Korean characters, and hyphens. Strips everything else.
+/// Delegates to `slugify_heading` — identical logic for filenames and headings.
 fn slugify(name: &str) -> String {
-    name.to_lowercase()
-        .replace(' ', "-")
-        .chars()
-        .filter(|c| c.is_alphanumeric() || *c == '-' || is_korean(*c))
-        .collect::<String>()
-        .trim_matches('-')
-        .to_string()
+    slugify_heading(name)
 }
 
 /// Split content into frontmatter and body.

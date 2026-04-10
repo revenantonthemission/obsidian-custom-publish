@@ -77,8 +77,9 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
         }
 
         // Calculate stats
+        const WORDS_PER_MINUTE: usize = 200;
         let word_count = count_words(&content);
-        let reading_time_min = (word_count / 200).max(1);
+        let reading_time_min = (word_count / WORDS_PER_MINUTE).max(1);
 
         // Collect link info (deduplicated)
         let mut forward: Vec<String> = graph.forward_links[i]

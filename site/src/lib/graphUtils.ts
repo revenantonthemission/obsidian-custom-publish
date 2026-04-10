@@ -19,7 +19,7 @@ export interface ResolvedLink {
 }
 
 /** Tag-based color palette for hub categories. */
-export const HUB_COLORS: Record<string, string> = {
+const HUB_COLORS: Record<string, string> = {
   os: "#3b82f6",
   web: "#10b981",
   db: "#f59e0b",

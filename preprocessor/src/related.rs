@@ -2,6 +2,10 @@ use std::collections::HashSet;
 
 use crate::types::{LinkGraph, VaultIndex};
 
+const SCORE_SHARED_TAG: i32 = 2;
+const SCORE_LINK: i32 = 3;
+const SCORE_SAME_HUB: i32 = 1;
+
 /// Compute the top-N related post slugs for every post using hybrid scoring:
 ///
 /// - +2 per shared tag
@@ -47,23 +51,23 @@ pub fn compute_related(index: &VaultIndex, graph: &LinkGraph, limit: usize) -> V
                 let mut score: i32 = 0;
 
                 // Shared tags
-                score += (post_tags.intersection(&all_tag_sets[j]).count() as i32) * 2;
+                score += (post_tags.intersection(&all_tag_sets[j]).count() as i32) * SCORE_SHARED_TAG;
 
                 // Forward link: this → candidate
                 if forward_sets[i].contains(candidate.slug.as_str()) {
-                    score += 3;
+                    score += SCORE_LINK;
                 }
 
                 // Backlink: candidate → this
                 if backlink_sets[i].contains(candidate.slug.as_str()) {
-                    score += 3;
+                    score += SCORE_LINK;
                 }
 
                 // Same hub parent
                 if index.posts[i].hub_parent.is_some()
                     && index.posts[i].hub_parent == candidate.hub_parent
                 {
-                    score += 1;
+                    score += SCORE_SAME_HUB;
                 }
 
                 (j, score)

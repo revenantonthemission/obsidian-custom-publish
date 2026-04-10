@@ -28,6 +28,11 @@ pub static TRANSCLUSION_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"!\[\[([^\]#]+?)(?:#(?:\^([a-zA-Z0-9-]+)|([^\]]+?)))?\]\]").unwrap()
 });
 
+/// Matches markdown headings with level and text capture.
+/// Groups: 1=hash marks (level), 2=heading text.
+pub static HEADING_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?m)^(#{1,6})\s+(.+)$").unwrap());
+
 /// Matches HTML tags (opening, closing, and self-closing).
 /// Used by preview and search modules for stripping HTML from plain text.
 pub static HTML_TAG_RE: LazyLock<Regex> =

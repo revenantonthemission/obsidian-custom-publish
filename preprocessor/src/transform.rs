@@ -262,15 +262,12 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
 /// Extract the section under a heading: everything from the heading line (inclusive)
 /// to the next heading of the same or higher level (exclusive).
 pub fn extract_heading_section(content: &str, heading: &str) -> Option<String> {
-    static HEADING_LEVEL_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^(#{1,6})\s+(.+)$").unwrap());
-
     let mut found = false;
     let mut level = 0;
     let mut section_lines = Vec::new();
 
     for line in content.lines() {
-        if let Some(caps) = HEADING_LEVEL_RE.captures(line) {
+        if let Some(caps) = crate::syntax::HEADING_RE.captures(line) {
             let hashes = caps[1].len();
             let text = caps[2].trim();
 
