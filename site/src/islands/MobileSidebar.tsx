@@ -1,30 +1,11 @@
 import { useState, useEffect } from "preact/hooks";
 import type { NavTreeData } from "../lib/types";
+import { extractToc } from "../lib/toc";
 import { TreeNodeItem, isAncestor } from "./TreeNodeItem";
 
 interface Props {
   content: string;
   currentSlug: string;
-}
-
-interface TocEntry {
-  id: string;
-  text: string;
-  depth: number;
-}
-
-function extractToc(html: string): TocEntry[] {
-  const entries: TocEntry[] = [];
-  const re = /<h([2-4])\s+id="([^"]*)"[^>]*>(.*?)<\/h[2-4]>/gi;
-  let match;
-  while ((match = re.exec(html)) !== null) {
-    entries.push({
-      depth: parseInt(match[1]),
-      id: match[2],
-      text: match[3].replace(/<[^>]+>/g, ""),
-    });
-  }
-  return entries;
 }
 
 export default function MobileSidebar({ content, currentSlug }: Props) {

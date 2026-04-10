@@ -6,11 +6,12 @@ pipeline {
     }
 
     environment {
-        AWS_REGION  = 'ap-northeast-2'
-        AWS_PROFILE = 'mfa'
-        S3_BUCKET   = 'obsidian-custom-s3'
-        CF_DIST_ID  = 'E35HZFVGD0OJ04'
-        VAULT_PATH  = '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'
+        AWS_REGION    = 'ap-northeast-2'
+        AWS_PROFILE   = 'mfa'
+        S3_BUCKET     = 'obsidian-custom-s3'
+        CF_DIST_ID    = 'E35HZFVGD0OJ04'
+        VAULT_PATH    = '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'
+        CARGO_HOME    = "${WORKSPACE}/.cargo"
     }
 
     stages {
@@ -18,16 +19,24 @@ pipeline {
             steps { checkout scm }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh 'cd site && npm ci'
+        stage('Install') {
+            parallel {
+                stage('npm ci') {
+                    steps {
+                        sh 'cd site && npm ci'
+                    }
+                }
+                stage('cargo build') {
+                    steps {
+                        sh 'cargo build --release -p obsidian-press'
+                    }
+                }
             }
         }
 
         stage('Preprocess') {
             steps {
                 sh 'rm -rf content/posts content/meta content/assets'
-                sh 'cargo build --release -p obsidian-press'
                 sh './target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content'
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'

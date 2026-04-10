@@ -86,7 +86,8 @@ export default function LocalGraph({ slug, data }: Props) {
       for (const node of nodes) {
         const dx = x - node.x!;
         const dy = y - node.y!;
-        if (dx * dx + dy * dy < 100 && node.slug !== slug) {
+        const HIT_RADIUS_SQ = 100; // 10px squared
+        if (dx * dx + dy * dy < HIT_RADIUS_SQ && node.slug !== slug) {
           window.location.href = node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`;
           break;
         }

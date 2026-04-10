@@ -3,7 +3,9 @@ import type { APIContext } from "astro";
 import { getAllPostMeta, getPreviewSummary } from "../lib/data";
 
 export function GET(context: APIContext) {
-  const posts = getAllPostMeta().filter((p) => p.published);
+  const posts = getAllPostMeta().filter(
+    (p): p is typeof p & { published: string } => !!p.published
+  );
 
   return rss({
     title: "obsidian-press",
@@ -11,7 +13,7 @@ export function GET(context: APIContext) {
     site: context.site!,
     items: posts.map((post) => ({
       title: post.title,
-      pubDate: new Date(post.published!),
+      pubDate: new Date(post.published),
       link: `/posts/${post.slug}/`,
       description: getPreviewSummary(post.slug) || `${post.title} — ${post.tags.join(", ")}`,
       categories: post.tags,
