@@ -51,8 +51,8 @@ pub fn migrate_d2_styles(source: &str) -> String {
         let in_style_scope = style_stack.last().copied().unwrap_or(false);
 
         // Bare style property outside a style block → collect for grouping
-        if !in_style_scope {
-            if let Some(caps) = BARE_STYLE_PROP_RE.captures(line) {
+        if !in_style_scope
+            && let Some(caps) = BARE_STYLE_PROP_RE.captures(line) {
                 let prop_indent = caps[1].len();
                 // Flush if the indentation changes (different parent block)
                 if !pending.is_empty() {
@@ -67,7 +67,6 @@ pub fn migrate_d2_styles(source: &str) -> String {
                 pending.push(line.to_string());
                 continue;
             }
-        }
 
         // Non-style line: flush any accumulated style props first
         flush_style_group(&mut result, &mut pending);
@@ -114,7 +113,7 @@ pub enum D2Format {
 
 impl D2Format {
     /// Parse from the info-string word after the language tag (e.g. `` ```d2 png ``).
-    pub fn from_str(s: &str) -> Self {
+    pub fn parse_format(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "png"  => Self::Png,
             "gif"  => Self::Gif,

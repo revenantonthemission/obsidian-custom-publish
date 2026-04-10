@@ -58,20 +58,18 @@ pub fn build_nav_tree(index: &VaultIndex, graph: &LinkGraph) -> NavTree {
 
         // Forward links from this hub
         for link in &graph.forward_links[hub_idx] {
-            if let Some(&target_idx) = index.slug_map.get(&link.target_slug) {
-                if !claimed.contains(&target_idx) {
+            if let Some(&target_idx) = index.slug_map.get(&link.target_slug)
+                && !claimed.contains(&target_idx) {
                     child_indices.push(target_idx);
                 }
-            }
         }
 
         // Posts whose hub_parent matches this hub's title
         for (i, p) in index.posts.iter().enumerate() {
-            if let Some(ref parent) = p.hub_parent {
-                if parent == &post.title && !claimed.contains(&i) {
+            if let Some(ref parent) = p.hub_parent
+                && parent == &post.title && !claimed.contains(&i) {
                     child_indices.push(i);
                 }
-            }
         }
 
         // Deduplicate

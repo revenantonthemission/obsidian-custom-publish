@@ -28,11 +28,17 @@ pub fn compute_related(index: &VaultIndex, graph: &LinkGraph, limit: usize) -> V
         .map(|bl| bl.iter().map(|s| s.as_str()).collect())
         .collect();
 
+    // Pre-compute per-post tag sets to avoid rebuilding in O(n²) inner loop
+    let all_tag_sets: Vec<HashSet<&str>> = index
+        .posts
+        .iter()
+        .map(|p| p.tags.iter().map(|t| t.as_str()).collect())
+        .collect();
+
     let mut results = Vec::with_capacity(n);
 
     for i in 0..n {
-        let post = &index.posts[i];
-        let post_tags: HashSet<&str> = post.tags.iter().map(|t| t.as_str()).collect();
+        let post_tags = &all_tag_sets[i];
 
         let mut scores: Vec<(usize, i32)> = (0..n)
             .filter(|&j| j != i)
@@ -41,9 +47,7 @@ pub fn compute_related(index: &VaultIndex, graph: &LinkGraph, limit: usize) -> V
                 let mut score: i32 = 0;
 
                 // Shared tags
-                let candidate_tags: HashSet<&str> =
-                    candidate.tags.iter().map(|t| t.as_str()).collect();
-                score += (post_tags.intersection(&candidate_tags).count() as i32) * 2;
+                score += (post_tags.intersection(&all_tag_sets[j]).count() as i32) * 2;
 
                 // Forward link: this → candidate
                 if forward_sets[i].contains(candidate.slug.as_str()) {
@@ -56,8 +60,8 @@ pub fn compute_related(index: &VaultIndex, graph: &LinkGraph, limit: usize) -> V
                 }
 
                 // Same hub parent
-                if post.hub_parent.is_some()
-                    && post.hub_parent == candidate.hub_parent
+                if index.posts[i].hub_parent.is_some()
+                    && index.posts[i].hub_parent == candidate.hub_parent
                 {
                     score += 1;
                 }

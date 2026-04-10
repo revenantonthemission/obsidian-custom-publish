@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::syntax::WIKILINK_RE;
 use crate::types::{GraphEdge, GraphJson, GraphNode, Link, LinkGraph, VaultIndex};
 
@@ -7,7 +9,7 @@ pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
     let n = index.posts.len();
 
     let mut forward_links: Vec<Vec<Link>> = vec![Vec::new(); n];
-    let mut backlinks: Vec<Vec<String>> = vec![Vec::new(); n];
+    let mut backlink_sets: Vec<HashSet<String>> = vec![HashSet::new(); n];
 
     for (i, post) in index.posts.iter().enumerate() {
         for cap in wikilink_re.captures_iter(&post.raw_content) {
@@ -26,13 +28,15 @@ pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
                     heading,
                 });
 
-                // Add backlink if not already present
-                if !backlinks[target_idx].contains(&source_slug) {
-                    backlinks[target_idx].push(source_slug);
-                }
+                backlink_sets[target_idx].insert(source_slug);
             }
         }
     }
+
+    let backlinks = backlink_sets
+        .into_iter()
+        .map(|set| set.into_iter().collect())
+        .collect();
 
     LinkGraph {
         forward_links,

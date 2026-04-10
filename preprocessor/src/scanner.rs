@@ -295,7 +295,13 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
         let yaml_str = &content[3..3 + end].trim();
         let body = &content[3 + end + 4..]; // skip past closing ---
 
-        let fm: RawFrontmatter = serde_yml::from_str(yaml_str).unwrap_or_default();
+        let fm: RawFrontmatter = match serde_yml::from_str(yaml_str) {
+            Ok(fm) => fm,
+            Err(e) => {
+                eprintln!("warning: malformed YAML frontmatter, using defaults: {e}");
+                RawFrontmatter::default()
+            }
+        };
         (fm, body)
     } else {
         (RawFrontmatter::default(), content)

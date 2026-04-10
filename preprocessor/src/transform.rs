@@ -182,22 +182,23 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
             .replace_all(line, |caps: &regex::Captures| {
                 let filename = &caps[1];
                 images.push(filename.to_string());
+                let escaped = html_escape(filename);
                 let size = caps.get(3).map(|m| m.as_str());
                 match size {
                     Some(s) if s.contains('x') => {
                         if let Some((w, h)) = s.split_once('x') {
                             format!(
-                                r#"<img src="/assets/{filename}" alt="" width="{w}" height="{h}" />"#,
+                                r#"<img src="/assets/{escaped}" alt="" width="{w}" height="{h}" />"#,
                             )
                         } else {
-                            format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                            format!(r#"<img src="/assets/{escaped}" alt="" />"#)
                         }
                     }
                     Some(w) => {
-                        format!(r#"<img src="/assets/{filename}" alt="" width="{w}" />"#)
+                        format!(r#"<img src="/assets/{escaped}" alt="" width="{w}" />"#)
                     }
                     None => {
-                        format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                        format!(r#"<img src="/assets/{escaped}" alt="" />"#)
                     }
                 }
             })
@@ -228,11 +229,10 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
 
             if let Some(block_id) = block_id {
                 // Block transclusion: inline the specific paragraph
-                if let Some(blocks) = index.block_map.get(name) {
-                    if let Some(text) = blocks.get(block_id) {
+                if let Some(blocks) = index.block_map.get(name)
+                    && let Some(text) = blocks.get(block_id) {
                         return text.clone();
                     }
-                }
                 format!("{name}#^{block_id}")
             } else if let Some(heading) = heading {
                 // Heading transclusion: inline content under a specific heading
@@ -252,7 +252,7 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
                 let target_content = &index.posts[target_idx].raw_content;
                 strip_frontmatter(target_content)
             } else {
-                format!("{name}")
+                name.to_string()
             }
         })
         .to_string()
@@ -472,7 +472,7 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
 
             match lang {
                 "d2" => {
-                    let format = D2Format::from_str(fmt_str);
+                    let format = D2Format::parse_format(fmt_str);
                     match format {
                         D2Format::Svg => {
                             render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
@@ -551,7 +551,7 @@ fn render_d2_text(
             Ok(text) => format!(r#"<pre class="diagram diagram-d2-ascii">{}</pre>"#, html_escape(&text)),
             Err(e) => {
                 eprintln!("warning: d2 ascii output was not UTF-8 for {slug}: {e}");
-                format!("<!-- d2 ascii render failed: not UTF-8 -->")
+                "<!-- d2 ascii render failed: not UTF-8 -->".to_string()
             }
         },
         Err(e) => {
@@ -605,8 +605,7 @@ fn render_themed_diagram(
     let dark_result = render_fn(source, themes.dark);
 
     // If both fail, fall back to source code
-    if light_result.is_err() && dark_result.is_err() {
-        let e = light_result.unwrap_err();
+    if let (Err(e), Err(_)) = (&light_result, &dark_result) {
         eprintln!("warning: {lang} rendering failed for {slug}: {e}");
         return format!("```{lang}\n{source}```");
     }

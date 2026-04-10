@@ -139,8 +139,7 @@ fn strip_markdown(content: &str) -> String {
         // 6. Strip inline markdown
         let line = line
             .replace("**", "")
-            .replace('*', "")
-            .replace('`', "")
+            .replace(['*', '`'], "")
             .replace("![[", "")
             .replace("[[", "")
             .replace("]]", "");
