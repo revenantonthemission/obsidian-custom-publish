@@ -7,6 +7,7 @@ use lindera::tokenizer::Tokenizer;
 use serde::Serialize;
 
 use crate::syntax::HTML_TAG_RE;
+use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
 
 #[derive(Debug, Serialize)]
@@ -101,16 +102,7 @@ fn tokenize_text(tokenizer: &Tokenizer, text: &str) -> Vec<String> {
 
 /// Strip markdown syntax to produce plain text for indexing.
 fn strip_markdown(content: &str) -> String {
-    // 1. Remove YAML frontmatter
-    let content = if content.starts_with("---") {
-        if let Some(end) = content[3..].find("\n---") {
-            &content[3 + end + 4..]
-        } else {
-            content
-        }
-    } else {
-        content
-    };
+    let content = strip_frontmatter(content);
 
     let mut result = Vec::new();
     let mut in_code_fence = false;

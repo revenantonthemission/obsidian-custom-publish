@@ -28,7 +28,7 @@ pipeline {
             steps {
                 sh 'rm -rf content/posts content/meta content/assets'
                 sh 'cargo build --release -p obsidian-press'
-                sh './target/release/obsidian-press "${VAULT_PATH}" ./content'
+                sh './target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content'
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
                 sh 'cp content/previews.json site/public/previews.json'

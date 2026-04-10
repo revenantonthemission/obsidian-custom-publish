@@ -32,3 +32,12 @@ pub static TRANSCLUSION_RE: LazyLock<Regex> = LazyLock::new(|| {
 /// Used by preview and search modules for stripping HTML from plain text.
 pub static HTML_TAG_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
+
+/// Matches wikilinks and embeds: `[[target]]`, `[[target|alias]]`, `![[target]]`, `![[target|alias]]`.
+/// Groups: 1=target, 2=alias (optional). Used for stripping in preview/search.
+pub static EMBED_OR_WIKILINK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]").unwrap());
+
+/// Matches `^block-id` annotations at end of lines (for stripping, no capture).
+pub static BLOCK_REF_STRIP_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s*\^[\w-]+\s*$").unwrap());

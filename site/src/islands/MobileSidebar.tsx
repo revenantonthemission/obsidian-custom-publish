@@ -1,5 +1,6 @@
 import { useState, useEffect } from "preact/hooks";
-import type { NavTreeData, NavTreeNode } from "../lib/types";
+import type { NavTreeData } from "../lib/types";
+import { TreeNodeItem, isAncestor } from "./TreeNodeItem";
 
 interface Props {
   content: string;
@@ -24,59 +25,6 @@ function extractToc(html: string): TocEntry[] {
     });
   }
   return entries;
-}
-
-function TreeNode({ node, currentSlug, defaultOpen }: {
-  node: NavTreeNode;
-  currentSlug: string;
-  defaultOpen: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  const isCurrent = node.slug === currentSlug;
-  const hasChildren = node.children.length > 0;
-
-  return (
-    <li class="nav-tree-item">
-      <div class={`nav-tree-label ${isCurrent ? "current" : ""}`}>
-        {hasChildren && (
-          <button
-            class="nav-tree-toggle"
-            onClick={() => setOpen(!open)}
-            aria-label={open ? "Collapse" : "Expand"}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" style={{
-                transform: open ? "rotate(90deg)" : "rotate(0deg)",
-                transition: "transform 0.15s ease"
-              }}>
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        )}
-        {!hasChildren && <span class="nav-tree-spacer" />}
-        <a href={`/${node.is_hub ? "hubs" : "posts"}/${node.slug}`}>
-          {node.title}
-        </a>
-      </div>
-      {hasChildren && open && (
-        <ul class="nav-tree-children">
-          {node.children.map((child) => (
-            <TreeNode
-              key={child.slug}
-              node={child}
-              currentSlug={currentSlug}
-              defaultOpen={isAncestor(child, currentSlug)}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
-function isAncestor(node: NavTreeNode, targetSlug: string): boolean {
-  if (node.slug === targetSlug) return true;
-  return node.children.some((c) => isAncestor(c, targetSlug));
 }
 
 export default function MobileSidebar({ content, currentSlug }: Props) {
@@ -181,11 +129,11 @@ export default function MobileSidebar({ content, currentSlug }: Props) {
                   {navTree && navTree.roots.length > 0 ? (
                     <ul class="nav-tree-root">
                       {navTree.roots.map((root) => (
-                        <TreeNode
+                        <TreeNodeItem
                           key={root.slug}
                           node={root}
                           currentSlug={currentSlug}
-                          defaultOpen={isAncestor(root, currentSlug)}
+                          defaultExpanded={isAncestor(root, currentSlug)}
                         />
                       ))}
                     </ul>

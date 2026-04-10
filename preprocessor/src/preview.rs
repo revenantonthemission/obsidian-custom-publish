@@ -2,18 +2,15 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::syntax::HTML_TAG_RE;
+use crate::syntax::{BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE};
 use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
 
 /// Compiled regexes for stripping markdown syntax.
 static RE_INLINE_MARKDOWN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(\*{1,2}|_{1,2}|`|~~)").unwrap());
-static RE_WIKILINK: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]").unwrap());
 static RE_MARKDOWN_LINK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[([^\]]*)\]\([^)]*\)").unwrap());
-static RE_BLOCK_REF: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*\^[\w-]+\s*$").unwrap());
 static RE_MULTI_SPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
 /// Build a slug→preview map for all posts.
@@ -50,7 +47,7 @@ fn strip_markdown_for_preview(content: &str) -> String {
     let joined = lines.join(" ");
 
     // Strip wikilinks: [[target|display]] -> display, [[target]] -> target
-    let text = RE_WIKILINK.replace_all(&joined, |caps: &regex::Captures| {
+    let text = EMBED_OR_WIKILINK_RE.replace_all(&joined, |caps: &regex::Captures| {
         caps.get(2)
             .or_else(|| caps.get(1))
             .map(|m| m.as_str().to_string())
@@ -63,7 +60,7 @@ fn strip_markdown_for_preview(content: &str) -> String {
     // Strip inline markdown: **, *, `, ~~
     let text = RE_INLINE_MARKDOWN.replace_all(&text, "");
     // Strip block references
-    let text = RE_BLOCK_REF.replace_all(&text, "");
+    let text = BLOCK_REF_STRIP_RE.replace_all(&text, "");
     // Normalize whitespace
     let text = RE_MULTI_SPACE.replace_all(&text, " ");
     text.trim().to_string()

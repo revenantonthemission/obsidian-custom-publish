@@ -37,12 +37,12 @@ fn deserialize_date_as_string<'de, D>(deserializer: D) -> Result<Option<String>,
 where
     D: serde::Deserializer<'de>,
 {
-    use serde_yaml::Value;
+    use serde_yml::Value;
     let v = Option::<Value>::deserialize(deserializer)?;
     Ok(v.map(|val| match val {
         Value::String(s) => s,
         other => {
-            // serde_yaml parses bare dates like 2025-01-01 as strings,
+            // serde_yml parses bare dates like 2025-01-01 as strings,
             // but just in case, stringify whatever we get.
             format!("{other:?}")
         }
@@ -295,7 +295,7 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
         let yaml_str = &content[3..3 + end].trim();
         let body = &content[3 + end + 4..]; // skip past closing ---
 
-        let fm: RawFrontmatter = serde_yaml::from_str(yaml_str).unwrap_or_default();
+        let fm: RawFrontmatter = serde_yml::from_str(yaml_str).unwrap_or_default();
         (fm, body)
     } else {
         (RawFrontmatter::default(), content)
