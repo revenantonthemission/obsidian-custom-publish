@@ -49,10 +49,51 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
     <script is:inline>
       // Apply saved theme immediately to prevent flash of unthemed content
       (function() {
-        var saved = localStorage.getItem("theme");
-        if (saved) document.documentElement.setAttribute("data-theme", saved);
-        else if (window.matchMedia("(prefers-color-scheme: dark)").matches)
-          document.documentElement.setAttribute("data-theme", "dark");
+        var theme;
+        var manual = localStorage.getItem("theme-manual");
+        var solar = null;
+
+        // Try to read cached solar data
+        try {
+          var raw = localStorage.getItem("solar");
+          if (raw) {
+            solar = JSON.parse(raw);
+            // Check if solar data is for today
+            var today = new Date().toISOString().slice(0, 10);
+            if (solar.date !== today) solar = null;
+          }
+        } catch(e) { solar = null; }
+
+        if (manual && solar) {
+          // Manual override active — check if a solar boundary has passed
+          var mt = new Date(manual);
+          var now = new Date();
+          var sr = new Date(solar.sunrise);
+          var ss = new Date(solar.sunset);
+          var boundaryPassed = (mt < sr && now >= sr) || (mt < ss && now >= ss);
+          if (boundaryPassed) {
+            // Override expired — use solar theme
+            localStorage.removeItem("theme-manual");
+            theme = (now >= sr && now < ss) ? "light" : "dark";
+          } else {
+            // Override still valid — use saved theme
+            theme = localStorage.getItem("theme");
+          }
+        } else if (solar) {
+          // No manual override — use solar theme
+          var now2 = new Date();
+          var sr2 = new Date(solar.sunrise);
+          var ss2 = new Date(solar.sunset);
+          theme = (now2 >= sr2 && now2 < ss2) ? "light" : "dark";
+        } else {
+          // No solar data yet — fall back to saved theme or system preference
+          theme = localStorage.getItem("theme");
+          if (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark";
+          }
+        }
+
+        if (theme) document.documentElement.setAttribute("data-theme", theme);
       })();
     </script>
   </head>
