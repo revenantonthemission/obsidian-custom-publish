@@ -46,16 +46,36 @@
 
 /* ── Diagram light/dark theme switching ── */
 
+.diagram-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.diagram-container .diagram-dark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* Default (light): show light, hide dark */
-.diagram-dark { display: none !important; }
-.diagram-light { display: block; }
+.diagram-dark { opacity: 0; pointer-events: none; }
+.diagram-light { opacity: 1; }
 
 /* Explicit dark mode */
-[data-theme="dark"] .diagram-light { display: none !important; }
-[data-theme="dark"] .diagram-dark { display: block; }
+[data-theme="dark"] .diagram-light { opacity: 0; pointer-events: none; }
+[data-theme="dark"] .diagram-dark { opacity: 1; pointer-events: auto; }
 
 /* System dark mode preference (no explicit theme set) */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .diagram-light { display: none !important; }
-  :root:not([data-theme="light"]) .diagram-dark { display: block; }
+  :root:not([data-theme="light"]) .diagram-light { opacity: 0; pointer-events: none; }
+  :root:not([data-theme="light"]) .diagram-dark { opacity: 1; pointer-events: auto; }
+}
+
+/* Transition only during active theme switches */
+html.theme-transitioning .diagram-light,
+html.theme-transitioning .diagram-dark {
+  transition: opacity 300ms ease;
 }
