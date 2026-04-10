@@ -1,4 +1,5 @@
 pub mod d2;
+pub mod hub_dates;
 pub mod linker;
 pub mod mermaid;
 pub mod nav_tree;

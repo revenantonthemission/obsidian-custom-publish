@@ -47,11 +47,17 @@ pub fn transform_content_with_assets(
 ) -> (String, Vec<String>) {
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
+    let is_hub = index.posts[post_idx].is_hub;
     let content = strip_frontmatter(raw);
     let content = strip_comments(&content);
     let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
+    let content = if is_hub {
+        crate::hub_dates::augment_hub_child_links(&content, index)
+    } else {
+        content
+    };
     let content = inject_block_anchors(&content);
     let content = convert_highlights(&content);
     let content = convert_callouts(&content);
