@@ -170,13 +170,21 @@ export function msUntilNextBoundary(solar: SolarCache | null): number {
   return tomorrowSunrise.getTime() - now.getTime();
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** Check if the manual override is still valid (hasn't crossed a solar boundary). */
 export function isManualOverrideActive(solar: SolarCache | null): boolean {
   const raw = localStorage.getItem(MANUAL_KEY);
   if (!raw) return false;
 
   const manualTime = new Date(raw);
+  if (isNaN(manualTime.getTime())) return false;
+
   const now = new Date();
+
+  // Any override older than 24h has definitely crossed at least one boundary
+  if (now.getTime() - manualTime.getTime() > DAY_MS) return false;
+
   let sunrise: Date;
   let sunset: Date;
 

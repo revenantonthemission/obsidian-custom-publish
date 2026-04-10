@@ -22,17 +22,24 @@ function getInitialTheme(): "light" | "dark" {
     : "light";
 }
 
-/** Add .theme-transitioning to <html>, wait for transition, then remove. */
+/**
+ * Add .theme-transitioning to <html>, apply the change, then remove after 350ms.
+ *
+ * Uses a module-level timer so rapid successive toggles extend the window
+ * rather than race each other. Does NOT use `transitionend` — that event
+ * fires per-property per-descendant and the first firing from any child
+ * would cut the window short.
+ */
+let transitionTimer: ReturnType<typeof setTimeout> | null = null;
 function withTransition(apply: () => void): void {
   const el = document.documentElement;
   el.classList.add("theme-transitioning");
   apply();
-  const cleanup = () => {
+  if (transitionTimer !== null) clearTimeout(transitionTimer);
+  transitionTimer = setTimeout(() => {
     el.classList.remove("theme-transitioning");
-    el.removeEventListener("transitionend", cleanup);
-  };
-  el.addEventListener("transitionend", cleanup);
-  setTimeout(() => el.classList.remove("theme-transitioning"), 350);
+    transitionTimer = null;
+  }, 350);
 }
 
 export default function ThemeToggle() {
@@ -69,13 +76,17 @@ export default function ThemeToggle() {
     }
 
     function scheduleBoundary(solar: SolarCache | null, geo: GeoCache | null) {
-      const ms = msUntilNextBoundary(solar);
+      // Clamp to at least 60s to avoid tight loops when fetches fail near a boundary
+      const ms = Math.max(msUntilNextBoundary(solar), 60_000);
       timerId = setTimeout(async () => {
         clearManualOverride();
 
+        // Keep prior solar data if fetch fails — avoids falling back to
+        // stale-today defaults which could produce a near-zero ms on retry
         let freshSolar = solar;
         if (geo) {
-          freshSolar = await fetchAndCacheSolar(geo.lat, geo.lng);
+          const fetched = await fetchAndCacheSolar(geo.lat, geo.lng);
+          if (fetched) freshSolar = fetched;
         }
 
         const solarTheme = getSolarTheme(freshSolar);
