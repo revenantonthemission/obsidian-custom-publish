@@ -634,7 +634,7 @@ fn render_themed_diagram(
         }
     }
 
-    parts.join("\n")
+    format!(r#"<div class="diagram-container">{}</div>"#, parts.join("\n"))
 }
 
 #[cfg(test)]
@@ -683,5 +683,34 @@ mod tests {
         let input = "```\nplain code\n```\n";
         let result = transform_outside_fences(input, |line| line.to_string());
         assert!(result.starts_with("```\n"));
+    }
+
+    #[test]
+    fn test_render_themed_diagram_wraps_in_container() {
+        let result = render_themed_diagram(
+            "test",
+            "source",
+            "my-slug",
+            1,
+            None,
+            &ThemePair { light: "light", dark: "dark" },
+            |_src, _theme| Ok("<svg>mock</svg>".to_string()),
+        );
+        assert!(
+            result.starts_with(r#"<div class="diagram-container">"#),
+            "Expected diagram-container wrapper, got: {result}"
+        );
+        assert!(
+            result.ends_with("</div>"),
+            "Expected closing </div>, got: {result}"
+        );
+        assert!(
+            result.contains("diagram-light"),
+            "Expected light variant, got: {result}"
+        );
+        assert!(
+            result.contains("diagram-dark"),
+            "Expected dark variant, got: {result}"
+        );
     }
 }
