@@ -68,12 +68,6 @@
 [data-theme="dark"] .diagram-light { opacity: 0; pointer-events: none; }
 [data-theme="dark"] .diagram-dark { opacity: 1; pointer-events: auto; }
 
-/* System dark mode preference (no explicit theme set) */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .diagram-light { opacity: 0; pointer-events: none; }
-  :root:not([data-theme="light"]) .diagram-dark { opacity: 1; pointer-events: auto; }
-}
-
 /* Transition only during active theme switches */
 html.theme-transitioning .diagram-light,
 html.theme-transitioning .diagram-dark {

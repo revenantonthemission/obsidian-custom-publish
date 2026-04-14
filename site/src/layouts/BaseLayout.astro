@@ -119,21 +119,21 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
 
     <script is:inline>
       // Reading progress bar
-      const progressBar = document.querySelector(".reading-progress");
+      var progressBar = document.querySelector(".reading-progress");
       if (progressBar) {
-        window.addEventListener("scroll", () => {
-          const h = document.documentElement.scrollHeight - window.innerHeight;
+        window.addEventListener("scroll", function() {
+          var h = document.documentElement.scrollHeight - window.innerHeight;
           progressBar.style.width = h > 0 ? (window.scrollY / h * 100) + "%" : "0%";
         }, { passive: true });
       }
 
       // Back-to-top button
-      const btt = document.querySelector(".back-to-top");
+      var btt = document.querySelector(".back-to-top");
       if (btt) {
-        btt.addEventListener("click", () => {
+        btt.addEventListener("click", function() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         });
-        window.addEventListener("scroll", () => {
+        window.addEventListener("scroll", function() {
           btt.classList.toggle("visible", window.scrollY > 400);
         }, { passive: true });
       }

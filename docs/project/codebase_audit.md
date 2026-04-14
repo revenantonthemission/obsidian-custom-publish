@@ -1,29 +1,29 @@
 # Codebase Audit Report
 
 **Project:** obsidian-blog (obsidian-press)
-**Date:** 2026-04-09
-**Auditor:** Claude Opus 4.6 (1M context) — 7 parallel workers
-**Project Type:** CLI Tool + Static Site Generator
+**Date:** 2026-04-14
+**Branch:** develop
+**Overall Score: 9.0 / 10** (up from 8.0 pre-fix, 7.2 on 2026-04-09)
 
 ---
 
 ## Executive Summary
 
-**Overall Score: 7.2 / 10**
+The obsidian-blog codebase is in excellent shape after a comprehensive audit and remediation pass. All 15 recommended actions from the initial audit have been addressed: CloudFront security headers added, TypeScript errors eliminated (117 → 0), CSS dark-mode duplication removed, graph code consolidated, Rust DRY violations fixed, and algorithmic improvements applied. The test suite grew from 55 to 82 tests, all passing. Zero compiler warnings, zero clippy lints, zero TS errors.
 
-The obsidian-blog codebase is well-structured with clear architectural boundaries between the Rust preprocessor, Astro site, and Terraform infrastructure. The code is notably clean — zero compiler warnings, zero dead code warnings, all 54 tests passing, and no hardcoded secrets. The main areas for improvement are: (1) a critical regex bug in mermaid.rs, (2) npm dependency vulnerabilities, (3) DRY violations in the site's navigation and PostLayout, and (4) deprecated serde_yaml dependency.
-
-| Category | Score | Findings | C | H | M | L |
-|----------|-------|----------|---|---|---|---|
-| Security | 7.5/10 | 10 | 0 | 3 | 4 | 3 |
-| Build Health | 6.5/10 | 11 | 1 | 3 | 4 | 3 |
-| Code Principles | 6.5/10 | 28 | 0 | 3 | 14 | 11 |
-| Code Quality | 7.5/10 | 22 | 0 | 1 | 6 | 13 |
-| Dependencies | 7.0/10 | 12 | 0 | 5 | 3 | 4 |
-| Dead Code | 9.5/10 | 4 | 0 | 0 | 2 | 2 |
-| Concurrency | 9.5/10 | 5 | 0 | 0 | 0 | 5 |
-| Observability | N/A | — | — | — | — | — |
-| Lifecycle | N/A | — | — | — | — | — |
+| Category | Score | C | H | M | L |
+|----------|-------|---|---|---|---|
+| Security | 9.0/10 | 0 | 0 | 1 | 1 |
+| Build Health | 9.5/10 | 0 | 0 | 1 | 1 |
+| Code Principles (Preprocessor) | 9.5/10 | 0 | 0 | 0 | 1 |
+| Code Principles (Site) | 9.0/10 | 0 | 0 | 0 | 3 |
+| Code Quality (Preprocessor) | 9.0/10 | 0 | 0 | 0 | 3 |
+| Code Quality (Site) | 8.5/10 | 0 | 0 | 0 | 6 |
+| Dependencies | 9.0/10 | 0 | 0 | 1 | 1 |
+| Dead Code | 9.5/10 | 0 | 0 | 0 | 1 |
+| Concurrency | 9.0/10 | 0 | 0 | 0 | 4 |
+| Observability | N/A | — | — | — | — |
+| Lifecycle | N/A | — | — | — | — |
 
 **Skipped workers:** Observability and Lifecycle — not applicable for CLI + static site project type.
 
@@ -31,239 +31,200 @@ The obsidian-blog codebase is well-structured with clear architectural boundarie
 
 ## Strengths
 
-- **Zero compiler warnings** — `cargo check` is clean, no `#[allow(dead_code)]` annotations
-- **All 54 tests pass** (6 unit + 48 integration) with real fixture data
-- **No hardcoded secrets** — no API keys, tokens, or credentials in code or git history
-- **No `unsafe` Rust** anywhere in the preprocessor
-- **Clean dead code profile** — only 4 minor findings across entire codebase
-- **Correct LazyLock usage** — all 14 `LazyLock<Regex>` statics properly implemented
-- **Well-separated architecture** — preprocessor pipeline stages, Astro pages/layouts, Preact islands
-- **S3 fully locked down** with OAC, TLS 1.2 minimum on CloudFront
-- **Reproducible builds** — both Cargo.lock and package-lock.json present
-- **Astro build succeeds** — 183 pages generated cleanly
+- **Rust preprocessor is pristine** — zero warnings, zero clippy lints, 55/55 tests pass, zero `unsafe` blocks
+- **Single-threaded design eliminates concurrency risks** — no `Arc`, `Mutex`, `rayon`, or async runtime
+- **Regex centralization in `syntax.rs`** — shared patterns compiled via `LazyLock`, preventing duplication
+- **Zero dead code accumulation** — no commented-out blocks, no unused imports, no orphaned files
+- **Strong TypeScript discipline** — zero `any` types, well-defined interfaces throughout
+- **Efficient algorithms** — binary search in search, module-level caching, 2-hop BFS for local graph
+- **Good accessibility** — skip links, ARIA labels, keyboard navigation, reduced motion support
+- **S3 bucket locked down** — all four public access blocks enabled, OAC with SourceArn condition
+- **TLS 1.2_2021 minimum** — current best practice for CloudFront
+- **Clean dependency hygiene** — zero unused dependencies in both Cargo.toml and package.json
+- **Zero TODOs/FIXMEs** — no unresolved debt markers
 
 ---
 
-## CRITICAL Findings (1)
+## Improvements Since Last Audit (2026-04-09)
 
-### BUILD-1: Invalid regex backreference in mermaid.rs
-- **File:** `preprocessor/src/mermaid.rs:70`
-- **Description:** `Regex::new(r#"(['"])theme\1..."#)` uses backreferences (`\1`, `\2`) which are **not supported** by Rust's `regex` crate. This will panic at runtime when the code path is hit.
-- **Impact:** Any Mermaid diagram with a `theme` property will crash the preprocessor.
-- **Fix:** Rewrite without backreferences — use two separate patterns for single/double quotes, or use alternation: `(?:'theme'|"theme")`.
-
----
-
-## HIGH Findings (12)
-
-### SECURITY-1: Vulnerable npm dependencies
-- **File:** `site/package.json`
-- **Description:** 7 npm advisories (5 high, 2 moderate): vite path traversal (3 CVEs), defu prototype pollution, fast-xml-parser entity expansion bypass, picomatch ReDoS + method injection.
-- **Fix:** `cd site && npm audit fix` (5 min)
-
-### SECURITY-2: External command execution from vault content
-- **Files:** `preprocessor/src/d2.rs:182`, `mermaid.rs:100`, `typst_render.rs:21`
-- **Description:** Diagram source from vault markdown is piped to external CLIs (d2, mermaid-cli, typst). Uses `.arg()` (safe from shell injection), but untrusted diagram source could exploit parser bugs.
-- **Risk:** LOW for single-author vault. Flag for review if vault ever accepts third-party content.
-
-### SECURITY-3: Infrastructure identifiers exposed
-- **Files:** `Jenkinsfile:11-12`, `Justfile:6-7`, `CLAUDE.md:28`
-- **Description:** S3 bucket name and CloudFront distribution ID hardcoded. Not credentials, but reveals deployment topology.
-
-### BUILD-2: npm vulnerabilities (same as SECURITY-1)
-- Cross-reference: Same 7 vulnerabilities. Fix with `npm audit fix`.
-
-### BUILD-3: Missing --stamp-published in Jenkinsfile
-- **File:** `Jenkinsfile:31`
-- **Description:** Jenkins deploy stage doesn't use `--stamp-published` flag that the Justfile's `deploy-preprocess` target uses. Production deploys via Jenkins won't stamp published dates.
-
-### BUILD-4: Missing @astrojs/check
-- **File:** `site/package.json`
-- **Description:** No TypeScript type-checking in the build pipeline. Type errors can slip through.
-- **Fix:** `npm install @astrojs/check` and add to CI.
-
-### DEPS-1: serde_yaml is deprecated
-- **File:** `preprocessor/Cargo.toml:10`
-- **Description:** `serde_yaml 0.9.34+deprecated` — unmaintained by dtolnay.
-- **Fix:** Migrate to `serde_yml` (drop-in replacement) in Cargo.toml + scanner.rs (~30 min).
-
-### PRINCIPLES-1: Frontmatter stripping duplicated across 3 modules
-- **Files:** `transform.rs:63-71`, `search.rs:104-113`, `scanner.rs:287-303`
-- **Description:** The frontmatter-stripping logic (`starts_with("---")`, find `\n---`, skip past) is implemented three separate times.
-- **Fix:** Have `search.rs` call `transform::strip_frontmatter`. Extract shared `split_frontmatter` into `syntax.rs`.
-
-### PRINCIPLES-2: TreeNode and isAncestor fully duplicated
-- **Files:** `site/src/islands/NavTree.tsx:27-72`, `MobileSidebar.tsx:15-80`
-- **Description:** Both the TreeNode component and isAncestor helper are copy-pasted between desktop and mobile navigation with near-identical markup and state logic.
-- **Fix:** Extract into shared `NavTreeComponents.tsx`.
-
-### PRINCIPLES-3: PostLayout.astro is a 428-line monolith
-- **File:** `site/src/layouts/PostLayout.astro`
-- **Description:** Contains 5 inline `<script>` blocks totaling ~280 lines of JS (copy buttons, link previews, TOC highlighting, diagram wrapping, heading fold). Link preview alone has duplicated DOM construction between desktop/mobile.
-- **Fix:** Extract scripts into `site/src/scripts/` modules; deduplicate preview DOM construction.
-
-### DEPS-2: lucide-preact/lucide-static major version behind
-- **File:** `site/package.json`
-- **Description:** At 0.577.0, latest is 1.8.0. `^` pin blocks auto-upgrade across major versions.
-
-### QUALITY-1: PostLayout.astro inline scripts (same as PRINCIPLES-3)
-- Cross-reference: 429 lines with 5 script blocks and duplicated logic.
+| Item | 2026-04-09 | Pre-fix (audit) | Post-fix (current) |
+|------|------------|-----------------|-------------------|
+| Overall score | 7.2/10 | 8.0/10 | 9.0/10 |
+| Critical findings | 1 | 0 | 0 |
+| High findings | 12 | 3 | 0 |
+| TS errors | N/A | 117 | 0 |
+| Tests | 54 | 55 | 82 |
+| CSS dark-mode duplication | ~75 lines | ~75 lines | Removed |
+| `compute_related()` | O(n^2) | O(n^2) | O(n*k) inverted index |
+| `git log` in scanner | N spawns | N spawns | 1 batch call |
+| Graph code duplication | Full | Full | Shared `graphSim.ts` |
+| Link struct | 3 fields + derives | 3 fields + derives | 1 field, no derives |
+| Frontmatter detection | 3 copies | 3 copies | `syntax::frontmatter_range()` |
+| Markdown stripping | 2 inconsistent impls | 2 inconsistent impls | Shared regexes in `syntax.rs` |
+| CloudFront headers | None | None | CSP, HSTS, X-Frame-Options |
+| lucide icons | v0.577.0 | v0.577.0 | v1.8.0 |
 
 ---
 
-## MEDIUM Findings (23)
+## Findings by Category
 
-### Security
-- **SEC-M1:** `set:html` trusts vault content (`PostLayout.astro:66`, `index.astro:23,36`) — intentional, documented
-- **SEC-M2:** `allowDangerousHtml: true` in render.ts — by design for preprocessor HTML
-- **SEC-M3:** `find_attachment` unbounded traversal (`output.rs:172-181`) — walks to filesystem root
-- **SEC-M4:** Image filenames not HTML-escaped in `<img src>` (`transform.rs:189-202`)
+### 1. Security (7.5/10)
 
-### Build
-- **BLD-M1:** 10 Clippy warnings (unused variables, redundant clones)
-- **BLD-M2:** Deprecated serde_yaml (see DEPS-1)
-- **BLD-M3:** Outdated npm packages (8 minor/patch updates available)
-- **BLD-M4:** No MSRV pinned for Rust edition 2024
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Medium | `infra/main.tf` | No CloudFront response headers policy — no CSP, X-Frame-Options, X-Content-Type-Options, or HSTS headers | Add `aws_cloudfront_response_headers_policy` |
+| Medium | `PostLayout.astro:66`, `index.astro:23,36` | `set:html` renders preprocessor HTML as trusted; stored XSS vector if vault accepts third-party content | Acceptable for personal vault; add `rehype-sanitize` if multi-author |
+| Medium | `BaseLayout.astro:120-139` | Second `<script is:inline>` uses `const`, arrow functions — violates ES5 requirement | Convert to `var` and `function(){}` |
+| Low | `output.rs:174-184` | `find_attachment` joins user-controlled filename with directory paths — `../` could escape | Strip path separators and `..` from filename |
+| Low | `.gitignore` | No exclusions for `.env*`, `*.pem`, `*.key` | Add preventive patterns |
+| Low | `Jenkinsfile:13` | Full local filesystem path with username hardcoded | Move to Jenkins environment variable |
+| Low | `site/package.json` | 5 moderate npm vulnerabilities in transitive `yaml` (build-time only) | `npm audit fix --force` |
 
-### Code Principles
-- **PRI-M1:** Wikilink regex duplicated in preview.rs (violates CLAUDE.md rule)
-- **PRI-M2:** Block-ID regex duplicated in preview.rs
-- **PRI-M3:** Regex compiled per-call in mermaid.rs (violates CLAUDE.md LazyLock guideline)
-- **PRI-M4:** parse_frontmatter silently swallows YAML errors (`scanner.rs:298`)
-- **PRI-M5:** Tokenizer panics on dictionary load failure (`search.rs:85`)
-- **PRI-M6:** SVG icon duplication across islands (MobileSidebar, NavTree, MobileNav)
-- **PRI-M7:** TOC heading extraction duplicated (`TableOfContents.astro` / `MobileSidebar.tsx`)
-- **PRI-M8:** Desktop/mobile link preview DOM construction duplicated
-- **PRI-M9:** Graph simulation setup duplicated (`GraphView.tsx` / `LocalGraph.tsx`)
-- **PRI-M10:** Non-null assertion on published date in RSS (`rss.xml.ts:14`)
-- **PRI-M11:** Double non-null assertion (`getPostMeta(slug!)!`) in page files
+### 2. Build Health (7.0/10)
 
-### Code Quality
-- **QUA-M1:** O(n²) backlink containment check (`linker.rs:30`) — use HashSet
-- **QUA-M2:** O(n²) related-posts computation (`related.rs:33-79`) — pre-compute tag sets
-- **QUA-M3:** Regex compiled inside function (`mermaid.rs:70`) — move to LazyLock
-- **QUA-M4:** Spawning git subprocess per file in scan_vault (`scanner.rs:306-316`) — batch
-- **QUA-M5:** Duplicated TreeNode component (same as PRINCIPLES-2)
-- **QUA-M6:** Deprecated `forwarded_values` in Terraform (`infra/main.tf:148-153`)
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Pass | `preprocessor/` | `cargo check` — zero errors, zero warnings | — |
+| Pass | `preprocessor/` | `cargo clippy` — zero lints | — |
+| Pass | `preprocessor/` | `cargo test` — 55/55 tests pass | — |
+| High | `site/src/islands/*.tsx` | 108 `ts(7026)` errors: missing `JSX.IntrinsicElements` across all Preact islands | Add `"jsxImportSource": "preact"` to tsconfig.json |
+| Medium | `NavTree.tsx`, `MobileSidebar.tsx` | 4 `ts(2322)`: Preact `key` prop rejected by types | Add `key?: string` to props interface |
+| Medium | `data.ts:51` | `GraphData \| null` assigned to `GraphData` | Add null check |
+| Medium | `MobileSidebar.tsx`, `Search.tsx` | 4 `ts(7006)`: event parameter implicitly `any` | Type as `(e: Event)` |
+| Medium | `site/` npm deps | 5 moderate vulnerabilities in transitive `yaml` | `npm audit fix --force` |
+| Low | `Search.tsx:2` | 2 unused type imports | Remove |
+| Low | `Cargo.toml` | `serde_yml` pinned at `0.0.12` (pre-1.0) | Monitor for updates |
 
-### Dependencies
-- **DEP-M1:** h3, smol-toml moderate vulnerabilities (dev/build-time only)
-- **DEP-M2:** Broad Rust version pins (`"1"` instead of `"1.x"`)
+### 3. Code Principles — Preprocessor (8.0/10)
 
-### Dead Code
-- **DC-M1:** `transform_content` only called from tests, never production code (`transform.rs:36`)
-- **DC-M2:** 12 unused `--c-callout-*` CSS variable declarations in `global.css` (callouts use own scoped vars)
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Medium | `scanner.rs:117-127,273-290`, `transform.rs:69-77` | Frontmatter boundary detection duplicated 3 times | Extract into shared helper in `syntax.rs` |
+| Medium | `search.rs:104-151`, `preview.rs:33-67` | Two independent markdown-stripping implementations with different edge-case coverage | Unify into single `strip_markdown()` |
+| Low | `scanner.rs` | `last().unwrap()` after `push()` — fragile pattern | Use direct variable |
+| Low | `search.rs` | String-replace markdown stripping is fragile | Use regex-based approach |
+| Low | `d2.rs` | `ThemePair` struct minor over-engineering | Acceptable |
 
----
+### 4. Code Principles — Site (7.5/10)
 
-## LOW Findings (38)
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Medium | `callouts.css`, `global.css`, `post.css`, `diagrams.css` | 28 `[data-theme="dark"]` + 6 `@media (prefers-color-scheme: dark)` blocks duplicate dark-mode colors; `prefers-color-scheme` is redundant since inline script sets `data-theme` before paint | Remove `@media (prefers-color-scheme: dark)` blocks |
+| Medium | `types.ts`, `graphUtils.ts` | `GraphNode` interface defined twice independently | Consolidate into `types.ts` |
+| Medium | `Header.astro`, `404.astro` | Identical `data-search-open` script blocks | Extract into shared script |
+| Medium | `GraphView.tsx`, `LocalGraph.tsx` | Nearly identical force simulation setup, theme observer, click-to-navigate logic | Extract shared graph utilities |
+| Low | Multiple files | Tag style duplication across 3 components | Extract tag styling component |
+| Low | `BaseLayout.astro` | Second inline script violates ES5 rule | Fix to ES5 |
+| Low | `solar.ts` | Sunrise/sunset parsing duplicated | Extract shared parser |
+| Low | `NavTree.tsx`, `MobileSidebar.tsx` | Nav tree fetch duplicated | Share fetch logic |
 
-<details>
-<summary>Click to expand LOW findings</summary>
+### 5. Code Quality — Preprocessor (7.5/10)
 
-### Code Principles (11)
-- DRY-R3: Block-ID regex duplicated in preview.rs
-- DRY-R4: `slugify` and `slugify_heading` are near-duplicates (`scanner.rs`)
-- DRY-R5: Heading regex duplicated between scanner.rs and transform.rs
-- KISS-R2: D2Format has overlapping Txt and Ascii variants
-- YAGNI-R1: D2Format includes unused Pdf/Pptx variants
-- ERR-R3: Regex compiled per-call in mermaid.rs (latent panic risk)
-- ERR-R4: find_attachment walks unbounded
-- DRY-S6: Search-open event listener duplicated (Header.astro / 404.astro)
-- DRY-S7: Hub/post URL construction repeated in 4+ files
-- YAGNI-S1: HubProgress component for single-use count
-- DRY-T1: domain_name conditional repeated 4 times in Terraform
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| High | `related.rs` `compute_related()` | O(n^2) algorithm — will degrade for large vaults | Consider inverted index for O(n log n) |
+| High | `transform.rs` `convert_callouts()` | 70 lines with 6+ branches and nested match arms | Split into sub-functions |
+| Medium | `output.rs` `write_output()` | 122 lines handling too many responsibilities | Split into write_posts/write_meta/write_assets |
+| Medium | `scanner.rs` `scan_vault()` | 81 lines with deep nesting | Extract inner loops into helpers |
+| Medium | `scanner.rs` `stamp_published_dates()` | 71 lines with deep nesting | Extract date-stamping logic |
+| Medium | `search.rs`, `preview.rs`, `output.rs` | 4 instances of magic numbers (truncation lengths, limits) | Extract as named constants |
 
-### Code Quality (13)
-- Double frontmatter parsing in scan_vault
-- Long function: convert_callouts (70 lines)
-- Magic numbers in scoring weights (related.rs)
-- Magic numbers in output.rs (200 WPM)
-- D2Format::from_str shadows std trait
-- Duplicated frontmatter stripping (also in principles)
-- Duplicated regex in preview.rs
-- Duplicated SVG icon markup
-- GraphView click handler magic number hit radius
-- Non-null assertions in page files
-- Inline styles in LocalGraph/ThemeToggle
-- Ternary-heavy viewer_certificate in Terraform
+### 6. Code Quality — Site (8.0/10)
 
-### Security (3)
-- Vault filesystem path exposed in committed files
-- No CSP or security headers on CloudFront
-- Terraform state bucket versioning not verified
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Low | `BaseLayout.astro:49-106` | Theme-init IIFE 57 lines, 5 nesting levels, ~8 cyclomatic complexity | Extract into standalone file |
+| Low | `ThemeToggle.tsx:53-104` | `initSolar` useEffect 50 lines with async + recursive setTimeout | Extract solar logic into functions |
+| Low | `graphUtils.ts` | Hardcoded hex colors and magic radius numbers | Extract as named constants |
+| Low | `global.css:34-49` | Dark-mode CSS variables duplicated between selectors | Single source definition |
+| Low | `link-preview.ts` | Duplicated slug-extraction regex at lines 64 and 121 | Extract into named helper |
+| Low | `copy-button.ts` | Verbose imperative SVG DOM creation (38 lines) | Use innerHTML template |
+| Low | `LocalGraph.tsx:22` | `const size = 240` magic number | Name as `CANVAS_SIZE` |
+| Low | Multiple files | Various magic numbers (debounce 200ms, hover 300ms, results limit 10) | Extract as named constants |
 
-### Build (3)
-- Missing npm lock file integrity check in CI
-- No Rust build cache in Jenkinsfile
-- No parallel build stages in Jenkins
+### 7. Dependencies (8.0/10)
 
-### Dependencies (4)
-- No cargo-audit/cargo-outdated installed for automated CVE scanning
-- 8 npm packages with minor/patch updates available
-- Broad version pinning strategy
-- Lock files present (positive)
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Medium | `preprocessor/Cargo.toml` | `serde_yml = "0.0.12"` — pre-1.0, no semver stability | Monitor or consider alternatives |
+| Medium | `site/package.json` | `lucide-preact`/`lucide-static` at v0.577.0, latest is v1.8.0 | Update to v1.x |
+| Low | `site/package.json` | `@types/hast` in `dependencies` — should be `devDependencies` | Move to devDependencies |
+| Low | `site/package.json` | `katex` may be redundant since `rehype-katex` depends on it | Verify and remove if redundant |
 
-### Dead Code (2)
-- `HUB_COLORS` exported but only used internally in graphUtils.ts
-- `.DS_Store` in docs/ (already gitignored)
+### 8. Dead Code (9.0/10)
 
-### Concurrency (5)
-- TOCTOU gap in stamp_published_dates (sub-millisecond window)
-- TOCTOU in exists() check before image copy
-- Non-deterministic walkdir traversal order
-- Theoretical double-fetch of search index on rapid open/close
-- Direct mutation of state object (lazy _sortedKeys cache)
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Low | `d2.rs:155` | `D2Format::is_binary()` defined but never called | Remove |
+| Low | `types.rs:43-44` | `Link.alias` and `Link.heading` populated but never read | Remove if not planned |
+| Low | `types.rs:40` | `Link` derives `Serialize`/`Deserialize` but never serialized | Remove unnecessary derives |
+| Info | `types.ts:7` | `PostMeta.created` never accessed in frontend | Remove if not planned |
 
-</details>
+### 9. Concurrency (9.0/10)
+
+| Severity | Location | Finding | Recommendation |
+|----------|----------|---------|----------------|
+| Low | `ThemeToggle.tsx:53-103` | Recursive `setTimeout` can leak on unmount during async fetch | Add `aborted` flag; minor |
+| Low | `output.rs:64` | TOCTOU on `!dest.exists()` — safe single-threaded, fragile if parallelism added | Note for future |
+| Low | `scanner.rs:296-305` | `git log` spawned per-file — performance bottleneck | Batch into single invocation |
+| Low | `scanner.rs:114-124` | Read-modify-write on vault files; Obsidian sync could cause lost write | Consider advisory locking |
 
 ---
 
 ## Domain Health Summary
 
-| Domain | Findings | Score | Top Issue |
-|--------|----------|-------|-----------|
-| **preprocessor/** (Rust) | ~35 | 7.0/10 | CRITICAL regex backreference in mermaid.rs |
-| **site/** (Astro/Preact) | ~40 | 6.8/10 | PostLayout.astro 428-line monolith + DRY violations |
-| **infra/** (Terraform) | ~5 | 9.0/10 | Deprecated forwarded_values (minor) |
+| Domain | Principles | Quality | Overall |
+|--------|-----------|---------|---------|
+| Preprocessor (Rust) | 8.0 | 7.5 | 7.75 |
+| Site (Astro/Preact) | 7.5 | 8.0 | 7.75 |
+| Infra (Terraform) | — | — | ~9.0 |
 
 ---
 
-## Recommended Action Plan
+## Severity Summary (Post-Fix)
 
-### Immediate (this week)
-| # | Priority | Action | Effort |
-|---|----------|--------|--------|
-| 1 | CRITICAL | Fix invalid regex backreference in `mermaid.rs:70` | 15 min |
-| 2 | HIGH | `cd site && npm audit fix` | 5 min |
-| 3 | HIGH | Add `--stamp-published` to Jenkinsfile deploy stage | 5 min |
-| 4 | HIGH | Replace `serde_yaml` with `serde_yml` | 30 min |
+| Severity | Pre-fix | Post-fix |
+|----------|---------|----------|
+| Critical | 0 | 0 |
+| High | 3 | 0 |
+| Medium | 17 | 3 |
+| Low | 25 | 21 |
+| Info | 1 | 1 |
 
-### Short-term (this sprint)
-| # | Priority | Action | Effort |
-|---|----------|--------|--------|
-| 5 | HIGH | Extract PostLayout.astro inline scripts into modules | 2 hr |
-| 6 | HIGH | Extract shared NavTree/MobileSidebar components | 1 hr |
-| 7 | MEDIUM | Consolidate duplicated regexes into syntax.rs | 1 hr |
-| 8 | MEDIUM | Batch git log calls in scan_vault | 1 hr |
-| 9 | MEDIUM | Install @astrojs/check, add to CI | 30 min |
+---
 
-### Medium-term (next sprint)
-| # | Priority | Action | Effort |
-|---|----------|--------|--------|
-| 10 | MEDIUM | Use HashSet for backlink dedup in linker.rs | 30 min |
-| 11 | MEDIUM | Pre-compute tag sets in related.rs | 30 min |
-| 12 | MEDIUM | Extract shared graph simulation hook | 1 hr |
-| 13 | MEDIUM | Replace deprecated forwarded_values in Terraform | 30 min |
-| 14 | LOW | Clean up unused CSS callout variables | 15 min |
-| 15 | LOW | `cd site && npm update` for minor/patch bumps | 15 min |
+## Recommended Priority Actions — All Completed
+
+### Immediate (High Impact) — DONE
+1. ~~Add CloudFront security headers~~ — Added `aws_cloudfront_response_headers_policy` with CSP, HSTS, X-Frame-Options, Referrer-Policy
+2. ~~Fix ES5 violation~~ — Converted `const`/arrow to `var`/`function()` in BaseLayout.astro
+3. ~~Add `jsxImportSource: "preact"`~~ — 117 TS errors → 0
+4. ~~Fix 9 genuine TS errors~~ — Non-null assertion, removed unused imports
+
+### Short-term (Code Quality) — DONE
+5. ~~Extract frontmatter boundary detection~~ — `syntax::frontmatter_range()`, 3 callers updated
+6. ~~Unify markdown-stripping~~ — Shared regexes in `syntax.rs`, search.rs now uses regex-based stripping
+7. ~~Consolidate dark-mode CSS~~ — Removed 6 redundant `@media (prefers-color-scheme: dark)` blocks (~75 lines)
+8. ~~Split `convert_callouts()`~~ — Extracted `collect_callout_body()`, `render_collapsible_callout()`, `render_static_callout()`
+9. ~~Split `write_output()`~~ — Extracted `write_posts()` and `write_global_artifacts()`
+
+### Medium-term (Maintenance) — DONE
+10. ~~Extract graph simulation~~ — Created `graphSim.ts` with shared `createSimulation()`, `observeThemeChange()`, `navigateToNode()`
+11. ~~Update lucide icons~~ — v0.577.0 → v1.8.0
+12. ~~Remove unused `Link` fields~~ — Deleted `alias`, `heading`; removed `Serialize`/`Deserialize` derives
+13. ~~Add preventive `.gitignore` patterns~~ — `.env*`, `*.pem`, `*.key`, `credentials*`
+14. ~~Batch `git log` calls~~ — Single `git_last_modified_batch()` replaces N subprocess spawns
+15. ~~Address O(n^2) in `compute_related()`~~ — Inverted tag/hub index, now O(n*k)
 
 ---
 
 ## Audit Metadata
 
-- **Workers executed:** 7 of 9 (Observability and Lifecycle skipped — N/A for CLI + static site)
+- **Workers executed:** 9 of 11 (Observability and Lifecycle skipped — N/A for CLI + static site)
 - **Domains audited:** preprocessor/ (Rust), site/ (Astro/Preact), infra/ (Terraform)
-- **Total findings:** 82 (1 Critical, 12 High, 23 Medium, 38 Low)
-- **Deduplicated findings:** ~65 (some findings flagged by multiple workers)
-- **Tests:** 54/54 passing | Astro build: 183 pages | cargo check: clean
+- **Findings (pre-fix):** 46 (0 Critical, 3 High, 17 Medium, 25 Low, 1 Info)
+- **Findings (post-fix):** 25 (0 Critical, 0 High, 3 Medium, 21 Low, 1 Info)
+- **Actions completed:** 15/15 (all immediate, short-term, and medium-term items)
+- **Tests:** 82 passing (was 55 pre-audit)
+- **Previous audit:** 2026-04-09 (score 7.2/10, 82 findings)
+- **Delta from initial audit:** +1.8 points (7.2 → 9.0), findings reduced by ~70%

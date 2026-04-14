@@ -6,7 +6,10 @@ use lindera::segmenter::Segmenter;
 use lindera::tokenizer::Tokenizer;
 use serde::Serialize;
 
-use crate::syntax::HTML_TAG_RE;
+use crate::syntax::{
+    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE,
+    INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE,
+};
 use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
 
@@ -136,15 +139,21 @@ fn strip_markdown(content: &str) -> String {
         // 5. Strip HTML tags (callout divs, anchors, etc.)
         let line = HTML_TAG_RE.replace_all(line, "");
 
-        // 6. Strip inline markdown
-        let line = line
-            .replace("**", "")
-            .replace(['*', '`'], "")
-            .replace("![[", "")
-            .replace("[[", "")
-            .replace("]]", "");
+        // 6. Strip wikilinks/embeds: [[target|display]] -> display
+        let line = EMBED_OR_WIKILINK_RE.replace_all(&line, |caps: &regex::Captures| {
+            caps.get(2)
+                .or_else(|| caps.get(1))
+                .map(|m| m.as_str().to_string())
+                .unwrap_or_default()
+        });
+        // 7. Strip markdown links: [text](url) -> text
+        let line = MARKDOWN_LINK_RE.replace_all(&line, "$1");
+        // 8. Strip inline markdown: **, *, `, ~~, ==
+        let line = INLINE_MARKDOWN_RE.replace_all(&line, "");
+        // 9. Strip block references
+        let line = BLOCK_REF_STRIP_RE.replace_all(&line, "");
 
-        result.push(line);
+        result.push(line.to_string());
     }
 
     result.join("\n")

@@ -1,13 +1,8 @@
 import type { SimulationNodeDatum, SimulationLinkDatum } from "d3-force";
+import type { GraphNode as RawGraphNode } from "./types";
 
 /** A graph node enriched with d3 simulation position data. */
-export interface GraphNode extends SimulationNodeDatum {
-  slug: string;
-  title: string;
-  tags: string[];
-  is_hub: boolean;
-  backlink_count: number;
-}
+export interface GraphNode extends RawGraphNode, SimulationNodeDatum {}
 
 /** A graph link between two GraphNodes, typed for d3 simulation. */
 export type GraphLink = SimulationLinkDatum<GraphNode>;

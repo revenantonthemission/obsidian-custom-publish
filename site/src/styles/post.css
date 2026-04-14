@@ -103,12 +103,6 @@
   background: rgba(255, 208, 0, 0.18);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .post-content mark {
-    background: rgba(255, 208, 0, 0.18);
-  }
-}
-
 /* ── Inline KaTeX size match ── */
 .post-content > p .katex,
 .post-content > li .katex {
@@ -332,12 +326,6 @@ a[data-footnote-backref] {
 
 [data-theme="dark"] .shiki .line.highlighted {
   background-color: rgba(101, 117, 133, 0.24);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .shiki .line.highlighted {
-    background-color: rgba(101, 117, 133, 0.24);
-  }
 }
 
 /* ── Heading fold toggle ── */

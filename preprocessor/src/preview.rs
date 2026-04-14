@@ -1,17 +1,9 @@
-use std::sync::LazyLock;
-
-use regex::Regex;
-
-use crate::syntax::{BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE};
+use crate::syntax::{
+    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE,
+    INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE, MULTI_SPACE_RE,
+};
 use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
-
-/// Compiled regexes for stripping markdown syntax.
-static RE_INLINE_MARKDOWN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(\*{1,2}|_{1,2}|`|~~)").unwrap());
-static RE_MARKDOWN_LINK: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[([^\]]*)\]\([^)]*\)").unwrap());
-static RE_MULTI_SPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
 /// Build a slug→preview map for all posts.
 pub fn build_previews(index: &VaultIndex) -> serde_json::Value {
@@ -54,15 +46,15 @@ fn strip_markdown_for_preview(content: &str) -> String {
             .unwrap_or_default()
     });
     // Strip markdown links: [text](url) -> text
-    let text = RE_MARKDOWN_LINK.replace_all(&text, "$1");
+    let text = MARKDOWN_LINK_RE.replace_all(&text, "$1");
     // Strip HTML tags
     let text = HTML_TAG_RE.replace_all(&text, "");
-    // Strip inline markdown: **, *, `, ~~
-    let text = RE_INLINE_MARKDOWN.replace_all(&text, "");
+    // Strip inline markdown: **, *, `, ~~, ==
+    let text = INLINE_MARKDOWN_RE.replace_all(&text, "");
     // Strip block references
     let text = BLOCK_REF_STRIP_RE.replace_all(&text, "");
     // Normalize whitespace
-    let text = RE_MULTI_SPACE.replace_all(&text, " ");
+    let text = MULTI_SPACE_RE.replace_all(&text, " ");
     text.trim().to_string()
 }
 

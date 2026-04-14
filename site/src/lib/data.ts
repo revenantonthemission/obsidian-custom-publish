@@ -48,7 +48,7 @@ export function getGraph(): GraphData {
   const filePath = path.join(CONTENT_DIR, "graph.json");
   if (!fs.existsSync(filePath)) return { nodes: [], edges: [] };
   _graph = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  return _graph;
+  return _graph!;
 }
 
 /** Get the 2-hop neighborhood subgraph for a given post slug. */

@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
+use crate::syntax::{frontmatter_range, BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
 use crate::types::VaultIndex;
 
 /// Matches Obsidian comments: `%%inline%%` or block `%%\n...\n%%`.
@@ -67,13 +67,9 @@ pub fn transform_content_with_assets(
 
 /// Remove YAML frontmatter delimited by `---`.
 pub fn strip_frontmatter(content: &str) -> String {
-    if !content.starts_with("---") {
-        return content.to_string();
-    }
-    if let Some(end) = content[3..].find("\n---") {
-        content[3 + end + 4..].to_string()
-    } else {
-        content.to_string()
+    match frontmatter_range(content) {
+        Some(range) => content[range.end + 4..].to_string(),
+        None => content.to_string(),
     }
 }
 
@@ -381,58 +377,14 @@ fn convert_callouts(content: &str) -> String {
             let callout_type = caps[1].to_lowercase();
             let collapse_marker = caps.get(2).map(|m| m.as_str());
             let title = caps[3].trim().to_string();
-
-            // Collect callout body lines (lines starting with `> `)
-            let mut body_lines = Vec::new();
-            while let Some(next) = lines.peek() {
-                if let Some(stripped) = next.strip_prefix("> ") {
-                    body_lines.push(stripped.to_string());
-                    lines.next();
-                } else if next.starts_with('>') {
-                    // Empty callout continuation line
-                    body_lines.push(String::new());
-                    lines.next();
-                } else {
-                    break;
-                }
-            }
-
-            // Join body lines as raw markdown — don't wrap in <p>,
-            // let the remark/rehype pipeline handle paragraph detection.
-            // This preserves code fences, lists, and other block elements inside callouts.
-            let body = body_lines.join("\n");
+            let body = collect_callout_body(&mut lines);
 
             match collapse_marker {
                 Some("-") | Some("+") => {
-                    let open_attr = if collapse_marker == Some("+") { " open" } else { "" };
-                    result.push(format!(
-                        r#"<details class="callout callout-{callout_type}"{open_attr}>"#
-                    ));
-                    let summary = if !title.is_empty() {
-                        html_escape(&title)
-                    } else {
-                        callout_type.clone()
-                    };
-                    result.push(format!(
-                        r#"<summary class="callout-title">{summary}</summary>"#
-                    ));
-                    result.push(String::new()); // blank line so markdown parser kicks in
-                    result.push(body);
-                    result.push(String::new());
-                    result.push("</details>".to_string());
+                    render_collapsible_callout(&mut result, &callout_type, &title, &body, collapse_marker.unwrap());
                 }
                 _ => {
-                    result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
-                    if !title.is_empty() {
-                        result.push(format!(
-                            r#"<div class="callout-title">{}</div>"#,
-                            html_escape(&title)
-                        ));
-                    }
-                    result.push(String::new()); // blank line so markdown parser kicks in
-                    result.push(body);
-                    result.push(String::new());
-                    result.push("</div>".to_string());
+                    render_static_callout(&mut result, &callout_type, &title, &body);
                 }
             }
         } else {
@@ -441,6 +393,51 @@ fn convert_callouts(content: &str) -> String {
     }
 
     result.join("\n")
+}
+
+/// Collect callout body lines (lines starting with `> `) from the iterator.
+fn collect_callout_body(lines: &mut std::iter::Peekable<std::str::Lines<'_>>) -> String {
+    let mut body_lines = Vec::new();
+    while let Some(next) = lines.peek() {
+        if let Some(stripped) = next.strip_prefix("> ") {
+            body_lines.push(stripped.to_string());
+            lines.next();
+        } else if next.starts_with('>') {
+            body_lines.push(String::new());
+            lines.next();
+        } else {
+            break;
+        }
+    }
+    body_lines.join("\n")
+}
+
+/// Render a collapsible callout as `<details>/<summary>`.
+fn render_collapsible_callout(result: &mut Vec<String>, callout_type: &str, title: &str, body: &str, marker: &str) {
+    let open_attr = if marker == "+" { " open" } else { "" };
+    result.push(format!(r#"<details class="callout callout-{callout_type}"{open_attr}>"#));
+    let summary = if !title.is_empty() {
+        html_escape(title)
+    } else {
+        callout_type.to_string()
+    };
+    result.push(format!(r#"<summary class="callout-title">{summary}</summary>"#));
+    result.push(String::new());
+    result.push(body.to_string());
+    result.push(String::new());
+    result.push("</details>".to_string());
+}
+
+/// Render a static (non-collapsible) callout as `<div>`.
+fn render_static_callout(result: &mut Vec<String>, callout_type: &str, title: &str, body: &str) {
+    result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
+    if !title.is_empty() {
+        result.push(format!(r#"<div class="callout-title">{}</div>"#, html_escape(title)));
+    }
+    result.push(String::new());
+    result.push(body.to_string());
+    result.push(String::new());
+    result.push("</div>".to_string());
 }
 
 /// Theme pair for dual-rendering diagrams (light + dark variants).

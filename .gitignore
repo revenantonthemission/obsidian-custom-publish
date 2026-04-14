@@ -7,6 +7,10 @@ dist/
 *.tfstate
 *.tfstate.backup
 *.tfvars
+.env*
+*.pem
+*.key
+credentials*
 site/public/search-index.json
 site/public/graph.json
 site/public/assets/

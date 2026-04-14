@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "preact/hooks";
-import type { SearchIndex, SearchDocument, SearchHit } from "../lib/types";
+import type { SearchIndex } from "../lib/types";
 
 /** Extended SearchIndex with mutable cache for sorted keys (binary search optimization). */
 type IndexWithCache = SearchIndex & { _sortedKeys?: string[] };
