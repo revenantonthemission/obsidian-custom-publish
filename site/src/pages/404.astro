@@ -26,14 +26,6 @@ const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 5);
   </div>
 </BaseLayout>
 
-<script>
-  document.querySelectorAll("[data-search-open]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("open-search"));
-    });
-  });
-</script>
-
 <style>
   .not-found {
     text-align: center;

@@ -219,7 +219,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         let headings = extract_headings(body);
         let blocks = extract_blocks(body);
 
-        posts.push(PostMeta {
+        let post = PostMeta {
             slug,
             title,
             file_path: path.to_path_buf(),
@@ -231,9 +231,10 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             hub_parent: frontmatter.hub_parent,
             description: frontmatter.description,
             raw_content: content,
-        });
-        heading_map.insert(posts.last().unwrap().title.clone(), headings);
-        block_map.insert(posts.last().unwrap().title.clone(), blocks);
+        };
+        heading_map.insert(post.title.clone(), headings);
+        block_map.insert(post.title.clone(), blocks);
+        posts.push(post);
     }
 
     // Sort by slug for deterministic output across runs

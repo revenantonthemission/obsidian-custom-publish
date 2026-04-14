@@ -10,7 +10,7 @@ pipeline {
         AWS_PROFILE   = 'mfa'
         S3_BUCKET     = 'obsidian-custom-s3'
         CF_DIST_ID    = 'E35HZFVGD0OJ04'
-        VAULT_PATH    = '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'
+        VAULT_PATH    = "${env.OBSIDIAN_VAULT_PATH ?: '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'}"
         CARGO_HOME    = "${WORKSPACE}/.cargo"
     }
 

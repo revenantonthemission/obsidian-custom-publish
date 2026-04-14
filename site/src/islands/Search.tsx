@@ -4,6 +4,10 @@ import type { SearchIndex } from "../lib/types";
 /** Extended SearchIndex with mutable cache for sorted keys (binary search optimization). */
 type IndexWithCache = SearchIndex & { _sortedKeys?: string[] };
 
+const DEBOUNCE_MS = 200;
+const MAX_RESULTS = 10;
+const TITLE_MATCH_BOOST = 100;
+
 interface Result {
   slug: string;
   title: string;
@@ -62,7 +66,7 @@ export default function Search() {
       return;
     }
 
-    const timer = setTimeout(() => runSearch(query, index), 200);
+    const timer = setTimeout(() => runSearch(query, index), DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query, index]);
 
@@ -75,7 +79,7 @@ export default function Search() {
     for (let i = 0; i < index.documents.length; i++) {
       const doc = index.documents[i];
       if (doc.title.toLowerCase().includes(q)) {
-        scores.set(i, (scores.get(i) || 0) + 100);
+        scores.set(i, (scores.get(i) || 0) + TITLE_MATCH_BOOST);
       }
     }
 
@@ -108,7 +112,7 @@ export default function Search() {
 
     const sorted = [...scores.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
+      .slice(0, MAX_RESULTS)
       .map(([idx, score]) => ({
         ...index.documents[idx],
         score,

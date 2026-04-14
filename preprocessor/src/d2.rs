@@ -151,11 +151,6 @@ impl D2Format {
         }
     }
 
-    /// True for formats that produce binary output (not UTF-8 text).
-    pub fn is_binary(self) -> bool {
-        matches!(self, Self::Png | Self::Gif | Self::Pdf | Self::Pptx)
-    }
-
     /// True for ASCII/text diagram formats.
     pub fn is_text_art(self) -> bool {
         matches!(self, Self::Txt | Self::Ascii)

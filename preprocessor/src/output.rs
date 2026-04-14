@@ -175,10 +175,16 @@ fn count_words(text: &str) -> usize {
 
 /// Walk up from the post's directory looking for `attachment/{filename}`.
 /// Bounded to 10 levels to prevent traversing to filesystem root.
+/// Strips path separators and `..` from filename to prevent directory traversal.
 fn find_attachment(post_path: &Path, filename: &str) -> Option<std::path::PathBuf> {
+    // Sanitize filename: use only the final component, stripping any path traversal
+    let safe_name = Path::new(filename)
+        .file_name()?
+        .to_str()?;
+
     let mut dir = post_path.parent()?;
     for _ in 0..10 {
-        let candidate = dir.join("attachment").join(filename);
+        let candidate = dir.join("attachment").join(safe_name);
         if candidate.exists() {
             return Some(candidate);
         }

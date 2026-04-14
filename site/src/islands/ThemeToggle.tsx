@@ -52,17 +52,20 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     let timerId: ReturnType<typeof setTimeout> | null = null;
+    let aborted = false;
 
     async function initSolar() {
       let geo = getCachedGeo();
       if (!geo) {
         geo = await requestGeoAndCache();
       }
+      if (aborted) return;
 
       let solar = getCachedSolar();
       if (!solar && geo) {
         solar = await fetchAndCacheSolar(geo.lat, geo.lng);
       }
+      if (aborted) return;
 
       if (!isManualOverrideActive(solar)) {
         clearManualOverride();
@@ -76,16 +79,15 @@ export default function ThemeToggle() {
     }
 
     function scheduleBoundary(solar: SolarCache | null, geo: GeoCache | null) {
-      // Clamp to at least 60s to avoid tight loops when fetches fail near a boundary
       const ms = Math.max(msUntilNextBoundary(solar), 60_000);
       timerId = setTimeout(async () => {
+        if (aborted) return;
         clearManualOverride();
 
-        // Keep prior solar data if fetch fails — avoids falling back to
-        // stale-today defaults which could produce a near-zero ms on retry
         let freshSolar = solar;
         if (geo) {
           const fetched = await fetchAndCacheSolar(geo.lat, geo.lng);
+          if (aborted) return;
           if (fetched) freshSolar = fetched;
         }
 
@@ -99,6 +101,7 @@ export default function ThemeToggle() {
     initSolar();
 
     return () => {
+      aborted = true;
       if (timerId !== null) clearTimeout(timerId);
     };
   }, []);

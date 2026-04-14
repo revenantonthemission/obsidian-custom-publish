@@ -21,16 +21,22 @@ const HUB_COLORS: Record<string, string> = {
   network: "#8b5cf6",
 };
 
+const HUB_COLOR = "#ef4444";
+const DEFAULT_NODE_COLOR = "#6b7280";
+const MIN_RADIUS = 4;
+const MAX_RADIUS = 12;
+const RADIUS_SCALE = 2;
+
 /** Node fill color based on hub status and tags. */
 export function getNodeColor(node: GraphNode): string {
-  if (node.is_hub) return "#ef4444";
+  if (node.is_hub) return HUB_COLOR;
   for (const tag of node.tags) {
     if (HUB_COLORS[tag]) return HUB_COLORS[tag];
   }
-  return "#6b7280";
+  return DEFAULT_NODE_COLOR;
 }
 
-/** Node radius scaled by backlink count (4-12px range). */
+/** Node radius scaled by backlink count. */
 export function getNodeRadius(node: GraphNode): number {
-  return Math.max(4, Math.min(12, 4 + node.backlink_count * 2));
+  return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, MIN_RADIUS + node.backlink_count * RADIUS_SCALE));
 }

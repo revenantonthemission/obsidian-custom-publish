@@ -13,6 +13,15 @@ let mobileBackdrop: HTMLDivElement | null = null;
 
 const isMobile = window.matchMedia("(max-width: 767px)");
 
+const HOVER_DELAY_MS = 300;
+const TIP_WIDTH = 280;
+
+/** Extract post slug from an href like "/posts/my-slug" or "/posts/my-slug#heading". */
+function extractPostSlug(href: string): string | null {
+  const match = href.match(/^\/posts\/(.+?)(?:#|$)/);
+  return match ? match[1] : null;
+}
+
 async function ensurePreviewData() {
   if (previewData) return previewData;
   try {
@@ -61,9 +70,8 @@ function createTooltip() {
 
 function showPreview(anchor: HTMLAnchorElement) {
   const href = anchor.getAttribute("href") || "";
-  const match = href.match(/^\/posts\/(.+?)(?:#|$)/);
-  if (!match) return;
-  const slug = match[1];
+  const slug = extractPostSlug(href);
+  if (!slug) return;
 
   hoverTimer = setTimeout(async () => {
     const data = await ensurePreviewData();
@@ -75,15 +83,14 @@ function showPreview(anchor: HTMLAnchorElement) {
     buildPreviewContent(preview, tip);
 
     const rect = anchor.getBoundingClientRect();
-    const tipWidth = 280;
     let left = rect.left + window.scrollX;
     let top = rect.top + window.scrollY - 8;
 
-    tip.style.left = `${Math.min(left, window.innerWidth - tipWidth - 16)}px`;
+    tip.style.left = `${Math.min(left, window.innerWidth - TIP_WIDTH - 16)}px`;
     tip.style.top = `${top}px`;
     tip.style.transform = "translateY(-100%)";
     tip.classList.add("visible");
-  }, 300);
+  }, HOVER_DELAY_MS);
 }
 
 function hidePreview() {
@@ -117,10 +124,8 @@ function hideMobilePreview() {
 
 async function showMobilePreview(anchor: HTMLAnchorElement, e: Event) {
   const href = anchor.getAttribute("href") || "";
-  const match = href.match(/^\/posts\/(.+?)(?:#|$)/);
-  if (!match) return;
-
-  const slug = match[1];
+  const slug = extractPostSlug(href);
+  if (!slug) return;
   const data = await ensurePreviewData();
   if (!data) return;
   const preview = data[slug];

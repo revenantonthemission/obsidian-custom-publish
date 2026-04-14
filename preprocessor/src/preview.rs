@@ -58,26 +58,28 @@ fn strip_markdown_for_preview(content: &str) -> String {
     text.trim().to_string()
 }
 
+/// Minimum characters before accepting a sentence-ending punctuation.
+const MIN_SENTENCE_CHARS: usize = 10;
+/// Maximum characters for preview summary truncation.
+const MAX_SUMMARY_CHARS: usize = 150;
+
 /// Extract the first sentence from plain text.
-/// Finds the first `.` or `。` after at least 10 chars, or truncates at 150 chars.
+/// Finds the first `.` or `。` after at least MIN_SENTENCE_CHARS, or truncates at MAX_SUMMARY_CHARS.
 fn extract_first_sentence(text: &str) -> String {
     if text.is_empty() {
         return String::new();
     }
-    // Look for sentence-ending punctuation after at least 10 chars
     for (i, ch) in text.char_indices() {
-        if i >= 10 && (ch == '.' || ch == '。') {
+        if i >= MIN_SENTENCE_CHARS && (ch == '.' || ch == '。') {
             let end = i + ch.len_utf8();
             return text[..end].to_string();
         }
     }
-    // No sentence end found; truncate at ~150 characters (not bytes)
     let char_count = text.chars().count();
-    if char_count <= 150 {
+    if char_count <= MAX_SUMMARY_CHARS {
         return text.to_string();
     }
-    // Find byte index of the 150th character
-    let byte_idx = text.char_indices().nth(150).map(|(i, _)| i).unwrap_or(text.len());
+    let byte_idx = text.char_indices().nth(MAX_SUMMARY_CHARS).map(|(i, _)| i).unwrap_or(text.len());
     let truncated = &text[..byte_idx];
     if let Some(last_space) = truncated.rfind(' ') {
         format!("{}...", &text[..last_space])

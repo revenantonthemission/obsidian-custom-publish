@@ -32,6 +32,13 @@ pub struct SearchHit {
     pub count: usize,
 }
 
+/// Maximum characters for search snippets.
+const SNIPPET_MAX_CHARS: usize = 200;
+/// Minimum token length to include in index (filters particles/punctuation).
+const MIN_TOKEN_CHARS: usize = 2;
+/// Boost multiplier for title tokens in the inverted index.
+const TITLE_TOKEN_BOOST: usize = 2;
+
 /// Build a full-text search index from all posts in the vault.
 ///
 /// Uses lindera with the Korean MeCab dictionary for morphological tokenization,
@@ -44,7 +51,7 @@ pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
 
     for (doc_idx, post) in index.posts.iter().enumerate() {
         let plain_text = strip_markdown(&post.raw_content);
-        let snippet = make_snippet(&plain_text, 200);
+        let snippet = make_snippet(&plain_text, SNIPPET_MAX_CHARS);
 
         documents.push(SearchDocument {
             slug: post.slug.clone(),
@@ -60,9 +67,9 @@ pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
 
         let mut token_counts: HashMap<String, usize> = HashMap::new();
 
-        // Title tokens count double (boosted)
+        // Title tokens boosted
         for token in &title_tokens {
-            *token_counts.entry(token.clone()).or_default() += 2;
+            *token_counts.entry(token.clone()).or_default() += TITLE_TOKEN_BOOST;
         }
 
         for token in &tokens {
@@ -98,7 +105,7 @@ fn tokenize_text(tokenizer: &Tokenizer, text: &str) -> Vec<String> {
     tokens
         .into_iter()
         .map(|t| t.surface.to_lowercase())
-        .filter(|t: &String| t.chars().count() >= 2)
+        .filter(|t: &String| t.chars().count() >= MIN_TOKEN_CHARS)
         .filter(|t: &String| !t.chars().all(|c| c.is_ascii_punctuation() || c.is_whitespace()))
         .collect()
 }
