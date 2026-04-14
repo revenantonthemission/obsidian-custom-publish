@@ -23,16 +23,16 @@ document.querySelectorAll("pre.shiki").forEach((pre) => {
   const btn = document.createElement("button");
   btn.className = "copy-btn";
   btn.ariaLabel = "Copy code";
-  // Safe: COPY_ICON and CHECK_ICON are hardcoded SVG constants, not user input
-  btn.innerHTML = COPY_ICON; // eslint-disable-line no-unsanitized/property
+  // COPY_ICON and CHECK_ICON are hardcoded SVG string constants, not user input
+  btn.innerHTML = COPY_ICON;
   btn.addEventListener("click", async () => {
     const code = pre.textContent || "";
     try {
       await navigator.clipboard.writeText(code);
-      btn.innerHTML = CHECK_ICON; // eslint-disable-line no-unsanitized/property
+      btn.innerHTML = CHECK_ICON;
       btn.classList.add("copied");
       setTimeout(() => {
-        btn.innerHTML = COPY_ICON; // eslint-disable-line no-unsanitized/property
+        btn.innerHTML = COPY_ICON;
         btn.classList.remove("copied");
       }, COPIED_RESET_MS);
     } catch {

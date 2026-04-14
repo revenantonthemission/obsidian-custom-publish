@@ -296,9 +296,9 @@ fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
 fn git_last_modified_batch(vault_path: &Path) -> HashMap<PathBuf, String> {
     let mut result = HashMap::new();
 
-    // `git log` with --name-only to get per-file last commit dates in one call
+    // Use a prefixed format to unambiguously distinguish date lines from filenames
     let output = Command::new("git")
-        .args(["log", "--format=%cs", "--name-only", "--diff-filter=ACMR", "--"])
+        .args(["--no-pager", "log", "--format=DATE:%cs", "--name-only", "--diff-filter=ACMR", "--"])
         .arg(vault_path)
         .output();
 
@@ -312,16 +312,15 @@ fn git_last_modified_batch(vault_path: &Path) -> HashMap<PathBuf, String> {
         Err(_) => return result,
     };
 
-    // Parse output: alternating date lines and filename lines, separated by blank lines
+    // Parse output: DATE:YYYY-MM-DD lines followed by filename lines, separated by blanks
     let mut current_date = String::new();
     for line in stdout.lines() {
         let trimmed = line.trim();
         if trimmed.is_empty() {
             continue;
         }
-        // Date lines match YYYY-MM-DD pattern
-        if trimmed.len() == 10 && trimmed.as_bytes()[4] == b'-' && trimmed.as_bytes()[7] == b'-' {
-            current_date = trimmed.to_string();
+        if let Some(date) = trimmed.strip_prefix("DATE:") {
+            current_date = date.to_string();
         } else if !current_date.is_empty() {
             // File path — only store the first (most recent) date per file
             let path = Path::new(trimmed);

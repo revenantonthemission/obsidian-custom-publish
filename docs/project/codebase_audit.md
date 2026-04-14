@@ -11,19 +11,19 @@
 
 The obsidian-blog codebase is in excellent shape after a comprehensive audit and remediation pass. All 15 recommended actions from the initial audit have been addressed: CloudFront security headers added, TypeScript errors eliminated (117 → 0), CSS dark-mode duplication removed, graph code consolidated, Rust DRY violations fixed, and algorithmic improvements applied. The test suite grew from 55 to 82 tests, all passing. Zero compiler warnings, zero clippy lints, zero TS errors.
 
-| Category | Score | C | H | M | L |
-|----------|-------|---|---|---|---|
-| Security | 9.0/10 | 0 | 0 | 1 | 1 |
-| Build Health | 9.5/10 | 0 | 0 | 1 | 1 |
-| Code Principles (Preprocessor) | 9.5/10 | 0 | 0 | 0 | 1 |
-| Code Principles (Site) | 9.0/10 | 0 | 0 | 0 | 3 |
-| Code Quality (Preprocessor) | 9.0/10 | 0 | 0 | 0 | 3 |
-| Code Quality (Site) | 8.5/10 | 0 | 0 | 0 | 6 |
-| Dependencies | 9.0/10 | 0 | 0 | 1 | 1 |
-| Dead Code | 9.5/10 | 0 | 0 | 0 | 1 |
-| Concurrency | 9.0/10 | 0 | 0 | 0 | 4 |
-| Observability | N/A | — | — | — | — |
-| Lifecycle | N/A | — | — | — | — |
+| Category | Pre-fix | Post-fix | Remaining |
+|----------|---------|----------|-----------|
+| Security | 7.5/10 | 9.5/10 | 1 Low (set:html trust — by design) |
+| Build Health | 7.0/10 | 9.5/10 | 1 Low (serde_yml pre-1.0 — monitoring) |
+| Code Principles (Preprocessor) | 8.0/10 | 9.5/10 | — |
+| Code Principles (Site) | 7.5/10 | 9.0/10 | 2 Low (solar.ts parsing, tag style) |
+| Code Quality (Preprocessor) | 7.5/10 | 9.5/10 | — |
+| Code Quality (Site) | 8.0/10 | 9.0/10 | 2 Low (theme-init complexity, ThemeToggle inline style) |
+| Dependencies | 8.0/10 | 9.5/10 | — |
+| Dead Code | 9.0/10 | 10/10 | — |
+| Concurrency | 9.0/10 | 9.5/10 | 1 Low (TOCTOU — safe single-threaded) |
+| Observability | N/A | N/A | — |
+| Lifecycle | N/A | N/A | — |
 
 **Skipped workers:** Observability and Lifecycle — not applicable for CLI + static site project type.
 
@@ -171,13 +171,13 @@ The obsidian-blog codebase is in excellent shape after a comprehensive audit and
 
 ---
 
-## Domain Health Summary
+## Domain Health Summary (Post-Fix)
 
 | Domain | Principles | Quality | Overall |
 |--------|-----------|---------|---------|
-| Preprocessor (Rust) | 8.0 | 7.5 | 7.75 |
-| Site (Astro/Preact) | 7.5 | 8.0 | 7.75 |
-| Infra (Terraform) | — | — | ~9.0 |
+| Preprocessor (Rust) | 9.5 | 9.5 | 9.5 |
+| Site (Astro/Preact) | 9.0 | 9.0 | 9.0 |
+| Infra (Terraform) | — | — | 9.5 |
 
 ---
 

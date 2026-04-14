@@ -24,13 +24,20 @@ pub fn build_previews(index: &VaultIndex) -> serde_json::Value {
 /// Strip markdown/HTML from raw content to produce plain text for previews.
 fn strip_markdown_for_preview(content: &str) -> String {
     let body = strip_frontmatter(content);
+    let mut in_code_fence = false;
     let lines: Vec<&str> = body
         .lines()
         .filter(|line| {
             let trimmed = line.trim();
-            // Skip headings, code fences, blockquotes, horizontal rules, empty lines
+            if trimmed.starts_with("```") {
+                in_code_fence = !in_code_fence;
+                return false;
+            }
+            if in_code_fence {
+                return false;
+            }
+            // Skip headings, blockquotes, horizontal rules, empty lines
             !trimmed.starts_with('#')
-                && !trimmed.starts_with("```")
                 && !trimmed.starts_with('>')
                 && !trimmed.starts_with("---")
                 && !trimmed.is_empty()
