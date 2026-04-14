@@ -1,8 +1,38 @@
 use anyhow::{Context, Result, bail};
 use regex::Regex;
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::LazyLock;
 use tempfile::NamedTempFile;
+
+/// Resolve the absolute path to `mmdc` once at startup.
+/// Checks common install locations if `which` fails (e.g. non-login shells).
+static MMDC_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+    // Try `which` first (works in interactive shells)
+    if let Ok(output) = std::process::Command::new("which").arg("mmdc").output() {
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() {
+                return Some(PathBuf::from(path));
+            }
+        }
+    }
+
+    // Fallback: check common Homebrew/npm global install locations
+    let candidates = [
+        "/opt/homebrew/bin/mmdc",
+        "/usr/local/bin/mmdc",
+        "/opt/homebrew/Cellar/node/25.9.0_2/bin/mmdc",
+    ];
+    for candidate in candidates {
+        let path = PathBuf::from(candidate);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    None
+});
 
 static INIT_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
@@ -100,7 +130,10 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
         .context("failed to create temp output file")?;
     let output_path = output_file.path().to_path_buf();
 
-    let mut cmd = std::process::Command::new("mmdc");
+    let mmdc = MMDC_PATH.as_ref()
+        .context("mmdc not found — install with: npm install -g @mermaid-js/mermaid-cli")?;
+
+    let mut cmd = std::process::Command::new(mmdc);
     cmd.arg("-i")
         .arg(input.path())
         .arg("-o")
@@ -115,7 +148,7 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
 
     let result = cmd
         .output()
-        .context("failed to spawn mmdc — is @mermaid-js/mermaid-cli installed?")?;
+        .with_context(|| format!("failed to spawn mmdc at {}", mmdc.display()))?;
 
     if !result.status.success() {
         let stderr = String::from_utf8_lossy(&result.stderr);
