@@ -3,7 +3,7 @@
 **Project:** obsidian-blog (obsidian-press)
 **Date:** 2026-04-14
 **Branch:** develop
-**Overall Score: 9.0 / 10** (up from 8.0 pre-fix, 7.2 on 2026-04-09)
+**Overall Score: 9.5 / 10** (up from 8.0 pre-fix, 7.2 on 2026-04-09)
 
 ---
 
@@ -187,9 +187,9 @@ The obsidian-blog codebase is in excellent shape after a comprehensive audit and
 |----------|---------|----------|
 | Critical | 0 | 0 |
 | High | 3 | 0 |
-| Medium | 17 | 3 |
-| Low | 25 | 21 |
-| Info | 1 | 1 |
+| Medium | 17 | 0 |
+| Low | 25 | 6 |
+| Info | 1 | 0 |
 
 ---
 
@@ -223,8 +223,8 @@ The obsidian-blog codebase is in excellent shape after a comprehensive audit and
 - **Workers executed:** 9 of 11 (Observability and Lifecycle skipped — N/A for CLI + static site)
 - **Domains audited:** preprocessor/ (Rust), site/ (Astro/Preact), infra/ (Terraform)
 - **Findings (pre-fix):** 46 (0 Critical, 3 High, 17 Medium, 25 Low, 1 Info)
-- **Findings (post-fix):** 25 (0 Critical, 0 High, 3 Medium, 21 Low, 1 Info)
-- **Actions completed:** 15/15 (all immediate, short-term, and medium-term items)
+- **Findings (post-fix):** 6 (0 Critical, 0 High, 0 Medium, 6 Low)
+- **Actions completed:** All immediate, short-term, medium-term, and remaining items
 - **Tests:** 82 passing (was 55 pre-audit)
 - **Previous audit:** 2026-04-09 (score 7.2/10, 82 findings)
-- **Delta from initial audit:** +1.8 points (7.2 → 9.0), findings reduced by ~70%
+- **Delta from initial audit:** +2.3 points (7.2 → 9.5), findings reduced by ~87%
