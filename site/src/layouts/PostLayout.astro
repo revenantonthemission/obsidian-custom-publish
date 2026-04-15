@@ -64,7 +64,7 @@ if (meta.hub_parent) {
           preprocessor (callout divs, wikilink anchors). This is safe for a personal vault but
           must be revisited if the vault ever accepts third-party content. */}
       <div class="post-content" set:html={content} />
-      <RelatedPosts slugs={meta.related_posts ?? []} />
+      {!meta.is_hub && <RelatedPosts slugs={meta.related_posts ?? []} />}
       <BacklinkList backlinks={meta.backlinks} />
     </article>
     <aside class="post-sidebar">
