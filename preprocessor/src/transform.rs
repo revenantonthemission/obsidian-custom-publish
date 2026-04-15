@@ -26,7 +26,7 @@ static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
 static FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:\s+(\w+))?\n(.*?)^```").unwrap());
+    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:[ \t]+(\w+))?\n(.*?)^```").unwrap());
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -77,13 +77,31 @@ pub fn strip_frontmatter(content: &str) -> String {
 ///
 /// Handles both inline comments (`some %%hidden%% text`) and block comments
 /// (a `%%` line starts a multi-line comment that ends at the next `%%` line).
+/// Skips fenced code blocks so that Mermaid directives (`%%{init}%%`) and
+/// Mermaid comments (`%% ...`) are preserved.
 fn strip_comments(content: &str) -> String {
     // First: strip block comments (%%\n...\n%%)
     let mut result = String::with_capacity(content.len());
     let mut in_block_comment = false;
+    let mut in_fence = false;
 
     for line in content.lines() {
         let trimmed = line.trim();
+
+        // Track fenced code blocks — don't strip comments inside them
+        if trimmed.starts_with("```") {
+            in_fence = !in_fence;
+            result.push_str(line);
+            result.push('\n');
+            continue;
+        }
+
+        if in_fence {
+            result.push_str(line);
+            result.push('\n');
+            continue;
+        }
+
         if trimmed == "%%" {
             in_block_comment = !in_block_comment;
             continue;
@@ -100,8 +118,10 @@ fn strip_comments(content: &str) -> String {
         result.pop();
     }
 
-    // Then: strip inline comments (%%hidden%%)
-    INLINE_COMMENT_RE.replace_all(&result, "").to_string()
+    // Then: strip inline comments (%%hidden%%) — only outside fenced blocks
+    transform_outside_fences(&result, |line| {
+        INLINE_COMMENT_RE.replace_all(line, "").to_string()
+    })
 }
 
 /// Convert `==highlighted text==` to `<mark>` tags.
