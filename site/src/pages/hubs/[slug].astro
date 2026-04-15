@@ -9,7 +9,9 @@ export function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-const hub = getPostMeta(slug!)!;
+if (!slug) return Astro.redirect("/404");
+const hub = getPostMeta(slug);
+if (!hub) return Astro.redirect("/404");
 
 const childSlugs = hub.forward_links || [];
 const children: PostMeta[] = childSlugs

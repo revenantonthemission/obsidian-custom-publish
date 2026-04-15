@@ -1,10 +1,10 @@
 // Types matching the Rust preprocessor's JSON output
 
+// Note: the preprocessor also emits `created` in meta JSON, omitted here as unused.
 export interface PostMeta {
   slug: string;
   title: string;
   tags: string[];
-  created: string | null;
   published: string | null;
   updated: string | null;
   backlinks: string[];

@@ -37,11 +37,9 @@ pub struct VaultIndex {
 
 // --- Link resolution types (Pass 2) ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Link {
     pub target_slug: String,
-    pub alias: Option<String>,
-    pub heading: Option<String>,
 }
 
 #[derive(Debug)]

@@ -1,16 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceCenter,
-  forceCollide,
-} from "d3-force";
 import { select } from "d3-selection";
 import { zoom } from "d3-zoom";
 import type { GraphData } from "../lib/types";
-import type { GraphNode, GraphLink, ResolvedLink } from "../lib/graphUtils";
+import type { ResolvedLink } from "../lib/graphUtils";
 import { getNodeColor, getNodeRadius } from "../lib/graphUtils";
+import { prepareGraphData, createSimulation, observeThemeChange, navigateToNode } from "../lib/graphSim";
 
 interface Props {
   data: GraphData;
@@ -25,7 +19,6 @@ export default function GraphView({ data, width, height }: Props) {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    // Use container dimensions if no explicit size provided
     const container = svgRef.current.parentElement;
     const w = width || container?.clientWidth || 800;
     const h = height || container?.clientHeight || 600;
@@ -34,13 +27,10 @@ export default function GraphView({ data, width, height }: Props) {
     svg.selectAll("*").remove();
     svg.attr("width", w).attr("height", h);
 
-    const nodes: GraphNode[] = data.nodes.map((n) => ({ ...n }));
-    const links: GraphLink[] = data.edges.map((e) => ({ ...e }));
+    const { nodes, links } = prepareGraphData(data);
 
     // Container group for zoom/pan
     const g = svg.append("g");
-
-    // Zoom behavior
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 4])
       .on("zoom", (event) => {
@@ -56,7 +46,7 @@ export default function GraphView({ data, width, height }: Props) {
       .selectAll("line")
       .data(links)
       .join("line")
-      .attr("stroke", "rgba(150, 150, 150, 0.3)")
+      .attr("stroke", "var(--c-border, rgba(150, 150, 150, 0.3))")
       .attr("stroke-width", 1);
 
     // Draw nodes
@@ -69,9 +59,7 @@ export default function GraphView({ data, width, height }: Props) {
       .attr("r", (d) => getNodeRadius(d))
       .attr("fill", (d) => getNodeColor(d))
       .attr("cursor", "pointer")
-      .on("click", (_event, d) => {
-        window.location.href = d.is_hub ? `/hubs/${d.slug}` : `/posts/${d.slug}`;
-      });
+      .on("click", (_event, d) => navigateToNode(d));
 
     // Draw labels
     const labelElements = g
@@ -87,16 +75,7 @@ export default function GraphView({ data, width, height }: Props) {
       .attr("pointer-events", "none");
 
     // Simulation
-    const sim = forceSimulation(nodes)
-      .force(
-        "link",
-        forceLink<GraphNode, GraphLink>(links)
-          .id((d) => d.slug)
-          .distance(80)
-      )
-      .force("charge", forceManyBody().strength(-200))
-      .force("center", forceCenter(w / 2, h / 2))
-      .force("collide", forceCollide().radius(20));
+    const sim = createSimulation(nodes, links, { width: w, height: h });
 
     sim.on("tick", () => {
       linkElements
@@ -112,8 +91,16 @@ export default function GraphView({ data, width, height }: Props) {
         .attr("y", (d) => d.y! + getNodeRadius(d) + 14);
     });
 
+    // Force SVG repaint when theme changes so CSS variables re-resolve
+    const disconnectObserver = observeThemeChange(() => {
+      svg.style("display", "none");
+      svgRef.current!.getBoundingClientRect();
+      svg.style("display", null);
+    });
+
     return () => {
       sim.stop();
+      disconnectObserver();
     };
   }, [data, width, height]);
 

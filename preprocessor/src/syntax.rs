@@ -28,7 +28,45 @@ pub static TRANSCLUSION_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"!\[\[([^\]#]+?)(?:#(?:\^([a-zA-Z0-9-]+)|([^\]]+?)))?\]\]").unwrap()
 });
 
+/// Matches markdown headings with level and text capture.
+/// Groups: 1=hash marks (level), 2=heading text.
+pub static HEADING_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?m)^(#{1,6})\s+(.+)$").unwrap());
+
 /// Matches HTML tags (opening, closing, and self-closing).
 /// Used by preview and search modules for stripping HTML from plain text.
 pub static HTML_TAG_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<[^>]+>").unwrap());
+
+/// Matches wikilinks and embeds: `[[target]]`, `[[target|alias]]`, `![[target]]`, `![[target|alias]]`.
+/// Groups: 1=target, 2=alias (optional). Used for stripping in preview/search.
+pub static EMBED_OR_WIKILINK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]").unwrap());
+
+/// Matches `^block-id` annotations at end of lines (for stripping, no capture).
+pub static BLOCK_REF_STRIP_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s*\^[\w-]+\s*$").unwrap());
+
+/// Matches inline markdown syntax for stripping: **, *, __, _, `, ~~, ==.
+pub static INLINE_MARKDOWN_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(\*{1,2}|_{1,2}|`|~~|==)").unwrap());
+
+/// Matches markdown links `[text](url)` for stripping — keeps the text.
+pub static MARKDOWN_LINK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[([^\]]*)\]\([^)]*\)").unwrap());
+
+/// Matches runs of whitespace for normalization.
+pub static MULTI_SPACE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s+").unwrap());
+
+/// Find the YAML frontmatter byte range in content.
+///
+/// Returns the range of the YAML text between the opening `---` and closing `\n---`.
+/// The body content starts at `range.end + 4` (skipping the `\n---` delimiter).
+/// Returns `None` if there is no valid frontmatter.
+pub fn frontmatter_range(content: &str) -> Option<std::ops::Range<usize>> {
+    if !content.starts_with("---") {
+        return None;
+    }
+    content[3..].find("\n---").map(|end| 3..3 + end)
+}

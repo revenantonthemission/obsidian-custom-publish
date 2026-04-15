@@ -1,18 +1,13 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Local};
-use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::LazyLock;
 use walkdir::WalkDir;
 
-use crate::syntax::BLOCK_ID_RE;
+use crate::syntax::{frontmatter_range, BLOCK_ID_RE, HEADING_RE};
 use crate::types::{is_korean, PostMeta, VaultIndex};
-
-static HEADING_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?m)^#{1,6}\s+(.+)$").unwrap());
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -37,12 +32,12 @@ fn deserialize_date_as_string<'de, D>(deserializer: D) -> Result<Option<String>,
 where
     D: serde::Deserializer<'de>,
 {
-    use serde_yaml::Value;
+    use serde_yml::Value;
     let v = Option::<Value>::deserialize(deserializer)?;
     Ok(v.map(|val| match val {
         Value::String(s) => s,
         other => {
-            // serde_yaml parses bare dates like 2025-01-01 as strings,
+            // serde_yml parses bare dates like 2025-01-01 as strings,
             // but just in case, stringify whatever we get.
             format!("{other:?}")
         }
@@ -69,7 +64,7 @@ fn extract_headings(content: &str) -> Vec<String> {
     let mut counts: HashMap<String, usize> = HashMap::new();
 
     for cap in HEADING_RE.captures_iter(content) {
-        let raw = cap[1].trim();
+        let raw = cap[2].trim();
         let base_slug = slugify_heading(raw);
         let count = counts.entry(base_slug.clone()).or_insert(0);
         let slug = if *count == 0 {
@@ -128,8 +123,8 @@ pub fn stamp_published_dates(vault_path: &Path) -> Result<usize> {
             continue;
         }
 
-        if let Some(end) = content[3..].find("\n---") {
-            let yaml_block = &content[3..3 + end];
+        if let Some(range) = frontmatter_range(&content) {
+            let yaml_block = &content[range.clone()];
 
             // Find existing published date
             let existing_published = yaml_block
@@ -157,11 +152,10 @@ pub fn stamp_published_dates(vault_path: &Path) -> Result<usize> {
                 }
                 None => {
                     // No published field — insert before the closing `---`
-                    let before_close = 3 + end;
                     let stamped = format!(
                         "{}\npublished: {today}{}",
-                        &content[..before_close],
-                        &content[before_close..]
+                        &content[..range.end],
+                        &content[range.end..]
                     );
                     std::fs::write(path, stamped)
                         .with_context(|| format!("failed to write {}", path.display()))?;
@@ -185,6 +179,11 @@ fn file_modified_date(file_path: &Path) -> Option<String> {
 /// Scan an Obsidian vault directory and build an index of all posts.
 pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
     let mut posts = Vec::new();
+    let mut heading_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut block_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+
+    // Batch-query git for all file modification dates (one subprocess instead of N)
+    let git_dates = git_last_modified_batch(vault_path);
 
     for entry in WalkDir::new(vault_path)
         .into_iter()
@@ -207,15 +206,20 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             .to_string();
 
         let slug = slugify(&filename);
-        let (frontmatter, _body) = parse_frontmatter(&content);
+        let (frontmatter, body) = parse_frontmatter(&content);
 
         let title = filename.clone();
 
-        let updated = git_last_modified(path);
+        let updated = path.canonicalize().ok()
+            .and_then(|canonical| git_dates.get(&canonical).cloned());
 
         let created = frontmatter.created.or_else(|| file_created_date(path));
 
-        posts.push(PostMeta {
+        // Extract headings and blocks during initial scan to avoid re-parsing
+        let headings = extract_headings(body);
+        let blocks = extract_blocks(body);
+
+        let post = PostMeta {
             slug,
             title,
             file_path: path.to_path_buf(),
@@ -227,8 +231,14 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             hub_parent: frontmatter.hub_parent,
             description: frontmatter.description,
             raw_content: content,
-        });
+        };
+        heading_map.insert(post.title.clone(), headings);
+        block_map.insert(post.title.clone(), blocks);
+        posts.push(post);
     }
+
+    // Sort by slug for deterministic output across runs
+    posts.sort_by(|a, b| a.slug.cmp(&b.slug));
 
     let mut slug_map: HashMap<String, usize> = HashMap::new();
     for (i, p) in posts.iter().enumerate() {
@@ -246,22 +256,6 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .map(|(i, p)| (p.title.clone(), i))
         .collect();
 
-    let heading_map: HashMap<String, Vec<String>> = posts
-        .iter()
-        .map(|p| {
-            let (_fm, body) = parse_frontmatter(&p.raw_content);
-            (p.title.clone(), extract_headings(body))
-        })
-        .collect();
-
-    let block_map: HashMap<String, HashMap<String, String>> = posts
-        .iter()
-        .map(|p| {
-            let (_fm, body) = parse_frontmatter(&p.raw_content);
-            (p.title.clone(), extract_blocks(body))
-        })
-        .collect();
-
     Ok(VaultIndex {
         posts,
         slug_map,
@@ -272,47 +266,70 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 }
 
 /// Convert a filename into a URL-safe slug.
-/// Keeps alphanumeric, Korean characters, and hyphens. Strips everything else.
+/// Delegates to `slugify_heading` — identical logic for filenames and headings.
 fn slugify(name: &str) -> String {
-    name.to_lowercase()
-        .replace(' ', "-")
-        .chars()
-        .filter(|c| c.is_alphanumeric() || *c == '-' || is_korean(*c))
-        .collect::<String>()
-        .trim_matches('-')
-        .to_string()
+    slugify_heading(name)
 }
 
 /// Split content into frontmatter and body.
 fn parse_frontmatter(content: &str) -> (RawFrontmatter, &str) {
-    // Frontmatter is enclosed between two `---` lines at the start
-    if !content.starts_with("---") {
-        return (RawFrontmatter::default(), content);
-    }
+    match frontmatter_range(content) {
+        Some(range) => {
+            let yaml_str = content[range.clone()].trim();
+            let body = &content[range.end + 4..]; // skip past closing \n---
 
-    // Find the closing `---`
-    if let Some(end) = content[3..].find("\n---") {
-        let yaml_str = &content[3..3 + end].trim();
-        let body = &content[3 + end + 4..]; // skip past closing ---
-
-        let fm: RawFrontmatter = serde_yaml::from_str(yaml_str).unwrap_or_default();
-        (fm, body)
-    } else {
-        (RawFrontmatter::default(), content)
+            let fm: RawFrontmatter = match serde_yml::from_str(yaml_str) {
+                Ok(fm) => fm,
+                Err(e) => {
+                    eprintln!("warning: malformed YAML frontmatter, using defaults: {e}");
+                    RawFrontmatter::default()
+                }
+            };
+            (fm, body)
+        }
+        None => (RawFrontmatter::default(), content),
     }
 }
 
-/// Get the last git commit date for a file as `YYYY-MM-DD`, or `None` if unavailable.
-fn git_last_modified(file_path: &Path) -> Option<String> {
+/// Batch-query git for the last commit date of all files under a directory.
+/// Returns a map of canonical file path → `YYYY-MM-DD` date string.
+fn git_last_modified_batch(vault_path: &Path) -> HashMap<PathBuf, String> {
+    let mut result = HashMap::new();
+
+    // Use a prefixed format to unambiguously distinguish date lines from filenames
     let output = Command::new("git")
-        .args(["log", "-1", "--format=%cs", "--", file_path.to_str()?])
-        .output()
-        .ok()?;
-    if !output.status.success() {
-        return None;
+        .args(["--no-pager", "log", "--format=DATE:%cs", "--name-only", "--diff-filter=ACMR", "--"])
+        .arg(vault_path)
+        .output();
+
+    let output = match output {
+        Ok(o) if o.status.success() => o,
+        _ => return result,
+    };
+
+    let stdout = match String::from_utf8(output.stdout) {
+        Ok(s) => s,
+        Err(_) => return result,
+    };
+
+    // Parse output: DATE:YYYY-MM-DD lines followed by filename lines, separated by blanks
+    let mut current_date = String::new();
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if let Some(date) = trimmed.strip_prefix("DATE:") {
+            current_date = date.to_string();
+        } else if !current_date.is_empty() {
+            // File path — only store the first (most recent) date per file
+            let path = Path::new(trimmed);
+            let canonical = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+            result.entry(canonical).or_insert_with(|| current_date.clone());
+        }
     }
-    let date = String::from_utf8(output.stdout).ok()?.trim().to_string();
-    if date.is_empty() { None } else { Some(date) }
+
+    result
 }
 
 /// Get the file creation date (birthtime) as `YYYY-MM-DD` in local timezone, or `None` if unavailable.

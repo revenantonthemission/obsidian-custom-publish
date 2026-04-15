@@ -132,3 +132,35 @@ fn test_heading_transclusion_boundary() {
     assert!(!section.contains("Content A"), "Should not include prior section");
     assert!(!section.contains("Content C"), "Should stop at next same-level heading");
 }
+
+#[test]
+fn test_hub_page_child_links_get_auto_dates() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["hub-page"];
+    let result = transform_content(&index, post_idx);
+
+    // Simple Post has published: 2025-01-15 in its frontmatter
+    assert!(
+        result.contains(r#"<time class="hub-child-date" datetime="2025-01-15">2025년 1월 15일</time>"#),
+        "Expected auto-appended date for Simple Post, got:\n{result}"
+    );
+    // Manual annotation should be stripped
+    assert!(
+        !result.contains("@2020-01-01"),
+        "Manual annotation should be stripped, got:\n{result}"
+    );
+}
+
+#[test]
+fn test_non_hub_file_wikilinks_not_augmented() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["post-with-links"];
+    let result = transform_content(&index, post_idx);
+
+    // Post With Links is NOT a hub, so even if it contains list-item wikilinks,
+    // they should NOT be augmented with dates
+    assert!(
+        !result.contains("hub-child-date"),
+        "Non-hub post should not have hub-child-date elements, got:\n{result}"
+    );
+}

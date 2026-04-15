@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
+use crate::syntax::{frontmatter_range, BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
 use crate::types::VaultIndex;
 
 /// Matches Obsidian comments: `%%inline%%` or block `%%\n...\n%%`.
@@ -26,7 +26,7 @@ static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
 static FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:\s+(\w+))?\n(.*?)^```").unwrap());
+    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:[ \t]+(\w+))?\n(.*?)^```").unwrap());
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -47,11 +47,17 @@ pub fn transform_content_with_assets(
 ) -> (String, Vec<String>) {
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
+    let is_hub = index.posts[post_idx].is_hub;
     let content = strip_frontmatter(raw);
     let content = strip_comments(&content);
     let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
     let content = convert_wikilinks(&content, index);
+    let content = if is_hub {
+        crate::hub_dates::augment_hub_child_links(&content, index)
+    } else {
+        content
+    };
     let content = inject_block_anchors(&content);
     let content = convert_highlights(&content);
     let content = convert_callouts(&content);
@@ -61,13 +67,9 @@ pub fn transform_content_with_assets(
 
 /// Remove YAML frontmatter delimited by `---`.
 pub fn strip_frontmatter(content: &str) -> String {
-    if !content.starts_with("---") {
-        return content.to_string();
-    }
-    if let Some(end) = content[3..].find("\n---") {
-        content[3 + end + 4..].to_string()
-    } else {
-        content.to_string()
+    match frontmatter_range(content) {
+        Some(range) => content[range.end + 4..].to_string(),
+        None => content.to_string(),
     }
 }
 
@@ -75,13 +77,31 @@ pub fn strip_frontmatter(content: &str) -> String {
 ///
 /// Handles both inline comments (`some %%hidden%% text`) and block comments
 /// (a `%%` line starts a multi-line comment that ends at the next `%%` line).
+/// Skips fenced code blocks so that Mermaid directives (`%%{init}%%`) and
+/// Mermaid comments (`%% ...`) are preserved.
 fn strip_comments(content: &str) -> String {
     // First: strip block comments (%%\n...\n%%)
     let mut result = String::with_capacity(content.len());
     let mut in_block_comment = false;
+    let mut in_fence = false;
 
     for line in content.lines() {
         let trimmed = line.trim();
+
+        // Track fenced code blocks — don't strip comments inside them
+        if trimmed.starts_with("```") {
+            in_fence = !in_fence;
+            result.push_str(line);
+            result.push('\n');
+            continue;
+        }
+
+        if in_fence {
+            result.push_str(line);
+            result.push('\n');
+            continue;
+        }
+
         if trimmed == "%%" {
             in_block_comment = !in_block_comment;
             continue;
@@ -98,8 +118,10 @@ fn strip_comments(content: &str) -> String {
         result.pop();
     }
 
-    // Then: strip inline comments (%%hidden%%)
-    INLINE_COMMENT_RE.replace_all(&result, "").to_string()
+    // Then: strip inline comments (%%hidden%%) — only outside fenced blocks
+    transform_outside_fences(&result, |line| {
+        INLINE_COMMENT_RE.replace_all(line, "").to_string()
+    })
 }
 
 /// Convert `==highlighted text==` to `<mark>` tags.
@@ -114,7 +136,7 @@ fn convert_highlights(content: &str) -> String {
 }
 
 /// Split content into code-fenced and non-fenced segments, applying `f` only to non-fenced parts.
-fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) -> String {
+pub(crate) fn transform_outside_fences(content: &str, mut f: impl FnMut(&str) -> String) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_fence = false;
 
@@ -182,22 +204,23 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
             .replace_all(line, |caps: &regex::Captures| {
                 let filename = &caps[1];
                 images.push(filename.to_string());
+                let escaped = html_escape(filename);
                 let size = caps.get(3).map(|m| m.as_str());
                 match size {
                     Some(s) if s.contains('x') => {
                         if let Some((w, h)) = s.split_once('x') {
                             format!(
-                                r#"<img src="/assets/{filename}" alt="" width="{w}" height="{h}" />"#,
+                                r#"<img src="/assets/{escaped}" alt="" width="{w}" height="{h}" />"#,
                             )
                         } else {
-                            format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                            format!(r#"<img src="/assets/{escaped}" alt="" />"#)
                         }
                     }
                     Some(w) => {
-                        format!(r#"<img src="/assets/{filename}" alt="" width="{w}" />"#)
+                        format!(r#"<img src="/assets/{escaped}" alt="" width="{w}" />"#)
                     }
                     None => {
-                        format!(r#"<img src="/assets/{filename}" alt="" />"#)
+                        format!(r#"<img src="/assets/{escaped}" alt="" />"#)
                     }
                 }
             })
@@ -228,11 +251,10 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
 
             if let Some(block_id) = block_id {
                 // Block transclusion: inline the specific paragraph
-                if let Some(blocks) = index.block_map.get(name) {
-                    if let Some(text) = blocks.get(block_id) {
+                if let Some(blocks) = index.block_map.get(name)
+                    && let Some(text) = blocks.get(block_id) {
                         return text.clone();
                     }
-                }
                 format!("{name}#^{block_id}")
             } else if let Some(heading) = heading {
                 // Heading transclusion: inline content under a specific heading
@@ -252,7 +274,7 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
                 let target_content = &index.posts[target_idx].raw_content;
                 strip_frontmatter(target_content)
             } else {
-                format!("{name}")
+                name.to_string()
             }
         })
         .to_string()
@@ -262,15 +284,12 @@ fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
 /// Extract the section under a heading: everything from the heading line (inclusive)
 /// to the next heading of the same or higher level (exclusive).
 pub fn extract_heading_section(content: &str, heading: &str) -> Option<String> {
-    static HEADING_LEVEL_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^(#{1,6})\s+(.+)$").unwrap());
-
     let mut found = false;
     let mut level = 0;
     let mut section_lines = Vec::new();
 
     for line in content.lines() {
-        if let Some(caps) = HEADING_LEVEL_RE.captures(line) {
+        if let Some(caps) = crate::syntax::HEADING_RE.captures(line) {
             let hashes = caps[1].len();
             let text = caps[2].trim();
 
@@ -378,58 +397,14 @@ fn convert_callouts(content: &str) -> String {
             let callout_type = caps[1].to_lowercase();
             let collapse_marker = caps.get(2).map(|m| m.as_str());
             let title = caps[3].trim().to_string();
-
-            // Collect callout body lines (lines starting with `> `)
-            let mut body_lines = Vec::new();
-            while let Some(next) = lines.peek() {
-                if let Some(stripped) = next.strip_prefix("> ") {
-                    body_lines.push(stripped.to_string());
-                    lines.next();
-                } else if next.starts_with('>') {
-                    // Empty callout continuation line
-                    body_lines.push(String::new());
-                    lines.next();
-                } else {
-                    break;
-                }
-            }
-
-            // Join body lines as raw markdown — don't wrap in <p>,
-            // let the remark/rehype pipeline handle paragraph detection.
-            // This preserves code fences, lists, and other block elements inside callouts.
-            let body = body_lines.join("\n");
+            let body = collect_callout_body(&mut lines);
 
             match collapse_marker {
                 Some("-") | Some("+") => {
-                    let open_attr = if collapse_marker == Some("+") { " open" } else { "" };
-                    result.push(format!(
-                        r#"<details class="callout callout-{callout_type}"{open_attr}>"#
-                    ));
-                    let summary = if !title.is_empty() {
-                        html_escape(&title)
-                    } else {
-                        callout_type.clone()
-                    };
-                    result.push(format!(
-                        r#"<summary class="callout-title">{summary}</summary>"#
-                    ));
-                    result.push(String::new()); // blank line so markdown parser kicks in
-                    result.push(body);
-                    result.push(String::new());
-                    result.push("</details>".to_string());
+                    render_collapsible_callout(&mut result, &callout_type, &title, &body, collapse_marker.unwrap());
                 }
                 _ => {
-                    result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
-                    if !title.is_empty() {
-                        result.push(format!(
-                            r#"<div class="callout-title">{}</div>"#,
-                            html_escape(&title)
-                        ));
-                    }
-                    result.push(String::new()); // blank line so markdown parser kicks in
-                    result.push(body);
-                    result.push(String::new());
-                    result.push("</div>".to_string());
+                    render_static_callout(&mut result, &callout_type, &title, &body);
                 }
             }
         } else {
@@ -438,6 +413,51 @@ fn convert_callouts(content: &str) -> String {
     }
 
     result.join("\n")
+}
+
+/// Collect callout body lines (lines starting with `> `) from the iterator.
+fn collect_callout_body(lines: &mut std::iter::Peekable<std::str::Lines<'_>>) -> String {
+    let mut body_lines = Vec::new();
+    while let Some(next) = lines.peek() {
+        if let Some(stripped) = next.strip_prefix("> ") {
+            body_lines.push(stripped.to_string());
+            lines.next();
+        } else if next.starts_with('>') {
+            body_lines.push(String::new());
+            lines.next();
+        } else {
+            break;
+        }
+    }
+    body_lines.join("\n")
+}
+
+/// Render a collapsible callout as `<details>/<summary>`.
+fn render_collapsible_callout(result: &mut Vec<String>, callout_type: &str, title: &str, body: &str, marker: &str) {
+    let open_attr = if marker == "+" { " open" } else { "" };
+    result.push(format!(r#"<details class="callout callout-{callout_type}"{open_attr}>"#));
+    let summary = if !title.is_empty() {
+        html_escape(title)
+    } else {
+        callout_type.to_string()
+    };
+    result.push(format!(r#"<summary class="callout-title">{summary}</summary>"#));
+    result.push(String::new());
+    result.push(body.to_string());
+    result.push(String::new());
+    result.push("</details>".to_string());
+}
+
+/// Render a static (non-collapsible) callout as `<div>`.
+fn render_static_callout(result: &mut Vec<String>, callout_type: &str, title: &str, body: &str) {
+    result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
+    if !title.is_empty() {
+        result.push(format!(r#"<div class="callout-title">{}</div>"#, html_escape(title)));
+    }
+    result.push(String::new());
+    result.push(body.to_string());
+    result.push(String::new());
+    result.push("</div>".to_string());
 }
 
 /// Theme pair for dual-rendering diagrams (light + dark variants).
@@ -472,7 +492,7 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
 
             match lang {
                 "d2" => {
-                    let format = D2Format::from_str(fmt_str);
+                    let format = D2Format::parse_format(fmt_str);
                     match format {
                         D2Format::Svg => {
                             render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
@@ -551,7 +571,7 @@ fn render_d2_text(
             Ok(text) => format!(r#"<pre class="diagram diagram-d2-ascii">{}</pre>"#, html_escape(&text)),
             Err(e) => {
                 eprintln!("warning: d2 ascii output was not UTF-8 for {slug}: {e}");
-                format!("<!-- d2 ascii render failed: not UTF-8 -->")
+                "<!-- d2 ascii render failed: not UTF-8 -->".to_string()
             }
         },
         Err(e) => {
@@ -605,8 +625,7 @@ fn render_themed_diagram(
     let dark_result = render_fn(source, themes.dark);
 
     // If both fail, fall back to source code
-    if light_result.is_err() && dark_result.is_err() {
-        let e = light_result.unwrap_err();
+    if let (Err(e), Err(_)) = (&light_result, &dark_result) {
         eprintln!("warning: {lang} rendering failed for {slug}: {e}");
         return format!("```{lang}\n{source}```");
     }
@@ -638,7 +657,7 @@ fn render_themed_diagram(
         }
     }
 
-    parts.join("\n")
+    format!(r#"<div class="diagram-container">{}</div>"#, parts.join("\n"))
 }
 
 #[cfg(test)]
@@ -687,5 +706,34 @@ mod tests {
         let input = "```\nplain code\n```\n";
         let result = transform_outside_fences(input, |line| line.to_string());
         assert!(result.starts_with("```\n"));
+    }
+
+    #[test]
+    fn test_render_themed_diagram_wraps_in_container() {
+        let result = render_themed_diagram(
+            "test",
+            "source",
+            "my-slug",
+            1,
+            None,
+            &ThemePair { light: "light", dark: "dark" },
+            |_src, _theme| Ok("<svg>mock</svg>".to_string()),
+        );
+        assert!(
+            result.starts_with(r#"<div class="diagram-container">"#),
+            "Expected diagram-container wrapper, got: {result}"
+        );
+        assert!(
+            result.ends_with("</div>"),
+            "Expected closing </div>, got: {result}"
+        );
+        assert!(
+            result.contains("diagram-light"),
+            "Expected light variant, got: {result}"
+        );
+        assert!(
+            result.contains("diagram-dark"),
+            "Expected dark variant, got: {result}"
+        );
     }
 }

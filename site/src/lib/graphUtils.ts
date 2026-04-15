@@ -1,13 +1,8 @@
 import type { SimulationNodeDatum, SimulationLinkDatum } from "d3-force";
+import type { GraphNode as RawGraphNode } from "./types";
 
 /** A graph node enriched with d3 simulation position data. */
-export interface GraphNode extends SimulationNodeDatum {
-  slug: string;
-  title: string;
-  tags: string[];
-  is_hub: boolean;
-  backlink_count: number;
-}
+export interface GraphNode extends RawGraphNode, SimulationNodeDatum {}
 
 /** A graph link between two GraphNodes, typed for d3 simulation. */
 export type GraphLink = SimulationLinkDatum<GraphNode>;
@@ -19,23 +14,29 @@ export interface ResolvedLink {
 }
 
 /** Tag-based color palette for hub categories. */
-export const HUB_COLORS: Record<string, string> = {
+const HUB_COLORS: Record<string, string> = {
   os: "#3b82f6",
   web: "#10b981",
   db: "#f59e0b",
   network: "#8b5cf6",
 };
 
+const HUB_COLOR = "#ef4444";
+const DEFAULT_NODE_COLOR = "#6b7280";
+const MIN_RADIUS = 4;
+const MAX_RADIUS = 12;
+const RADIUS_SCALE = 2;
+
 /** Node fill color based on hub status and tags. */
 export function getNodeColor(node: GraphNode): string {
-  if (node.is_hub) return "#ef4444";
+  if (node.is_hub) return HUB_COLOR;
   for (const tag of node.tags) {
     if (HUB_COLORS[tag]) return HUB_COLORS[tag];
   }
-  return "#6b7280";
+  return DEFAULT_NODE_COLOR;
 }
 
-/** Node radius scaled by backlink count (4-12px range). */
+/** Node radius scaled by backlink count. */
 export function getNodeRadius(node: GraphNode): number {
-  return Math.max(4, Math.min(12, 4 + node.backlink_count * 2));
+  return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, MIN_RADIUS + node.backlink_count * RADIUS_SCALE));
 }

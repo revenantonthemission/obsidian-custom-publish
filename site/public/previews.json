@@ -24,20 +24,11 @@
     "title": "Agile Software Developement"
   },
   "aws": {
-    "summary": "- AWS VPC @2026-03-05 - VPC & Subnet @2026-03-05 - VPC Routing & Gateway @2026-03-05 - VPC Endpoint & PrivateLink @2026-03-05 - NACL @2026-03-05 -...",
+    "summary": "- VPC @2026-03-05 - CIDR 블록 설계 @2026-03-05 - 서브넷 아키텍처 @2026-03-05 - DHCP와 VPC DNS @2026-03-05 - VPC 라우팅 테이블 @2026-03-05 - Internet Gateway...",
     "tags": [
       "aws"
     ],
     "title": "AWS"
-  },
-  "aws-vpc": {
-    "summary": "초기 AWS에서는 모든 사용자의 인스턴스가 하나의 평면적 네트워크를 공유하는 EC2-Classic 모델을 사용했다.",
-    "tags": [
-      "aws",
-      "network",
-      "cloud"
-    ],
-    "title": "AWS VPC"
   },
   "b-tree": {
     "summary": "데이터베이스에서 이루어지는 모든 작업은 접근Access 기반이다.",
@@ -97,6 +88,15 @@
       "cmmi"
     ],
     "title": "Capability Maturity Model Integration"
+  },
+  "cidr-블록-설계": {
+    "summary": "CIDR(Classless Inter-Domain Routing)[^cidr-definition]은 IP 주소 범위를 표기하는 방법이다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "CIDR 블록 설계"
   },
   "completely-fair-scheduler": {
     "summary": "스케줄러의 근본적인 과제는 한정된 CPU 시간을 여러 태스크에 배분하는 것이다.",
@@ -207,6 +207,15 @@
     ],
     "title": "DevOps"
   },
+  "dhcp와-vpc-dns": {
+    "summary": "VPC 내 인스턴스가 네트워크에 합류할 때 TCP/IP 설정을 자동으로 구성하는 것이 DHCP(Dynamic Host Configuration Protocol) 옵션 세트다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "DHCP와 VPC DNS"
+  },
   "earliest-eligible-virtual-deadline-first": {
     "summary": "CFS의 태스크 선택 원칙은 \"레드-블랙 트리의 가장 왼쪽에 위치한 노드(최소 vruntime)를 고른다\"로 요약된다.",
     "tags": [
@@ -216,6 +225,15 @@
       "computerarchitecture"
     ],
     "title": "Earliest Eligible Virtual Deadline First"
+  },
+  "elastic-ip": {
+    "summary": "탄력적 IP(EIP)는 AWS 계정에 할당되는 고정 퍼블릭 IPv4 주소다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "Elastic IP"
   },
   "entity-relationship-model": {
     "summary": "데이터베이스를 설계하기 위해서는 여러 단계가 필요한데, 그중 첫 번째 단계는 실제 세계의 상호작용을 추상적인 데이터 모델로 표현하는 개념적 스키마Conceptual Schema 단계이다.",
@@ -265,6 +283,16 @@
     ],
     "title": "Functional Dependency"
   },
+  "gateway-endpoint": {
+    "summary": "VPC 내 프라이빗 서브넷의 인스턴스가 S3에 데이터를 업로드하는 시나리오를 생각해 보자.",
+    "tags": [
+      "aws",
+      "network",
+      "security",
+      "cloud"
+    ],
+    "title": "Gateway Endpoint"
+  },
   "heap": {
     "summary": "힙에는 두 가지 변형이 있다.",
     "tags": [
@@ -290,6 +318,15 @@
       "computerarchitecture"
     ],
     "title": "Inter-Process Communication"
+  },
+  "internet-gateway": {
+    "summary": "인터넷 게이트웨이(Internet Gateway)는 VPC와 인터넷 사이의 논리적 관문이다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "Internet Gateway"
   },
   "ipa": {
     "summary": "IPAInternational Phonetic Alphabet는 현존하는 모든 언어의 말소리Phone를 표현하는 표준적인 방법이며, 언어학에서 주로 사용하는 음성 기록 체계다.",
@@ -361,6 +398,15 @@
     ],
     "title": "NACL"
   },
+  "nat-gateway": {
+    "summary": "프라이빗 서브넷의 인스턴스는 퍼블릭 IP가 없으므로 인터넷 게이트웨이를 통해 직접 인터넷에 접근할 수 없다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "NAT Gateway"
+  },
   "normalization": {
     "summary": "정규화를 이해하려면 먼저 \"나쁜 설계\"가 어떤 문제를 일으키는지 알아야 한다.",
     "tags": [
@@ -386,7 +432,7 @@
     "title": "Object-Relational Mapping"
   },
   "operating-system--computer-architecture": {
-    "summary": "+ 프로세스 @2026-03-16 + PCB @2026-03-05 + 컨텍스트 스위치 @2026-03-05 + 스레드 @2026-03-16 + 시스템 호출 @2026-03-05 + 스케줄러 @2026-03-05 + CFS @2026-03-05 + EEVDF @2026-03-05 + Inter-Process Communication @2026-03-05 + fork() @2026-03-05 + exec() @2026-03-05 + 프로세스 종료 (예정) + 락 (예정) + 경쟁 조건 (예정) + 모니터 (예정) + 세마포어 (예정) + 최적화 장벽 (예정) + TLB @2026-03-05 + 메모리 관리 (예정) + UMA & NUMA (예정) + 가상화 + 하이퍼바이저 (예정) + 가상 머신 (예정) + Container @2026-03-16 + OverlayFS @2026-03-16 + 운영체제 (예정) + 커널 (예정) + POSIX (예정) + UNIX (예정) + ELF (예정) + API vs ABI (예정) 추후 업데이트됩니다.",
+    "summary": "+ 프로세스 @2026-03-16 + PCB @2026-03-05 + 컨텍스트 스위치 @2026-03-05 + 스레드 @2026-03-16 + 시스템 호출 @2026-03-05 + 스케줄러 @2026-03-05 + CFS @2026-03-05 + EEVDF @2026-03-05 + Inter-Process Communication @2026-03-05 + fork() @2026-03-05 + exec() @2026-03-05 + 프로세스 종료 @2026-04-10 + 락 (예정) + 경쟁 조건 (예정) + 모니터 (예정) + 세마포어 (예정) + 최적화 장벽 (예정) + TLB @2026-03-05 + 메모리 관리 (예정) + UMA & NUMA (예정) + 가상화 + 하이퍼바이저 (예정) + 가상 머신 (예정) + Container @2026-03-16 + OverlayFS @2026-03-16 + 운영체제 (예정) + 커널 (예정) + POSIX (예정) + UNIX (예정) + ELF (예정) + API vs ABI (예정) 추후 업데이트됩니다.",
     "tags": [
       "operatingsystem",
       "os",
@@ -416,21 +462,22 @@
     "tags": [],
     "title": "Passion Project"
   },
-  "peering--transit-gateway": {
-    "summary": "VPC 피어링(Peering)은 두 VPC 사이에 1:1 직접 연결을 생성한다.",
-    "tags": [
-      "aws",
-      "network",
-      "cloud"
-    ],
-    "title": "Peering & Transit Gateway"
-  },
   "priority-queue": {
     "summary": "우선순위 큐는 최소한 다음 세 가지 연산을 지원해야 한다.",
     "tags": [
       "datastructure"
     ],
     "title": "Priority Queue"
+  },
+  "privatelink": {
+    "summary": "인터페이스 엔드포인트(Interface Endpoint)는 S3, DynamoDB를 포함한 대부분의 AWS 서비스(EC2 API, SNS, SQS, Kinesis, SageMaker, CloudWatch 등)와 서드파티 SaaS 서비스를 지원한다.",
+    "tags": [
+      "aws",
+      "network",
+      "security",
+      "cloud"
+    ],
+    "title": "PrivateLink"
   },
   "process": {
     "summary": "프로세스가 무엇인지를 깊이 이해하기 위해서는, 이 개념이 컴퓨터와 함께 어떻게 발전해왔는지를 살펴보는 것이 도움이 된다.",
@@ -609,6 +656,15 @@
     ],
     "title": "Trait"
   },
+  "transit-gateway": {
+    "summary": "트랜짓 게이트웨이(TGW)는 대규모 네트워크의 복잡성을 해결하기 위한 중앙 집중형 허브다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "Transit Gateway"
+  },
   "translation-lookaside-buffer": {
     "summary": "오늘날 모든 프로세스는 가상 주소virtual address를 사용하며, MMU(Memory Management Unit)가 페이지 테이블을 참조하여 가상 주소를 물리 주소로 변환한다.",
     "tags": [
@@ -619,7 +675,7 @@
     "title": "Translation Lookaside Buffer"
   },
   "uniform-cost-search": {
-    "summary": "Breadth-First Search는 얕은 깊이의 노드부터 차례대로 확장한다.",
+    "summary": "너비 우선 탐색는 얕은 깊이의 노드부터 차례대로 확장한다.",
     "tags": [
       "algorithm",
       "ai",
@@ -660,33 +716,42 @@
     ],
     "title": "Virtualization"
   },
-  "vpc--subnet": {
-    "summary": "CIDR(Classless Inter-Domain Routing)[^cidr-definition]은 IP 주소 범위를 표기하는 방법이다.",
+  "vpc": {
+    "summary": "초기 AWS에서는 모든 사용자의 인스턴스가 하나의 평면적 네트워크를 공유하는 EC2-Classic 모델을 사용했다.",
     "tags": [
       "aws",
       "network",
       "cloud"
     ],
-    "title": "VPC & Subnet"
+    "title": "VPC"
   },
-  "vpc-endpoint--privatelink": {
-    "summary": "VPC 내 프라이빗 서브넷의 인스턴스가 S3에 데이터를 업로드하는 시나리오를 생각해 보자.",
+  "vpc-flow-logs": {
+    "summary": "VPC Flow Logs는 네트워크 인터페이스를 통과하는 트래픽의 메타데이터를 기록하는 AWS 서비스다.",
     "tags": [
       "aws",
       "network",
       "security",
       "cloud"
     ],
-    "title": "VPC Endpoint & PrivateLink"
+    "title": "VPC Flow Logs"
   },
-  "vpc-routing--gateway": {
+  "vpc-peering": {
+    "summary": "VPC 피어링(Peering)은 두 VPC 사이에 1:1 직접 연결을 생성한다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "VPC Peering"
+  },
+  "vpc-라우팅-테이블": {
     "summary": "라우팅 테이블(Route Table)은 패킷의 목적지 IP 주소를 보고 다음 홉(hop)을 결정하는 규칙의 집합이다.",
     "tags": [
       "aws",
       "network",
       "cloud"
     ],
-    "title": "VPC Routing & Gateway"
+    "title": "VPC 라우팅 테이블"
   },
   "work-breakdown-structure": {
     "summary": "수많은 인력이 필요한 프로젝트는 매우 거대하고 프로젝트가 구현하고자 하는 기능을 가진 소프트웨어를 실제로 구현하고 소비자에게 전하기까지 굉장히 많은 업무가 필요하다.",
@@ -785,6 +850,15 @@
     ],
     "title": "사전 준비"
   },
+  "서브넷-아키텍처": {
+    "summary": "서브넷(Subnet)은 VPC의 CIDR 블록을 더 작은 단위로 나눈 논리적 파티션이다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "서브넷 아키텍처"
+  },
   "소유권": {
     "summary": "모든 프로그램은 작동하는 동안 운영체제로부터 메모리를 빌려오는데, 이 영역을 힙heap 영역이라 부른다.",
     "tags": [
@@ -836,7 +910,7 @@
     "title": "언어학"
   },
   "연결-리스트": {
-    "summary": "연결 리스트의 각 원소를 노드(node)라 부른다.",
+    "summary": "연결 리스트의 각 원소를 노드node라 부른다.",
     "tags": [
       "datastructure"
     ],
@@ -945,6 +1019,15 @@
       "computerarchitecture"
     ],
     "title": "프로세스 종료"
+  },
+  "하이브리드-연결": {
+    "summary": "AWS Site-to-Site VPN은 인터넷을 통해 IPSec(Internet Protocol Security)[^ipsec-definition] 암호화 터널을 연결한다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "하이브리드 연결"
   },
   "한중-청년의-상호-혐오를-어떻게-해결할-것인가": {
     "summary": "1992년 한 · 중 양국이 수교를 맺은 지 어느덧 30년 이상이 지났다.",

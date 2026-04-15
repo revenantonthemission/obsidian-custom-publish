@@ -1,5 +1,17 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useCallback } from "preact/hooks";
 import { Sun, Moon } from "lucide-preact";
+import {
+  getCachedGeo,
+  requestGeoAndCache,
+  getCachedSolar,
+  fetchAndCacheSolar,
+  getSolarTheme,
+  msUntilNextBoundary,
+  isManualOverrideActive,
+  setManualOverride,
+  clearManualOverride,
+} from "../lib/solar";
+import type { SolarCache, GeoCache } from "../lib/solar";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
@@ -10,6 +22,26 @@ function getInitialTheme(): "light" | "dark" {
     : "light";
 }
 
+/**
+ * Add .theme-transitioning to <html>, apply the change, then remove after 350ms.
+ *
+ * Uses a module-level timer so rapid successive toggles extend the window
+ * rather than race each other. Does NOT use `transitionend` — that event
+ * fires per-property per-descendant and the first firing from any child
+ * would cut the window short.
+ */
+let transitionTimer: ReturnType<typeof setTimeout> | null = null;
+function withTransition(apply: () => void): void {
+  const el = document.documentElement;
+  el.classList.add("theme-transitioning");
+  apply();
+  if (transitionTimer !== null) clearTimeout(transitionTimer);
+  transitionTimer = setTimeout(() => {
+    el.classList.remove("theme-transitioning");
+    transitionTimer = null;
+  }, 350);
+}
+
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
 
@@ -18,7 +50,66 @@ export default function ThemeToggle() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggle = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+  useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    let aborted = false;
+
+    async function initSolar() {
+      let geo = getCachedGeo();
+      if (!geo) {
+        geo = await requestGeoAndCache();
+      }
+      if (aborted) return;
+
+      let solar = getCachedSolar();
+      if (!solar && geo) {
+        solar = await fetchAndCacheSolar(geo.lat, geo.lng);
+      }
+      if (aborted) return;
+
+      if (!isManualOverrideActive(solar)) {
+        clearManualOverride();
+        const solarTheme = getSolarTheme(solar);
+        if (solarTheme !== theme) {
+          withTransition(() => setTheme(solarTheme));
+        }
+      }
+
+      scheduleBoundary(solar, geo);
+    }
+
+    function scheduleBoundary(solar: SolarCache | null, geo: GeoCache | null) {
+      const ms = Math.max(msUntilNextBoundary(solar), 60_000);
+      timerId = setTimeout(async () => {
+        if (aborted) return;
+        clearManualOverride();
+
+        let freshSolar = solar;
+        if (geo) {
+          const fetched = await fetchAndCacheSolar(geo.lat, geo.lng);
+          if (aborted) return;
+          if (fetched) freshSolar = fetched;
+        }
+
+        const solarTheme = getSolarTheme(freshSolar);
+        withTransition(() => setTheme(solarTheme));
+
+        scheduleBoundary(freshSolar, geo);
+      }, ms);
+    }
+
+    initSolar();
+
+    return () => {
+      aborted = true;
+      if (timerId !== null) clearTimeout(timerId);
+    };
+  }, []);
+
+  const toggle = useCallback(() => {
+    setManualOverride();
+    withTransition(() => setTheme((t) => (t === "light" ? "dark" : "light")));
+  }, []);
 
   return (
     <button

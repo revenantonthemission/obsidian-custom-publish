@@ -21,6 +21,10 @@ provider "aws" {
   region = var.aws_region
 }
 
+locals {
+  has_custom_domain = var.domain_name != ""
+}
+
 # ── S3 Bucket ──
 
 resource "aws_s3_bucket" "site" {
@@ -126,6 +130,38 @@ resource "aws_cloudfront_function" "index_rewrite" {
   EOF
 }
 
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name = "${var.bucket_name}-security-headers"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    content_security_policy {
+      content_security_policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.sunrise-sunset.org"
+      override                = true
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   default_root_object = "index.html"
@@ -145,16 +181,9 @@ resource "aws_cloudfront_distribution" "site" {
     cached_methods         = ["GET", "HEAD"]
     compress               = true
 
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl     = 0
-    default_ttl = 86400    # 1 day
-    max_ttl     = 31536000 # 1 year
+    # AWS managed CachingOptimized policy (replaces deprecated forwarded_values)
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
 
     function_association {
       event_type   = "viewer-request"
@@ -189,12 +218,12 @@ resource "aws_cloudfront_distribution" "site" {
     }
   }
 
-  aliases = var.domain_name != "" ? [var.domain_name] : []
+  aliases = local.has_custom_domain ? [var.domain_name] : []
 
   viewer_certificate {
-    cloudfront_default_certificate = var.domain_name == "" ? true : false
-    acm_certificate_arn            = var.domain_name != "" ? var.acm_certificate_arn : null
-    ssl_support_method             = var.domain_name != "" ? "sni-only" : null
-    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : "TLSv1"
+    cloudfront_default_certificate = !local.has_custom_domain
+    acm_certificate_arn            = local.has_custom_domain ? var.acm_certificate_arn : null
+    ssl_support_method             = local.has_custom_domain ? "sni-only" : null
+    minimum_protocol_version       = local.has_custom_domain ? "TLSv1.2_2021" : "TLSv1"
   }
 }

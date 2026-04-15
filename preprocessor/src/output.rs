@@ -38,7 +38,6 @@ struct OutputMeta {
 /// - `graph.json` — node/edge graph for visualization
 /// - `search-index.json` — inverted index for Korean FTS
 pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) -> Result<()> {
-    // Create directory structure
     let posts_dir = output_dir.join("posts");
     let meta_dir = output_dir.join("meta");
     let assets_dir = output_dir.join("assets");
@@ -46,19 +45,38 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
     fs::create_dir_all(&meta_dir).context("failed to create meta dir")?;
     fs::create_dir_all(&assets_dir).context("failed to create assets dir")?;
 
-    // Pre-compute related posts for all posts (top 5)
     let all_related = compute_related(index, graph, 5);
 
-    // Write each post
+    write_posts(index, graph, &posts_dir, &meta_dir, &assets_dir, &all_related)?;
+    write_global_artifacts(index, graph, output_dir)?;
+
+    println!(
+        "Output written: {} posts, {} meta files",
+        index.posts.len(),
+        index.posts.len()
+    );
+
+    Ok(())
+}
+
+/// Transform each post, write markdown + metadata JSON, and copy referenced images.
+fn write_posts(
+    index: &VaultIndex,
+    graph: &LinkGraph,
+    posts_dir: &Path,
+    meta_dir: &Path,
+    assets_dir: &Path,
+    all_related: &[Vec<String>],
+) -> Result<()> {
     for (i, post) in index.posts.iter().enumerate() {
-        let (content, images) = transform_content_with_assets(index, i, Some(&assets_dir));
+        let (content, images) = transform_content_with_assets(index, i, Some(assets_dir));
 
         // Write transformed markdown
         let md_path = posts_dir.join(format!("{}.md", post.slug));
         fs::write(&md_path, &content)
             .with_context(|| format!("failed to write {}", md_path.display()))?;
 
-        // Copy referenced images from vault attachment/ directory to assets/
+        // Copy referenced images from vault attachment/ directory
         for image_filename in &images {
             let dest = assets_dir.join(image_filename);
             if !dest.exists() {
@@ -76,20 +94,18 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
             }
         }
 
-        // Calculate stats
+        // Calculate stats and write metadata
+        const WORDS_PER_MINUTE: usize = 200;
         let word_count = count_words(&content);
-        let reading_time_min = (word_count / 200).max(1);
+        let reading_time_min = (word_count / WORDS_PER_MINUTE).max(1);
 
-        // Collect link info (deduplicated)
         let mut forward: Vec<String> = graph.forward_links[i]
             .iter()
             .map(|l| l.target_slug.clone())
             .collect();
         forward.sort();
         forward.dedup();
-        let backlinks = graph.backlinks[i].clone();
 
-        // Write metadata JSON
         let meta = OutputMeta {
             slug: post.slug.clone(),
             title: post.title.clone(),
@@ -97,7 +113,7 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
             created: post.created.clone(),
             published: post.published.clone(),
             updated: post.updated.clone(),
-            backlinks,
+            backlinks: graph.backlinks[i].clone(),
             forward_links: forward,
             is_hub: post.is_hub,
             hub_parent: post.hub_parent.clone(),
@@ -113,49 +129,38 @@ pub fn write_output(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) ->
         fs::write(&meta_path, json)
             .with_context(|| format!("failed to write {}", meta_path.display()))?;
     }
+    Ok(())
+}
 
-    // Write graph.json
+/// Write global artifact files: graph, search index, previews, nav tree.
+fn write_global_artifacts(index: &VaultIndex, graph: &LinkGraph, output_dir: &Path) -> Result<()> {
     let graph_json = graph.to_graph_json(index);
-    let graph_path = output_dir.join("graph.json");
     fs::write(
-        &graph_path,
+        output_dir.join("graph.json"),
         serde_json::to_string_pretty(&graph_json).context("failed to serialize graph")?,
     )
     .context("failed to write graph.json")?;
 
-    // Write search-index.json
     let search = build_search_index(index);
-    let search_path = output_dir.join("search-index.json");
     fs::write(
-        &search_path,
+        output_dir.join("search-index.json"),
         serde_json::to_string(&search).context("failed to serialize search index")?,
     )
     .context("failed to write search-index.json")?;
 
-    // Write previews.json
     let previews = build_previews(index);
-    let previews_path = output_dir.join("previews.json");
     fs::write(
-        &previews_path,
-        serde_json::to_string_pretty(&previews)
-            .context("failed to serialize previews")?,
+        output_dir.join("previews.json"),
+        serde_json::to_string_pretty(&previews).context("failed to serialize previews")?,
     )
     .context("failed to write previews.json")?;
 
-    // Write nav-tree.json
     let nav_tree = build_nav_tree(index, graph);
-    let nav_tree_path = output_dir.join("nav-tree.json");
     fs::write(
-        &nav_tree_path,
+        output_dir.join("nav-tree.json"),
         serde_json::to_string_pretty(&nav_tree).context("failed to serialize nav tree")?,
     )
     .context("failed to write nav-tree.json")?;
-
-    println!(
-        "Output written: {} posts, {} meta files",
-        index.posts.len(),
-        index.posts.len()
-    );
 
     Ok(())
 }
@@ -169,13 +174,21 @@ fn count_words(text: &str) -> usize {
 }
 
 /// Walk up from the post's directory looking for `attachment/{filename}`.
+/// Bounded to 10 levels to prevent traversing to filesystem root.
+/// Strips path separators and `..` from filename to prevent directory traversal.
 fn find_attachment(post_path: &Path, filename: &str) -> Option<std::path::PathBuf> {
+    // Sanitize filename: use only the final component, stripping any path traversal
+    let safe_name = Path::new(filename)
+        .file_name()?
+        .to_str()?;
+
     let mut dir = post_path.parent()?;
-    loop {
-        let candidate = dir.join("attachment").join(filename);
+    for _ in 0..10 {
+        let candidate = dir.join("attachment").join(safe_name);
         if candidate.exists() {
             return Some(candidate);
         }
         dir = dir.parent()?;
     }
+    None
 }

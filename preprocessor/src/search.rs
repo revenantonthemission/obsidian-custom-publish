@@ -6,7 +6,11 @@ use lindera::segmenter::Segmenter;
 use lindera::tokenizer::Tokenizer;
 use serde::Serialize;
 
-use crate::syntax::HTML_TAG_RE;
+use crate::syntax::{
+    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE,
+    INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE,
+};
+use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
 
 #[derive(Debug, Serialize)]
@@ -28,6 +32,13 @@ pub struct SearchHit {
     pub count: usize,
 }
 
+/// Maximum characters for search snippets.
+const SNIPPET_MAX_CHARS: usize = 200;
+/// Minimum token length to include in index (filters particles/punctuation).
+const MIN_TOKEN_CHARS: usize = 2;
+/// Boost multiplier for title tokens in the inverted index.
+const TITLE_TOKEN_BOOST: usize = 2;
+
 /// Build a full-text search index from all posts in the vault.
 ///
 /// Uses lindera with the Korean MeCab dictionary for morphological tokenization,
@@ -40,7 +51,7 @@ pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
 
     for (doc_idx, post) in index.posts.iter().enumerate() {
         let plain_text = strip_markdown(&post.raw_content);
-        let snippet = make_snippet(&plain_text, 200);
+        let snippet = make_snippet(&plain_text, SNIPPET_MAX_CHARS);
 
         documents.push(SearchDocument {
             slug: post.slug.clone(),
@@ -56,9 +67,9 @@ pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
 
         let mut token_counts: HashMap<String, usize> = HashMap::new();
 
-        // Title tokens count double (boosted)
+        // Title tokens boosted
         for token in &title_tokens {
-            *token_counts.entry(token.clone()).or_default() += 2;
+            *token_counts.entry(token.clone()).or_default() += TITLE_TOKEN_BOOST;
         }
 
         for token in &tokens {
@@ -94,23 +105,14 @@ fn tokenize_text(tokenizer: &Tokenizer, text: &str) -> Vec<String> {
     tokens
         .into_iter()
         .map(|t| t.surface.to_lowercase())
-        .filter(|t: &String| t.chars().count() >= 2)
+        .filter(|t: &String| t.chars().count() >= MIN_TOKEN_CHARS)
         .filter(|t: &String| !t.chars().all(|c| c.is_ascii_punctuation() || c.is_whitespace()))
         .collect()
 }
 
 /// Strip markdown syntax to produce plain text for indexing.
 fn strip_markdown(content: &str) -> String {
-    // 1. Remove YAML frontmatter
-    let content = if content.starts_with("---") {
-        if let Some(end) = content[3..].find("\n---") {
-            &content[3 + end + 4..]
-        } else {
-            content
-        }
-    } else {
-        content
-    };
+    let content = strip_frontmatter(content);
 
     let mut result = Vec::new();
     let mut in_code_fence = false;
@@ -144,16 +146,21 @@ fn strip_markdown(content: &str) -> String {
         // 5. Strip HTML tags (callout divs, anchors, etc.)
         let line = HTML_TAG_RE.replace_all(line, "");
 
-        // 6. Strip inline markdown
-        let line = line
-            .replace("**", "")
-            .replace('*', "")
-            .replace('`', "")
-            .replace("![[", "")
-            .replace("[[", "")
-            .replace("]]", "");
+        // 6. Strip wikilinks/embeds: [[target|display]] -> display
+        let line = EMBED_OR_WIKILINK_RE.replace_all(&line, |caps: &regex::Captures| {
+            caps.get(2)
+                .or_else(|| caps.get(1))
+                .map(|m| m.as_str().to_string())
+                .unwrap_or_default()
+        });
+        // 7. Strip markdown links: [text](url) -> text
+        let line = MARKDOWN_LINK_RE.replace_all(&line, "$1");
+        // 8. Strip inline markdown: **, *, `, ~~, ==
+        let line = INLINE_MARKDOWN_RE.replace_all(&line, "");
+        // 9. Strip block references
+        let line = BLOCK_REF_STRIP_RE.replace_all(&line, "");
 
-        result.push(line);
+        result.push(line.to_string());
     }
 
     result.join("\n")

@@ -1,26 +1,12 @@
 ---
+import { extractToc } from "../lib/toc";
+
 interface Props {
   content: string;
 }
 
-interface Heading {
-  depth: number;
-  text: string;
-  id: string;
-}
-
 const { content } = Astro.props;
-
-// Extract headings from rendered HTML content — relies on rehype-slug for id attributes
-const headingRegex = /<h([1-6])\s+id="([^"]*)"[^>]*>(.*?)<\/h[1-6]>/gi;
-const headings: Heading[] = [];
-let match;
-while ((match = headingRegex.exec(content)) !== null) {
-  const depth = parseInt(match[1]);
-  const text = match[3].replace(/<[^>]+>/g, "").trim();
-  const id = match[2];
-  headings.push({ depth, text, id });
-}
+const headings = extractToc(content);
 ---
 
 {headings.length > 0 && (

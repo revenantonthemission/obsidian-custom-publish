@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceCenter,
-  forceCollide,
-} from "d3-force";
 import type { GraphData } from "../lib/types";
-import type { GraphNode, GraphLink, ResolvedLink } from "../lib/graphUtils";
+import type { ResolvedLink } from "../lib/graphUtils";
 import { getNodeColor } from "../lib/graphUtils";
+import { prepareGraphData, createSimulation, observeThemeChange, navigateToNode } from "../lib/graphSim";
+
+const CANVAS_SIZE = 240;
 
 interface Props {
   slug: string;
@@ -18,7 +14,6 @@ interface Props {
 export default function LocalGraph({ slug, data }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
-  const size = 240;
 
   useEffect(() => {
     if (!data || !canvasRef.current || data.nodes.length === 0) return;
@@ -26,35 +21,40 @@ export default function LocalGraph({ slug, data }: Props) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d")!;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
+    canvas.width = CANVAS_SIZE * dpr;
+    canvas.height = CANVAS_SIZE * dpr;
     ctx.scale(dpr, dpr);
 
-    const nodes: GraphNode[] = data.nodes.map((n) => ({ ...n }));
-    const links: GraphLink[] = data.edges.map((e) => ({ ...e }));
+    const { nodes, links } = prepareGraphData(data);
 
-    const sim = forceSimulation(nodes)
-      .force(
-        "link",
-        forceLink<GraphNode, GraphLink>(links)
-          .id((d) => d.slug)
-          .distance(50)
-      )
-      .force("charge", forceManyBody().strength(-120))
-      .force("center", forceCenter(size / 2, size / 2))
-      .force("collide", forceCollide().radius(15));
+    const sim = createSimulation(nodes, links, {
+      width: CANVAS_SIZE,
+      height: CANVAS_SIZE,
+      linkDistance: 50,
+      chargeStrength: -120,
+      collideRadius: 15,
+    });
 
-    const styles = getComputedStyle(document.documentElement);
-    const accentColor = styles.getPropertyValue("--c-accent").trim() || "#0d9488";
-    const textColor = styles.getPropertyValue("--c-text").trim() || "#1c1917";
-    const borderColor = styles.getPropertyValue("--c-border").trim() || "#e7e5e4";
+    /** Read current theme colors from CSS variables. */
+    function readThemeColors() {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        accent: styles.getPropertyValue("--c-accent").trim() || "#0d9488",
+        text: styles.getPropertyValue("--c-text").trim() || "#1c1917",
+        border: styles.getPropertyValue("--c-border").trim() || "#e7e5e4",
+      };
+    }
 
+    let colors = readThemeColors();
     setReady(true);
 
-    sim.on("tick", () => {
-      ctx.clearRect(0, 0, size, size);
+    const CURRENT_RADIUS = 6;
+    const DEFAULT_RADIUS = 4;
 
-      ctx.strokeStyle = borderColor;
+    sim.on("tick", () => {
+      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+      ctx.strokeStyle = colors.border;
       ctx.lineWidth = 1;
       for (const link of links as unknown as ResolvedLink[]) {
         ctx.beginPath();
@@ -66,12 +66,12 @@ export default function LocalGraph({ slug, data }: Props) {
       for (const node of nodes) {
         const isCurrent = node.slug === slug;
         ctx.beginPath();
-        ctx.arc(node.x!, node.y!, isCurrent ? 6 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isCurrent ? accentColor : getNodeColor(node);
+        ctx.arc(node.x!, node.y!, isCurrent ? CURRENT_RADIUS : DEFAULT_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = isCurrent ? colors.accent : getNodeColor(node);
         ctx.fill();
       }
 
-      ctx.fillStyle = textColor;
+      ctx.fillStyle = colors.text;
       ctx.font = "10px sans-serif";
       ctx.textAlign = "center";
       for (const node of nodes) {
@@ -79,6 +79,12 @@ export default function LocalGraph({ slug, data }: Props) {
       }
     });
 
+    const disconnectObserver = observeThemeChange(() => {
+      colors = readThemeColors();
+      sim.alpha(0.1).restart();
+    });
+
+    const HIT_RADIUS_SQ = 100;
     const handleClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -86,8 +92,8 @@ export default function LocalGraph({ slug, data }: Props) {
       for (const node of nodes) {
         const dx = x - node.x!;
         const dy = y - node.y!;
-        if (dx * dx + dy * dy < 100 && node.slug !== slug) {
-          window.location.href = node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`;
+        if (dx * dx + dy * dy < HIT_RADIUS_SQ && node.slug !== slug) {
+          navigateToNode(node);
           break;
         }
       }
@@ -96,6 +102,7 @@ export default function LocalGraph({ slug, data }: Props) {
 
     return () => {
       sim.stop();
+      disconnectObserver();
       canvas.removeEventListener("click", handleClick);
     };
   }, [data, slug]);
@@ -116,7 +123,7 @@ export default function LocalGraph({ slug, data }: Props) {
       {!ready && (
         <div
           class="skeleton"
-          style={{ width: `${size}px`, height: `${size}px` }}
+          style={{ width: `${CANVAS_SIZE}px`, height: `${CANVAS_SIZE}px` }}
         />
       )}
       <canvas
@@ -124,8 +131,8 @@ export default function LocalGraph({ slug, data }: Props) {
         aria-label="현재 글과 연결된 글들의 관계를 보여주는 로컬 그래프"
         role="img"
         style={{
-          width: `${size}px`,
-          height: `${size}px`,
+          width: `${CANVAS_SIZE}px`,
+          height: `${CANVAS_SIZE}px`,
           cursor: "pointer",
           display: ready ? "block" : "none",
         }}

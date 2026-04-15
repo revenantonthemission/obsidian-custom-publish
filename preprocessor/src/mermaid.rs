@@ -1,11 +1,45 @@
 use anyhow::{Context, Result, bail};
 use regex::Regex;
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::LazyLock;
 use tempfile::NamedTempFile;
 
+/// Resolve the absolute path to `mmdc` once at startup.
+/// Checks common install locations if `which` fails (e.g. non-login shells).
+static MMDC_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+    // Try `which` first (works in interactive shells)
+    if let Ok(output) = std::process::Command::new("which").arg("mmdc").output() {
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() {
+                return Some(PathBuf::from(path));
+            }
+        }
+    }
+
+    // Fallback: check common Homebrew/npm global install locations
+    let candidates = [
+        "/opt/homebrew/bin/mmdc",
+        "/usr/local/bin/mmdc",
+        "/opt/homebrew/Cellar/node/25.9.0_2/bin/mmdc",
+    ];
+    for candidate in candidates {
+        let path = PathBuf::from(candidate);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    None
+});
+
 static INIT_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
+
+static THEME_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?:'theme'\s*:\s*'[^']*'|"theme"\s*:\s*"[^"]*")"#).unwrap()
+});
 
 /// Infer and prepend a Mermaid diagram-type header when one is missing.
 ///
@@ -67,9 +101,8 @@ fn apply_theme_to_source(source: &str, theme: &str) -> (String, bool) {
     let result = INIT_RE.replace(source, |caps: &regex::Captures| {
         let init_block = &caps[0];
         // Replace 'theme': '...' or "theme": "..." with the desired theme
-        let re_theme = Regex::new(r#"(['"])theme\1\s*:\s*(['"])[^'"]*\2"#).unwrap();
-        if re_theme.is_match(init_block) {
-            re_theme.replace(init_block, format!("'theme': '{theme}'")).to_string()
+        if THEME_RE.is_match(init_block) {
+            THEME_RE.replace(init_block, format!("'theme': '{theme}'")).to_string()
         } else {
             // No theme key — inject one after the opening %%{init: {
             init_block.replacen("{", &format!("{{ 'theme': '{theme}',"), 2)
@@ -97,7 +130,10 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
         .context("failed to create temp output file")?;
     let output_path = output_file.path().to_path_buf();
 
-    let mut cmd = std::process::Command::new("mmdc");
+    let mmdc = MMDC_PATH.as_ref()
+        .context("mmdc not found — install with: npm install -g @mermaid-js/mermaid-cli")?;
+
+    let mut cmd = std::process::Command::new(mmdc);
     cmd.arg("-i")
         .arg(input.path())
         .arg("-o")
@@ -112,7 +148,7 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
 
     let result = cmd
         .output()
-        .context("failed to spawn mmdc — is @mermaid-js/mermaid-cli installed?")?;
+        .with_context(|| format!("failed to spawn mmdc at {}", mmdc.display()))?;
 
     if !result.status.success() {
         let stderr = String::from_utf8_lossy(&result.stderr);

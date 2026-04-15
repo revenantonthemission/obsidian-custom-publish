@@ -8,10 +8,7 @@
   --c-accent: #0d9488;
   --c-accent-hover: #0f766e;
   --c-code-bg: #f5f5f4;
-  --c-callout-note: #dbeafe;
-  --c-callout-warning: #fef3c7;
-  --c-callout-note-border: #3b82f6;
-  --c-callout-warning-border: #f59e0b;
+
   --radius: 6px;
   --max-width: 720px;
   --sidebar-width: 260px;
@@ -32,23 +29,6 @@
   --c-callout-warning: #422006;
   --c-callout-note-border: #3b82f6;
   --c-callout-warning-border: #f59e0b;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --c-bg: #0c0a09;
-    --c-surface: #1c1917;
-    --c-text: #e7e5e4;
-    --c-text-muted: #a8a29e;
-    --c-border: #292524;
-    --c-accent: #2dd4bf;
-    --c-accent-hover: #5eead4;
-    --c-code-bg: #1c1917;
-    --c-callout-note: #1e3a5f;
-    --c-callout-warning: #422006;
-    --c-callout-note-border: #3b82f6;
-    --c-callout-warning-border: #f59e0b;
-  }
 }
 
 /* ── Shiki dual-theme ── */
@@ -72,14 +52,6 @@ pre.shiki span {
 [data-theme="dark"] pre.shiki span {
   color: var(--shiki-dark);
   background-color: var(--shiki-dark-bg);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) pre.shiki,
-  :root:not([data-theme="light"]) pre.shiki span {
-    color: var(--shiki-dark);
-    background-color: var(--shiki-dark-bg);
-  }
 }
 
 /* ── Skip link ── */
@@ -353,6 +325,14 @@ img {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ── Theme transition ── */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, box-shadow 300ms ease !important;
 }
 
 /* ── Responsive: Phone ── */
