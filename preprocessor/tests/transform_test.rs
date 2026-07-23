@@ -1,44 +1,41 @@
-use obsidian_press::linker::resolve_links;
 use obsidian_press::scanner::scan_vault;
 use obsidian_press::transform::transform_content;
 use std::path::Path;
 
-fn fixture_setup() -> (obsidian_press::types::VaultIndex, obsidian_press::types::LinkGraph) {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
-    let graph = resolve_links(&index);
-    (index, graph)
+fn fixture_setup() -> obsidian_press::types::VaultIndex {
+    scan_vault(Path::new("../fixtures/vault")).unwrap()
 }
 
 #[test]
 fn test_wikilinks_converted_to_html_links() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-links"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(result.contains(r#"<a href="/posts/simple-post">"#));
 }
 
 #[test]
 fn test_alias_links_use_alias_text() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-links"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(result.contains(r#"<a href="/posts/simple-post">alias link</a>"#));
 }
 
 #[test]
 fn test_callouts_converted_to_divs() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-callouts"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(result.contains(r#"<div class="callout callout-note">"#));
     assert!(result.contains(r#"<div class="callout callout-warning">"#));
 }
 
 #[test]
 fn test_transclusions_inlined() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     // Should contain content from Simple Post, not the ![[]] syntax
     assert!(!result.contains("![[Simple Post]]"));
     assert!(result.contains("simple post with no special syntax"));
@@ -46,27 +43,27 @@ fn test_transclusions_inlined() {
 
 #[test]
 fn test_latex_passed_through_unchanged() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-math"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(result.contains("$f(x) = x^2 + 1$"));
     assert!(result.contains(r"\int_0^1"));
 }
 
 #[test]
 fn test_footnotes_preserved() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-footnotes"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     assert!(result.contains("[^context-switch]"));
     assert!(result.contains("[^tlb-flush]"));
 }
 
 #[test]
 fn test_unresolved_wikilinks_become_plain_text() {
-    let (index, graph) = fixture_setup();
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-links"];
-    let result = transform_content(&index, &graph, post_idx);
+    let result = transform_content(&index, post_idx);
     // Should not contain [[Nonexistent Page]] as a wikilink
     assert!(!result.contains("[[Nonexistent Page]]"));
     // Should contain the text without brackets
@@ -74,32 +71,96 @@ fn test_unresolved_wikilinks_become_plain_text() {
 }
 
 #[test]
-fn test_image_embed_produces_img_tag() {
-    let (index, graph) = fixture_setup();
-    let post_idx = index.slug_map["post-with-image"];
-    let result = transform_content(&index, &graph, post_idx);
-    assert!(
-        result.contains(r#"<img src="/assets/test-image.png" alt="test-image" />"#),
-        "Expected <img> tag, got: {result}"
-    );
+fn test_inline_comments_stripped() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["post-with-formatting"];
+    let result = transform_content(&index, post_idx);
+    assert!(!result.contains("%%inline comment%%"));
+    assert!(!result.contains("inline comment"));
+    assert!(result.contains("Visible text"));
+    assert!(result.contains("more visible text"));
 }
 
 #[test]
-fn test_missing_image_embed_produces_warning_comment() {
-    let (index, graph) = fixture_setup();
-    let post_idx = index.slug_map["post-with-image"];
-    let result = transform_content(&index, &graph, post_idx);
-    assert!(
-        result.contains("<!-- image not found: nonexistent-image.png -->"),
-        "Expected HTML warning comment, got: {result}"
-    );
+fn test_block_comments_stripped() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["post-with-formatting"];
+    let result = transform_content(&index, post_idx);
+    assert!(!result.contains("This is a block comment"));
+    assert!(!result.contains("spans multiple lines"));
+    assert!(result.contains("Text after block comment"));
 }
 
 #[test]
-fn test_transclusions_still_work_after_image_support() {
-    let (index, graph) = fixture_setup();
+fn test_highlights_converted_to_mark_tags() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["post-with-formatting"];
+    let result = transform_content(&index, post_idx);
+    assert!(result.contains("<mark>highlighted text</mark>"));
+    assert!(!result.contains("==highlighted text=="));
+}
+
+#[test]
+fn test_multiple_highlights_on_one_line() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["post-with-formatting"];
+    let result = transform_content(&index, post_idx);
+    assert!(result.contains("<mark>highlights</mark>"));
+    assert!(result.contains("<mark>one line</mark>"));
+}
+
+#[test]
+fn test_heading_transclusion() {
+    let index = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
-    let result = transform_content(&index, &graph, post_idx);
-    assert!(!result.contains("![[Simple Post]]"));
-    assert!(result.contains("simple post with no special syntax"));
+    let result = transform_content(&index, post_idx);
+    // The heading transclusion syntax should be resolved
+    assert!(!result.contains("![[Simple Post#Introduction]]"), "Heading transclusion syntax should be removed");
+    // Should contain the Introduction section content
+    assert!(result.contains("Some intro text here"));
+    assert!(result.contains("More introduction content"));
+    assert!(result.contains("End of heading transclusion"));
+}
+
+#[test]
+fn test_heading_transclusion_boundary() {
+    // Unit-test the heading section extraction directly
+    let content = "## First\n\nContent A.\n\n## Second\n\nContent B.\n\n## Third\n\nContent C.\n";
+    let section = obsidian_press::transform::extract_heading_section(content, "Second");
+    let section = section.expect("Section should be found");
+    assert!(section.contains("Content B"), "Should include section content");
+    assert!(!section.contains("Content A"), "Should not include prior section");
+    assert!(!section.contains("Content C"), "Should stop at next same-level heading");
+}
+
+#[test]
+fn test_hub_page_child_links_get_auto_dates() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["hub-page"];
+    let result = transform_content(&index, post_idx);
+
+    // Simple Post has published: 2025-01-15 in its frontmatter
+    assert!(
+        result.contains(r#"<time class="hub-child-date" datetime="2025-01-15">2025년 1월 15일</time>"#),
+        "Expected auto-appended date for Simple Post, got:\n{result}"
+    );
+    // Manual annotation should be stripped
+    assert!(
+        !result.contains("@2020-01-01"),
+        "Manual annotation should be stripped, got:\n{result}"
+    );
+}
+
+#[test]
+fn test_non_hub_file_wikilinks_not_augmented() {
+    let index = fixture_setup();
+    let post_idx = index.slug_map["post-with-links"];
+    let result = transform_content(&index, post_idx);
+
+    // Post With Links is NOT a hub, so even if it contains list-item wikilinks,
+    // they should NOT be augmented with dates
+    assert!(
+        !result.contains("hub-child-date"),
+        "Non-hub post should not have hub-child-date elements, got:\n{result}"
+    );
 }

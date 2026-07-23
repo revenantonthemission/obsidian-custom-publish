@@ -1,31 +1,10 @@
-import { useEffect, useRef } from "preact/hooks";
-import {
-  forceSimulation,
-  forceLink,
-  forceManyBody,
-  forceCenter,
-  forceCollide,
-  type SimulationNodeDatum,
-  type SimulationLinkDatum,
-} from "d3-force";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { select } from "d3-selection";
 import { zoom } from "d3-zoom";
 import type { GraphData } from "../lib/types";
-
-interface GraphNode extends SimulationNodeDatum {
-  slug: string;
-  title: string;
-  tags: string[];
-  is_hub: boolean;
-  backlink_count: number;
-}
-
-type GraphLink = SimulationLinkDatum<GraphNode>;
-
-interface ResolvedLink {
-  source: GraphNode;
-  target: GraphNode;
-}
+import type { ResolvedLink } from "../lib/graphUtils";
+import { getNodeColor, getNodeRadius } from "../lib/graphUtils";
+import { prepareGraphData, createSimulation, observeThemeChange, navigateToNode } from "../lib/graphSim";
 
 interface Props {
   data: GraphData;
@@ -33,32 +12,13 @@ interface Props {
   height?: number;
 }
 
-const HUB_COLORS: Record<string, string> = {
-  os: "#3b82f6",
-  web: "#10b981",
-  db: "#f59e0b",
-  network: "#8b5cf6",
-};
-
-function getNodeColor(node: GraphNode): string {
-  if (node.is_hub) return "#ef4444";
-  for (const tag of node.tags) {
-    if (HUB_COLORS[tag]) return HUB_COLORS[tag];
-  }
-  return "#6b7280";
-}
-
-function getNodeRadius(node: GraphNode): number {
-  return Math.max(4, Math.min(12, 4 + node.backlink_count * 2));
-}
-
 export default function GraphView({ data, width, height }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    // Use container dimensions if no explicit size provided
     const container = svgRef.current.parentElement;
     const w = width || container?.clientWidth || 800;
     const h = height || container?.clientHeight || 600;
@@ -67,19 +27,17 @@ export default function GraphView({ data, width, height }: Props) {
     svg.selectAll("*").remove();
     svg.attr("width", w).attr("height", h);
 
-    const nodes: GraphNode[] = data.nodes.map((n) => ({ ...n }));
-    const links: GraphLink[] = data.edges.map((e) => ({ ...e }));
+    const { nodes, links } = prepareGraphData(data);
 
     // Container group for zoom/pan
     const g = svg.append("g");
-
-    // Zoom behavior
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 4])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
     svg.call(zoomBehavior);
+    setReady(true);
 
     // Draw edges
     const linkElements = g
@@ -88,7 +46,7 @@ export default function GraphView({ data, width, height }: Props) {
       .selectAll("line")
       .data(links)
       .join("line")
-      .attr("stroke", "rgba(150, 150, 150, 0.3)")
+      .attr("stroke", "var(--c-border, rgba(150, 150, 150, 0.3))")
       .attr("stroke-width", 1);
 
     // Draw nodes
@@ -101,9 +59,7 @@ export default function GraphView({ data, width, height }: Props) {
       .attr("r", (d) => getNodeRadius(d))
       .attr("fill", (d) => getNodeColor(d))
       .attr("cursor", "pointer")
-      .on("click", (_event, d) => {
-        window.location.href = `/posts/${d.slug}`;
-      });
+      .on("click", (_event, d) => navigateToNode(d));
 
     // Draw labels
     const labelElements = g
@@ -119,16 +75,7 @@ export default function GraphView({ data, width, height }: Props) {
       .attr("pointer-events", "none");
 
     // Simulation
-    const sim = forceSimulation(nodes)
-      .force(
-        "link",
-        forceLink<GraphNode, GraphLink>(links)
-          .id((d) => d.slug)
-          .distance(80)
-      )
-      .force("charge", forceManyBody().strength(-200))
-      .force("center", forceCenter(w / 2, h / 2))
-      .force("collide", forceCollide().radius(20));
+    const sim = createSimulation(nodes, links, { width: w, height: h });
 
     sim.on("tick", () => {
       linkElements
@@ -144,17 +91,35 @@ export default function GraphView({ data, width, height }: Props) {
         .attr("y", (d) => d.y! + getNodeRadius(d) + 14);
     });
 
+    // Force SVG repaint when theme changes so CSS variables re-resolve
+    const disconnectObserver = observeThemeChange(() => {
+      svg.style("display", "none");
+      svgRef.current!.getBoundingClientRect();
+      svg.style("display", null);
+    });
+
     return () => {
       sim.stop();
+      disconnectObserver();
     };
   }, [data, width, height]);
 
   return (
-    <svg
-      ref={svgRef}
-      width={width || "100%"}
-      height={height || "100%"}
-      style={{ cursor: "grab" }}
-    />
+    <>
+      {!ready && (
+        <div
+          class="skeleton"
+          style={{ width: "100%", height: "100%" }}
+        />
+      )}
+      <svg
+        ref={svgRef}
+        width={width || "100%"}
+        height={height || "100%"}
+        style={{ cursor: "grab", display: ready ? "block" : "none" }}
+        aria-label="모든 글의 연결 관계를 보여주는 그래프"
+        role="img"
+      />
+    </>
   );
 }

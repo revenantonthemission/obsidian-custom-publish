@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-pub const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
-
 /// Returns true if the character is a Korean Hangul syllable, Jamo, or compatibility Jamo.
 pub fn is_korean(c: char) -> bool {
     matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
@@ -17,8 +15,10 @@ pub struct PostMeta {
     pub tags: Vec<String>,
     pub created: Option<String>,
     pub published: Option<String>,
+    pub updated: Option<String>,
     pub is_hub: bool,
     pub hub_parent: Option<String>,
+    pub description: Option<String>,
     pub raw_content: String,
 }
 
@@ -29,16 +29,17 @@ pub struct VaultIndex {
     pub slug_map: HashMap<String, usize>,
     /// original filename (without .md) -> index into posts
     pub name_map: HashMap<String, usize>,
-    /// image filename (e.g. "diagram.png") -> absolute path in vault
-    pub attachment_map: HashMap<String, PathBuf>,
+    /// title -> list of heading slugs (in document order, with -1/-2 suffixes for duplicates)
+    pub heading_map: HashMap<String, Vec<String>>,
+    /// title -> (block_id -> paragraph text without the ^block-id annotation)
+    pub block_map: HashMap<String, HashMap<String, String>>,
 }
 
 // --- Link resolution types (Pass 2) ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Link {
     pub target_slug: String,
-    pub alias: Option<String>,
 }
 
 #[derive(Debug)]

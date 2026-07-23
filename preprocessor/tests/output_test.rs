@@ -62,7 +62,7 @@ fn test_output_post_contains_img_tag() {
     let post_path = tmp.path().join("posts/post-with-image.md");
     let content = std::fs::read_to_string(&post_path).unwrap();
     assert!(
-        content.contains(r#"<img src="/assets/test-image.png" alt="test-image" />"#),
+        content.contains(r#"<img src="/assets/test-image.png" alt="" />"#),
         "Post output should contain <img> tag"
     );
 }

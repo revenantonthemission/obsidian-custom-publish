@@ -1,17 +1,20 @@
 // Types matching the Rust preprocessor's JSON output
 
+// Note: the preprocessor also emits `created` in meta JSON, omitted here as unused.
 export interface PostMeta {
   slug: string;
   title: string;
   tags: string[];
-  created: string | null;
   published: string | null;
+  updated: string | null;
   backlinks: string[];
   forward_links: string[];
   is_hub: boolean;
   hub_parent: string | null;
+  description: string | null;
   reading_time_min: number;
   word_count: number;
+  related_posts?: string[];
 }
 
 export interface GraphData {
@@ -46,4 +49,16 @@ export interface SearchDocument {
 export interface SearchHit {
   doc_idx: number;
   count: number;
+}
+
+export interface NavTreeNode {
+  slug: string;
+  title: string;
+  is_hub: boolean;
+  children: NavTreeNode[];
+}
+
+export interface NavTreeData {
+  roots: NavTreeNode[];
+  orphans: NavTreeNode[];
 }

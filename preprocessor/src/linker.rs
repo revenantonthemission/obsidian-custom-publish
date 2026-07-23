@@ -1,11 +1,7 @@
-use std::sync::LazyLock;
+use std::collections::HashSet;
 
-use regex::Regex;
-
+use crate::syntax::WIKILINK_RE;
 use crate::types::{GraphEdge, GraphJson, GraphNode, Link, LinkGraph, VaultIndex};
-
-static WIKILINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]").unwrap());
 
 /// Parse all wikilinks in the vault and build forward/back link maps.
 pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
@@ -13,12 +9,11 @@ pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
     let n = index.posts.len();
 
     let mut forward_links: Vec<Vec<Link>> = vec![Vec::new(); n];
-    let mut backlinks: Vec<Vec<String>> = vec![Vec::new(); n];
+    let mut backlink_sets: Vec<HashSet<String>> = vec![HashSet::new(); n];
 
     for (i, post) in index.posts.iter().enumerate() {
         for cap in wikilink_re.captures_iter(&post.raw_content) {
             let target_name = cap[1].trim();
-            let alias = cap.get(2).map(|m| m.as_str().trim().to_string());
 
             // Resolve target name to a post via name_map
             if let Some(&target_idx) = index.name_map.get(target_name) {
@@ -27,16 +22,17 @@ pub fn resolve_links(index: &VaultIndex) -> LinkGraph {
 
                 forward_links[i].push(Link {
                     target_slug: target_slug.clone(),
-                    alias,
                 });
 
-                // Add backlink if not already present
-                if !backlinks[target_idx].contains(&source_slug) {
-                    backlinks[target_idx].push(source_slug);
-                }
+                backlink_sets[target_idx].insert(source_slug);
             }
         }
     }
+
+    let backlinks = backlink_sets
+        .into_iter()
+        .map(|set| set.into_iter().collect())
+        .collect();
 
     LinkGraph {
         forward_links,

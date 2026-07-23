@@ -9,8 +9,10 @@ export function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-const meta = getPostMeta(slug!)!;
-const rawContent = getPostContent(slug!);
+if (!slug) return Astro.redirect("/404");
+const meta = getPostMeta(slug);
+if (!meta) return Astro.redirect("/404");
+const rawContent = getPostContent(slug);
 const htmlContent = await renderMarkdown(rawContent);
 ---
 

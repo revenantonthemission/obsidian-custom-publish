@@ -31,10 +31,13 @@ fn test_alias_links_resolved() {
     let graph = resolve_links(&index);
     let post_idx = index.slug_map["post-with-links"];
     let forward = &graph.forward_links[post_idx];
-    let alias_link = forward
+    // [[Simple Post|alias link]] should still resolve to simple-post
+    let count = forward
         .iter()
-        .find(|l| l.alias == Some("alias link".to_string()));
-    assert!(alias_link.is_some());
+        .filter(|l| l.target_slug == "simple-post")
+        .count();
+    // Two links to Simple Post: [[Simple Post]] and [[Simple Post|alias link]]
+    assert!(count >= 2, "expected >=2 links to simple-post (direct + alias), got {count}");
 }
 
 #[test]

@@ -111,7 +111,15 @@ const processor = unified()
       dark: "github-dark",
     },
     defaultColor: false,
-    transformers: [transformerMetaHighlight()],
+    transformers: [
+      transformerMetaHighlight(),
+      {
+        // Inject data-language attribute on <pre> for CSS language badge
+        pre(node) {
+          node.properties["data-language"] = this.options.lang;
+        },
+      },
+    ],
   })
   .use(rehypeSlug)
   .use(rehypeCodeFilename)

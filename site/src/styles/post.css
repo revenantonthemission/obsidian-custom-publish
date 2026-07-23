@@ -12,6 +12,16 @@
 }
 
 /* ── Article ── */
+.post-layout > article {
+  min-width: 0;
+}
+
+.post-content {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
 .post-header {
   margin-bottom: 2rem;
   padding-bottom: 1rem;
@@ -52,9 +62,9 @@
   .post-sidebar {
     display: block;
     position: sticky;
-    top: 2rem;
+    top: 3.5rem;
     align-self: start;
-    max-height: calc(100dvh - 4rem);
+    max-height: calc(100dvh - 4.5rem);
     overflow-y: auto;
   }
 }
@@ -81,6 +91,36 @@
   margin-bottom: 0.4rem;
 }
 
+/* ── Highlighted text (==text==) ── */
+.post-content mark {
+  background: rgba(255, 208, 0, 0.25);
+  color: inherit;
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .post-content mark {
+  background: rgba(255, 208, 0, 0.18);
+}
+
+/* ── Inline KaTeX size match ── */
+.post-content > p .katex,
+.post-content > li .katex {
+  font-size: 1em;
+}
+
+/* ── KaTeX display math overflow ── */
+.post-content .katex-display {
+  width: 100%;
+}
+
+/* On mobile, left-align overflowing formulas so the start is visible */
+@media (max-width: 767px) {
+  .post-content .katex-display > .katex {
+    text-align: left;
+  }
+}
+
 /* ── Code block with filename ── */
 .code-block {
   position: relative;
@@ -88,12 +128,14 @@
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .code-block pre {
   margin: 0;
   border: none;
   border-radius: 0;
+  padding: 1rem;
 }
 
 /* ── Copy button ── */
@@ -108,15 +150,15 @@
   background: var(--c-code-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
-  padding: 0.3rem;
+  padding: 0.35rem;
   cursor: pointer;
   color: var(--c-text-muted);
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition: opacity 0.2s, color 0.2s, background 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 2;
 }
 
 .code-block-wrapper:hover .copy-btn,
@@ -127,6 +169,7 @@
 
 .copy-btn:hover {
   color: var(--c-text);
+  background: var(--c-border);
 }
 
 .copy-btn.copied {
@@ -141,6 +184,28 @@
   color: var(--c-text-muted);
   background: var(--c-code-bg);
   border-bottom: 1px solid var(--c-border);
+}
+
+/* ── Language badge ── */
+.code-block pre.shiki[data-language]::before,
+.code-block-wrapper > pre.shiki[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.4rem;
+  right: 2.75rem;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hide language badge when filename is shown — filename already implies language */
+.code-block .code-filename ~ pre.shiki[data-language]::before {
+  display: none;
 }
 
 /* ── Image figures ── */
@@ -159,6 +224,25 @@
   font-size: 0.85rem;
   color: var(--c-text-muted);
   font-style: italic;
+}
+
+/* ── Image & diagram auto-scaling ── */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Diagrams: scale to fit viewport, scroll wrapper handles overflow */
+.post-content img.diagram {
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Images with inline width/height: respect the attribute but scale down */
+.post-content img[width] {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ── Responsive tables ── */
@@ -206,6 +290,10 @@
 }
 
 .footnotes li {
+  scroll-margin-top: 3.5rem;
+}
+
+.footnotes li {
   margin-bottom: 0.5rem;
 }
 
@@ -218,6 +306,7 @@ sup a[data-footnote-ref] {
   color: var(--c-accent);
   text-decoration: none;
   font-weight: 600;
+  scroll-margin-top: 3.5rem;
 }
 
 a[data-footnote-backref] {
@@ -239,8 +328,57 @@ a[data-footnote-backref] {
   background-color: rgba(101, 117, 133, 0.24);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .shiki .line.highlighted {
-    background-color: rgba(101, 117, 133, 0.24);
-  }
+/* ── Heading fold toggle ── */
+.post-content h2,
+.post-content h3 {
+  position: relative;
+}
+
+.heading-fold-toggle {
+  position: absolute;
+  left: -1.25rem;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6em;
+  color: var(--c-text-muted);
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+h2:hover .heading-fold-toggle,
+h3:hover .heading-fold-toggle,
+.heading-fold-toggle:focus-visible {
+  opacity: 1;
+}
+
+h2.collapsed .heading-fold-toggle,
+h3.collapsed .heading-fold-toggle {
+  transform: translateY(-50%) rotate(0deg);
+  opacity: 1;
+}
+
+/* ── Responsive: Post ── */
+@media (max-width: 479px) {
+  .post-title { font-size: 1.5rem; }
+  .post-meta { font-size: 0.8rem; }
+  pre.shiki, .code-block pre { padding: 0.75rem; }
+  .code-block pre.shiki[data-language]::before,
+  .code-block-wrapper > pre.shiki[data-language]::before { display: none; }
+  .copy-btn { padding: 0.5rem; }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .post-title { font-size: 1.75rem; }
+}
+
+/* Hub page child post dates — auto-appended by preprocessor */
+.hub-child-date {
+  color: var(--c-text-muted);
+  font-size: 0.85em;
+  margin-left: 0.5rem;
+  font-variant-numeric: tabular-nums;
 }

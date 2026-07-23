@@ -1,22 +1,12 @@
 import { useState, useEffect, useRef } from "preact/hooks";
+import type { SearchIndex } from "../lib/types";
 
-interface SearchDocument {
-  slug: string;
-  title: string;
-  snippet: string;
-}
+/** Extended SearchIndex with mutable cache for sorted keys (binary search optimization). */
+type IndexWithCache = SearchIndex & { _sortedKeys?: string[] };
 
-interface SearchHit {
-  doc_idx: number;
-  count: number;
-}
-
-interface SearchIndex {
-  documents: SearchDocument[];
-  inverted_index: Record<string, SearchHit[]>;
-  /** Sorted keys for binary search prefix matching — built on first load */
-  _sortedKeys?: string[];
-}
+const DEBOUNCE_MS = 200;
+const MAX_RESULTS = 10;
+const TITLE_MATCH_BOOST = 100;
 
 interface Result {
   slug: string;
@@ -30,10 +20,11 @@ export default function Search() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [selected, setSelected] = useState(0);
-  const [index, setIndex] = useState<SearchIndex | null>(null);
+  const [index, setIndex] = useState<IndexWithCache | null>(null);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut to open
+  // Keyboard shortcut and custom event to open
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -42,8 +33,13 @@ export default function Search() {
       }
       if (e.key === "Escape") setOpen(false);
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("open-search", openHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("open-search", openHandler);
+    };
   }, []);
 
   // Focus input when opened
@@ -51,11 +47,13 @@ export default function Search() {
     if (open) {
       inputRef.current?.focus();
       // Lazy-load index on first open
-      if (!index) {
+      if (!index && !loading) {
+        setLoading(true);
         fetch("/search-index.json")
           .then((r) => r.json())
-          .then((data: SearchIndex) => setIndex(data))
-          .catch(() => {});
+          .then((data: IndexWithCache) => setIndex(data))
+          .catch(() => {})
+          .finally(() => setLoading(false));
       }
     }
   }, [open]);
@@ -68,11 +66,11 @@ export default function Search() {
       return;
     }
 
-    const timer = setTimeout(() => runSearch(query, index), 200);
+    const timer = setTimeout(() => runSearch(query, index), DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query, index]);
 
-  const runSearch = (query: string, index: SearchIndex) => {
+  const runSearch = (query: string, index: IndexWithCache) => {
     const q = query.toLowerCase().trim();
     const tokens = q.split(/\s+/);
     const scores = new Map<number, number>();
@@ -81,7 +79,7 @@ export default function Search() {
     for (let i = 0; i < index.documents.length; i++) {
       const doc = index.documents[i];
       if (doc.title.toLowerCase().includes(q)) {
-        scores.set(i, (scores.get(i) || 0) + 100);
+        scores.set(i, (scores.get(i) || 0) + TITLE_MATCH_BOOST);
       }
     }
 
@@ -114,7 +112,7 @@ export default function Search() {
 
     const sorted = [...scores.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
+      .slice(0, MAX_RESULTS)
       .map(([idx, score]) => ({
         ...index.documents[idx],
         score,
@@ -170,6 +168,9 @@ export default function Search() {
               </li>
             ))}
           </ul>
+        )}
+        {loading && (
+          <div class="search-empty">검색 인덱스 로딩 중...</div>
         )}
         {query && results.length === 0 && index && (
           <div class="search-empty">결과 없음</div>
