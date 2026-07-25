@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const ownedGroups = new Map();
@@ -8,6 +9,18 @@ const execFileAsync = promisify(execFile);
 let lifecycleInstalled = false;
 let signalShutdownStarted = false;
 let observationSupportPromise;
+
+// Inherited by every process in an owned scope so that a descendant which lost
+// its ancestry — a double-detached grandchild reparented to init — can still be
+// proven ours. Deliberately distinct from PROFILE_OWNED_BOOTSTRAP_TOKEN, which
+// authenticates the bootstrap IPC handshake and is stripped before exec.
+const OWNERSHIP_TOKEN_ENV = 'PROFILE_OWNED_PROCESS_OWNERSHIP_TOKEN';
+const OWNERSHIP_TOKEN_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
+const MAX_OWNERSHIP_PROBES_PER_SWEEP = 256;
+const OWNERSHIP_REAP_ITERATIONS = 8;
+const OWNERSHIP_REAP_SETTLE_MS = 25;
+const OWNERSHIP_PROBE_TIMEOUT_MS = 2_000;
 
 export function assertOwnedProcessTreeSupport() {
   if (process.platform === 'win32') {
@@ -551,6 +564,224 @@ export async function freezeOwnedProcessTree({
   );
 }
 
+/**
+ * Opens an ownership scope before the first owned process is spawned.
+ *
+ * Ancestry alone cannot prove zero residual processes: when an intermediate
+ * parent exits first, its children are reparented to init and disappear from
+ * every ppid walk. The scope therefore mints a token that is inherited by the
+ * whole owned subtree, and rediscovers survivors by that token instead.
+ */
+export async function beginOwnedProcessScope(label) {
+  assertOwnedProcessTreeSupport();
+  if (typeof label !== 'string' || label.trim().length === 0) {
+    throw new TypeError('owned process scope label must be non-empty');
+  }
+  const token = randomUUID();
+  if (!OWNERSHIP_TOKEN_PATTERN.test(token)) {
+    throw new Error('owned process scope token is malformed');
+  }
+  // Every process alive before the scope opened is out of scope forever. The
+  // identity key carries lstart, so a recycled pid no longer matches its
+  // baseline entry and is correctly reconsidered as newly born.
+  const baselineIdentities = new Map(
+    (await readProcessTable()).map((row) => [row.pid, processIdentityKey(row)]),
+  );
+  let closed = false;
+
+  return Object.freeze({
+    label,
+    environment: Object.freeze({ [OWNERSHIP_TOKEN_ENV]: token }),
+    async reapResiduals() {
+      if (closed) {
+        throw new Error('owned process scope is already closed');
+      }
+      return reapOwnershipResiduals(token, baselineIdentities);
+    },
+    close() {
+      closed = true;
+    },
+  });
+}
+
+async function reapOwnershipResiduals(token, baselineIdentities) {
+  const probeFailures = [];
+  let candidateCount = 0;
+  let sweepCount = 0;
+  let residualProcessIds = [];
+
+  for (
+    let iteration = 0;
+    iteration < OWNERSHIP_REAP_ITERATIONS;
+    iteration += 1
+  ) {
+    let sweep;
+    try {
+      sweep = await sweepOwnershipResiduals(token, baselineIdentities);
+    } catch (error) {
+      probeFailures.push(
+        Object.freeze({
+          name: typeof error?.name === 'string' ? error.name : typeof error,
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      );
+      break;
+    }
+    sweepCount += 1;
+    candidateCount = sweep.candidateCount;
+    if (sweep.exceededProbeBudget) {
+      probeFailures.push(
+        Object.freeze({
+          name: 'OwnershipProbeBudgetExceeded',
+          message:
+            `${sweep.candidateCount} processes appeared during the owned scope, ` +
+            `above the ${MAX_OWNERSHIP_PROBES_PER_SWEEP} probe budget`,
+        }),
+      );
+      residualProcessIds = [];
+      break;
+    }
+    residualProcessIds = sweep.survivors;
+    if (residualProcessIds.length === 0) {
+      return ownershipEvidence({
+        verified: true,
+        residualProcessIds,
+        candidateCount,
+        sweepCount,
+        probeFailures,
+      });
+    }
+    // Each survivor proved ownership by carrying this run's token, so it is
+    // signalled by pid alone. Signalling -pid would target whichever group
+    // happens to share the number when the survivor does not lead one.
+    for (const pid of residualProcessIds) {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch (error) {
+        if (error?.code !== 'ESRCH') {
+          probeFailures.push(
+            Object.freeze({
+              name: 'OwnershipResidualKillFailed',
+              message: `residual process ${pid} could not be signalled`,
+            }),
+          );
+        }
+      }
+    }
+    await new Promise((resolvePromise) => {
+      setTimeout(resolvePromise, OWNERSHIP_REAP_SETTLE_MS);
+    });
+  }
+
+  return ownershipEvidence({
+    verified: false,
+    residualProcessIds,
+    candidateCount,
+    sweepCount,
+    probeFailures,
+  });
+}
+
+function ownershipEvidence({
+  verified,
+  residualProcessIds,
+  candidateCount,
+  sweepCount,
+  probeFailures,
+}) {
+  return Object.freeze({
+    verified,
+    residualProcessIds: Object.freeze(
+      [...residualProcessIds].sort((a, b) => a - b),
+    ),
+    candidateCount,
+    sweepCount,
+    probeBudget: MAX_OWNERSHIP_PROBES_PER_SWEEP,
+    probeFailures: Object.freeze([...probeFailures]),
+  });
+}
+
+async function sweepOwnershipResiduals(token, baselineIdentities) {
+  const rows = await readProcessTable();
+  const selfAncestry = collectSelfAncestry(rows);
+  const candidates = rows.filter(
+    (row) =>
+      !selfAncestry.has(row.pid) &&
+      (!baselineIdentities.has(row.pid) ||
+        baselineIdentities.get(row.pid) !== processIdentityKey(row)),
+  );
+  if (candidates.length > MAX_OWNERSHIP_PROBES_PER_SWEEP) {
+    return {
+      exceededProbeBudget: true,
+      candidateCount: candidates.length,
+      survivors: [],
+    };
+  }
+  const survivors = [];
+  for (const { pid } of candidates) {
+    if (await processCarriesOwnershipToken(pid, token)) survivors.push(pid);
+  }
+  return {
+    exceededProbeBudget: false,
+    candidateCount: candidates.length,
+    survivors,
+  };
+}
+
+function collectSelfAncestry(rows) {
+  const byPid = new Map(rows.map((row) => [row.pid, row]));
+  const ancestry = new Set([process.pid]);
+  let cursor = byPid.get(process.pid);
+  while (
+    cursor !== undefined &&
+    cursor.ppid > 0 &&
+    !ancestry.has(cursor.ppid)
+  ) {
+    ancestry.add(cursor.ppid);
+    cursor = byPid.get(cursor.ppid);
+  }
+  return ancestry;
+}
+
+/**
+ * Answers one question about one pid: does it carry this scope's token?
+ *
+ * `ps eww` prints the target environment, so the read is deliberately narrow.
+ * BSD and macOS only expose the environment of same-uid processes, the output
+ * is matched in place, and nothing derived from it other than this boolean
+ * leaves the function — it is never returned, stored, logged or put in
+ * evidence. execFile attaches captured output to its rejection, so a failure is
+ * re-raised as a fresh error carrying only the outcome code.
+ */
+async function processCarriesOwnershipToken(pid, token) {
+  try {
+    const { stdout } = await execFileAsync(
+      'ps',
+      ['eww', '-p', String(pid)],
+      {
+        encoding: 'utf8',
+        maxBuffer: 1024 * 1024,
+        timeout: OWNERSHIP_PROBE_TIMEOUT_MS,
+      },
+    );
+    return stdout.includes(`${OWNERSHIP_TOKEN_ENV}=${token}`);
+  } catch (error) {
+    // `ps` exits 1 when the pid vanished between listing and probing, which is
+    // the ordinary outcome for a process that has already been reaped.
+    if (error?.code === 1 && error?.killed !== true) return false;
+    throw new Error(
+      `owned ownership probe failed for pid ${pid} (${describeProbeFailure(error)})`,
+    );
+  }
+}
+
+function describeProbeFailure(error) {
+  if (error?.killed === true) return 'timeout';
+  if (typeof error?.code === 'string') return error.code;
+  if (Number.isInteger(error?.code)) return `exit ${error.code}`;
+  return 'unknown';
+}
+
 function installLifecycleHooks() {
   if (lifecycleInstalled) return;
   lifecycleInstalled = true;
@@ -739,6 +970,7 @@ function processIdentityKey(value) {
 export const ownedProcessRegistryTesting = Object.freeze({
   isOwnedGroupAlive,
   parseProcessTable,
+  ownershipTokenEnv: OWNERSHIP_TOKEN_ENV,
   ownedCount() {
     return ownedGroups.size;
   },

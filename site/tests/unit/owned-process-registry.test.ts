@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import {
   existsSync,
@@ -9,7 +9,11 @@ import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { join, resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { monitorOwnedDescendants } from '../../scripts/profile/owned-process-registry.mjs';
+import {
+  beginOwnedProcessScope,
+  monitorOwnedDescendants,
+  ownedProcessRegistryTesting,
+} from '../../scripts/profile/owned-process-registry.mjs';
 
 describe.skipIf(process.platform === 'win32')(
   'owned detached process registry',
@@ -184,8 +188,130 @@ describe.skipIf(process.platform === 'win32')(
         }
       }
     });
+    test('reaps a token-owned process that lost its ancestry', async () => {
+      const scope = await beginOwnedProcessScope('double-detach-test');
+      // The middle process detaches a grandchild and exits at once, so the
+      // grandchild is reparented to init. No ppid walk from this test can
+      // reach it any more; only the inherited ownership token can.
+      const orphanSource = [
+        "import { spawn } from 'node:child_process';",
+        'const orphan = spawn(',
+        '  process.execPath,',
+        "  ['-e', 'setInterval(() => {}, 1000)'],",
+        "  { detached: true, stdio: 'ignore' },",
+        ');',
+        'orphan.unref();',
+        "process.stdout.write(String(orphan.pid) + '\\n', () => process.exit(0));",
+      ].join('\n');
+      const middle = spawn(
+        process.execPath,
+        ['--input-type=module', '-e', orphanSource],
+        {
+          env: { ...process.env, ...scope.environment },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        },
+      );
+      let orphanPid: number | undefined;
+
+      try {
+        orphanPid = Number(await readFirstLine(middle));
+        expect(Number.isSafeInteger(orphanPid)).toBe(true);
+        await waitForExit(middle, 3_000);
+        await waitForReparenting(orphanPid, 2_000);
+
+        // Proof the ancestry walk is blind here: the survivor's parent is init.
+        expect(readParentPid(orphanPid)).toBe(1);
+        expect(isProcessAlive(orphanPid)).toBe(true);
+
+        const evidence = await scope.reapResiduals();
+
+        expect(evidence.probeFailures).toEqual([]);
+        expect(evidence.verified).toBe(true);
+        expect(evidence.residualProcessIds).toEqual([]);
+        expect(evidence.sweepCount).toBeGreaterThanOrEqual(2);
+        expect(isProcessAlive(orphanPid)).toBe(false);
+      } finally {
+        scope.close();
+        if (middle.exitCode === null && middle.signalCode === null) {
+          middle.kill('SIGKILL');
+        }
+        if (orphanPid !== undefined && isProcessAlive(orphanPid)) {
+          try {
+            process.kill(orphanPid, 'SIGKILL');
+          } catch {
+            // The assertion above is authoritative.
+          }
+        }
+      }
+    });
+
+    test('leaves processes without the scope token untouched', async () => {
+      // A neighbour born inside the scope window but carrying no token stands
+      // in for any unrelated process the sweep must never signal.
+      const neighbour = spawn(
+        process.execPath,
+        ['-e', 'setInterval(() => {}, 1000)'],
+        { stdio: 'ignore' },
+      );
+      const scope = await beginOwnedProcessScope('token-isolation-test');
+      const untokened = spawn(
+        process.execPath,
+        ['-e', 'setInterval(() => {}, 1000)'],
+        { stdio: 'ignore' },
+      );
+
+      try {
+        expect(scope.environment).toHaveProperty(
+          ownedProcessRegistryTesting.ownershipTokenEnv,
+        );
+        const evidence = await scope.reapResiduals();
+
+        expect(evidence.probeFailures).toEqual([]);
+        expect(evidence.verified).toBe(true);
+        expect(untokened.pid).toBeDefined();
+        expect(isProcessAlive(untokened.pid as number)).toBe(true);
+        expect(isProcessAlive(neighbour.pid as number)).toBe(true);
+        // The pre-scope neighbour must not even be probed.
+        expect(evidence.candidateCount).toBeLessThanOrEqual(
+          evidence.probeBudget,
+        );
+      } finally {
+        scope.close();
+        untokened.kill('SIGKILL');
+        neighbour.kill('SIGKILL');
+        await waitForExit(untokened, 2_000).catch(() => undefined);
+        await waitForExit(neighbour, 2_000).catch(() => undefined);
+      }
+    });
   },
 );
+
+function readParentPid(pid: number): number {
+  const { status, stdout } = spawnSync('ps', ['-o', 'ppid=', '-p', String(pid)], {
+    encoding: 'utf8',
+  });
+  if (status !== 0) return -1;
+  return Number(stdout.trim());
+}
+
+async function waitForReparenting(pid: number, timeoutMs: number) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (readParentPid(pid) === 1) return;
+    await new Promise((resolvePromise) => {
+      setTimeout(resolvePromise, 25);
+    });
+  }
+}
+
+function isProcessAlive(pid: number) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error: any) {
+    return error?.code !== 'ESRCH';
+  }
+}
 
 function readFirstLine(child: ChildProcess): Promise<string> {
   return new Promise((resolvePromise, rejectPromise) => {

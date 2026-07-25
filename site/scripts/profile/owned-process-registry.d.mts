@@ -106,7 +106,25 @@ export function freezeOwnedProcessTree(input: {
   releaseVerified(): void;
 }>>;
 
+export function beginOwnedProcessScope(label: string): Promise<Readonly<{
+  label: string;
+  environment: Readonly<Record<string, string>>;
+  reapResiduals(): Promise<Readonly<{
+    verified: boolean;
+    residualProcessIds: readonly number[];
+    candidateCount: number;
+    sweepCount: number;
+    probeBudget: number;
+    probeFailures: readonly Readonly<{
+      name: string;
+      message: string;
+    }>[];
+  }>>;
+  close(): void;
+}>>;
+
 export const ownedProcessRegistryTesting: Readonly<{
   isOwnedGroupAlive(pid: number): boolean;
+  ownershipTokenEnv: string;
   ownedCount(): number;
 }>;
