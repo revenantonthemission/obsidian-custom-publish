@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "result": "pass",
+  "reviewSubjectSchemaVersion": 1,
+  "reviewSubjectDigest": "f9688988f1bcd93e23e088b4b1db26148e1eff370ef8001d945f173c7499e902",
+  "reviewer": "조준희",
+  "reviewedAt": "2026-07-25T09:25:23.300Z",
+  "states": [
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "320x800",
+      "theme": "light",
+      "details": "closed",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "320x800",
+      "theme": "light",
+      "details": "all-open",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/portfolio",
+      "engine": "chromium",
+      "viewport": "320x800",
+      "theme": "light",
+      "details": "not-applicable",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "320x800",
+      "theme": "dark",
+      "details": "closed",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "320x800",
+      "theme": "dark",
+      "details": "all-open",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/portfolio",
+      "engine": "chromium",
+      "viewport": "320x800",
+      "theme": "dark",
+      "details": "not-applicable",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "1440x900",
+      "theme": "light",
+      "details": "closed",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "1440x900",
+      "theme": "light",
+      "details": "all-open",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/portfolio",
+      "engine": "chromium",
+      "viewport": "1440x900",
+      "theme": "light",
+      "details": "not-applicable",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "details": "closed",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/resume",
+      "engine": "chromium",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "details": "all-open",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    },
+    {
+      "route": "/portfolio",
+      "engine": "chromium",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "details": "not-applicable",
+      "checks": {
+        "colorIndependentMeaning": "pass",
+        "focusAppearance": "pass",
+        "focusObscuration": "pass",
+        "readingOrder": "pass"
+      }
+    }
+  ],
+  "targetSizeExceptions": [],
+  "skippedReasons": []
+}

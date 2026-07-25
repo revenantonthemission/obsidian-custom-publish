@@ -186,7 +186,10 @@ export function getApprovedExternalDestinations(): readonly ApprovedExternalDest
         Object.freeze({
           url: evidence.expectedDestination,
           verifier: evidence.verifier,
-          checkedAt: evidence.checkedAt,
+          // The same instant, emitted in the canonical ISO-8601 form. The
+          // stored literal omits milliseconds, and verification compares
+          // timestamps against `new Date(value).toISOString()` exactly.
+          checkedAt: new Date(evidence.checkedAt).toISOString(),
         }),
       ),
   );

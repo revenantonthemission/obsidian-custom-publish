@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
@@ -133,4 +134,22 @@ export async function readEmittedAssets(): Promise<
   readonly EmittedAssetIdentity[]
 > {
   return (await readBuildManifest()).outputFiles;
+}
+
+/**
+ * The clean build identifies its manifest by hashing the written file, so the
+ * digest cannot live inside the manifest it describes. Verification compares
+ * the ledger against that value, which means the suite has to hash the same
+ * bytes rather than read a field that was never there.
+ */
+export async function readBuildIdentity(): Promise<
+  Readonly<Record<string, unknown>> & { readonly id: string }
+> {
+  const environment = profileEnvironment();
+  const manifest = await readBuildManifest();
+  const bytes = await readFile(environment.buildManifestPath);
+  return Object.freeze({
+    ...manifest.buildIdentity,
+    manifestSha256: createHash('sha256').update(bytes).digest('hex'),
+  });
 }

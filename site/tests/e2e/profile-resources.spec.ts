@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { installRequestLedger } from '../../scripts/profile/request-ledger.mjs';
 import {
   profileEnvironment,
+  readBuildIdentity,
   readBuildManifest,
   supervisedOrigin,
 } from './support/environment.js';
@@ -31,6 +32,7 @@ test.describe('local resource policy', () => {
   }) => {
     const environment = profileEnvironment();
     const manifest = await readBuildManifest();
+    const buildIdentity = await readBuildIdentity();
 
     // The ledger has to be installed before the first page exists, so the
     // context is created here rather than taken from the page fixture.
@@ -38,7 +40,7 @@ test.describe('local resource policy', () => {
     const ledger = await installRequestLedger(context, {
       baseURL: environment.baseURL,
       emittedAssets: manifest.outputFiles,
-      buildIdentity: manifest.buildIdentity,
+      buildIdentity,
     });
     expect(ledger.supervisedOrigin).toBe(supervisedOrigin());
 
@@ -73,8 +75,8 @@ test.describe('local resource policy', () => {
         requireProfileRoutes: true,
         staticAssetEvidence: {
           schemaVersion: 1,
-          buildId: manifest.buildIdentity.id,
-          manifestSha256: manifest.buildIdentity.manifestSha256,
+          buildId: buildIdentity.id,
+          manifestSha256: buildIdentity.manifestSha256,
           observedAssets: [...observed.values()].sort((left, right) =>
             left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
           ),
