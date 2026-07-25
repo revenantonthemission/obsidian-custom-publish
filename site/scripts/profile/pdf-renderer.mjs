@@ -139,6 +139,10 @@ export async function renderResumePdfCandidate({
       }
     });
 
+    // The web surface is observed on screen, before print emulation, so the
+    // two surfaces are each described by the medium they actually belong to.
+    const webSurface = await observeSurfaceSkeleton(page);
+
     await page.emulateMedia({ media: 'print' });
     const print = await observePrintContract(page);
     const skeleton = await observeSurfaceSkeleton(page);
@@ -201,6 +205,7 @@ export async function renderResumePdfCandidate({
       candidatePath,
       bytes,
       skeleton,
+      webSurface,
       machineChecks: Object.freeze({ font, network, print }),
       tools: Object.freeze({
         node: process.versions.node,
@@ -460,13 +465,18 @@ async function observeSurfaceSkeleton(page) {
     const facts = [];
     for (const element of shell.querySelectorAll(FACT)) {
       for (const attribute of FACT_ATTRIBUTES) {
-        if (!element.hasAttribute(attribute)) continue;
+        const factId = element.getAttribute(attribute);
+        if (factId === null) continue;
         facts.push({
           factOrder: facts.length + 1,
+          factId,
           sectionOrdinal: ordinalOf(element, SECTION, sectionOf),
           entityOrdinal: ordinalOf(element, ENTITY, entityOf),
           text: visibleText(element),
           href: element.getAttribute('href'),
+          // Layout, not computed style: a hidden disclosure still reports
+          // `display: block`, so only a box proves the fact reaches the page.
+          rendered: element.getBoundingClientRect().height > 0,
         });
       }
     }
