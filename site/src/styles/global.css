@@ -385,16 +385,27 @@ html.theme-transitioning *::after {
   background: none;
   border: 1px solid var(--c-border);
   border-radius: var(--radius);
-  padding: 0.4rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
   cursor: pointer;
   color: var(--c-text);
   display: flex;
   align-items: center;
   justify-content: center;
+  list-style: none;
+}
+
+.mobile-nav-toggle::-webkit-details-marker {
+  display: none;
 }
 
 .mobile-nav-toggle:hover {
   background: var(--c-code-bg);
+}
+
+.mobile-nav-toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .mobile-nav-dropdown {

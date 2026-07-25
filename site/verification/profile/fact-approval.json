@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "profile-fact-approval-2026-07-25-r1",
+  "inventoryRevision": "profile-facts-r2",
+  "inventoryDigest": "25357f9902858abeafe17a3b3016c43328852ea8dce29453e48cd83da31fa345",
+  "productionDiffRevision": "profile-production-diff-r2",
+  "productionDiffDigest": "a4ebc55bd3e3d78ae8d3239abdc81e0a52921d19e1c0c0cb28ea49cbad53c6e1",
+  "approvedRecordsDigest": "356356f9dc5f8b2b93e4d7bf88a3f11a8181f55f1485ed82c8994ae994aa6474",
+  "materializedProfileDigest": "775177b9cd3dd6b662e25a3094d96ba56260084de06d9d527c531481b4c9e15e",
+  "decision": "Approved",
+  "decisionAuditId": "U1-CG-S14-FACT-APPROVAL-20260725T034431Z",
+  "decisionRecordedAt": "2026-07-25T03:44:31Z"
+}

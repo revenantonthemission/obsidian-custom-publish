@@ -1,0 +1,38 @@
+---
+import type { ProfileActionView } from "./presentation.js";
+
+interface Props {
+  actions: readonly ProfileActionView[];
+  label: string;
+  variant: "contact-actions" | "evidence-actions";
+}
+
+const { actions, label, variant } = Astro.props;
+---
+
+{actions.length > 0 && (
+  <div
+    class={`profile-actions ${variant}`}
+    role="group"
+    aria-label={label}
+  >
+    <ul>
+      {actions.map((action) => (
+        <li>
+          <a
+            href={action.href}
+            data-profile-action-kind={action.kind}
+            data-profile-entity-kind={action.order === undefined ? undefined : "evidence-link"}
+            data-profile-entity-id={action.order === undefined ? undefined : action.id}
+            data-profile-entity-order={action.order}
+            data-profile-label-fact-id={action.labelFactId}
+            data-profile-destination-fact-id={action.destinationFactId}
+            data-testid={`${variant}-link-${action.id}`}
+          >
+            {action.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}

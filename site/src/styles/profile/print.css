@@ -1,0 +1,164 @@
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+/*
+ * This entry is loaded only by /resume. Global shell selectors are required
+ * because browser print owns the complete page tree, not just ProfileShell.
+ */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: var(--c-profile-font-family);
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  body {
+    display: block;
+  }
+
+  .site-header,
+  .site-footer,
+  .profile-local-navigation,
+  .reading-progress,
+  .back-to-top,
+  .search-overlay,
+  .skip-link,
+  [data-profile-action-kind="document"] {
+    display: none !important;
+  }
+
+  .site-main:has(.profile-shell) {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .profile-shell {
+    color: #000;
+  }
+
+  .profile-shell-header {
+    display: block;
+    margin-bottom: 6mm;
+    padding-bottom: 3mm;
+    border-color: #777;
+  }
+
+  .profile-shell-header h1 {
+    margin: 0;
+    font-size: 20pt;
+  }
+
+  .profile-section + .profile-section {
+    margin-top: 7mm;
+    padding-top: 2mm;
+    border-color: #aaa;
+  }
+
+  .profile-section > h2 {
+    margin-bottom: 3mm;
+    font-size: 15pt;
+  }
+
+  .profile-section h2,
+  .profile-section h3,
+  .profile-section h4,
+  .profile-section h5 {
+    break-after: avoid-page;
+    color: #000;
+  }
+
+  .profile-section h2 + *,
+  .profile-section h3 + *,
+  .profile-section h4 + *,
+  .profile-section h5 + * {
+    break-before: avoid-page;
+  }
+
+  .profile-shell p,
+  .profile-shell li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .profile-period,
+  .resume-entry-organization,
+  .resume-entry-period {
+    color: #333;
+  }
+
+  .profile-actions a {
+    min-height: 0;
+    border-color: #777;
+    color: #000;
+  }
+
+  .resume-skills,
+  .resume-projects,
+  .resume-education,
+  .resume-certifications {
+    display: block;
+  }
+
+  .resume-skill-group,
+  .resume-project-summary,
+  .resume-education-entry,
+  .resume-certification-entry {
+    margin-bottom: 3mm;
+    border-color: #999;
+    background: transparent;
+    break-inside: avoid-page;
+  }
+
+  details.resume-entry {
+    margin-top: 3mm;
+    border-color: #999;
+    background: transparent;
+    break-inside: avoid-page;
+  }
+
+  details.resume-entry > summary {
+    display: grid;
+    padding: 3mm;
+    cursor: default;
+    list-style: none;
+    border-bottom: 1px solid #999;
+    break-after: avoid-page;
+  }
+
+  details.resume-entry > summary::marker,
+  details.resume-entry > summary::-webkit-details-marker,
+  details.resume-entry > summary::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  details.resume-entry:not([open]) > .resume-entry-detail-content {
+    display: block !important;
+  }
+
+  .resume-entry-detail-content {
+    display: block !important;
+    padding: 3mm;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .resume-entry-detail-content > :first-child {
+    break-before: avoid-page;
+  }
+
+  .resume-entry-evidence {
+    border-color: #aaa;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+}

@@ -1,0 +1,67 @@
+---
+import ContactActions from "./ContactActions.astro";
+import ContentBlocks from "./ContentBlocks.astro";
+import type { ResumeEntryView } from "./presentation.js";
+
+interface Props {
+  entry: ResumeEntryView;
+}
+
+const { entry } = Astro.props;
+const heading = entry.kind === "career" ? entry.role : entry.title;
+---
+
+<details
+  class={`resume-entry resume-entry-${entry.kind}`}
+  data-profile-entity-kind={entry.kind}
+  data-profile-entity-id={entry.id}
+  data-profile-entity-order={entry.order}
+  data-testid={`resume-entry-details-${entry.id}`}
+>
+  <summary data-testid={`resume-entry-summary-${entry.id}`}>
+    <span
+      class="resume-entry-heading"
+      role="heading"
+      aria-level="4"
+      data-profile-fact-id={heading.factId}
+    >
+      {heading.value}
+    </span>
+    {entry.kind === "career" && (
+      <span
+        class="resume-entry-organization"
+        data-profile-fact-id={entry.organization.factId}
+      >
+        {entry.organization.value}
+      </span>
+    )}
+    {entry.period !== undefined && (
+      <span
+        class="resume-entry-period"
+        data-profile-fact-id={entry.period.factId}
+      >
+        {entry.period.text}
+      </span>
+    )}
+    <span
+      class="resume-entry-summary"
+      data-profile-fact-id={entry.summary.factId}
+    >
+      {entry.summary.value}
+    </span>
+  </summary>
+
+  <div class="resume-entry-detail-content">
+    <ContentBlocks blocks={entry.details} />
+    {entry.evidence.length > 0 && (
+      <div class="resume-entry-evidence">
+        <h5>근거</h5>
+        <ContactActions
+          actions={entry.evidence}
+          label={`${heading.value} 근거`}
+          variant="evidence-actions"
+        />
+      </div>
+    )}
+  </div>
+</details>

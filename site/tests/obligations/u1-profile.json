@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "unit": "U1 Profile Domain and Native Experience",
+  "canonicalTests": [
+    {
+      "id": "PBT-U1-DOMAIN",
+      "path": "tests/pbt/u1/profile-domain.pbt.test.ts",
+      "kind": "pbt",
+      "semanticPropertyId": "u1-domain-properties"
+    },
+    {
+      "id": "PBT-U1-PRESENTATION",
+      "path": "tests/pbt/u1/profile-presentation.pbt.test.ts",
+      "kind": "pbt",
+      "semanticPropertyId": "u1-presentation-properties"
+    },
+    {
+      "id": "PBT-U1-METADATA-NAVIGATION",
+      "path": "tests/pbt/u1/profile-metadata-navigation.pbt.test.ts",
+      "kind": "pbt",
+      "semanticPropertyId": "u1-metadata-navigation-properties"
+    },
+    {
+      "id": "PBT-U1-DOCUMENT",
+      "path": "tests/pbt/u1/resume-document.pbt.test.ts",
+      "kind": "pbt",
+      "semanticPropertyId": "u1-resume-document-properties"
+    },
+    {
+      "id": "PBT-U1-RELEASE",
+      "path": "tests/pbt/u1/release-state-machine.pbt.test.ts",
+      "kind": "pbt",
+      "semanticPropertyId": "u1-release-state-machine"
+    },
+    {
+      "id": "UNIT-U1-DOMAIN",
+      "path": "tests/unit/profile-domain.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "UNIT-U1-PROJECTIONS",
+      "path": "tests/unit/profile-projections.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "UNIT-U1-PRESENTATION",
+      "path": "tests/unit/profile-presentation.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "UNIT-U1-METADATA-NAVIGATION",
+      "path": "tests/unit/profile-metadata-navigation.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "UNIT-U1-DOCUMENT",
+      "path": "tests/unit/resume-document.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "UNIT-U1-TOOLING",
+      "path": "tests/unit/profile-tooling.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "UNIT-U1-RELEASE",
+      "path": "tests/unit/resume-release.test.ts",
+      "kind": "unit"
+    },
+    {
+      "id": "E2E-U1-ROUTES",
+      "path": "tests/e2e/profile-routes.spec.ts",
+      "kind": "e2e"
+    },
+    {
+      "id": "E2E-U1-RESPONSIVE",
+      "path": "tests/e2e/profile-responsive.spec.ts",
+      "kind": "e2e"
+    },
+    {
+      "id": "E2E-U1-ACCESSIBILITY",
+      "path": "tests/e2e/profile-accessibility.spec.ts",
+      "kind": "e2e"
+    },
+    {
+      "id": "E2E-U1-CROSS-BROWSER",
+      "path": "tests/e2e/profile-cross-browser.spec.ts",
+      "kind": "e2e"
+    },
+    {
+      "id": "E2E-U1-PRINT",
+      "path": "tests/e2e/profile-print.spec.ts",
+      "kind": "e2e"
+    },
+    {
+      "id": "E2E-U1-RESOURCES",
+      "path": "tests/e2e/profile-resources.spec.ts",
+      "kind": "e2e"
+    },
+    {
+      "id": "GATE-U1-FACT-APPROVAL",
+      "path": "tests/unit/profile-domain.test.ts",
+      "kind": "human-gate"
+    },
+    {
+      "id": "GATE-U1-MANUAL-ACCESSIBILITY",
+      "path": "tests/e2e/profile-accessibility.spec.ts",
+      "kind": "human-gate"
+    },
+    {
+      "id": "GATE-U1-PDF-REVIEW",
+      "path": "tests/unit/resume-release.test.ts",
+      "kind": "human-gate"
+    }
+  ],
+  "obligations": [
+    { "id": "U1-P01", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P02", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P03", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P04", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P05", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P06", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P07", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "U1-P08", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "U1-P09", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "U1-P10", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "U1-P11", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "U1-P12", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "P-C01-01", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "P-C01-02", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "P-C01-03", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "P-C01-04", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "P-C01-05", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "P-C01-06", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "P-C02-01", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "P-C02-02", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "P-C02-03", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "P-C03-01", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C03-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C03-03", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C03-04", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C04-01", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C04-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C05-01", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C05-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C05-03", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "P-C11-01", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "P-C11-02", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "P-C11-03", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "P-S01-01", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "FD-P-C02-01", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "FD-P-C02-02", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "FD-P-C02-03", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "FD-P-C04-01", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "FD-P-C04-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "FD-P-C05-01", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "FD-P-C05-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "FD-P-C11-01", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "FD-P-C11-02", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "DE-P01", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P02", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P03", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P04", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P05", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P06", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P07", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P08", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P09", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P10", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P11", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P12", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "DE-P13", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
+    { "id": "DE-P14", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "DE-P15", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "NFR-P-RELEASE-01", "canonicalTestId": "PBT-U1-RELEASE" },
+    { "id": "NFR-U1-001", "canonicalTestId": "E2E-U1-RESPONSIVE" },
+    { "id": "NFR-U1-002", "canonicalTestId": "E2E-U1-CROSS-BROWSER" },
+    { "id": "NFR-U1-003", "canonicalTestId": "E2E-U1-ACCESSIBILITY" },
+    { "id": "NFR-U1-004", "canonicalTestId": "E2E-U1-RESOURCES" },
+    { "id": "NFR-U1-005", "canonicalTestId": "E2E-U1-PRINT" },
+    { "id": "NFR-U1-006", "canonicalTestId": "E2E-U1-RESOURCES" },
+    { "id": "NFR-U1-007", "canonicalTestId": "UNIT-U1-DOCUMENT" },
+    { "id": "NFR-U1-008", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "NFR-U1-009", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "NFR-U1-010", "canonicalTestId": "UNIT-U1-TOOLING" },
+    { "id": "NFR-U1-011", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "NFR-U1-012", "canonicalTestId": "UNIT-U1-RELEASE" },
+    { "id": "NFR-U1-013", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "NFR-U1-014", "canonicalTestId": "E2E-U1-ROUTES" },
+    { "id": "NFR-U1-015", "canonicalTestId": "UNIT-U1-METADATA-NAVIGATION" },
+    { "id": "ST-U01-CONTRIBUTOR", "canonicalTestId": "E2E-U1-ROUTES" },
+    { "id": "ST-U02", "canonicalTestId": "UNIT-U1-PRESENTATION" },
+    { "id": "ST-U03", "canonicalTestId": "GATE-U1-PDF-REVIEW" },
+    { "id": "ST-U04", "canonicalTestId": "UNIT-U1-PRESENTATION" },
+    { "id": "ST-U05", "canonicalTestId": "GATE-U1-FACT-APPROVAL" },
+    { "id": "ST-E01", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "ST-E02", "canonicalTestId": "GATE-U1-FACT-APPROVAL" },
+    { "id": "ST-E03-U1-SLICE", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-U01-02", "canonicalTestId": "E2E-U1-ROUTES" },
+    { "id": "AC-U01-03", "canonicalTestId": "E2E-U1-ROUTES" },
+    { "id": "AC-U01-04", "canonicalTestId": "E2E-U1-CROSS-BROWSER" },
+    { "id": "AC-U02-01", "canonicalTestId": "UNIT-U1-PRESENTATION" },
+    { "id": "AC-U02-02", "canonicalTestId": "E2E-U1-ACCESSIBILITY" },
+    { "id": "AC-U02-03", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "AC-U02-04", "canonicalTestId": "UNIT-U1-METADATA-NAVIGATION" },
+    { "id": "AC-U03-01", "canonicalTestId": "E2E-U1-PRINT" },
+    { "id": "AC-U03-02", "canonicalTestId": "GATE-U1-PDF-REVIEW" },
+    { "id": "AC-U03-03", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "AC-U03-04", "canonicalTestId": "UNIT-U1-DOCUMENT" },
+    { "id": "AC-U04-01", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "AC-U04-02", "canonicalTestId": "UNIT-U1-PRESENTATION" },
+    { "id": "AC-U04-03", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "AC-U04-04", "canonicalTestId": "UNIT-U1-METADATA-NAVIGATION" },
+    { "id": "AC-U05-01", "canonicalTestId": "E2E-U1-ACCESSIBILITY" },
+    { "id": "AC-U05-02", "canonicalTestId": "GATE-U1-FACT-APPROVAL" },
+    { "id": "AC-U05-03", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-U05-04", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "AC-E01-01", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-E01-02", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "AC-E01-03", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-E01-04", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-E02-01", "canonicalTestId": "GATE-U1-FACT-APPROVAL" },
+    { "id": "AC-E02-02", "canonicalTestId": "GATE-U1-FACT-APPROVAL" },
+    { "id": "AC-E02-03", "canonicalTestId": "GATE-U1-FACT-APPROVAL" },
+    { "id": "AC-E02-04", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "AC-E03-01", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-E03-02", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-E03-03", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "AC-E03-04", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "EDGE-001", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "EDGE-002", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "EDGE-003", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "EDGE-004", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "EDGE-005", "canonicalTestId": "E2E-U1-RESPONSIVE" },
+    { "id": "EDGE-006", "canonicalTestId": "PBT-U1-PRESENTATION" },
+    { "id": "EDGE-008", "canonicalTestId": "UNIT-U1-DOCUMENT" },
+    { "id": "EDGE-009", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "EDGE-010", "canonicalTestId": "PBT-U1-DOMAIN" },
+    { "id": "EDGE-011", "canonicalTestId": "E2E-U1-CROSS-BROWSER" },
+    { "id": "NEG-PROJECT-COUNT-2-3-6-7", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "NEG-MISSING-IDENTITY-CONTACT", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "NEG-DUPLICATE-ID-ORDER", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "NEG-OPTIONAL-ABSENT-VS-INVALID", "canonicalTestId": "UNIT-U1-DOMAIN" },
+    { "id": "NEG-ROUTE-PREFIX-COLLISION", "canonicalTestId": "UNIT-U1-METADATA-NAVIGATION" },
+    { "id": "NEG-NO-JS-MOBILE-ANCHORS", "canonicalTestId": "E2E-U1-CROSS-BROWSER" },
+    { "id": "NEG-PDF-MISSING-UNREADABLE-STALE-CHANGED", "canonicalTestId": "UNIT-U1-DOCUMENT" },
+    { "id": "NEG-PDF-AMBIGUOUS-MAPPING", "canonicalTestId": "UNIT-U1-DOCUMENT" },
+    { "id": "NEG-PATH-SYMLINK-NONREGULAR-CROSSDEVICE", "canonicalTestId": "UNIT-U1-RELEASE" },
+    { "id": "NEG-STARTUP-RETRY-CLEANUP", "canonicalTestId": "UNIT-U1-TOOLING" },
+    { "id": "NEG-RELEASE-INTERRUPTED-ROLLBACK", "canonicalTestId": "UNIT-U1-RELEASE" },
+    { "id": "NEG-ACTIVE-LOCK-JOURNAL-READONLY", "canonicalTestId": "UNIT-U1-RELEASE" }
+  ],
+  "deferredCoverage": [
+    {
+      "ids": [
+        "FD-P-C11-01"
+      ],
+      "canonicalTestId": "PBT-U1-DOCUMENT",
+      "remainingStep": 21,
+      "rationale": "Step 9 closes canonical manifest and document-request parity; mapping the rendered web, print and PDF evidence back to that approved manifest requires the document generation and inspection boundary produced in Step 21."
+    },
+    {
+      "ids": [
+        "NFR-P-RELEASE-01"
+      ],
+      "canonicalTestId": "PBT-U1-RELEASE",
+      "remainingStep": 22,
+      "rationale": "The mutable release journal and its pure transition model are generated together in Step 22; Step 9 intentionally owns only the four current pure business-logic suites."
+    }
+  ],
+  "notApplicable": [
+    {
+      "id": "PBT-C01-ROUNDTRIP",
+      "rationale": "C01 has no public encode/decode pair; JSON-LD round-trip belongs to C04."
+    },
+    {
+      "id": "PBT-C01-COMMUTATIVITY",
+      "rationale": "Normalization, validation and projection are intentionally ordered."
+    },
+    {
+      "id": "PBT-C01-INDUCTION",
+      "rationale": "The bounded aggregate has no recursive or divide-and-conquer operation."
+    },
+    {
+      "id": "PBT-C02-ROUNDTRIP-IDEMPOTENCE-COMMUTATIVITY-INDUCTION",
+      "rationale": "C02 is a one-way semantic presentation; browser examples own visual and interaction behavior."
+    },
+    {
+      "id": "PBT-C03-ROUNDTRIP",
+      "rationale": "C03 builds typed documents; C04 owns serialization round-trip."
+    },
+    {
+      "id": "PBT-C04-IDEMPOTENCE-COMMUTATIVITY-INDUCTION",
+      "rationale": "Hosted output is not fed back as input and document order is observable."
+    },
+    {
+      "id": "PBT-C05-ROUNDTRIP-IDEMPOTENCE-COMMUTATIVITY-INDUCTION",
+      "rationale": "Navigation is a fixed ordered projection without an inverse or recursion."
+    },
+    {
+      "id": "PBT-C11-PDF-BINARY-ROUNDTRIP",
+      "rationale": "PDF bytes are a lossy presentation boundary; full manifest equality is the semantic oracle."
+    },
+    {
+      "id": "PBT-HUMAN-FACT-APPROVAL",
+      "rationale": "A generator cannot establish truth, evidence sufficiency or human approval."
+    }
+  ]
+}
