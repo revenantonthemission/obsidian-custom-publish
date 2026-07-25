@@ -131,6 +131,38 @@ function createProfilePaths(siteRoot) {
       'verification',
       'e2e-verification.json',
     ),
+    // The résumé candidate and everything derived from it stay under the
+    // ignored artifact root. A candidate is private until Step 23 promotes it
+    // under its own exact-SHA human gate; nothing here may reach `public/`.
+    pdfRoot: resolve(canonicalSiteRoot, '.artifacts', 'profile', 'pdf'),
+    pdfCandidateRoot: resolve(
+      canonicalSiteRoot,
+      '.artifacts',
+      'profile',
+      'pdf',
+      'candidates',
+    ),
+    pdfInspectionRoot: resolve(
+      canonicalSiteRoot,
+      '.artifacts',
+      'profile',
+      'pdf',
+      'inspection',
+    ),
+    pdfViewerRoot: resolve(
+      canonicalSiteRoot,
+      '.artifacts',
+      'profile',
+      'pdf',
+      'viewer',
+    ),
+    resumeDraftReceiptPath: resolve(
+      canonicalSiteRoot,
+      '.artifacts',
+      'profile',
+      'pdf',
+      'draft-receipt.json',
+    ),
     manualWebAccessibilityPath: resolve(
       canonicalSiteRoot,
       'verification',
