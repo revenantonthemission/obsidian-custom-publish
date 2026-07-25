@@ -86,6 +86,19 @@
     widows: 3;
   }
 
+  /*
+   * These read as secondary on screen at 0.9rem, which the 10pt print root
+   * would turn into 9pt. Printed body text has a 10pt floor — dates and
+   * organisations are facts a reader has to be able to read, not decoration —
+   * so print lifts them while the screen hierarchy stays as designed.
+   */
+  .profile-period,
+  .resume-entry-organization,
+  .resume-entry-period,
+  .evidence-actions a {
+    font-size: 10pt;
+  }
+
   .profile-period,
   .resume-entry-organization,
   .resume-entry-period {

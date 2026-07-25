@@ -322,10 +322,16 @@ async function observePrintContract(page) {
         );
       });
 
+      // The browser quantizes 10pt to 13.3333px, so converting back lands a
+      // few millionths of a point short. Rounding to a hundredth of a point is
+      // far finer than any typographic decision and keeps that float noise
+      // from reading as a real shortfall.
+      const round = (value) => Math.round(value * 100) / 100;
+
       return {
-        bodyTextMinimumPt: Number.isFinite(minimumPt) ? minimumPt : 0,
+        bodyTextMinimumPt: Number.isFinite(minimumPt) ? round(minimumPt) : 0,
         lineHeightMinimum: Number.isFinite(minimumLineHeight)
-          ? minimumLineHeight
+          ? round(minimumLineHeight)
           : 0,
         screenOnlyShown: shown,
         detailContentCount: detailContents.length,
