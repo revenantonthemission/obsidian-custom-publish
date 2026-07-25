@@ -34,6 +34,17 @@ static MMDC_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
     None
 });
 
+/// Optional puppeteer JSON config (e.g. `executablePath` for system Chrome).
+/// Looked up once at startup, relative to the preprocessor's cwd.
+static PUPPETEER_CONFIG_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+    let path = PathBuf::from(".puppeteer-config.json");
+    if path.exists() {
+        path.canonicalize().ok()
+    } else {
+        None
+    }
+});
+
 static INIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
 
 static THEME_RE: LazyLock<Regex> =
@@ -156,6 +167,10 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
         .arg(&output_path)
         .arg("-b")
         .arg("transparent");
+
+    if let Some(config) = PUPPETEER_CONFIG_PATH.as_ref() {
+        cmd.arg("-p").arg(config);
+    }
 
     // Only pass -t when there's no %%{init}%% directive (avoid conflicts)
     if !has_init {
