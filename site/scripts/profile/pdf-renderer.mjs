@@ -127,8 +127,21 @@ export async function renderResumePdfCandidate({
     await page.waitForLoadState('networkidle');
 
     const font = await observeFontReadiness(page, fontResponse);
+
+    // A closed <details> is hidden by the user agent with content-visibility
+    // on its slot, which overriding `display` on a descendant does not defeat:
+    // the computed style reads `block` while nothing is painted. The candidate
+    // is therefore printed with every disclosure genuinely open.
+    await page.evaluate(() => {
+      const shell = document.querySelector('.profile-shell');
+      for (const element of shell?.querySelectorAll('details') ?? []) {
+        element.open = true;
+      }
+    });
+
     await page.emulateMedia({ media: 'print' });
     const print = await observePrintContract(page);
+    const skeleton = await observeSurfaceSkeleton(page);
     await page.emulateMedia({ media: null });
 
     const bytes = await page.pdf({
@@ -187,6 +200,7 @@ export async function renderResumePdfCandidate({
       candidate: Object.freeze({ candidateId, pdfSha256 }),
       candidatePath,
       bytes,
+      skeleton,
       machineChecks: Object.freeze({ font, network, print }),
       tools: Object.freeze({
         node: process.versions.node,
@@ -310,8 +324,11 @@ async function observePrintContract(page) {
           : 0,
         screenOnlyShown: shown,
         detailContentCount: detailContents.length,
+        // Measured as real layout, not as computed `display`. A hidden
+        // disclosure still reports `display: block`, so only a box with height
+        // proves the content will actually be on the page.
         detailsCollapsed: detailContents.filter(
-          (element) => window.getComputedStyle(element).display === 'none',
+          (element) => element.getBoundingClientRect().height <= 0,
         ).length,
         entryCount: entries.length,
         entriesSplittable: entries.filter(
@@ -398,6 +415,101 @@ async function observePrintContract(page) {
     entriesUnsplittable: true,
     longDetailsSplittable: true,
     headingFirstBlockKept: true,
+  });
+}
+
+/**
+ * Observes the ordinal skeleton from the printed document itself.
+ *
+ * Chromium does not carry `data-profile-entity-*` into the PDF, and the tag
+ * tree cannot separate a contact link from a skill: both are `L > LI`, yet one
+ * has no entity and the other is an entity of its own. The ordinals therefore
+ * come from the rendered document, not from the approved manifest — taking
+ * them from the answer key would let a PDF that disagrees with the document
+ * still pass.
+ */
+async function observeSurfaceSkeleton(page) {
+  const observed = await page.evaluate(() => {
+    const SECTION = '[data-profile-section]';
+    const ENTITY = '[data-profile-entity-kind][data-profile-entity-id]';
+    const FACT_ATTRIBUTES = [
+      'data-profile-fact-id',
+      'data-profile-label-fact-id',
+      'data-profile-destination-fact-id',
+    ];
+    const FACT = FACT_ATTRIBUTES.map((name) => `[${name}]`).join(',');
+
+    const shell = document.querySelector('.profile-shell');
+    if (shell === null) return null;
+
+    const sectionElements = [...shell.querySelectorAll(SECTION)];
+    const entityElements = [...shell.querySelectorAll(ENTITY)];
+    const sectionOf = new Map(
+      sectionElements.map((element, index) => [element, index]),
+    );
+    const entityOf = new Map(
+      entityElements.map((element, index) => [element, index]),
+    );
+    const ordinalOf = (element, selector, table) => {
+      const owner = element?.closest(selector) ?? null;
+      return owner === null ? null : (table.get(owner) ?? null);
+    };
+    const visibleText = (element) =>
+      (element.textContent ?? '').replace(/\s+/gu, ' ').trim();
+
+    const facts = [];
+    for (const element of shell.querySelectorAll(FACT)) {
+      for (const attribute of FACT_ATTRIBUTES) {
+        if (!element.hasAttribute(attribute)) continue;
+        facts.push({
+          factOrder: facts.length + 1,
+          sectionOrdinal: ordinalOf(element, SECTION, sectionOf),
+          entityOrdinal: ordinalOf(element, ENTITY, entityOf),
+          text: visibleText(element),
+          href: element.getAttribute('href'),
+        });
+      }
+    }
+
+    return {
+      sections: sectionElements.map((_, index) => ({ sectionOrdinal: index })),
+      entities: entityElements.map((element, index) => ({
+        entityOrdinal: index,
+        sectionOrdinal: ordinalOf(element, SECTION, sectionOf),
+        // `closest` from the element itself would find the entity again, so the
+        // search for an enclosing entity starts at the parent.
+        parentEntityOrdinal: ordinalOf(element.parentElement, ENTITY, entityOf),
+      })),
+      facts,
+    };
+  });
+
+  if (observed === null) {
+    throw rendererError(
+      'PDF_RENDER_SHELL_MISSING',
+      'The résumé shell was absent when the ordinal skeleton was observed.',
+      'pdf.render.skeleton',
+    );
+  }
+  for (const fact of observed.facts) {
+    if (fact.sectionOrdinal === null) {
+      throw rendererError(
+        'PDF_RENDER_FACT_OUTSIDE_SECTION',
+        'A rendered fact does not belong to any profile section.',
+        'pdf.render.skeleton',
+        { factOrder: fact.factOrder },
+      );
+    }
+  }
+
+  return deepFreezeSkeleton(observed);
+}
+
+function deepFreezeSkeleton(skeleton) {
+  return Object.freeze({
+    sections: Object.freeze(skeleton.sections.map(Object.freeze)),
+    entities: Object.freeze(skeleton.entities.map(Object.freeze)),
+    facts: Object.freeze(skeleton.facts.map(Object.freeze)),
   });
 }
 
