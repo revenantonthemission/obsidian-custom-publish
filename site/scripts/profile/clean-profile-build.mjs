@@ -12,6 +12,7 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import {
   assertOwnedProcessObservationSupport,
   assertOwnedProcessTreeSupport,
+  beginOwnedProcessScope,
   freezeOwnedProcessTree,
   monitorOwnedDescendants,
   prepareOwnedSpawn,
@@ -83,6 +84,9 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
   const output = createBoundedOutput(outputLimitBytes);
   const spawnGuard = prepareOwnedSpawn('profile-clean-build');
   const bootstrapToken = randomUUID();
+  // Opened before the first spawn so the baseline excludes every process that
+  // already existed, and so the token is inherited by the whole build subtree.
+  const ownedScope = await beginOwnedProcessScope('profile-clean-build');
   let child;
   let ownership;
   let descendantMonitor;
@@ -100,6 +104,7 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
         detached: process.platform !== 'win32',
         env: Object.freeze({
           ...process.env,
+          ...ownedScope.environment,
           [VERIFICATION_BUILD_ENV]: '1',
           PROFILE_OWNED_BOOTSTRAP_TOKEN: bootstrapToken,
         }),
@@ -148,6 +153,7 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
     const cleanup = await releaseBuildProcessTree(
       child,
       descendantMonitor,
+      ownedScope,
     );
     if (cleanup.ownershipReleaseSafe) {
       ownership.release();
@@ -168,7 +174,11 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
   }
 
   const result = await waitForBuildProcess(child, timeoutMs);
-  const cleanup = await releaseBuildProcessTree(child, descendantMonitor);
+  const cleanup = await releaseBuildProcessTree(
+    child,
+    descendantMonitor,
+    ownedScope,
+  );
   if (cleanup.ownershipReleaseSafe) {
     ownership.release();
   }
@@ -671,7 +681,7 @@ function signalProcessTree(child, signal) {
   }
 }
 
-async function releaseBuildProcessTree(child, suppliedMonitor) {
+async function releaseBuildProcessTree(child, suppliedMonitor, ownedScope) {
   const pid = child.pid ?? null;
   if (pid === null) {
     return deepFreeze({
@@ -743,7 +753,15 @@ async function releaseBuildProcessTree(child, suppliedMonitor) {
     );
   }
 
-  const ownershipReleaseSafe = pidReleased && processGroupsReleased;
+  // Ancestry can only prove what it can still reach. The token sweep closes the
+  // double-detach gap before any ownership lease is released. Callers that
+  // never opened a scope keep their previous behaviour.
+  const ownershipResiduals =
+    ownedScope === undefined ? null : await ownedScope.reapResiduals();
+  const residualsCleared =
+    ownershipResiduals === null || ownershipResiduals.verified;
+  const ownershipReleaseSafe =
+    pidReleased && processGroupsReleased && residualsCleared;
   const processTreeReleased =
     ownershipReleaseSafe &&
     descendantProcessTree.failures.length === 0;
@@ -758,6 +776,7 @@ async function releaseBuildProcessTree(child, suppliedMonitor) {
     ownershipReleaseSafe,
     descendantProcessTree,
     frozenProcessTree,
+    ownershipResiduals,
   });
 }
 

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   assertOwnedProcessObservationSupport,
   assertOwnedProcessTreeSupport,
+  beginOwnedProcessScope,
   freezeOwnedProcessTree,
   monitorOwnedDescendants,
   prepareOwnedSpawn,
@@ -111,6 +112,8 @@ export async function startStaticPreview({
   const output = createBoundedOutput(outputLimit);
 
   const spawnGuard = prepareOwnedSpawn('profile-static-preview');
+  // Opened before the fork so the baseline excludes pre-existing processes.
+  const ownedScope = await beginOwnedProcessScope('profile-static-preview');
   let child;
   let ownership;
   let descendantMonitor;
@@ -118,7 +121,7 @@ export async function startStaticPreview({
     child = fork(fileURLToPath(import.meta.url), [CHILD_ARGUMENT], {
       cwd: canonicalDistRoot,
       detached: process.platform !== 'win32',
-      env: {},
+      env: { ...ownedScope.environment },
       execArgv: [],
       execPath: process.execPath,
       serialization: 'json',
@@ -151,6 +154,7 @@ export async function startStaticPreview({
     output,
     ownership,
     descendantMonitor,
+    ownedScope,
     shutdownTimeoutMs: timeouts.shutdown,
   });
 
@@ -226,6 +230,7 @@ function createChildOwner({
   output,
   ownership,
   descendantMonitor,
+  ownedScope,
   shutdownTimeoutMs,
 }) {
   let port = null;
@@ -494,8 +499,11 @@ function createChildOwner({
 
     const pidReleased =
       !childActive || pid === null || !isProcessAlive(pid);
+    // Ancestry can only prove what it can still reach. The token sweep closes
+    // the double-detach gap before any ownership lease is released.
+    const ownershipResiduals = await ownedScope.reapResiduals();
     const ownershipReleaseSafe =
-      pidReleased && processGroupsReleased;
+      pidReleased && processGroupsReleased && ownershipResiduals.verified;
     const processTreeReleased =
       ownershipReleaseSafe &&
       descendantProcessTree.failures.length === 0;
