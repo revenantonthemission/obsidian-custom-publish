@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { resumeEvidenceTesting } from '../../src/lib/profile/resume-evidence.js';
 import {
   PROFILE_SOURCE_DIGEST_DOMAIN,
   RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
@@ -494,3 +495,40 @@ function failureCodes(
   if (result.ok) throw new Error('expected failure');
   return result.issues.map(({ code }) => code);
 }
+
+describe('pdf period observation', () => {
+  const { parsePeriodDisplayText } = resumeEvidenceTesting;
+
+  test('inverts the rendered period into the approved manifest token', () => {
+    expect(parsePeriodDisplayText('2023-07 – 2023-08')).toBe(
+      'start:year-month:2023-07|end:year-month:2023-08',
+    );
+    expect(parsePeriodDisplayText('2019 – 2026')).toBe(
+      'start:year:2019|end:year:2026',
+    );
+  });
+
+  test('reads an open-ended period as the present point', () => {
+    expect(parsePeriodDisplayText('2023-07 – 현재')).toBe(
+      'start:year-month:2023-07|end:present',
+    );
+  });
+
+  test('tolerates the layout whitespace PDF extraction produces', () => {
+    // Text items arrive as glyph runs, so the spaces around the en dash are
+    // layout rather than content and may be absent or doubled.
+    expect(parsePeriodDisplayText('2019–2026')).toBe(
+      'start:year:2019|end:year:2026',
+    );
+    expect(parsePeriodDisplayText('2019  –  2026')).toBe(
+      'start:year:2019|end:year:2026',
+    );
+  });
+
+  test('refuses a period it cannot read rather than passing it through', () => {
+    expect(parsePeriodDisplayText('2023-07')).toBeNull();
+    expect(parsePeriodDisplayText('2023-13 – 2023-14')).toBeNull();
+    expect(parsePeriodDisplayText('2019 - 2026')).toBeNull();
+    expect(parsePeriodDisplayText('2019 – 2020 – 2021')).toBeNull();
+  });
+});

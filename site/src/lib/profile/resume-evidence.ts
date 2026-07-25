@@ -29,6 +29,15 @@ declare const surfaceManifestComparisonBrand: unique symbol;
 
 export const RESUME_EVIDENCE_SCHEMA_VERSION = 1 as const;
 
+/**
+ * The rendered vocabulary of a period, mirrored from `presentation.ts` and
+ * `resume-manifest.ts`. Kept local rather than imported so that reading a PDF
+ * cannot pull the manifest builder into the observation path.
+ */
+const PERIOD_PRESENT_LABEL = '현재';
+const PERIOD_YEAR_PATTERN = /^\d{4}$/u;
+const PERIOD_YEAR_MONTH_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])$/u;
+
 export const RESUME_TOOL_VERSIONS = Object.freeze({
   playwright: '1.61.1',
   pdfjs: '5.4.624',
@@ -896,7 +905,46 @@ function normalizePdfOccurrence(
     }
     value += fragment.text.replaceAll('\u00ad', '');
   }
-  return value.normalize('NFC');
+  const text = value.normalize('NFC');
+
+  // A period is the one kind whose approved value is a token and whose
+  // rendered form is a label. Every other surface carries the manifest value
+  // itself, so only the PDF \u2014 the sole independently extracted surface \u2014 has
+  // to invert the presentation. Refusing to parse returns null and fails the
+  // occurrence rather than letting an unreadable period pass as plain text.
+  return kind === 'period' ? parsePeriodDisplayText(text) : text;
+}
+
+/**
+ * Inverts `presentation.ts`'s period rendering. The separator is U+2013 with
+ * surrounding layout whitespace, and `\ud604\uc7ac` is the open-ended point; the
+ * resulting token must match `resume-manifest.ts`'s `start:\u2026|end:\u2026` form.
+ */
+function parsePeriodDisplayText(text: string): string | null {
+  const parts = text.split(/\s*\u2013\s*/u);
+  if (parts.length !== 2) {
+    return null;
+  }
+  const start = periodPointToken(parts[0] ?? '');
+  const end = periodPointToken(parts[1] ?? '');
+  if (start === null || end === null) {
+    return null;
+  }
+  return `start:${start}|end:${end}`;
+}
+
+function periodPointToken(displayed: string): string | null {
+  const point = displayed.trim();
+  if (point === PERIOD_PRESENT_LABEL) {
+    return 'present';
+  }
+  if (PERIOD_YEAR_PATTERN.test(point)) {
+    return `year:${point}`;
+  }
+  if (PERIOD_YEAR_MONTH_PATTERN.test(point)) {
+    return `year-month:${point}`;
+  }
+  return null;
 }
 
 function occurrenceMatches(
@@ -1975,3 +2023,14 @@ function hasExactKeys(
     expected.every((key) => Object.prototype.hasOwnProperty.call(value, key))
   );
 }
+
+/**
+ * Owner-local seam. Period parsing is the one place where a PDF observation
+ * has to invert a presentation decision, so it carries its own regression
+ * surface instead of being reachable only through a full snapshot.
+ *
+ * @internal
+ */
+export const resumeEvidenceTesting = Object.freeze({
+  parsePeriodDisplayText,
+});
