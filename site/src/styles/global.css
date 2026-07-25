@@ -214,7 +214,10 @@ img {
 }
 
 .site-nav-link[aria-current="page"] {
-  color: var(--c-accent);
+  /* The accent reaches only 3.59:1 on the light background, short of the
+     4.5:1 WCAG AA asks of text. Borders and fills keep the accent; the label
+     itself uses the darker teal, which measures 5.3:1. */
+  color: var(--c-accent-hover);
   font-weight: 600;
 }
 

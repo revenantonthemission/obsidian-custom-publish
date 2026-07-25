@@ -15,6 +15,11 @@ if (!['127.0.0.1', 'localhost'].includes(baseUrl.hostname)) {
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // The completion matrix spans three projects and therefore three worker
+  // processes. Setup clears the previous run's fragments and teardown merges
+  // this run's into the single browser evidence record the provider validates.
+  globalSetup: './tests/e2e/support/global-setup.ts',
+  globalTeardown: './tests/e2e/support/global-teardown.ts',
   fullyParallel: false,
   forbidOnly: true,
   retries: 0,

@@ -7,6 +7,18 @@
   min-width: 0;
   font-family: var(--c-profile-font-family);
   color: var(--c-text);
+
+  /*
+   * WCAG 2.2 AA asks 4.5:1 of body text. The site accent reaches only 3.59:1
+   * on the light background — enough for a border, not for a word — so the
+   * profile pins the darker teal wherever the accent carries text. The dark
+   * accent already measures 10.6:1 and is inherited unchanged.
+   */
+  --c-profile-accent-text: #0f766e;
+}
+
+:root[data-theme="dark"] .profile-shell {
+  --c-profile-accent-text: var(--c-accent);
 }
 
 .profile-shell,
@@ -66,7 +78,7 @@
 
 .profile-local-navigation a[aria-current="page"] {
   border-color: var(--c-accent);
-  color: var(--c-accent);
+  color: var(--c-profile-accent-text);
   font-weight: 650;
 }
 
@@ -119,7 +131,7 @@
 }
 
 .profile-actions a {
-  color: var(--c-accent);
+  color: var(--c-profile-accent-text);
   font-weight: 600;
 }
 

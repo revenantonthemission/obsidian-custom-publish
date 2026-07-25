@@ -7,7 +7,7 @@
 
 .resume-headline {
   margin-bottom: 1.25rem;
-  color: var(--c-accent);
+  color: var(--c-profile-accent-text);
   font-size: 1.05rem;
   font-weight: 650;
 }

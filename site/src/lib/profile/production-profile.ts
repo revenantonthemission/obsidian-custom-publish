@@ -166,6 +166,32 @@ let cachedAssembly: FactApprovedProfileAssembly | undefined;
  * This module is build/server-only by construction: Node hashing, the private
  * receipt and the raw profile source never enter the public profile barrel.
  */
+export interface ApprovedExternalDestination {
+  readonly url: string;
+  readonly verifier: string;
+  readonly checkedAt: string;
+}
+
+/**
+ * The human-verified public-source destinations behind the profile's external
+ * links. Browser verification reproduces these records rather than reaching the
+ * network, so the only thing exposed here is what the pages already show: the
+ * destination, who checked it and when. No approval identity is reachable.
+ */
+export function getApprovedExternalDestinations(): readonly ApprovedExternalDestination[] {
+  return Object.freeze(
+    Object.values(EVIDENCE_SOURCES)
+      .filter((evidence) => evidence.kind === 'public-source')
+      .map((evidence) =>
+        Object.freeze({
+          url: evidence.expectedDestination,
+          verifier: evidence.verifier,
+          checkedAt: evidence.checkedAt,
+        }),
+      ),
+  );
+}
+
 export function getProductionProfileAssembly(): FactApprovedProfileAssembly {
   cachedAssembly ??= evaluateProductionProfile(
     profileData,

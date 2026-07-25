@@ -45,7 +45,7 @@
 .case-study-dimension h4,
 .case-study-evidence h4 {
   margin-bottom: 0.65rem;
-  color: var(--c-accent);
+  color: var(--c-profile-accent-text);
   font-size: 1rem;
 }
 
