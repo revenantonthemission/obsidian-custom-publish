@@ -90,19 +90,23 @@ export async function prepareResumeRelease({
       await readFile(buildIdentity.manifestPath, 'utf8'),
     );
 
-    const rendered = await renderResumePdfCandidate({
-      baseURL: lease.baseURL,
-      buildIdentity,
-      emittedAssets: buildManifest.outputFiles,
-      ...(renderTimeoutMs === undefined ? {} : { timeoutMs: renderTimeoutMs }),
-    });
-
     // The manifest is the definition of "current source" for this run, and it
     // supplies both identities the inspector needs. Taking them from anywhere
     // else would let the candidate be inspected against one source while the
-    // receipt is approved against another.
+    // receipt is approved against another. It is resolved before the render
+    // rather than after, because the renderer now observes both rendered
+    // surfaces against it and cannot do so retroactively.
     const releaseTools = await loadProfileReleaseTools();
     const manifest = await releaseTools.buildCurrentResumeManifest();
+
+    const rendered = await renderResumePdfCandidate({
+      baseURL: lease.baseURL,
+      buildIdentity,
+      manifest,
+      schemaVersion: releaseTools.RESUME_EVIDENCE_SCHEMA_VERSION,
+      emittedAssets: buildManifest.outputFiles,
+      ...(renderTimeoutMs === undefined ? {} : { timeoutMs: renderTimeoutMs }),
+    });
 
     // The inspector returns `{rule, snapshot, snapshotPath}`, not the snapshot
     // itself. Treating the wrapper as the snapshot left `structure` undefined
@@ -135,6 +139,7 @@ export async function prepareResumeRelease({
       subject: releaseTools.buildReceiptSubject(rendered.candidate, manifest),
       skeleton: rendered.skeleton,
       webSurface: rendered.webSurface,
+      printSurface: rendered.printSurface,
       machineChecks: rendered.machineChecks,
       tools: rendered.tools,
       snapshot,

@@ -128,15 +128,20 @@ async function runPrepare() {
     const manifest = session.manifest;
 
     // The two rendered surfaces are observed in the medium each belongs to:
-    // `webSurface` on screen, `skeleton` under print emulation. Comparing both
-    // against the same expected manifest is what makes "the page and the
+    // `webSurface` on screen, `printSurface` under print emulation. Comparing
+    // both against the same expected manifest is what makes "the page and the
     // printout say the same thing" a checked claim rather than an assumption.
+    //
+    // `session.skeleton` is not either of them. It is the ordinal skeleton the
+    // inspector uses to bound PDF extraction, and passing it here compared an
+    // ordinal skeleton against a rendered-surface schema — which is why every
+    // prepare failed at this gate before the renderer observed the surfaces.
     const web = requirePure(
       tools.compareRenderedManifest(manifest, session.webSurface),
       'web surface',
     );
     const print = requirePure(
-      tools.compareRenderedManifest(manifest, session.skeleton),
+      tools.compareRenderedManifest(manifest, session.printSurface),
       'print surface',
     );
     const pdfEvidence = requirePure(

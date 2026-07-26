@@ -26,9 +26,30 @@ export interface ResumeSurfaceSkeleton {
   readonly facts: readonly ResumeSurfaceFactObservation[];
 }
 
+/**
+ * One rendered-surface observation. The approved fields come from the manifest;
+ * `domPresent` and `rendered` are what the DOM decided.
+ */
+export interface RenderedSurfaceObservation {
+  readonly schemaVersion: number;
+  readonly surface: 'web' | 'print';
+  readonly sourceIdentity: unknown;
+  readonly fingerprint: unknown;
+  readonly sectionOrder: readonly unknown[];
+  readonly entityOrder: readonly unknown[];
+  readonly entries: readonly Readonly<{
+    occurrenceOrder: number;
+    annotationOccurrence: number;
+    domPresent: true;
+    rendered: boolean;
+  }>[];
+}
+
 export function renderResumePdfCandidate(input: {
   baseURL: string;
   buildIdentity: unknown;
+  manifest: unknown;
+  schemaVersion: number;
   emittedAssets?: readonly { path: string; bytes: number; sha256: string }[];
   timeoutMs?: number;
 }): Promise<
@@ -37,8 +58,10 @@ export function renderResumePdfCandidate(input: {
     candidate: Readonly<{ candidateId: string; pdfSha256: string }>;
     candidatePath: string;
     bytes: Uint8Array;
+    /** Ordinal skeleton, consumed by the inspector to bound PDF extraction. */
     skeleton: ResumeSurfaceSkeleton;
-    webSurface: ResumeSurfaceSkeleton;
+    webSurface: RenderedSurfaceObservation;
+    printSurface: RenderedSurfaceObservation;
     machineChecks: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
     tools: Readonly<{ node: string; chromium: string }>;
     requestLedger: Readonly<Record<string, unknown>>;

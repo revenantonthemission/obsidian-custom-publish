@@ -78,12 +78,32 @@ function requireSupervisedOrigin(baseURL) {
 export async function renderResumePdfCandidate({
   baseURL,
   buildIdentity,
+  manifest,
+  schemaVersion,
   emittedAssets = [],
   timeoutMs = DEFAULT_RENDER_TIMEOUT_MS,
 } = {}) {
   requireSupervisedOrigin(baseURL);
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
     throw new TypeError('timeoutMs must be a positive safe integer');
+  }
+  // The manifest arrives already built rather than being read here, so both
+  // surfaces are observed against the same approved source the inspector and
+  // the receipt are measured against. Rendering first and resolving the
+  // manifest afterwards would let the two name different sources.
+  if (
+    manifest === null ||
+    typeof manifest !== 'object' ||
+    !Array.isArray(manifest.entries)
+  ) {
+    throw rendererError(
+      'PDF_RENDER_MANIFEST_REQUIRED',
+      'The rendered surfaces cannot be observed without the approved manifest.',
+      'pdf.render.surface',
+    );
+  }
+  if (!Number.isSafeInteger(schemaVersion) || schemaVersion < 1) {
+    throw new TypeError('schemaVersion must be a positive safe integer');
   }
 
   const browser = await chromium.launch({ headless: true });
@@ -141,11 +161,22 @@ export async function renderResumePdfCandidate({
 
     // The web surface is observed on screen, before print emulation, so the
     // two surfaces are each described by the medium they actually belong to.
-    const webSurface = await observeSurfaceSkeleton(page);
+    const webSurface = buildRenderedSurface(
+      'web',
+      manifest,
+      schemaVersion,
+      await observeRenderedFacts(page),
+    );
 
     await page.emulateMedia({ media: 'print' });
     const print = await observePrintContract(page);
     const skeleton = await observeSurfaceSkeleton(page);
+    const printSurface = buildRenderedSurface(
+      'print',
+      manifest,
+      schemaVersion,
+      await observeRenderedFacts(page),
+    );
     await page.emulateMedia({ media: null });
 
     const bytes = await page.pdf({
@@ -206,6 +237,7 @@ export async function renderResumePdfCandidate({
       bytes,
       skeleton,
       webSurface,
+      printSurface,
       machineChecks: Object.freeze({ font, network, print }),
       tools: Object.freeze({
         node: process.versions.node,
@@ -519,6 +551,118 @@ async function observeSurfaceSkeleton(page) {
   }
 
   return deepFreezeSkeleton(observed);
+}
+
+/**
+ * Observes every approved fact occurrence in document order.
+ *
+ * This is deliberately not the ordinal skeleton: the skeleton exists to bound
+ * PDF extraction, while this answers the only questions the rendered surfaces
+ * are asked — is each approved fact in the document, and does it occupy a box.
+ * `getBoundingClientRect().height` rather than computed style, because a closed
+ * disclosure still reports `display: block` while painting nothing.
+ */
+async function observeRenderedFacts(page) {
+  const observed = await page.evaluate(() => {
+    const FACT_ATTRIBUTES = [
+      'data-profile-fact-id',
+      'data-profile-label-fact-id',
+      'data-profile-destination-fact-id',
+    ];
+    const FACT = FACT_ATTRIBUTES.map((name) => `[${name}]`).join(',');
+
+    const shell = document.querySelector('.profile-shell');
+    if (shell === null) return null;
+
+    const occurrences = [];
+    for (const element of shell.querySelectorAll(FACT)) {
+      for (const attribute of FACT_ATTRIBUTES) {
+        const factId = element.getAttribute(attribute);
+        if (factId === null) continue;
+        occurrences.push({
+          annotationOccurrence: occurrences.length + 1,
+          factId,
+          rendered: element.getBoundingClientRect().height > 0,
+        });
+      }
+    }
+    return occurrences;
+  });
+
+  if (observed === null) {
+    throw rendererError(
+      'PDF_RENDER_SHELL_MISSING',
+      'The résumé shell was absent when the rendered surface was observed.',
+      'pdf.render.surface',
+    );
+  }
+  return observed;
+}
+
+/**
+ * Assembles one rendered-surface observation.
+ *
+ * The envelope and each entry's approved fields come from the manifest, because
+ * `sourceIdentity` and `fingerprint` have no DOM representation and — as
+ * `normalizePdfOccurrence` records — every surface but the PDF carries the
+ * manifest value itself. What the DOM decides is presence, occurrence identity
+ * and whether the fact actually rendered, which is exactly what this gate is
+ * asked to catch.
+ *
+ * A fact the manifest does not approve is a renderer-level anomaly and throws.
+ * A manifest entry with no occurrence is left out instead, so the count
+ * disagrees and `compareRenderedManifest` reports it by name rather than the
+ * renderer pre-empting the gate.
+ */
+function buildRenderedSurface(surface, manifest, schemaVersion, occurrences) {
+  const approved = new Set(manifest.entries.map((entry) => entry.factId));
+  const byFactId = new Map();
+  for (const occurrence of occurrences) {
+    if (!approved.has(occurrence.factId)) {
+      throw rendererError(
+        'PDF_RENDER_SURFACE_FACT_UNKNOWN',
+        'The rendered document carries a fact the manifest does not approve.',
+        'pdf.render.surface',
+        { surface, factId: occurrence.factId },
+      );
+    }
+    // Two elements claiming one fact make `annotationOccurrence` a choice
+    // rather than an observation, and the gate requires it to be unique.
+    if (byFactId.has(occurrence.factId)) {
+      throw rendererError(
+        'PDF_RENDER_SURFACE_FACT_AMBIGUOUS',
+        'One approved fact was rendered more than once.',
+        'pdf.render.surface',
+        { surface, factId: occurrence.factId },
+      );
+    }
+    byFactId.set(occurrence.factId, occurrence);
+  }
+
+  const entries = [];
+  for (const entry of manifest.entries) {
+    const occurrence = byFactId.get(entry.factId);
+    if (occurrence === undefined) continue;
+    entries.push(
+      Object.freeze({
+        ...entry,
+        occurrenceOrder: entries.length + 1,
+        annotationOccurrence: occurrence.annotationOccurrence,
+        domPresent: true,
+        rendered: occurrence.rendered,
+      }),
+    );
+  }
+
+  return Object.freeze({
+    schemaVersion,
+    surface,
+    sourceIdentity: manifest.sourceIdentity,
+    fingerprint: manifest.fingerprint,
+    sectionOrder: manifest.sectionOrder,
+    entityOrder: manifest.entityOrder,
+    entries: Object.freeze(entries),
+  });
 }
 
 function deepFreezeSkeleton(skeleton) {

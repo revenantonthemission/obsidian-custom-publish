@@ -239,6 +239,13 @@ export async function loadProfileReleaseTools(options = {}) {
 
   return Object.freeze({
     compilation,
+    /**
+     * The renderer stamps this into every rendered-surface observation. It is
+     * read from the owning module rather than restated in the tooling layer,
+     * because a second copy of the schema version would be free to drift from
+     * the one `compareRenderedManifest` checks against.
+     */
+    RESUME_EVIDENCE_SCHEMA_VERSION: evidence.RESUME_EVIDENCE_SCHEMA_VERSION,
     compareRenderedManifest: evidence.compareRenderedManifest,
     mapPdfEvidence: evidence.mapPdfEvidence,
     compareResumeSurfaces: evidence.compareResumeSurfaces,
