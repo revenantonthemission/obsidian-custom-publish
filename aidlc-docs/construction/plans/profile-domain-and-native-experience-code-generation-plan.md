@@ -779,12 +779,17 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
 
 **Stories/requirements**: FR-017/018; U1→U2/U3 handoff; AI-DLC Documentation and Deployment Artifacts.
 
-- [ ] `site/README.md`에 five commands, PBT replay, fact gate, manual accessibility, PDF prepare/review/promote/verify와 no-deploy warning을 기록한다.
-- [ ] `code/verification-and-document-summary.md`에 browser/manual/PDF evidence, receipt/currentness와 negative gates를 기록한다.
-- [ ] `code/deployment-artifacts-summary.md`에 Infrastructure implementation N/A/no-change를 기록한다.
-- [ ] Local output에서 `/resume/index.html`, `/portfolio/index.html`, `/resume.pdf`, hashed CSS/WOFF2 mapping, MIME/non-empty와 private evidence exclusion을 확인한다.
-- [ ] `infra/`, Terraform, AWS, DNS, CloudFront/cache, Jenkins Deploy와 Vault가 unchanged인지 확인한다.
-- [ ] Reduced direct build가 profile-validation output일 뿐 full-site deployment candidate가 아님을 명시한다.
+- [x] `site/README.md`에 five commands, PBT replay, fact gate, manual accessibility, PDF prepare/review/promote/verify와 no-deploy warning을 기록한다.
+  - 기존 파일은 손대지 않은 Astro starter-kit 템플릿이었다. 실제 운영 문서로 교체하면서 세 사람 게이트, PBT replay 문법, 후보 PDF 의 non-reproducibility, canonical digest 객체 함정을 기록했다.
+- [x] `code/verification-and-document-summary.md`에 browser/manual/PDF evidence, receipt/currentness와 negative gates를 기록한다.
+  - 통과 주장과 미실행 주장을 분리해 기록한다. §6 이 rollback arm 미진입, cross-device/stale review-source, 빈 note 11행, `resume:pdf:verify` 계약 편차, `FD-P-C11-01` 다섯 건을 미실행/잔여로 남긴다.
+- [x] `code/deployment-artifacts-summary.md`에 Infrastructure implementation N/A/no-change를 기록한다.
+- [x] Local output에서 `/resume/index.html`, `/portfolio/index.html`, `/resume.pdf`, hashed CSS/WOFF2 mapping, MIME/non-empty와 private evidence exclusion을 확인한다.
+  - `/resume/index.html` 30,454B, `/portfolio/index.html` 34,277B, `/resume.pdf` 323,173B. `/_astro/` 아래 content-hashed CSS 4개와 WOFF2 92개가 전부 `url(/_astro/…)` 루트 상대 same-origin 이다. profile route 의 외부 CDN 참조 0, private evidence 유출 0. `dist/resume.pdf` 의 SHA-256 이 tracked `public/resume.pdf` 및 승격된 `pdfSha256` `834faa3b…` 와 일치한다.
+- [x] `infra/`, Terraform, AWS, DNS, CloudFront/cache, Jenkins Deploy와 Vault가 unchanged인지 확인한다.
+  - validated base `67f70a4` 대비 `infra/`, `Jenkinsfile`, `Justfile`, `preprocessor/`, `index.astro`, `data.ts`, `render.ts` 변경 0. `site/scripts/` 에 `aws s3`/`cloudfront`/`terraform` 참조 0. AWS/DNS/CloudFront mutation, Vault 쓰기, push/merge 없음.
+- [x] Reduced direct build가 profile-validation output일 뿐 full-site deployment candidate가 아님을 명시한다.
+  - README 의 "배포 경계" 와 deployment 요약 §4 양쪽에 기록했다. 전체 사이트 빌드는 preprocessor 가 만든 `content/` 를 요구하므로 축소 빌드의 `dist/` 를 S3 에 동기화하면 사이트 콘텐츠가 사라진다.
 
 ### Step 25 — Complete owner-local generation verification and summaries
 
