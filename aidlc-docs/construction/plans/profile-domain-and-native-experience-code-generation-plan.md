@@ -795,13 +795,21 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
 
 **Stories/requirements**: all U1-owned stories; U1 provider slice for U2/U3.
 
-- [ ] `npm run test:unit`을 실행한다.
-- [ ] `npm run test:pbt` local default를 실행하고 printed seed를 기록한다.
-- [ ] Same-seed/focused replay evidence를 실행한다.
-- [ ] `npm run test:e2e`를 실행한다.
-- [ ] `npm run resume:pdf:verify`를 실행한다.
-- [ ] Internal `test:pbt:framework` proof와 direct `npx astro build`를 재검증한다.
-- [ ] `git diff --check`, duplicate-file scan, source/generated/public/private scan과 no-edit set diff를 검사한다.
+- [x] `npm run test:unit`을 실행한다.
+  - 15 files / 179 tests pass.
+- [x] `npm run test:pbt` local default를 실행하고 printed seed를 기록한다.
+  - 5 files / 32 properties × 100 runs. Printed seed `369705162`.
+- [x] Same-seed/focused replay evidence를 실행한다.
+  - `PBT_SEED=369705162` 전체 재실행이 5 files / 32 tests 로 동일하게 통과한다. Focused replay 는 `PBT_SEED=369705162 PBT_PATH=0 PBT_FILE=tests/pbt/u1/resume-document.pbt.test.ts PBT_FOCUS='U1-P12 canonical digests are deterministic, NFC-stable and field-sensitive'` 로 1 passed / 4 skipped.
+  - **Step 24 문서 결함을 발견해 고쳤다.** README 가 focused replay 를 `npm run test:pbt -- <file> -t '<name>'` 로 적었으나 runner 는 `PBT_FILE`/`PBT_FOCUS` 환경변수만 읽고 CLI 인자 형태는 `PBT_CONFIG_INVALID` 로 거부한다. 문서대로 따라 하면 반드시 실패한다.
+- [x] `npm run test:e2e`를 실행한다.
+  - `result: pass`, buildId `ea921152229f6d987e29168ff397f570f57da70ab92a0075476a6a647ed82fb2`. Step 23 과 동일한 buildId 로 빌드 결정성이 유지된다.
+- [x] `npm run resume:pdf:verify`를 실행한다.
+  - `result: pass`, `releaseState: ABSENT`, `pdfSha256` `834faa3b…`. 단 §5.2 계약 편차는 미해결로 남아 있다.
+- [x] Internal `test:pbt:framework` proof와 direct `npx astro build`를 재검증한다.
+  - Framework proof 1 file / 2 tests pass. Direct build `Complete!`.
+- [x] `git diff --check`, duplicate-file scan, source/generated/public/private scan과 no-edit set diff를 검사한다.
+  - Whitespace clean. No-edit set 변경 0. Tracked `dist`/`.generated`/`.artifacts` 파일 0. Profile source 중복 basename 0.
 - [ ] All U1-P/refinement/NFR/AC/EDGE/negative obligations가 one canonical evidence에 연결되는지 검사한다.
 - [ ] `code/code-generation-summary.md`에 modified/created/removed files, tests, facts, PDF identity, deferred U2/U3 work와 no-deploy result를 기록한다.
 - [ ] Workflow-owned `aidlc-docs/`를 feature worktree에 포함할 commit handoff를 준비하되 stage/push/merge는 별도 사용자 권한 전에는 수행하지 않는다.

@@ -35,11 +35,23 @@ U1 이 제공하는 stable command surface 는 정확히 다섯 개이며 이 �
 ```sh
 npm run test:pbt                          # 로컬 기본 100 runs, seed 를 출력한다
 PBT_RUNS=1000 npm run test:pbt            # CI 기본값
-PBT_SEED=1729 npm run test:pbt            # 같은 seed 전체 재실행
-PBT_SEED=1729 PBT_PATH=0:1:0 npm run test:pbt -- <file> -t '<exact test name>'
+PBT_SEED=369705162 npm run test:pbt       # 같은 seed 전체 재실행
+
+# focused replay. 네 값 모두 환경변수이며 CLI 인자가 아니다.
+PBT_SEED=369705162 \
+PBT_PATH=0 \
+PBT_FILE=tests/pbt/u1/resume-document.pbt.test.ts \
+PBT_FOCUS='U1-P12 canonical digests are deterministic, NFC-stable and field-sensitive' \
+  npm run test:pbt
 ```
 
 - seed 는 worker 를 띄우기 전에 하나 생성·검증하고 **항상 출력한다.**
+- **focus 는 `-t` 로 넘길 수 없다.** runner 는 `PBT_FILE` 과 `PBT_FOCUS`
+  환경변수만 읽는다. `npm run test:pbt -- <file> -t '<name>'` 형태로 주면
+  `PBT_CONFIG_INVALID` / `field: PBT_PATH` 로 거부한다. runner 가 worker 를
+  띄우기 전에 focus 를 AST 로 사전 검증하고 fast-check 의 runtime seed suffix 를
+  감안한 anchored filter 를 만들어야 하기 때문이다. 그 사전 검증이 없으면 오타 난
+  focus 가 zero-test success 로 조용히 통과한다.
 - `PBT_PATH` 는 explicit seed + exact file + exact full test name 이 모두
   있을 때만 허용한다. 셋 중 하나라도 빠지면 거부한다.
 - 기본 shrinking 과 counterexample 출력을 보존한다. retry, 일반 실행에서의
