@@ -761,14 +761,19 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
 
 **Stories/requirements**: ST-U03, ST-U05, ST-E02; hard exact-SHA human gate.
 
-- [ ] `npm run resume:pdf -- --prepare`로 first clean build, candidate, PDF.js evidence, full parity와 draft receipt를 생성한다.
-- [ ] Candidate ID/SHA, source fingerprint, manifest digest와 viewer path를 사용자에게 제시한다.
-- [ ] **PAUSE**: 사용자가 exact candidate pages의 reading order, tagged structure, clipping, grayscale hierarchy, page breaks, Korean font/readability와 links를 검토해 fixed review record를 작성·승인할 때까지 기다린다.
-- [ ] Review SHA/source/manifest/checklist가 current candidate와 exact match인지 재검증한다.
-- [ ] `npm run resume:pdf -- --promote <candidate-id>`로 receipt/PDF transaction을 시작한다.
-- [ ] Clean second build와 transaction-scoped final route/MIME/source/full-parity check가 pass하면 finalize한다.
+- [x] `npm run resume:pdf -- --prepare`로 first clean build, candidate, PDF.js evidence, full parity와 draft receipt를 생성한다.
+- [x] Candidate ID/SHA, source fingerprint, manifest digest와 viewer path를 사용자에게 제시한다.
+- [x] **PAUSE**: 사용자가 exact candidate pages의 reading order, tagged structure, clipping, grayscale hierarchy, page breaks, Korean font/readability와 links를 검토해 fixed review record를 작성·승인할 때까지 기다린다.
+- [x] Review SHA/source/manifest/checklist가 current candidate와 exact match인지 재검증한다.
+- [x] `npm run resume:pdf -- --promote <candidate-id>`로 receipt/PDF transaction을 시작한다.
+- [x] Clean second build와 transaction-scoped final route/MIME/source/full-parity check가 pass하면 finalize한다.
 - [ ] Failure이면 same lock 아래 previous pair/first-release absence를 exact rollback하고 original failure를 non-zero로 반환한다.
-- [ ] Independent `npm run resume:pdf:verify`가 current tracked PDF/receipt를 read-only로 재검증하는지 확인한다.
+  - 미실행: 트랜잭션이 forward arm 을 끝까지 갔으므로 이 분기는 한 번도 진입하지 않았다. 4-state rollback 경로는 Step 22 의 pure journal model 과 `release-state-machine.pbt.test.ts` 로만 검증되어 있고 라이브 구동 증거가 없다.
+  - Step 22 가 이 스텝으로 넘긴 cross-device 와 stale review/source 잔여도 같은 이유로 닫히지 않았다. 셋 다 rollback arm 진입이 전제이며 forward arm 이 성공하면 관측할 방법이 없다. 다음 릴리스에서 실패를 유도하거나, store 의 고정 경로 안전성을 약화시키지 않는 별도 주입 지점을 설계해야 닫힌다.
+- [x] Independent `npm run resume:pdf:verify`가 current tracked PDF/receipt를 read-only로 재검증하는지 확인한다.
+  - 확인 과정에서 `cli.mjs` 의 다섯 번째 배선 결함을 찾아 고쳤다. 출력 조건이 `result.result !== 'pass'` 였고, CLI 가 스스로 계산한 통과 판정을 갖는 명령은 이것뿐이라 판정 전체가 조용히 버려졌다. 무출력 + exit 0 은 동작하는 검증과 no-op 을 구분할 수 없어 이 체크박스를 정직하게 닫을 수 없었다.
+  - 수정 뒤 판정이 출력된다. `releaseState: ABSENT`, candidate `e36d47c6…`, `pdfSha256` `834faa3b…`, `receiptSha256` `2f6b2496…`, `sourceIdentity` `6ea953a0…`, `manifestFingerprint` `aab8a08b…` 로 현재 tracked pair 가 current source 에 대해 재검증된다.
+  - 다만 이 명령의 실제 동작은 digest 대조이며 §5.2 가 규정한 `clean build/preview → full reinspection` 이 아니다. PDF.js 재추출도 clean build 도 하지 않는다. Step 22 구현 범위의 편차이므로 Step 24~25 로 넘긴다.
 
 ### Step 24 — Generate documentation and deployment-artifact no-change evidence
 

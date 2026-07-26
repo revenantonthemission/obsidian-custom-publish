@@ -19,6 +19,7 @@ import {
   READ_ONLY_COMMANDS,
   STABLE_COMMANDS,
   main as cliMain,
+  shouldReportResult,
 } from '../../scripts/profile/cli.mjs';
 
 const SHA_A = 'a'.repeat(64);
@@ -384,5 +385,34 @@ describe('the stable command surface', () => {
     await expect(
       cliMain(['resume:pdf', '--promote', SHA_A]),
     ).rejects.toMatchObject({ code: 'CLI_PROMOTE_ARGUMENTS_REQUIRED' });
+  });
+
+  test('a passing verdict the CLI computed itself is still reported', () => {
+    // `resume:pdf:verify` is the only command that both passes and produces its
+    // own verdict. Reported silently, a working verification and a no-op are
+    // the same observation, so the read-only gate could never be confirmed.
+    expect(
+      shouldReportResult({
+        rule: 'LC-U1-19/NFR-U1-010',
+        result: 'pass',
+        candidateId: SHA_A,
+        pdfSha256: SHA_B,
+      }),
+    ).toBe(true);
+  });
+
+  test('a routed pass adds nothing, because the child already reported', () => {
+    expect(
+      shouldReportResult({
+        rule: 'LC-U1-19/NFR-U1-010',
+        result: 'pass',
+        routed: true,
+      }),
+    ).toBe(false);
+  });
+
+  test('a non-pass verdict is reported and an absent one is not', () => {
+    expect(shouldReportResult({ result: 'released' })).toBe(true);
+    expect(shouldReportResult(undefined)).toBe(false);
   });
 });
