@@ -1,0 +1,24 @@
+---
+import ProfileLocalNavigation from "./ProfileLocalNavigation.astro";
+import type { ProfileShellView } from "./presentation.js";
+
+interface Props {
+  shell: ProfileShellView;
+}
+
+const { shell } = Astro.props;
+---
+
+<div
+  class={`profile-shell profile-shell-${shell.identity.route}`}
+  data-profile-route={shell.identity.route}
+  data-testid={`profile-shell-${shell.identity.route}`}
+>
+  <header class="profile-shell-header">
+    <h1 data-testid="profile-shell-heading">{shell.identity.label}</h1>
+    <ProfileLocalNavigation items={shell.navigation} />
+  </header>
+  <div class="profile-shell-content">
+    <slot />
+  </div>
+</div>

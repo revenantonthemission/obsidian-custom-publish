@@ -2,22 +2,82 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import Search from "../islands/Search.tsx";
+import { serializeJsonLdDocuments } from "../lib/layout/json-ld.js";
+import {
+  resolveRouteResourcePolicy,
+  validateRouteResourcePolicy,
+} from "../lib/layout/profile-resources.js";
+import type { ProfilePageMetadata } from "../lib/profile/metadata.js";
 
 interface Props {
   title?: string;
   description?: string;
   ogType?: string;
   canonicalUrl?: string;
+  metadata?: ProfilePageMetadata;
 }
 
-const {
-  title = "obsidian-press",
-  description = "obsidian-press — personal knowledge base",
-  ogType = "website",
-  canonicalUrl,
-} = Astro.props;
+const props = Astro.props;
+const defaultTitle = "obsidian-press";
+const defaultDescription = "obsidian-press — personal knowledge base";
+const defaultOgType = "website";
 const siteUrl = "https://rvnnt.dev";
-const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
+const legacyTitle = props.title ?? defaultTitle;
+const legacyDescription = props.description ?? defaultDescription;
+const legacyOgType = props.ogType ?? defaultOgType;
+const legacyFullUrl = props.canonicalUrl
+  ? `${siteUrl}${props.canonicalUrl}`
+  : siteUrl;
+const metadata = props.metadata;
+const normalizedPathname =
+  Astro.url.pathname.length > 1 && Astro.url.pathname.endsWith("/")
+    ? Astro.url.pathname.slice(0, -1)
+    : Astro.url.pathname;
+
+if (
+  metadata !== undefined &&
+  (
+    metadata.pathname !== normalizedPathname ||
+    (props.title !== undefined && props.title !== metadata.title) ||
+    (
+      props.description !== undefined &&
+      props.description !== metadata.description
+    ) ||
+    (
+      props.canonicalUrl !== undefined &&
+      legacyFullUrl !== metadata.canonical
+    ) ||
+    (props.ogType !== undefined && props.ogType !== defaultOgType)
+  )
+) {
+  throw new TypeError("Conflicting BaseLayout metadata.");
+}
+
+const resolvedResources = resolveRouteResourcePolicy(Astro.url.pathname);
+if (!resolvedResources.ok) {
+  throw new TypeError("Invalid BaseLayout resource policy.");
+}
+const verifiedResources = validateRouteResourcePolicy(
+  Astro.url.pathname,
+  resolvedResources.value,
+);
+if (!verifiedResources.ok) {
+  throw new TypeError("Invalid BaseLayout resource policy.");
+}
+const resourcePolicy = verifiedResources.value;
+
+const serializedJsonLd = serializeJsonLdDocuments(metadata?.jsonLd);
+if (!serializedJsonLd.ok) {
+  throw new TypeError("Invalid BaseLayout JSON-LD documents.");
+}
+const jsonLdScripts = serializedJsonLd.value;
+
+const title = metadata?.title ?? legacyTitle;
+const description = metadata?.description ?? legacyDescription;
+const ogType = metadata === undefined ? legacyOgType : defaultOgType;
+const fullUrl = metadata?.canonical ?? legacyFullUrl;
+const openGraph = metadata?.openGraph;
+const twitter = metadata?.twitter;
 ---
 <html lang="ko" data-theme="">
   <head>
@@ -25,27 +85,30 @@ const fullUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={openGraph?.title ?? title} />
+    <meta property="og:description" content={openGraph?.description ?? description} />
     <meta property="og:type" content={ogType} />
-    <meta property="og:url" content={fullUrl} />
+    <meta property="og:url" content={openGraph?.url ?? fullUrl} />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:title" content={twitter?.title ?? title} />
+    <meta name="twitter:description" content={twitter?.description ?? description} />
     <link rel="canonical" href={fullUrl} />
     <link rel="alternate" type="application/rss+xml" title="obsidian-press RSS" href="/rss.xml" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-      crossorigin
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
-      crossorigin="anonymous"
-    />
+    {resourcePolicy.headResources.map((resource) => (
+      <link
+        rel={resource.rel}
+        href={resource.href}
+        crossorigin={resource.crossorigin}
+      />
+    ))}
+    {jsonLdScripts?.map((script) => (
+      <script
+        type={script.type}
+        is:inline
+        set:html={script.payload}
+      />
+    ))}
     <script is:inline>
       // Apply saved theme immediately to prevent flash of unthemed content.
       // This runs synchronously before any other JS, so it MUST NOT throw —

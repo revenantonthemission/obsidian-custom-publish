@@ -1,0 +1,5 @@
+@import "../../../.generated/profile-font/pretendard-profile.css";
+
+:root {
+  --c-profile-font-family: "RVNNT Profile", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}

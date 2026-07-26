@@ -1,0 +1,225 @@
+---
+import ContactActions from "./ContactActions.astro";
+import ContentBlocks from "./ContentBlocks.astro";
+import ResumeEntry from "./ResumeEntry.astro";
+import type { ResumePresentation } from "./presentation.js";
+
+interface Props {
+  presentation: ResumePresentation;
+}
+
+const { presentation } = Astro.props;
+---
+
+<div class="resume-content" data-testid="resume-content">
+  {presentation.sections.map((section) => (
+    section.kind === "intro" ? (
+      <section
+        class="profile-section resume-intro"
+        data-profile-section="intro"
+      >
+        <h2>{section.heading}</h2>
+        <p
+          class="resume-name"
+          data-profile-fact-id={section.name.factId}
+        >
+          {section.name.value}
+        </p>
+        <p
+          class="resume-headline"
+          data-profile-fact-id={section.headline.factId}
+        >
+          {section.headline.value}
+        </p>
+        <p
+          class="resume-summary"
+          data-profile-fact-id={section.summary.factId}
+        >
+          {section.summary.value}
+        </p>
+        <ContentBlocks blocks={section.details} />
+        <ContactActions
+          actions={section.actions}
+          label="연락처와 PDF 이력서"
+          variant="contact-actions"
+        />
+      </section>
+    ) : section.kind === "skills" ? (
+      <section
+        class="profile-section resume-skills"
+        data-profile-section="skills"
+      >
+        <h2>{section.heading}</h2>
+        {section.groups.map((group) => (
+          <section
+            class="resume-skill-group"
+            data-profile-entity-kind="skill-group"
+            data-profile-entity-id={group.id}
+            data-profile-entity-order={group.order}
+            data-testid={`resume-content-skill-group-${group.id}`}
+          >
+            <h3 data-profile-fact-id={group.title.factId}>
+              {group.title.value}
+            </h3>
+            <ul>
+              {group.skills.map((skill) => (
+                <li
+                  data-profile-entity-kind="skill"
+                  data-profile-entity-id={skill.id}
+                  data-profile-entity-order={skill.order}
+                  data-profile-fact-id={skill.name.factId}
+                  data-testid={`resume-content-skill-${skill.id}`}
+                >
+                  {skill.name.value}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </section>
+    ) : section.kind === "highlights" ? (
+      <section
+        class="profile-section resume-highlights"
+        data-profile-section="highlights"
+      >
+        <h2>{section.heading}</h2>
+        {section.groups.map((group) => (
+          <section
+            class={`resume-highlight-group resume-highlight-${group.kind}`}
+            data-profile-highlight-group={group.kind}
+          >
+            <h3>{group.heading}</h3>
+            {group.entries.map((entry) => (
+              <ResumeEntry entry={entry} />
+            ))}
+          </section>
+        ))}
+      </section>
+    ) : section.kind === "projects" ? (
+      <section
+        class="profile-section resume-projects"
+        data-profile-section="projects"
+      >
+        <h2>{section.heading}</h2>
+        {section.projects.map((project) => (
+          <article
+            class="resume-project-summary"
+            data-profile-entity-kind="project"
+            data-profile-entity-id={project.id}
+            data-profile-entity-order={project.order}
+            data-testid={`resume-content-project-${project.id}`}
+          >
+            <h3 data-profile-fact-id={project.title.factId}>
+              {project.title.value}
+            </h3>
+            {project.period !== undefined && (
+              <p
+                class="profile-period"
+                data-profile-fact-id={project.period.factId}
+              >
+                {project.period.text}
+              </p>
+            )}
+            <p data-profile-fact-id={project.outcomeSummary.factId}>
+              {project.outcomeSummary.value}
+            </p>
+            {project.portfolioHref !== undefined && (
+              <a
+                href={project.portfolioHref}
+                data-testid={`resume-content-project-link-${project.id}`}
+              >
+                Portfolio에서 자세히 보기
+              </a>
+            )}
+          </article>
+        ))}
+      </section>
+    ) : section.kind === "education" ? (
+      <section
+        class="profile-section resume-education"
+        data-profile-section="education"
+      >
+        <h2>{section.heading}</h2>
+        {section.entries.map((entry) => (
+          <article
+            class="resume-education-entry"
+            data-profile-entity-kind="education"
+            data-profile-entity-id={entry.id}
+            data-profile-entity-order={entry.order}
+            data-testid={`resume-content-education-${entry.id}`}
+          >
+            <h3 data-profile-fact-id={entry.title.factId}>
+              {entry.title.value}
+            </h3>
+            {entry.subtitle !== undefined && (
+              <p data-profile-fact-id={entry.subtitle.factId}>
+                {entry.subtitle.value}
+              </p>
+            )}
+            {entry.period !== undefined && (
+              <p
+                class="profile-period"
+                data-profile-fact-id={entry.period.factId}
+              >
+                {entry.period.text}
+              </p>
+            )}
+            {entry.details.length > 0 && (
+              <ContentBlocks blocks={entry.details} />
+            )}
+            {entry.evidence.length > 0 && (
+              <ContactActions
+                actions={entry.evidence}
+                label={`${entry.title.value} 근거`}
+                variant="evidence-actions"
+              />
+            )}
+          </article>
+        ))}
+      </section>
+    ) : (
+      <section
+        class="profile-section resume-certifications"
+        data-profile-section="certifications"
+      >
+        <h2>{section.heading}</h2>
+        {section.entries.map((entry) => (
+          <article
+            class="resume-certification-entry"
+            data-profile-entity-kind="certification"
+            data-profile-entity-id={entry.id}
+            data-profile-entity-order={entry.order}
+            data-testid={`resume-content-certification-${entry.id}`}
+          >
+            <h3 data-profile-fact-id={entry.title.factId}>
+              {entry.title.value}
+            </h3>
+            {entry.issuer !== undefined && (
+              <p data-profile-fact-id={entry.issuer.factId}>
+                {entry.issuer.value}
+              </p>
+            )}
+            {entry.period !== undefined && (
+              <p
+                class="profile-period"
+                data-profile-fact-id={entry.period.factId}
+              >
+                {entry.period.text}
+              </p>
+            )}
+            {entry.details.length > 0 && (
+              <ContentBlocks blocks={entry.details} />
+            )}
+            {entry.evidence.length > 0 && (
+              <ContactActions
+                actions={entry.evidence}
+                label={`${entry.title.value} 근거`}
+                variant="evidence-actions"
+              />
+            )}
+          </article>
+        ))}
+      </section>
+    )
+  ))}
+</div>

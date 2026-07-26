@@ -3,6 +3,10 @@ dist/
 # generated types
 .astro/
 
+# profile build and verification artifacts
+.generated/
+.artifacts/
+
 # dependencies
 node_modules/
 
