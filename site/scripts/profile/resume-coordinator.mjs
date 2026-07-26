@@ -83,11 +83,18 @@ export async function prepareResumeRelease({
       ...(renderTimeoutMs === undefined ? {} : { timeoutMs: renderTimeoutMs }),
     });
 
+    // The manifest is the definition of "current source" for this run, and it
+    // supplies both identities the inspector needs. Taking them from anywhere
+    // else would let the candidate be inspected against one source while the
+    // receipt is approved against another.
+    const releaseTools = await loadProfileReleaseTools();
+    const manifest = await releaseTools.buildCurrentResumeManifest();
+
     const snapshot = await inspectResumePdfCandidate({
       candidatePath: rendered.candidatePath,
       candidate: rendered.candidate,
-      sourceIdentity: rendered.sourceIdentity,
-      manifestFingerprint: rendered.manifestFingerprint,
+      sourceIdentity: manifest.sourceIdentity,
+      manifestFingerprint: manifest.fingerprint,
       skeleton: rendered.skeleton,
       tools: rendered.tools,
     });
@@ -106,6 +113,8 @@ export async function prepareResumeRelease({
       baseURL: lease.baseURL,
       candidate: rendered.candidate,
       candidatePath: rendered.candidatePath,
+      manifest,
+      subject: releaseTools.buildReceiptSubject(rendered.candidate, manifest),
       skeleton: rendered.skeleton,
       webSurface: rendered.webSurface,
       machineChecks: rendered.machineChecks,
@@ -139,14 +148,24 @@ export async function prepareResumeRelease({
 export async function promotePreparedRelease({
   candidateId,
   reviewRecord,
-  currentSubject,
-  currentManifest,
   assembledAt = new Date().toISOString(),
   buildTimeoutMs,
 } = {}) {
   const stage = 'resume.promote';
   const prepared = await readPreparedEvidence(candidateId, { stage });
   const tools = await loadProfileReleaseTools();
+
+  // Current source is recomputed here rather than accepted from the caller.
+  // A supplied subject could name a manifest the candidate was never measured
+  // against, which is the one thing the exact-SHA gate is meant to prevent.
+  const currentManifest = await tools.buildCurrentResumeManifest();
+  const currentSubject = tools.buildReceiptSubject(
+    {
+      candidateId: prepared.candidateId,
+      pdfSha256: prepared.candidateSha256,
+    },
+    currentManifest,
+  );
 
   // The pure C11 gate owns exact-SHA review currentness. Re-deciding it here
   // would create a second, quietly divergent definition of "reviewed".

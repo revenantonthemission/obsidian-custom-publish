@@ -20,6 +20,7 @@ const DEFAULT_OUTPUT_LIMIT_BYTES = 512_000;
 const REQUIRED_TOOL_MODULES = Object.freeze([
   'canonical-digest.js',
   'document-boundary.js',
+  'production-profile.js',
   'resume-evidence.js',
   'resume-manifest.js',
   'resume-receipts.js',
@@ -142,8 +143,17 @@ export async function loadProfileReleaseTools(options = {}) {
     resolve(compilation.moduleRoot, 'document-boundary.js'),
   ).href;
 
+  const manifestUrl = pathToFileURL(
+    resolve(compilation.moduleRoot, 'resume-manifest.js'),
+  ).href;
+  const productionUrl = pathToFileURL(
+    resolve(compilation.moduleRoot, 'production-profile.js'),
+  ).href;
+
   const receipts = await import(receiptsUrl);
   const boundary = await import(boundaryUrl);
+  const manifests = await import(manifestUrl);
+  const production = await import(productionUrl);
 
   const missing = [
     'assembleResumeReleaseReceipt',
@@ -160,12 +170,51 @@ export async function loadProfileReleaseTools(options = {}) {
     );
   }
 
+  /**
+   * Builds the manifest that defines "current source" for this invocation.
+   *
+   * Both the inspector's `sourceIdentity`/`manifestFingerprint` and the
+   * receipt subject come from here, so a candidate and the receipt that
+   * approves it are always measured against one manifest rather than two
+   * independently derived ones.
+   */
+  const buildCurrentResumeManifest = async () => {
+    const assembly = production.getProductionProfileAssembly();
+    const built = await manifests.buildApprovedResumeManifest(assembly.source);
+    if (!built.ok) {
+      throw compileError(
+        'PROFILE_TOOLS_MANIFEST_UNAVAILABLE',
+        'The approved résumé manifest could not be built from production facts.',
+        'tools.manifest.build',
+        { issues: built.issues ?? null },
+      );
+    }
+    return built.value;
+  };
+
   return Object.freeze({
     compilation,
     assembleResumeReleaseReceipt: receipts.assembleResumeReleaseReceipt,
     validateResumeHumanReview: receipts.validateResumeHumanReview,
     validateResumeInspectionReceipt: receipts.validateResumeInspectionReceipt,
     validateResumeReleaseReceipt: receipts.validateResumeReleaseReceipt,
+    buildCurrentResumeManifest,
+    /**
+     * U1 defines `manifestFingerprint` and `manifestDigest` as aliases, which
+     * `receiptSubjectMatchesManifest` enforces. Building the subject in one
+     * place keeps that aliasing from being restated — and drifting — at each
+     * call site.
+     */
+    buildReceiptSubject: (candidate, manifest) =>
+      Object.freeze({
+        candidate: Object.freeze({
+          candidateId: candidate.candidateId,
+          pdfSha256: candidate.pdfSha256,
+        }),
+        sourceIdentity: manifest.sourceIdentity,
+        manifestFingerprint: manifest.fingerprint,
+        manifestDigest: manifest.fingerprint,
+      }),
     RESUME_DOCUMENT_PUBLIC_HREF: boundary.RESUME_DOCUMENT_PUBLIC_HREF,
     RESUME_DOCUMENT_REPOSITORY_PATH: boundary.RESUME_DOCUMENT_REPOSITORY_PATH,
   });
