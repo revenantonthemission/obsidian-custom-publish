@@ -122,15 +122,14 @@ describe('U1 obligation map', () => {
         }),
       ),
     ).toEqual([
+      // Step 22 closed NFR-P-RELEASE-01 by generating the pure journal
+      // transition model and its state-machine suite. FD-P-C11-01 remains
+      // deferred: Step 21 built the document pipeline but never cleared its
+      // entry, and clearing it is not Step 22's to do.
       {
         canonicalTestId: 'PBT-U1-DOCUMENT',
         remainingStep: 21,
         ids: ['FD-P-C11-01'],
-      },
-      {
-        canonicalTestId: 'PBT-U1-RELEASE',
-        remainingStep: 22,
-        ids: ['NFR-P-RELEASE-01'],
       },
     ]);
   });

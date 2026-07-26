@@ -258,14 +258,6 @@
       "canonicalTestId": "PBT-U1-DOCUMENT",
       "remainingStep": 21,
       "rationale": "Step 9 closes canonical manifest and document-request parity; mapping the rendered web, print and PDF evidence back to that approved manifest requires the document generation and inspection boundary produced in Step 21."
-    },
-    {
-      "ids": [
-        "NFR-P-RELEASE-01"
-      ],
-      "canonicalTestId": "PBT-U1-RELEASE",
-      "remainingStep": 22,
-      "rationale": "The mutable release journal and its pure transition model are generated together in Step 22; Step 9 intentionally owns only the four current pure business-logic suites."
     }
   ],
   "notApplicable": [

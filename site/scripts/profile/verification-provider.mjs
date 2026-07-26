@@ -3559,6 +3559,164 @@ export const verificationEvidenceSchema = deepFreeze({
   ],
 });
 
+/**
+ * Read-only revalidation of whatever is currently tracked.
+ *
+ * Any lock or journal means a release is in flight or was interrupted, and
+ * this command stops there. It holds no mutation authority, so "repair it" is
+ * not an option it could take even if that looked helpful — an incomplete
+ * release reported as current is exactly what this exists to prevent.
+ */
+export async function verifyCurrentRelease() {
+  const { inspectReleaseState, readCurrentReleasePair } = await import(
+    './release-store.mjs'
+  );
+  const state = await inspectReleaseState();
+  if (state.active) {
+    throw providerError(
+      'RELEASE_INCOMPLETE',
+      'A release lock or journal is present; the tracked pair cannot be verified as current.',
+      'verification.release.current',
+      { state: state.state, lockPresent: state.lockPresent },
+    );
+  }
+
+  const pair = await readCurrentReleasePair();
+  if (!pair.present) {
+    throw providerError(
+      'RELEASE_ABSENT',
+      'No tracked résumé release exists yet.',
+      'verification.release.current',
+      {},
+    );
+  }
+
+  const { loadProfileReleaseTools } = await import(
+    './compile-profile-tools.mjs'
+  );
+  const tools = await loadProfileReleaseTools();
+  const manifest = await tools.buildCurrentResumeManifest();
+  const receipt = pair.receipt.value;
+
+  // The receipt must describe the bytes on disk *and* the current source. One
+  // that only agrees with itself would let a stale release survive a source
+  // change unnoticed.
+  if (receipt?.pdfSha256 !== pair.pdf.sha256) {
+    throw providerError(
+      'RELEASE_PAIR_MISMATCH',
+      'The tracked receipt does not name the public PDF on disk.',
+      'verification.release.current',
+      {},
+    );
+  }
+  if (
+    receipt.sourceIdentity?.digest !== manifest.sourceIdentity.digest ||
+    receipt.manifestFingerprint?.digest !== manifest.fingerprint.digest
+  ) {
+    throw providerError(
+      'RELEASE_STALE',
+      'The tracked release was approved against a different source or manifest.',
+      'verification.release.current',
+      {},
+    );
+  }
+
+  return deepFreeze({
+    rule: PROVIDER_RULE,
+    group: 'document',
+    result: 'pass',
+    releaseState: state.state,
+    candidateId: receipt.candidateId,
+    pdfSha256: pair.pdf.sha256,
+    receiptSha256: pair.receipt.sha256,
+    sourceIdentity: manifest.sourceIdentity.digest,
+    manifestFingerprint: manifest.fingerprint.digest,
+  });
+}
+
+/**
+ * Transaction-scoped observation of a pending pair, for the promote process
+ * only.
+ *
+ * The capability is resolved by the store that issued it, so this cannot be
+ * aimed at another transaction. The verdict is explicitly not a claim that the
+ * pair is the current release — the neutral CLI still has to route it to
+ * `finalize` or `rollback`.
+ */
+export async function verifyPendingRelease(capability, secondBuildIdentity) {
+  const { describePendingRelease, readCurrentReleasePair } = await import(
+    './release-store.mjs'
+  );
+  const pending = describePendingRelease(capability);
+  if (pending.state !== 'PDF_COMMITTED') {
+    throw providerError(
+      'RELEASE_PENDING_STATE_INVALID',
+      'A pending release may only be observed at the public commit point.',
+      'verification.release.pending',
+      { state: pending.state },
+    );
+  }
+  if (typeof secondBuildIdentity?.id !== 'string') {
+    throw providerError(
+      'RELEASE_SECOND_BUILD_INVALID',
+      'A pending release verification requires the clean second build identity.',
+      'verification.release.pending',
+      {},
+    );
+  }
+
+  const pair = await readCurrentReleasePair();
+  if (
+    !pair.present ||
+    pair.pdf.sha256 !== pending.pdfSha256 ||
+    pair.receipt.sha256 !== pending.receiptSha256
+  ) {
+    throw providerError(
+      'RELEASE_PENDING_PAIR_MISMATCH',
+      'The tracked pair is not the exact pair this transaction committed.',
+      'verification.release.pending',
+      {},
+    );
+  }
+
+  // The second build must have consumed the promoted PDF as ordinary static
+  // input. A dist without it means the release would ship a route pointing at
+  // a document the build never saw.
+  const distPdf = resolve(PROFILE_PATHS.distRoot, 'resume.pdf');
+  let distSha256;
+  try {
+    distSha256 = createHash('sha256')
+      .update(await readFile(distPdf))
+      .digest('hex');
+  } catch {
+    throw providerError(
+      'RELEASE_SECOND_BUILD_MISSING_PDF',
+      'The clean second build did not materialize the promoted résumé PDF.',
+      'verification.release.pending',
+      { distPdf },
+    );
+  }
+  if (distSha256 !== pending.pdfSha256) {
+    throw providerError(
+      'RELEASE_SECOND_BUILD_PDF_MISMATCH',
+      'The second build emitted different résumé PDF bytes than were promoted.',
+      'verification.release.pending',
+      {},
+    );
+  }
+
+  return deepFreeze({
+    rule: PROVIDER_RULE,
+    group: 'document',
+    result: 'pass',
+    scope: 'pending-transaction',
+    journalId: pending.journalId,
+    buildId: secondBuildIdentity.id,
+    pdfSha256: pending.pdfSha256,
+    receiptSha256: pending.receiptSha256,
+  });
+}
+
 export const verificationProviderTesting = Object.freeze({
   digestAccessibilityReviewSubject,
   isEligibleIsolatedBrowserLaunchFailure,

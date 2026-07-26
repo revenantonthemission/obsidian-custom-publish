@@ -10,9 +10,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test:unit": "vitest run --config vitest.config.ts tests/unit",
-    "test:pbt": "node scripts/profile/pbt-runner.mjs",
-    "test:e2e": "node scripts/profile/verification-provider.mjs e2e",
+    "test:unit": "node scripts/profile/cli.mjs test:unit",
+    "test:pbt": "node scripts/profile/cli.mjs test:pbt",
+    "test:e2e": "node scripts/profile/cli.mjs test:e2e",
+    "resume:pdf": "node scripts/profile/cli.mjs resume:pdf",
+    "resume:pdf:verify": "node scripts/profile/cli.mjs resume:pdf:verify",
     "test:pbt:framework": "vitest run tests/pbt/framework-selection.pbt.test.ts"
   },
   "dependencies": {
