@@ -1616,6 +1616,20 @@ function isCanonicalIdentifier(value: unknown): value is string {
   );
 }
 
+/**
+ * The single rule for the identifiers carried on an approval identity.
+ *
+ * This module mints those identifiers, so it owns what makes one well formed.
+ * A consumer that restates the rule locally drifts from it, and a stricter
+ * copy rejects an approval this module legitimately issued — which is exactly
+ * what a lowercase-only slug pattern did to the uppercase decision audit ID.
+ */
+export function isCanonicalApprovalIdentifier(
+  value: unknown,
+): value is string {
+  return isCanonicalIdentifier(value);
+}
+
 function isSha256Digest(value: unknown): value is string {
   return typeof value === 'string' && SHA256_PATTERN.test(value);
 }

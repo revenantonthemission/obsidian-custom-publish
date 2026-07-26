@@ -15,6 +15,8 @@ import {
   getProductionProfileAssembly,
   productionProfileTesting,
 } from '../../src/lib/profile/production-profile.js';
+import { buildApprovedResumeManifest } from '../../src/lib/profile/resume-manifest.js';
+import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/document-boundary.js';
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
@@ -423,3 +425,50 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
   }
   return files;
 }
+
+describe('approved production source builds its résumé manifest', () => {
+  // Regression for a defect found in Step 22: `isValidApprovalIdentity` used a
+  // local lowercase-only slug pattern for the four approval identifiers, while
+  // the fact-approval module that mints them allows any canonical identifier.
+  // The uppercase decision audit ID therefore failed, and every approved
+  // manifest — and with it the whole PDF document path — was unbuildable while
+  // each stage still looked correct in isolation.
+  //
+  // Asserting against the real production assembly rather than a fixture is
+  // the point: a synthetic approval with a lowercase audit ID would have
+  // passed the broken code.
+  test('buildApprovedResumeManifest succeeds for the real approved profile', async () => {
+    const assembly = getProductionProfileAssembly();
+
+    const manifest = await buildApprovedResumeManifest(assembly.source);
+
+    expect(manifest.ok).toBe(true);
+    if (!manifest.ok) return;
+    expect(manifest.value.entries.length).toBeGreaterThan(0);
+    expect(manifest.value.sourceIdentity.digest).toMatch(/^[a-f0-9]{64}$/);
+    expect(manifest.value.fingerprint.digest).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  test('the approved decision audit ID is accepted even though it is not a lowercase slug', () => {
+    const { approval } = getProductionProfileAssembly().source;
+
+    // Pins the exact shape that broke: uppercase letters and a compact
+    // timestamp. If the approval process ever mints a lowercase ID this test
+    // still passes, but the manifest test above is what actually guards the
+    // behaviour.
+    expect(approval.decisionAuditId).not.toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    expect(approval.decision).toBe('Approved');
+  });
+
+  test('buildApprovedResumeDocumentRequest resolves the current document request', async () => {
+    const request = await buildApprovedResumeDocumentRequest(
+      getProductionProfileAssembly(),
+    );
+
+    expect(request.ok).toBe(true);
+    if (!request.ok) return;
+    expect(request.value.publicHref).toBe('/resume.pdf');
+    expect(request.value.repositoryPath).toBe('site/public/resume.pdf');
+    expect(request.value.expectedManifest.entries.length).toBeGreaterThan(0);
+  });
+});

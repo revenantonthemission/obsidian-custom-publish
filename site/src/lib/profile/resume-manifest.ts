@@ -9,6 +9,7 @@ import {
   FACT_APPROVAL_SCHEMA_VERSION,
   factCanonicalPath,
   hasVerifiedFactApprovalCapability,
+  isCanonicalApprovalIdentifier,
 } from './fact-approval.js';
 import type { FactCanonicalPath } from './fact-approval.js';
 import { createValidationIssue } from './issues.js';
@@ -301,17 +302,24 @@ function isValidApprovalIdentity(value: unknown): boolean {
     return false;
   }
 
+  // These four identifiers are minted by the fact-approval module, so its rule
+  // is the one that decides whether they are well formed. The local
+  // `isIdentifier` slug pattern is deliberately not used here: it accepts only
+  // lowercase, which rejected the uppercase decision audit ID that the approval
+  // process actually issues, and made every approved manifest unbuildable.
+  // `isIdentifier` still governs fact and entity IDs below, where slugs are
+  // correct.
   return (
     value.schemaVersion === FACT_APPROVAL_SCHEMA_VERSION &&
-    isIdentifier(value.receiptId) &&
-    isIdentifier(value.inventoryRevision) &&
+    isCanonicalApprovalIdentifier(value.receiptId) &&
+    isCanonicalApprovalIdentifier(value.inventoryRevision) &&
     isSha256(value.inventoryDigest) &&
-    isIdentifier(value.productionDiffRevision) &&
+    isCanonicalApprovalIdentifier(value.productionDiffRevision) &&
     isSha256(value.productionDiffDigest) &&
     isSha256(value.approvedRecordsDigest) &&
     isSha256(value.materializedProfileDigest) &&
     value.decision === 'Approved' &&
-    isIdentifier(value.decisionAuditId) &&
+    isCanonicalApprovalIdentifier(value.decisionAuditId) &&
     isTimestamp(value.decisionRecordedAt)
   );
 }
