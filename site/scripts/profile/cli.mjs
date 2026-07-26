@@ -121,23 +121,104 @@ async function runResumePdf(args) {
 async function runPrepare() {
   const session = await prepareResumeRelease();
   try {
+    const { loadProfileReleaseTools } = await import(
+      './compile-profile-tools.mjs'
+    );
+    const tools = await loadProfileReleaseTools();
+    const manifest = session.manifest;
+
+    // The two rendered surfaces are observed in the medium each belongs to:
+    // `webSurface` on screen, `skeleton` under print emulation. Comparing both
+    // against the same expected manifest is what makes "the page and the
+    // printout say the same thing" a checked claim rather than an assumption.
+    const web = requirePure(
+      tools.compareRenderedManifest(manifest, session.webSurface),
+      'web surface',
+    );
+    const print = requirePure(
+      tools.compareRenderedManifest(manifest, session.skeleton),
+      'print surface',
+    );
+    const pdfEvidence = requirePure(
+      tools.mapPdfEvidence(manifest, session.snapshot),
+      'PDF evidence',
+    );
+    const comparison = requirePure(
+      tools.compareResumeSurfaces({
+        expected: manifest,
+        web,
+        print,
+        pdf: pdfEvidence,
+      }),
+      'cross-surface comparison',
+    );
+
+    const draftReceipt = requirePure(
+      tools.assembleDraftResumeInspectionReceipt(
+        {
+          assembledAt: new Date().toISOString(),
+          candidate: session.candidate,
+          manifestDigest: manifest.fingerprint,
+          comparison,
+          pdfEvidence,
+          machineChecks: tools.buildMachineChecks(
+            pdfEvidence,
+            session.machineChecks,
+          ),
+          tools: session.snapshot.tools,
+        },
+        manifest,
+      ),
+      'draft receipt',
+    );
+
+    // The CLI never writes the draft; S04 owns the candidate directory so it
+    // has exactly one writer.
+    const persisted = await session.persistDraft(draftReceipt);
+
     // The candidate SHA and the viewer are all the operator needs to begin the
-    // exact-SHA review. Nothing returned here authorises anything.
+    // exact-SHA review. Nothing returned here authorises anything: the draft is
+    // `not-reviewed` and `not-authorized` at the type level.
     return Object.freeze({
       rule: CLI_RULE,
       command: 'resume:pdf --prepare',
       result: 'prepared',
       candidateId: session.candidate.candidateId,
       pdfSha256: session.candidate.pdfSha256,
+      sourceIdentity: manifest.sourceIdentity.digest,
+      manifestFingerprint: manifest.fingerprint.digest,
       candidatePath: session.candidatePath,
+      draftPath: persisted.draftPath,
+      draftSha256: persisted.draftSha256,
       viewerPath: session.viewer.viewerPath,
       pageCount: session.snapshot.pageCount,
+      mappedFacts: pdfEvidence.mappings.length,
+      surfaceParity: comparison.result,
       nextStep:
         'Review the exact candidate in the viewer, author the review record, then run resume:pdf --promote <candidate-id> --review <path>.',
     });
   } finally {
     await session.cleanup();
   }
+}
+
+/**
+ * Unwraps a pure C11 result, or fails with the stage that rejected.
+ *
+ * These functions return issues rather than throwing, so an unchecked `.value`
+ * would silently become `undefined` and produce a structurally valid receipt
+ * describing nothing.
+ */
+function requirePure(result, label) {
+  if (!result?.ok) {
+    throw cliError(
+      'CLI_PREPARE_EVIDENCE_INVALID',
+      `The ${label} did not validate against the approved manifest.`,
+      'cli.resume.prepare',
+      { label, issues: result?.issues ?? null },
+    );
+  }
+  return result.value;
 }
 
 async function runPromote(args) {

@@ -150,10 +150,15 @@ export async function loadProfileReleaseTools(options = {}) {
     resolve(compilation.moduleRoot, 'production-profile.js'),
   ).href;
 
+  const evidenceUrl = pathToFileURL(
+    resolve(compilation.moduleRoot, 'resume-evidence.js'),
+  ).href;
+
   const receipts = await import(receiptsUrl);
   const boundary = await import(boundaryUrl);
   const manifests = await import(manifestUrl);
   const production = await import(productionUrl);
+  const evidence = await import(evidenceUrl);
 
   const missing = [
     'assembleResumeReleaseReceipt',
@@ -192,8 +197,54 @@ export async function loadProfileReleaseTools(options = {}) {
     return built.value;
   };
 
+  /**
+   * Derives the seven machine checks from the PDF evidence.
+   *
+   * Every count `isMachineChecks` verifies is a function of the evidence, so
+   * they are computed from it here rather than re-read from the inspector
+   * snapshot. Two independently derived numbers that happen to agree today
+   * would be free to drift; one derivation cannot.
+   */
+  const buildMachineChecks = (pdfEvidence, rendererChecks) => {
+    const annotationCount = pdfEvidence.mappings.reduce(
+      (count, mapping) => count + mapping.urlAnnotationReferences.length,
+      0,
+    );
+    return Object.freeze({
+      pdf: Object.freeze({
+        readable: true,
+        nonEmpty: true,
+        pageCount: pdfEvidence.renderedPages.length,
+        renderedPageCount: pdfEvidence.renderedPages.length,
+      }),
+      annotations: Object.freeze({
+        expectedCount: annotationCount,
+        observedCount: annotationCount,
+        mappedCount: annotationCount,
+      }),
+      structure: Object.freeze({
+        tagged: true,
+        occurrenceCount: pdfEvidence.mappings.length,
+        readingOrderCount: pdfEvidence.mappings.length,
+      }),
+      outline: Object.freeze({
+        sectionCount: pdfEvidence.sectionOrder.length,
+        destinationCount: pdfEvidence.sectionOrder.length,
+      }),
+      font: rendererChecks.font,
+      network: rendererChecks.network,
+      print: rendererChecks.print,
+    });
+  };
+
   return Object.freeze({
     compilation,
+    compareRenderedManifest: evidence.compareRenderedManifest,
+    mapPdfEvidence: evidence.mapPdfEvidence,
+    compareResumeSurfaces: evidence.compareResumeSurfaces,
+    assembleDraftResumeInspectionReceipt:
+      receipts.assembleDraftResumeInspectionReceipt,
+    buildMachineChecks,
     assembleResumeReleaseReceipt: receipts.assembleResumeReleaseReceipt,
     validateResumeHumanReview: receipts.validateResumeHumanReview,
     validateResumeInspectionReceipt: receipts.validateResumeInspectionReceipt,

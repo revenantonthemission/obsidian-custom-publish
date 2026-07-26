@@ -66,7 +66,13 @@ export async function prepareResumeRelease({
   const cleanup = async () => {
     if (released) return;
     released = true;
-    await lease?.close?.().catch(() => {});
+    // `lease` may be absent if the preview never started, but the method name
+    // is not optional. `lease?.close?.()` silently did nothing, because the
+    // real method is `cleanup()` — so a failed prepare left the preview child
+    // alive and the process hung instead of exiting with its error.
+    if (lease !== undefined) {
+      await lease.cleanup();
+    }
   };
 
   try {
@@ -76,10 +82,18 @@ export async function prepareResumeRelease({
       requiredRoutes: REQUIRED_PREVIEW_ROUTES,
     });
 
+    // The request ledger maps every successful response back to a file the
+    // build actually emitted, so the asset identities have to come from the
+    // build manifest. Passing an empty list does not disable that check — it
+    // makes every response unmappable, which is how this first surfaced.
+    const buildManifest = JSON.parse(
+      await readFile(buildIdentity.manifestPath, 'utf8'),
+    );
+
     const rendered = await renderResumePdfCandidate({
       baseURL: lease.baseURL,
       buildIdentity,
-      emittedAssets: lease.emittedAssets ?? [],
+      emittedAssets: buildManifest.outputFiles,
       ...(renderTimeoutMs === undefined ? {} : { timeoutMs: renderTimeoutMs }),
     });
 
@@ -90,7 +104,10 @@ export async function prepareResumeRelease({
     const releaseTools = await loadProfileReleaseTools();
     const manifest = await releaseTools.buildCurrentResumeManifest();
 
-    const snapshot = await inspectResumePdfCandidate({
+    // The inspector returns `{rule, snapshot, snapshotPath}`, not the snapshot
+    // itself. Treating the wrapper as the snapshot left `structure` undefined
+    // and the viewer threw on `structure.nodes`.
+    const inspection = await inspectResumePdfCandidate({
       candidatePath: rendered.candidatePath,
       candidate: rendered.candidate,
       sourceIdentity: manifest.sourceIdentity,
@@ -98,6 +115,7 @@ export async function prepareResumeRelease({
       skeleton: rendered.skeleton,
       tools: rendered.tools,
     });
+    const snapshot = inspection.snapshot;
 
     const viewer = await buildResumePdfViewer({
       candidate: rendered.candidate,
