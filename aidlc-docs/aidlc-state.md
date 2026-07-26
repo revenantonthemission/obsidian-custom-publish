@@ -1,0 +1,411 @@
+# AI-DLC State Tracking
+
+## Project Information
+
+- **Project**: obsidian-press resume and portfolio rebuild
+- **Project Type**: Brownfield
+- **Start Date**: 2026-07-23T06:19:28Z
+- **Current Phase**: CONSTRUCTION
+- **Current Stage**: U1 Code Generation — Part 2 Generation, Step 21
+- **Workflow Status**: In progress
+
+## Workspace State
+
+- **Existing Code**: Yes
+- **Programming Languages**: Rust, TypeScript, TSX, Astro, CSS, JavaScript, Terraform
+- **Build System**: Cargo, npm/npx, Just
+- **Project Structure**: Rust preprocessor and Astro static site
+- **Reverse Engineering Needed**: Completed
+- **Existing Reverse Engineering Artifacts**: Yes; current as of 2026-07-23T06:34:04Z
+- **Workspace Root**: /Users/revenantonthemission/Projects/obsidian-blog
+- **Initial Branch**: main
+- **Working Tree**: Dirty; pre-existing user changes must be preserved
+- **Branch Strategy**: User confirmed project Git Flow on 2026-07-23T08:26:41Z; create focused feature branches from `develop` and merge back with `--no-ff`
+- **Branch Base Status**: Reconciled successfully. Local `develop` is `67f70a4240819ed8b9408360f9b59512660f8e10`, which merges old `develop` and current `main`; U1 branch `codex/feature/resume-profile-experience` was created from that validated base. Remote refs were not pushed.
+
+## Code Location Rules
+
+- **Application Code**: Workspace root, never in aidlc-docs/
+- **Documentation**: aidlc-docs/ only during the active workflow
+- **Generated Artifacts**: Do not use generated content/, site/dist/, Rust target/, or generated site/public data as the only source of behavior changes
+- **Structure Patterns**: See the project AGENTS.md and AI-DLC code-generation rules
+
+## Extension Configuration
+
+| Extension | Enabled | Decided At |
+|---|---|---|
+| Obsidian Press Project Extension | Yes | Workflow start; always enforced |
+| Resiliency Baseline | No | Requirements Analysis |
+| Security Baseline | No | Requirements Analysis scope clarification |
+| Property-Based Testing | Yes | Requirements Analysis scope clarification |
+
+- **Loaded Full Rules**: Obsidian Press Project Extension and Property-Based Testing; Security Baseline was loaded after the initial opt-in but is now disabled
+- **Intentionally Not Loaded**: Resiliency Baseline
+- **Security Status**: Disabled to preserve feature-focused scope; SECURITY rules are no longer enforced.
+- **PBT Enforcement Mode**: Full; Jenkins path repair and PBT CI execution are in scope.
+
+## Stage Progress
+
+- [x] INCEPTION - Workspace Detection
+- [x] INCEPTION - Reverse Engineering
+- [x] INCEPTION - Requirements Analysis
+- [x] INCEPTION - User Stories assessment
+- [x] INCEPTION - Workflow Planning
+- [x] INCEPTION - Application Design (EXECUTE)
+- [x] INCEPTION - Units Generation (EXECUTE)
+- [ ] CONSTRUCTION - Functional Design per unit (EXECUTE)
+- [ ] CONSTRUCTION - NFR Requirements per unit (EXECUTE)
+- [ ] CONSTRUCTION - NFR Design per unit (EXECUTE)
+- [ ] CONSTRUCTION - Infrastructure Design (EXECUTE)
+- [ ] CONSTRUCTION - Code Generation per unit (EXECUTE)
+- [ ] CONSTRUCTION - Build and Test (EXECUTE)
+- [ ] OPERATIONS - Placeholder
+
+## Workspace Detection Findings
+
+- Existing Rust and Astro source code makes this a brownfield project.
+- No active or completed AI-DLC state exists at the fixed active path.
+- No reverse-engineering artifacts exist for this workflow.
+- Root AGENTS.md was read and remains binding.
+- Existing uncommitted changes include authored source, AI-DLC setup files, package metadata, and generated public data.
+- No deployment or AWS mutation is authorized by this request.
+
+## Reverse Engineering Status
+
+- [x] Reverse Engineering - Completed on 2026-07-23T06:34:04Z
+- [x] Reverse Engineering - Approved on 2026-07-23T06:36:30Z
+- **Artifacts Location**: aidlc-docs/inception/reverse-engineering/
+- **Repository Files Analyzed**: 98
+- **Current Product Finding**: Résumé and Portfolio are temporary external Notion links sourced from the external Vault's `Passion Project.md`; no native routes, components, structured data, print/download behavior, or regression tests exist.
+- **Quality Evidence**: 82 Rust tests passed and the Astro build generated 220 pages.
+- **Generated Boundary**: No generated file was used as the sole source of a behavior change.
+- **Git-Flow Blocker**: `main` and `develop` are diverged; no feature branch may be created until the base is confirmed or repaired.
+- **Deployment**: Not performed and not authorized.
+
+## Requirements Analysis Status
+
+- **Started**: 2026-07-23T06:36:30Z
+- **Request Clarity**: Complete after validated requirement, canonical-source, Security-scope, and PBT-scope answers.
+- **Request Type**: New user-facing feature and enhancement.
+- **Initial Scope**: Multiple components and an external authored-content boundary.
+- **Initial Complexity**: Moderate.
+- **Requirements Depth**: Standard.
+- **Question File**: aidlc-docs/inception/requirements/requirement-verification-questions.md
+- **Questions**: 23
+- **Question Validation**: All 23 original decisions are complete after applying the explicit Question 3 clarification.
+- **Clarification File**: aidlc-docs/inception/requirements/requirements-clarification-questions.md
+- **Clarifications**: 1
+- **Clarification Validation**: Complete; Question 3 explicitly confirmed option A.
+- **Contradiction Check**: Complete; no unresolved contradictions.
+- **Gate Status**: Passed.
+- **Extension Decisions**: Resiliency disabled; Security disabled by the later scope clarification; Property-Based Testing fully enabled.
+- **Security Scope Conflict**: Question 19 excludes infrastructure/CI debt while Question 22 makes all applicable SECURITY findings blocking.
+- **Security Clarification File**: aidlc-docs/inception/requirements/requirements-security-scope-clarification-questions.md
+- **Security Clarification Result**: Option B; Security Baseline disabled and feature-focused scope retained.
+- **PBT Scope Conflict**: Question 19 excludes Jenkins changes while full PBT makes CI execution blocking under PBT-08.
+- **PBT Clarification File**: aidlc-docs/inception/requirements/requirements-pbt-scope-clarification-questions.md
+- **PBT Clarification Result**: Option A; full PBT retained, and the minimum Jenkins path/PBT execution work is included.
+- **Requirements Document**: aidlc-docs/inception/requirements/requirements.md
+- **Requirements Generated**: 2026-07-23T08:15:07Z
+- **Requirements Validation**: Passed; 18 functional requirements, 10 non-functional requirements, 4 user scenarios, 12 edge/error scenarios, traceability, acceptance evidence, and extension compliance are present.
+- **Requirements Gate**: Approved on 2026-07-23T08:23:41Z with the user response "다음 단계를 진행해줘".
+- **User Stories Assessment**: Execute; this is a new user-facing feature with multiple audiences, user journeys, acceptance boundaries, and error scenarios.
+- **PBT Compliance at This Stage**: N/A; Requirements Analysis is not an enforcement stage in the PBT enforcement table. Future stage obligations are traced in the requirements document, and no blocking PBT finding exists.
+
+## User Stories Status
+
+- **Started**: 2026-07-23T08:23:41Z
+- **Assessment Document**: aidlc-docs/inception/plans/user-stories-assessment.md
+- **Assessment Decision**: Execute; high-priority new user feature, user-experience change, and multi-persona system criteria apply.
+- **Story Plan**: aidlc-docs/inception/plans/story-generation-plan.md
+- **Planning Questions**: 3
+- **Planning Answers**: A/A/A — Journey-first Hybrid, vertical outcome stories, and Given/When/Then plus constraint/evidence traceability.
+- **Planning Question Validation**: Passed on 2026-07-23T08:39:06Z; all answers use valid choices and contain no ambiguity, contradiction, or requirements conflict.
+- **Clarification Status**: Not required.
+- **Planning Gate**: Approved on 2026-07-23T08:44:59Z with the user response "다음 단계를 진행해줘".
+- **Generation Status**: Completed on 2026-07-23T08:55:30Z; awaiting explicit artifact approval.
+- **PBT Compliance at This Stage**: N/A; User Stories is not an enforcement stage in the PBT enforcement table. PBT obligations remain traced for later applicable stages.
+- **Later Workflow Input**: Feature branches must follow the repository Git Flow from `develop`; base-safety verification remains a Workflow Planning prerequisite and does not alter the current story questions.
+- **Personas Artifact**: aidlc-docs/inception/user-stories/personas.md
+- **Stories Artifact**: aidlc-docs/inception/user-stories/stories.md
+- **Generated Coverage**: 4 personas, 6 user-outcome stories, 4 enabling stories, and 40 Given/When/Then acceptance criteria.
+- **Traceability Validation**: Complete for FR-001 through FR-018, NFR-001 through NFR-010, USCN-001 through USCN-004, and EDGE-001 through EDGE-012.
+- **INVEST Validation**: All 10 stories passed Independent, Negotiable, Valuable, Estimable, Small, and Testable review after splitting local PBT reproducibility from CI execution.
+- **Independent Artifact Review**: Passed; Korean-content verification, network-independent testing, persona mappings, evidence matrix, and PBT handoff are complete.
+- **Artifact Gate**: Approved on 2026-07-23T09:01:31Z with the user response "다음 단계를 진행해줘".
+- **Stage Status**: Completed and approved.
+
+## Workflow Planning Status
+
+- **Started**: 2026-07-23T09:01:31Z
+- **Prior Context Loaded**: Reverse engineering, requirements, requirement answers, user stories, personas, and story plan.
+- **Execution Plan**: aidlc-docs/inception/plans/execution-plan.md
+- **Generated and Validated**: 2026-07-23T09:16:39Z
+- **Planning Status**: Revised artifact approved on 2026-07-23T09:21:22Z with the user response "다음 단계를 진행시켜.".
+- **Risk Assessment**: Medium risk, Moderate rollback complexity, Complex testing.
+- **Stage Selection**: 8 stage types EXECUTE, 0 stage types SKIP, Operations PLACEHOLDER.
+- **Provisional Stage Execution Count**: 18 — Application Design + Units Generation + (5 per-unit stages × 3 provisional units) + integrated Build and Test; approval and content/branch gates are additional.
+- **User Stage Override**: Infrastructure Design changed from SKIP to EXECUTE on 2026-07-23T09:13:40Z.
+- **Infrastructure Authorization Boundary**: Execute design-time compatibility verification only; Terraform edits, AWS mutation and deployment still require separate authorization.
+- **Provisional Units**: 3 — Profile Domain and Native Experience; Homepage Publication Boundary; Quality Gate and CI Integration.
+- **Module Strategy**: Strictly sequential across units: complete U1's five-stage Construction loop, then U2's, then U3's; limited parallel work is allowed only inside the active unit.
+- **Branch Base Gate**: Preserve the dirty primary worktree; reconcile `origin/main` into an isolated branch from `origin/develop`, validate, then fast-forward local `develop` before any Construction feature branch.
+- **PBT Ownership**: U1 and U2 own property identification, generators, and tests; U3 only aggregates stable commands into CI and adds cross-unit evidence.
+- **Independent Review**: Passed after resolving PBT ownership, approval-status consistency, strict per-unit sequencing, stage-execution counting and sequential branch creation.
+- **Mermaid Validation**: Passed with Mermaid CLI 11.12.0 and the repository Puppeteer configuration.
+- **PBT Compliance at This Stage**: N/A; Workflow Planning is not an enforcement stage. Full PBT still makes later Functional Design, NFR Requirements, Code Generation, and Build and Test obligations binding.
+
+## Application Design Status
+
+- **Started**: 2026-07-23T09:21:22Z
+- **Execution Decision**: EXECUTE, approved through the Workflow Planning gate.
+- **Plan**: aidlc-docs/inception/plans/application-design-plan.md
+- **Plan Generated and Validated**: 2026-07-23T09:32:02Z
+- **Initial Questions**: 6; all answered A/B/A/B/A/A.
+- **Answers Validated**: 2026-07-23T10:10:20Z; valid options, no ambiguity or contradiction.
+- **Clarification Status**: Not required.
+- **Plan Approved**: 2026-07-23T10:22:29Z with the user response "다음 단계를 진행시켜."
+- **Confirmed Decisions**: TypeScript profile domain; explicit Vault profile slot; desktop/mobile Header links; `visibility: homepage`; homepage wikilinks normalize to `/` while all transclusions fail; full-detail stable `/resume.pdf`.
+- **Question Coverage**: Component identification, component methods, service layer, dependencies and design patterns.
+- **Independent Review**: Passed after removing no-JS, canonical-source, reference-contract, stale-PDF and follow-up-count conflicts.
+- **Required Artifacts**: `components.md`, `component-methods.md`, `services.md`, `component-dependency.md`, and consolidated `application-design.md`.
+- **Artifacts Generated and Validated**: 2026-07-23T10:34:30Z.
+- **Artifacts Location**: `aidlc-docs/inception/application-design/`.
+- **Design Inventory**: 12 components, 5 build-time services, one dependency matrix and 4 Mermaid diagrams with text alternatives.
+- **Traceability Validation**: Complete for FR-001 through FR-018, NFR-001 through NFR-010, ST-U01 through ST-U06 and ST-E01 through ST-E04.
+- **Consistency Validation**: Passed after aligning the C10 consumer summary, the C11 canonical/link contract and the hydration-independent server-rendered mobile profile navigation contract.
+- **Independent Artifact Review**: Passed; no remaining missing responsibility, dependency cycle, duplicate source, approval-boundary violation or no-JS contradiction.
+- **Markdown and Mermaid Validation**: Passed; all 4 relative detailed-document links resolve, structural checks passed and Mermaid CLI 11.12.0 rendered all 4 diagrams.
+- **Artifact Gate**: Approved on 2026-07-23T10:46:02Z with the user response "다음 단계를 진행시켜."
+- **Stage Status**: Completed and approved.
+- **Project Extension Compliance**: OBSIDIAN-01 compliant; OBSIDIAN-02 compliant; OBSIDIAN-03 N/A for documentation-only Application Design; OBSIDIAN-04 compliant with the branch-base gate retained and no branch created; OBSIDIAN-05 compliant with one active run.
+- **PBT Compliance at This Stage**: N/A; Application Design is not a PBT enforcement stage. Per-unit Functional Design and later applicable stages retain the approved PBT obligations.
+
+## Units Generation Status
+
+- **Started**: 2026-07-23T10:46:02Z.
+- **Execution Decision**: EXECUTE, approved through Workflow Planning and enabled by approved Application Design.
+- **Current Part**: Part 2 — Generation.
+- **Plan**: `aidlc-docs/inception/plans/unit-of-work-plan.md`.
+- **Plan Generated and Validated**: 2026-07-23T10:46:02Z.
+- **Planning Questions**: 5; all answered A/A/A/A/A.
+- **Answers Validated**: 2026-07-23T11:14:59Z; valid choices with no ambiguity, contradiction or existing-approval conflict.
+- **Clarification Status**: Not required.
+- **Question Coverage**: Story Grouping, Dependencies, Team Alignment, Technical Considerations and Business Domain.
+- **Code Organization**: N/A because this is a Brownfield project with approved existing Rust/Astro/fixtures/CI organization and one static deployment.
+- **Planning Baseline**: 3 logical units — U1 Profile Domain and Native Experience, U2 Homepage Publication Boundary, U3 Quality Gate and CI Integration.
+- **Cross-Unit Story Model**: The recommended option distinguishes primary owner, contributor and closure unit for ST-U01, ST-U03 and ST-E03 without moving U1/U2 PBT implementation into U3.
+- **Independent Plan Review**: Passed after making all cross-unit closure points explicit; no remaining question-format, ownership, PBT, branch or deployment blocker.
+- **Plan Gate**: Approved on 2026-07-23T12:05:53Z with the user response "다음 단계로 진행해줘".
+- **Plan Approved**: 2026-07-23T12:05:53Z with the user response "다음 단계로 진행해줘".
+- **Generation Status**: Completed and validated on 2026-07-23T12:18:03Z; explicit artifact approval is pending.
+- **Artifacts**: `unit-of-work.md`, `unit-of-work-dependency.md`, `unit-of-work-story-map.md`.
+- **Generated Unit Count**: 3 — U1 Profile Domain and Native Experience; U2 Homepage Publication Boundary; U3 Quality Gate and CI Integration.
+- **Planned Execution Count**: 18 total — 2 Inception + 15 per-unit Construction + 1 integrated Build and Test.
+- **Construction Sequence**: branch-base gate, then complete/merge U1 → U2 → U3 from the latest validated `develop`; integrated Build and Test last.
+- **Ownership Validation**: C01~C12 and S01~S05 each have exactly one production owner.
+- **Story Validation**: 10 stories and 40 acceptance criteria are assigned with explicit primary, contributor and closure roles.
+- **Traceability Validation**: Complete for FR-001~FR-018, NFR-001~NFR-010, USCN-001~USCN-004 and EDGE-001~EDGE-012.
+- **Dependency Validation**: U1→U2→U3 is acyclic; provider contracts, readiness, reopen and sequential `develop` merge gates are explicit.
+- **Boundary Validation**: Authored/generated, user fact approval, single Vault file, owner-local PBT, actual non-deploy Jenkins evidence, Infrastructure Design no-change, no-push and no-deploy rules passed.
+- **Independent Artifact Review**: Passed after removing an unapproved C11→U2 dependency, clarifying the user as fact approver, completing expected source paths and preventing ST-E04 closure from a Jenkinsfile diff or local-only simulation.
+- **Markdown Validation**: 3 files, 53 tables, 15 relative links and balanced fences passed; Mermaid is N/A because the unit artifacts contain no diagrams.
+- **Artifact Gate**: Approved on 2026-07-23T12:54:31Z with the user response "다음 단계로 진행해줘".
+- **Stage Status**: Completed and approved.
+- **Branch Boundary**: No reconciliation or feature branch before Units Generation artifact approval and the separate branch-base gate.
+- **PBT Compliance at This Stage**: N/A; Units Generation is not an enforcement stage. Owner-local U1/U2 properties and tests plus U3 ST-E04 aggregation remain mandatory handoffs.
+- **Project Extension Compliance**: OBSIDIAN-01 compliant; OBSIDIAN-02 compliant; OBSIDIAN-03 N/A for documentation-only Units Generation; OBSIDIAN-04 compliant with the branch-base gate retained and no Git mutation; OBSIDIAN-05 compliant with one active run.
+
+## Branch Base Reconciliation Status
+
+- **Started**: 2026-07-23T12:54:31Z after explicit Units Generation artifact approval.
+- **Completed and Verified**: 2026-07-23T13:08:44Z.
+- **Pre-Reconciliation Refs**: `main`/`origin/main` at `24ae7621423319ed8b9408360f9b59512660f8e10`; local/remote `develop` at `b191bbf5a631ddb5ab2ae99bead8e1a317e3ecdc`; divergence was 113 `main`-only and 8 `develop`-only commits.
+- **Isolation**: The merge was performed in a temporary clean worktree. The dirty primary `main` worktree and all pre-existing user changes remained untouched.
+- **Merge Result**: Created merge commit `67f70a4240819ed8b9408360f9b59512660f8e10` with parents old `develop` and current `main`, subject `chore: reconcile develop with main`.
+- **Semantic Resolution**: Retained current `main` implementations where they superseded duplicate image work, preserved `develop`-only uppercase/mixed-case image-extension behavior in shared `syntax.rs`, retained its regression fixture coverage, selected the valid current PNG asset and aligned image-output assertions with current decorative-alt semantics.
+- **Validation**: Six targeted image tests passed; the uppercase-extension unit test passed; `just test` passed all 85 Rust tests; `cd site && npx astro build` generated 220 pages successfully; `git diff --check` passed.
+- **Formatting Note**: `cargo fmt --check` reports widespread pre-existing formatting drift in the reconciled baseline. No unrelated bulk formatting was applied; this was not an approved branch-base gate and the required project checks passed.
+- **Local Ref Update**: Local `develop` was fast-forwarded to `67f70a4240819ed8b9408360f9b59512660f8e10`. Both old `develop` and `main` are ancestors of the result.
+- **U1 Branch**: `codex/feature/resume-profile-experience` was created at the reconciled `develop` commit. The primary dirty worktree remains on `main`; no U1 application code has been written.
+- **Remote and Deployment Boundary**: No push, external Vault edit, Terraform/AWS mutation or deployment occurred.
+- **Project Extension Compliance**: OBSIDIAN-01 compliant; OBSIDIAN-02 compliant; OBSIDIAN-03 compliant for the approved reconciliation gates with the extra formatting diagnostic recorded; OBSIDIAN-04 compliant through isolated reconciliation and the focused U1 branch; OBSIDIAN-05 compliant with one active run.
+- **PBT Compliance**: N/A for this transition gate; no product logic or PBT enforcement-stage artifact was created.
+
+## U1 Functional Design Status
+
+- **Started**: 2026-07-23T13:08:44Z.
+- **Execution Decision**: EXECUTE; U1 introduces a canonical data model, validation, projections, metadata and document-parity business rules.
+- **Plan**: `aidlc-docs/construction/plans/profile-domain-and-native-experience-functional-design-plan.md`.
+- **Current Part**: Functional Design artifact approval.
+- **Questions**: 14, covering public-ready schema, entity relationships, period precision, text normalization, fact approval, diagnostics, link validation, ID/order, case-study content, metadata summaries, Header order, résumé summary/section order, profile-local navigation and web/print/PDF parity.
+- **Answers**: A/A/A/A/A/A/A/A/A/A/A/A/A/A, submitted and validated on 2026-07-23T13:51:44Z.
+- **Answer Validation**: Passed format, clarity, consistency and approved-boundary checks. Q3's unambiguous next-line answer was mechanically normalized to the `[Answer]:` line. No clarification file is required.
+- **Artifacts Generated and Validated**: 2026-07-23T14:15:08Z — `business-logic-model.md`, `business-rules.md`, `domain-entities.md` and `frontend-components.md`.
+- **Functional Contract**: Approved-answer schema, Experience/Achievement variants, project relation and visible case studies, deterministic diagnostics, exact route metadata, static navigation, approved-fact projection and full web/print/PDF manifest parity are mutually consistent.
+- **PBT-01 Status**: Compliant. The artifacts define 12 stage-level properties, 22 business-rule refinements, 15 domain refinements and 9 frontend refinements for C01~C05, C11 and S01; S04 is explicitly marked `No PBT properties identified` for independent side-effect orchestration with named example/document gates.
+- **PBT Category Review**: Round-trip, Invariant, Idempotence, Commutativity, Oracle, Induction and Easy verification are each applied or explicitly marked N/A with rationale. Determinism is not mislabeled as idempotence; human approval, CSS/visual quality and PDF byte identity are not replaced by PBT.
+- **PBT Handoff**: All property IDs are binding Code Generation inputs for the U1 ST-E03 slice. A defect-discovering shrunk counterexample must become a permanent named example regression while retaining the property.
+- **PBT-02 through PBT-10**: N/A at Functional Design. Their later enforcement points are unchanged; PBT-09 framework selection is next in U1 NFR Requirements.
+- **Independent Artifact Review**: Passed after resolving canonical manifest fields and period coverage, Experience organization/role projection, visible portfolio outcome summary, metadata consistency negative properties/diagnostics and lexical issue ordering. Three independent final reviews report no remaining finding.
+- **Traceability Validation**: C01~C05, C11, S01/S04, FR-001~FR-007, FR-010~FR-015, U1 Story/AC responsibilities and EDGE-001~006/008~011 are covered; property crosswalk IDs resolve without duplicates.
+- **Markdown Validation**: Five plan/artifact files, 78 tables, 9 relative links and balanced code fences passed. The 64 business-rule IDs and 40 diagnostic codes are unique; every used diagnostic is registered. Mermaid is N/A because the artifacts contain no diagrams.
+- **Artifact Gate**: Approved on 2026-07-23T15:02:53Z with the user response `"continue to the next stage"`.
+- **Stage Status**: Completed and approved.
+- **Deferred to NFR Requirements**: TypeScript PBT framework, generator library, shrinking/seed syntax, browser/PDF tool, viewport, breakpoint, CSS and print metrics.
+- **Fact Boundary**: Actual public facts remain outside production data and require a separate atomic or user-selected fact approval process before public-ready code/PDF completion.
+- **Change Boundary**: AI-DLC Functional Design documentation only. No application source, generated output, external Vault, Git ref, remote branch, Terraform/AWS resource, push or deployment was changed.
+- **Project Extension Compliance**: OBSIDIAN-01 compliant; OBSIDIAN-02 compliant with authored/generated boundaries and untouched user changes; OBSIDIAN-03 N/A for documentation-only design; OBSIDIAN-04 compliant with the focused U1 branch and no Git mutation; OBSIDIAN-05 compliant with one active run.
+- **Security and Resiliency**: Both extensions remain disabled; no SECURITY or RESILIENCY compliance claim is required for this stage.
+
+## U1 NFR Requirements Status
+
+- **Started**: 2026-07-23T15:02:53Z after explicit Functional Design approval.
+- **Execution Decision**: EXECUTE; U1 requires accessibility, responsive, print/PDF, static performance, compatibility, maintainability, testability and TypeScript PBT/tooling choices.
+- **Current Part**: NFR Requirements artifact approval.
+- **Plan**: `aidlc-docs/construction/plans/profile-domain-and-native-experience-nfr-requirements-plan.md`.
+- **Questions Generated**: 14 context-specific questions covering responsive/browser/accessibility, deterministic performance, print/PDF/font/inspection, TypeScript runner/PBT, test ownership/coverage, document reliability, public-link integrity and static availability/scalability boundaries.
+- **Question Validation**: Passed on 2026-07-23T15:20:33Z. Exactly 14 question headings, 14 empty `[Answer]:` tags, 14 final `X) Other` options and 14 recommended choices are present; each question has at least two meaningful options with CommonMark blank-line separation.
+- **First Answer Submission**: 2026-07-23T16:29:55Z with the user response "작성 완료"; 13/14 because Q7 was empty, so the gate remained blocked.
+- **Complete Answer Submission**: 2026-07-23T16:32:08Z with the user response "작성 완료".
+- **Answer Completeness**: 14/14.
+- **Submitted Choices**: A/A/A/A/A/B/A/A/A/A/A/B/A/A.
+- **Answer Validation**: Passed. Every answer matches an available choice and is clear, mutually consistent and compatible with all prior approvals. No clarification file was required.
+- **Current Stack Analysis**: Astro 6 static output, TypeScript 5.9 and npm are retained. Effective Node engine is refined to `^22.12.0 || >=24.0.0` so the selected Vitest stack does not claim unsupported Node 23.
+- **Official Capability Review**: Current Astro, Vitest, fast-check, Playwright, WCAG 2.2, PDF.js and Pretendard primary documentation was used to bound the options.
+- **Independent Question Review**: Passed after three reviews resolved runner-option conflicts, 320px and WCAG evidence gaps, current CDN/local-font isolation, PDF manifest identity feasibility, tagged-structure/outline verification, NFR-006 coverage, Playwright provisioning, retry/atomic output and network-scope conflicts. No blocking or material finding remains.
+- **Required Artifacts**: `nfr-requirements.md` and `tech-stack-decisions.md`.
+- **Artifacts Generated and Validated**: 2026-07-23T16:48:00Z under `aidlc-docs/construction/profile-domain-and-native-experience/nfr-requirements/`.
+- **NFR Catalog**: 15 measurable U1 NFRs covering responsive/browser/accessibility, deterministic static performance, print/PDF/font/inspection, PBT/test layers, maintainability/source boundaries, reliability, link integrity, static readiness and search/share consistency.
+- **Tech Stack Decisions**: 9 decision records. Vitest/fast-check connector is installed now; Playwright, Axe, Pretendard and compatible PDF.js are selected Code Generation handoffs.
+- **PBT-09 Status**: Compliant. Direct devDependencies resolve Vitest 4.1.10, fast-check 4.9.0 and `@fast-check/vitest` 0.4.1. An Astro-aware Vitest config and two-test framework smoke prove structured custom generators, connector integration, generated-case shrinking, same-seed reproduction and captured seed/path replay.
+- **Isolated Tooling Worktree**: `/private/tmp/obsidian-blog-u1-nfr` checks out `codex/feature/resume-profile-experience`. It contains `site/package.json`, `site/package-lock.json`, `site/vitest.config.ts` and `site/tests/pbt/framework-selection.pbt.test.ts` changes. Dirty primary `main` and its pre-existing lockfile diff remain untouched.
+- **Validation**: `npm ci --ignore-scripts`, `npx tsc --noEmit --pretty false`, `npm run test:pbt:framework` (2 passed), `npm run build` (4 pages in the clean no-generated-content worktree), direct `npm ls`, `git diff --check`, answer extraction, relative-link, Markdown table/fence and whitespace checks passed.
+- **Audit Observation**: `npm audit` reports 17 findings in the existing Astro/tooling graph; the three selected PBT package names are not direct findings, while their shared pre-existing Vite dependency remains in the report. Security extension is disabled and no broad dependency upgrade or automatic audit fix was authorized.
+- **Independent Artifact Review**: Passed after fixing seed-independent example replay, Node engine compatibility, NFR-004 maintainability/source boundaries, exact accessibility viewports, U1/U2 ownership leakage and the mandatory Infrastructure Design compatibility-stage wording. Three final reviews report no blocking or material finding.
+- **Artifact Gate**: Approved on 2026-07-24T06:02:15Z with the user response "다음 단계로 진행해".
+- **Disabled Extensions**: Security and Resiliency remain disabled. Product integrity/privacy requirements already approved in NFR-007 remain in scope, but no disabled extension rule is re-enabled.
+- **Change Boundary**: AI-DLC documentation changed in the primary workspace; minimal PBT-09 tooling changed only in the isolated U1 feature worktree. No profile product source, external Vault content, tracked generated output, PDF binary, Git ref, remote branch, Terraform/AWS resource, push or deployment changed. Active AI-DLC artifacts must be transferred to the focused feature branch before commit preparation.
+- **Project Extension Compliance**: OBSIDIAN-01~05 compliant. Risk-proportional gates passed; the required later Infrastructure Design compatibility/no-change stage remains scheduled and no infrastructure mutation is authorized.
+- **Stage Status**: Completed and approved.
+
+## U1 NFR Design Status
+
+- **Started**: 2026-07-24T06:02:15Z after explicit U1 NFR Requirements approval.
+- **Execution Decision**: EXECUTE; the approved execution plan requires NFR patterns and logical components for the U1 static experience, test/PDF pipeline and compatibility boundaries.
+- **Current Part**: NFR Design artifact approval gate.
+- **Required Inputs**: Approved U1 Functional Design, U1 NFR Requirements, tech-stack decisions, application design and unit ownership artifacts.
+- **Plan**: `aidlc-docs/construction/plans/profile-domain-and-native-experience-nfr-design-plan.md`.
+- **Questions Generated**: 16 context-specific questions covering startup retry, crash-safe document promotion, static scalability N/A, CSS/resource budgets, external stylesheet policy, private artifact containment, source/manifest integrity, JSON-LD safety, PBT/preview/font/PDF components, receipt persistence and stable command topology.
+- **Category Coverage**: Resilience, Scalability, Performance, Security/Integrity and Logical Components were all evaluated. Runtime HA/autoscaling/cache/queue/auth/session/telemetry concerns have explicit evidence-backed N/A boundaries rather than silent omission.
+- **Question Structure Validation**: Passed on 2026-07-24T06:12:58Z. Exactly 16 question headings, 16 `[Answer]:` tags, 16 final `X) Other` options and 16 recommended choices are present; every question has at least two meaningful options. All answer tags are now completed and separately validated below.
+- **Independent Question Review**: Passed after correcting C03/C04 serialization ownership, profile-scoped layout choices, C11/S04/C12 document-inspection ownership, the five-command contract and read-only CI/verification boundary. No blocking or material finding remains.
+- **Answer Submission**: 2026-07-24T06:21:17Z with the user response "작성 완료".
+- **Answer Completeness**: 16/16.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed. Every answer exactly matches an available option, all choices are mutually consistent and the approved NFR, component ownership, five-command and no-deployment boundaries remain intact. No clarification file is required.
+- **Required Artifacts**: `nfr-design-patterns.md` and `logical-components.md`.
+- **Artifacts Generated and Validated**: 2026-07-24T06:47:05Z under `aidlc-docs/construction/profile-domain-and-native-experience/nfr-design/`.
+- **Pattern Design**: 17 named patterns covering clean startup retry, single-writer promotion/rollback, static capacity, deterministic resources, path/digest/JSON-LD integrity, PBT/preview/browser evidence and two-pass PDF release.
+- **Logical Component Design**: 20 logical components/contracts with C11 pure, S04 side-effect, neutral owner-local CLI, U1 verification provider and later U3 C12/S05 aggregation ownership.
+- **Cross-Surface Contract**: Expected, actual web, browser print and PDF ordered manifests must be exactly equal; manual web accessibility and exact-SHA PDF review have separate currentness-bound records.
+- **Release Reliability**: Draft evidence is atomically persisted by S04 between prepare/promote invocations. Pending promotion retains a previous PDF/receipt recovery snapshot and explicit rollback states through second build/final verification.
+- **Command Topology**: Exactly five U1 stable commands. CI/U3 aggregates the four read-only commands and never invokes mutating `resume:pdf`.
+- **Validation**: 16/16 decisions, NFR-U1-001~015 coverage in both artifacts, 17 pattern IDs, 20 component IDs, exactly five commands, relative links, Markdown tables/fences, required contracts and `git diff --check` passed.
+- **Independent Artifact Review**: Passed after resolving rollback durability, canonical Unicode encoding, final receipt assembly, print obligations, U1/U3 ownership, manual accessibility currentness, full cross-surface parity, neutral orchestration, pending transaction verification and cross-invocation draft persistence. Three final reviews report no blocking or material finding.
+- **Artifact Status**: Complete and approved on 2026-07-24T06:52:11Z with the user response "다음 단계로 진행해줘".
+- **Extension Boundary**: Security and Resiliency remain disabled. Product NFR-007 integrity/privacy remains binding. PBT has no direct NFR Design enforcement rule, but approved PBT-09 decisions and later Code Generation obligations remain binding.
+- **Infrastructure Boundary**: NFR Design may model static artifact and verification components but does not replace or skip the separately required U1 Infrastructure Design compatibility/no-change stage.
+- **Mutation Boundary**: This stage changed AI-DLC documentation only. No profile product source, external Vault, generated output, Git ref, Terraform/AWS resource, push or deployment is authorized.
+
+## U1 Infrastructure Design Status
+
+- **Started**: 2026-07-24T06:52:11Z after explicit U1 NFR Design approval.
+- **Execution Decision**: EXECUTE; the approved workflow requires a separate U1 static-delivery compatibility/no-change gate.
+- **Current Part**: Infrastructure Design artifact approval gate.
+- **Plan**: `aidlc-docs/construction/plans/profile-domain-and-native-experience-infrastructure-design-plan.md`.
+- **Required Inputs**: Approved U1 Functional Design, NFR Requirements, NFR Design, unit dependency, reverse-engineered architecture and existing authored infrastructure.
+- **Baseline Mapping**: Astro static output → existing private S3 origin → existing CloudFront OAC/default behavior/function → `rvnnt.dev`.
+- **Expected Result**: Existing S3/CloudFront topology compatibility with no Terraform/AWS/DNS/cache-policy change; inherited deployment-input/validation gaps are recorded rather than treated as implemented.
+- **Questions Generated**: 8, covering deployment environment, compute/font bootstrap, storage/MIME, messaging, networking/CSP, cache/rollout/rollback, monitoring and shared infrastructure.
+- **Question Structure Validation**: Passed on 2026-07-24T07:00:01Z. Exactly 8 question headings, 8 empty `[Answer]:` lines, 8 final `X) Other` options and 8 recommended choices are present; every question has at least two meaningful options.
+- **Independent Question Review**: Passed after correcting all-extensionless CloudFront rewrite wording, preserving direct fresh-clone Astro build in every font-bootstrap alternative and synchronizing the approved execution-plan status. No blocking or material finding remains.
+- **Mermaid Revalidation**: The synchronized execution-plan diagram rendered successfully with Mermaid CLI 11.12.0 on 2026-07-24.
+- **Answer Submission**: 2026-07-24T07:04:32Z with the user response "작성 완료".
+- **Answer Completeness**: 8/8.
+- **Submitted Choices**: A/A/A/A/A/A/A/A.
+- **Answer Syntax Validation**: Passed. Every answer exactly matches an available option.
+- **Resolved Consistency Finding**: Q3's exclusive `만` list omitted the Astro/Vite compiled profile CSS; clarification A established a representative list and complete `site/dist/` namespace without weakening the 24KiB CSS gate.
+- **Clarification File**: `aidlc-docs/construction/plans/profile-domain-and-native-experience-infrastructure-design-clarification-questions.md`.
+- **Clarification Questions**: 1; answer A submitted and validated on 2026-07-24T07:20:54Z.
+- **Clarification Structure Validation**: Passed on 2026-07-24T07:09:57Z with one question, one empty answer, two meaningful options and one final `X) Other`.
+- **Independent Clarification Review**: Passed after synchronizing plan/state/execution status. No blocking or material finding remains at the answer gate.
+- **Retained Infrastructure Artifacts**: 3 generated and validated artifacts under the required unit/shared paths; explicit approval pending.
+- **Clarification Result**: Original Q3 list is representative of new U1 delivery objects. The actual deployable set remains the complete `site/dist/`, including Astro/Vite hashed CSS, WOFF2 and existing site assets; the 24KiB profile CSS gate remains binding.
+- **Generated Artifacts**: `infrastructure-design.md`, `deployment-architecture.md` and `aidlc-docs/construction/shared-infrastructure.md`.
+- **Artifact Generation and Validation**: Completed on 2026-07-24T07:40:24Z.
+- **Compatibility Risks Identified**: Fresh-clone font materialization; direct/profile output versus deploy-preprocessed full-site output; `just deploy` unsafe fixture default; missing deployment path/completeness gates; nightly unconditional Jenkins Deploy; stable PDF shared caching; non-atomic S3 sync/invalidation; exact production rollback absence; MIME evidence under `nosniff`.
+- **Infrastructure Result**: Existing S3/CloudFront/OAC/default behavior/function/header/logging topology is compatible and unchanged. Direct/fixture builds are non-deploy evidence. Only an explicitly production-path-validated, deploy-preprocessed and completeness-gated full-site `site/dist/` can be deployment-eligible.
+- **Deployment Automation Finding**: Current automation was inspected, not changed. `just deploy` can default to `./fixtures/vault`; Jenkins runs nightly and enters Deploy unconditionally after a successful build; neither path has the required explicit path/generated-output completeness gate. This workflow invokes neither.
+- **Rollback Result**: Local PDF pair rollback remains exact. Production exact rollback is unavailable without a retained complete release or exact repository-plus-Vault/generated-input snapshot; current production recovery is best-effort redeploy only.
+- **Validation**: Q1~Q8 and clarification A traceability, NFR-U1-001~015, FR-016/017, LC-U1-01~20, complete public/private/generated boundaries, relative links, Markdown tables/fences and `git diff --check` passed. All 3 Mermaid diagrams rendered with Mermaid CLI.
+- **Independent Artifact Review**: Passed after resolving physical Jenkins behavior versus workflow authority, exact rollback overclaim, reduced direct-build versus full-site deployment state and unsafe fixture-default deployment input. Final reviewers report no blocking or material finding.
+- **Artifact Status**: Complete and approved on 2026-07-24T07:47:23Z with the user response "다음 단계를 진행해줘".
+- **Required Artifacts After Answers**: `infrastructure-design.md`, `deployment-architecture.md` and shared `aidlc-docs/construction/shared-infrastructure.md`.
+- **PBT Compliance**: N/A for Infrastructure Design; Code Generation and Build and Test obligations remain binding.
+- **Extension Configuration**: Obsidian Press project extension enabled; Security and Resiliency disabled and skipped.
+- **Mutation Boundary**: Documentation only. No application source, external Vault, generated public artifact, Git ref, remote branch, Terraform/AWS resource, push, invalidation or deployment changed.
+
+## U1 Code Generation Status
+
+- **Started**: 2026-07-24T07:47:23Z after explicit U1 Infrastructure Design approval.
+- **Current Part**: Part 2 — Generation.
+- **Plan**: `aidlc-docs/construction/plans/profile-domain-and-native-experience-code-generation-plan.md`.
+- **Plan Generated and Validated**: 2026-07-24T08:07:06Z.
+- **Plan Inventory**: 25 sequential steps and 148 execution checkboxes covering brownfield baseline, business logic/tests/summary, explicit API/repository/database N/A, frontend/tests/summary, font/build/browser/PDF tooling, documentation and deployment-artifact no-change evidence.
+- **Workspace Root**: `/Users/revenantonthemission/Projects/obsidian-blog`.
+- **Implementation Worktree**: `/private/tmp/obsidian-blog-u1-nfr`.
+- **Feature Branch**: `codex/feature/resume-profile-experience` at reconciled local `develop` `67f70a4240819ed8b9408360f9b59512660f8e10`.
+- **Branch State**: Existing in-scope NFR toolchain changes are present in `site/package.json`, `site/package-lock.json`, `site/vitest.config.ts` and `site/tests/pbt/framework-selection.pbt.test.ts`; they must be preserved and incorporated, not duplicated.
+- **Planning Result**: Exact modified/new/test/tool/document paths, five stable commands, all U1 story/NFR/property obligations and generated/public/private boundaries are fixed in the plan.
+- **Hard Human Gates**: Exact inventory/production-diff fact approval; current-digest manual web accessibility review; exact candidate-SHA PDF review before promotion.
+- **PBT Planning Compliance**: PBT-01~10 disposition is explicit. NFR Design's mutable release journal adds a pure model-based PBT-06 state-sequence suite while actual filesystem/crash behavior remains named example coverage.
+- **Independent Plan Review**: Passed after preserving the existing `MobileNav.tsx` path/behavior boundary, requiring production `FactApprovedProfile` plus tracked non-public digest receipt, adding PBT-06 and synchronizing approved NFR Design artifact headers. No blocking or material finding remains.
+- **Plan Approval**: Approved on 2026-07-24T08:09:41Z with the exact user response "다음 단계로 진행해줘".
+- **Part 1 Status**: Complete.
+- **Completed Generation Steps**: Steps 1~18. Step 3 added synthetic-only Korean/Unicode fixtures, 135 obligation aliases across 21 canonical evidence targets, nine explicit PBT N/A dispositions and a five-test fail-closed map validator. Step 4 added the immutable C01 entity/read-model/result types, exact 40-code diagnostic vocabulary with numeric-index stable sorting and `code+path` deduplication, and trim → LF → NFC deep-cloning normalization. Step 5 added shape-safe aggregate validation plus stable-ID canonical fact traversal and exact inventory/diff/receipt correspondence. Step 6 added canonical résumé/portfolio/homepage selectors, branded-state S01 assembly seams and a production-safe explicit barrel. Step 7 added exact route metadata, conservative opaque JSON-LD documents and script-safe round-trip hosting, pathname-bound profile/legacy resource policy, and fixed segment-aware navigation. Step 8 added runtime-authenticated validated/approved capabilities, complete ordered résumé manifests, domain-separated canonical digests, fixed document request/link guards, structured four-surface evidence mapping and current-manifest/current-evidence-bound draft/review/release receipts. Step 9 added six business-logic unit suites, four owner-local canonical PBT suites, broad shrink-friendly generators/mutations, synthetic approval correspondence, exact independent manifest/provenance/diagnostic oracles and a replay-safe prevalidated Vitest runner with stable pure commands. Step 10 documented the exact business source/test/tooling inventory, C01/C03/C11/S01 contracts, diagnostics, fact gate, property ownership/PBT compliance and production boundaries, while correcting three traceability gaps found during review. Step 11 scoped network/transport API generation and API unit testing as N/A for the U1 delta, recorded inherited repository network behavior as explicit carveouts and fixed concrete architecture-change triggers for reevaluation. Step 12 scoped repository/data-access/database and runtime state infrastructure as N/A for the U1 delta, separated authored, tracked-derived and private-generated artifacts, and preserved future local filesystem and PBT-06 obligations. Step 13 pinned and verified the Pretendard variable dynamic subset, added fixed-root crash-conscious private materialization and every-build Astro integration, and proved scoped same-origin content-hashed output with full OFL metadata without changing legacy build assets. Step 14 recorded the user's exact A/A/A/A fact/public-disclosure decision, finalized 77 Approved records and four external destination checks, reproduced the final inventory/diff/profile identities and created the value-free 11-key machine receipt without materializing production profile data. Step 15 materialized the exact 77 Approved facts as the sole frozen production `ProfileData`, added a build-only exact receipt/evidence/structural digest gate and final public-output leak scan, and proved zero approved inventory drift without creating routes early. Step 16 added frozen fact-attributed renderer-neutral résumé/portfolio trees and eight static semantic Astro components with exact section/dimension order, native closed disclosures, approved-ID automation hooks and no raw markup or hydration. Step 17 composed the two production routes, backward-compatible typed BaseLayout metadata/JSON-LD/resource hosting, immutable four-item Header/native MobileNav SSR and foundation/résumé/portfolio/print style layers. Step 18 added direct C02 presentation mapper properties, fixed/static production-output examples, canonical metadata/navigation host evidence, exact frontend alias closure and the Frontend Components Summary.
+- **Step 4 Verification**: `npx tsc --noEmit --pretty false`, profile-tools compilation, normalization/immutability/unknown-tag smoke checks, the five-test obligation validator and `git diff --check` pass. Independent re-review confirmed the initial unknown-tag coercion defect was fixed and found no remaining Step 4 blocker.
+- **Step 5 Verification**: Valid fixture, multi-issue aggregation, no-throw malformed candidates, cyclic scalar non-mutation, project-count/order/period/relation/content/link negatives, encoded traversal rejection, 40-fact approval success, value/status/order/receipt mismatch failures, TypeScript, the five-test obligation validator and `git diff --check` pass. Two independently found defects—Pending-record cascade and cyclic invalid-scalar freeze/crash—were fixed; focused re-review found no remaining Step 5 blocker.
+- **Step 6 Verification**: Numeric root/nested ordering, exact six-dimension order, absent optional-key omission, source `PublicFact` identity, route-local/shared non-interference, wrapper immutability, branded assembly input separation and production-barrel export checks pass. TypeScript, profile-tools compilation, the five-test obligation validator and `git diff --check` pass; independent review found no blocking or material finding.
+- **Step 7 Verification**: Exact résumé/portfolio title, visible-summary description, canonical, OG/Twitter identity, JSON-LD schema/order/allowlist/evidence mapping, unsupported-claim mutation rejection, opaque construction boundary, safe `<`/`>`/`&`/U+2028/U+2029 serialization, structural round trip, profile/legacy resource separation, fixed navigation order, query/fragment/trailing-slash/descendant handling, prefix-collision rejection and public-barrel containment pass. Full TypeScript, profile-tools compilation, production-gate/opaque-type negative checks, integrated and hardening runtime smokes, the five-test obligation validator and `git diff --check` pass. Independent review identified and drove fixes for a pathname-independent resource validator and structurally constructible public JSON-LD type; focused re-review reports both resolved with no regression.
+- **Step 8 Verification**: Full and profile-tools TypeScript checks, compile-time production-barrel negatives, a complete approval → manifest → web/print/PDF → draft → exact 11-item review → release smoke, the five-test obligation validator, Astro static build, whitespace scan and `git diff --check` pass. Negatives cover structural approval/validation forgery, post-approval mutation, source/path/order/fact changes, getter/proxy input, missing/extra/reordered observations, forged tagged-tree paths/vectors/roles, ambiguous PDF occurrences, stale SHA/digests, out-of-page references, self-consistent persisted receipt forgery, changed release mappings, extra review fields and whitespace-only reviewer identity. Independent reviews found and drove fixes for runtime capability issuance, persisted mapping self-validation, shallow tagged evidence, throwing public guards, release evidence binding and exact review shape; the final read-only review reports no remaining material finding.
+- **Step 9 Verification**: Initial close passed full and profile-tools TypeScript checks, six unit files/54 tests, four canonical PBT files/24 properties at 100 runs, separate two-test framework proof, Astro static build, whitespace scan and `git diff --check`. Step 10 traceability re-review corrected DE-P13/DE-P15 ownership, added one obligation-map regression and two non-vacuous S01 production-boundary properties, bringing the current totals to 55 unit tests and 26 properties; focused independent re-review is clean. Default execution printed seed `1018959259`; two same-seed full replays and a focused seed/path replay passed. A one-use failing property produced seed `4242`, counterexample `[10]`, seven shrinks and path `0:1:0:0:0:0:0:2`; exact path replay reproduced the counterexample and the proof file was removed. Reviews drove stronger generator/mutation breadth, synthetic approval properties, independent exact manifest/provenance/diagnostic oracles, and a permanent regression for the runner's former false zero-test focus success. Current pure properties are closed; C02/BaseLayout/Header surface refinements remain Step 18, actual four-surface document mapping remains Step 21 and mutable release-state/release aliases remain Step 22 in fail-closed `deferredCoverage`.
+- **Step 10 Verification**: `business-logic-summary.md` GFM parsing found five valid tables and no code/Mermaid blocks; authored path, trailing-whitespace and diff checks pass. Full TypeScript and profile-tools checks, six unit files/55 tests, four canonical PBT files/26 properties × 100 at seed `1729`, separate two-test framework proof and Astro static build pass. Independent contract/file-boundary reviews found incorrect DE-P13/DE-P15 suite ownership, incomplete S01 metadata assembly evidence and unmarked FD-P-C11-01 future four-surface mapping; all were corrected, the initial vacuous invalid-output helper was replaced by direct production-boundary assertions, and focused re-review plus final summary review report no material finding. Fixtures/reviews remain synthetic test source; actual facts, routes, PDF and release are explicitly unclaimed.
+- **Step 11 Verification**: Exact 17-file U1 application-source and 44-file full-delta scans found no new runtime API call, endpoint/server handler, auth/session/form/webhook or external API client. `site/src/pages/**` and static Astro configuration are unchanged; dependency changes are static font and local test/inspection tooling only. The N/A summary parses as three GFM tables with no code/Mermaid blocks. Independent review found one overbroad pure-build-time wording claim; it was corrected to preserve local materialization/browser/PDF/filesystem tooling, and focused re-review found no remaining issue. No application or test source changed in Step 11.
+- **Step 12 Verification**: Exact 17-file U1 application-source and 44-file full-delta scans found no repository/DAO, ORM/database/schema/migration, runtime persistence, queue/worker, cache, telemetry/analytics or health-check implementation; application source has no external or Node/filesystem import and direct persistence dependencies are absent. The summary distinguishes authored source/tooling, future tracked receipts/public PDF, private generated artifacts and transient build outputs; it retains inherited filesystem/cache/browser storage/S3 carveouts and keeps Step 13 local materialization, Step 22 release tooling/PBT-06 and filesystem recovery examples applicable. At Step 12 start, the missing/prunable uncommitted implementation worktree was reconstructed at the exact path/branch from 175 recorded successful patches and the exact dependency commands. The restored 44-file delta passed both TypeScript checks, 55 unit tests, 26 properties at seed `1729`, two framework tests and the four-route Astro build without stage, commit, push, merge or deployment. Independent review found and corrected one pre-/post-approval receipt lifecycle overstatement; focused re-review and six-table GFM parsing are clean.
+- **Step 13 Verification**: Pinned `pretendard@1.3.9` official variable dynamic CSS, 92 WOFF2 files and full OFL license as 94 exact path/byte/SHA records plus source-set digest. Fixed-root, package-lock, regular/no-symlink, hash/format/CSS-closure/license verification feeds exclusive UUID staging, file/directory fsync, identity checks, cooperating publish lock, atomic directory rename, exact-tree validation, safe cleanup and mutation-free reuse. Generated CSS uses the distinct `RVNNT Profile` family and pre-hash wording-preserving, whitespace-canonicalized full-license `@license` metadata; the at-rule may trigger a non-blocking CSS validator warning. Vite `7.3.2` tests prove exact metadata once, content-hash sensitivity, 92 unique root-relative same-origin URLs with emitted-file closure and no private license/manifest exposure. Focused tooling 13 tests, TypeScript two checks, six unit files/66 tests, four PBT files/26 properties × 100 at seed `1729`, two framework tests and a fresh direct four-route Astro build all pass. Fresh build materialized 95 private outputs; current reduced `dist/` correctly has no profile font because routes remain future work. Legacy output hashes are unchanged. Three independent review tracks report no blocker; no fact, route, PDF, external Vault, deployment, push or merge changed.
+- **Step 14 Verification**: The four answers exactly match A/A/A/A with no contradiction or non-answer edit. All 77 records are Approved with zero Pending/Excluded records; four URL checks and every decision record bind to `U1-CG-S14-FACT-APPROVAL-20260725T034431Z` at `2026-07-25T03:44:31Z`. Final inventory/Approved-record/diff/materialized-profile digests are `25357f9902858abeafe17a3b3016c43328852ea8dce29453e48cd83da31fa345`, `356356f9dc5f8b2b93e4d7bf88a3f11a8181f55f1485ed82c8994ae994aa6474`, `a4ebc55bd3e3d78ae8d3239abdc81e0a52921d19e1c0c0cb28ea49cbad53c6e1` and `775177b9cd3dd6b662e25a3094d96ba56260084de06d9d527c531481b4c9e15e`. Normative generator SHA `a186c6989f06fe95d98d143e4329f04a87b11298e4c3c40199b8a371f2f29e59`, runtime-compatible evidence projection, four-file byte equality and the exact value-free 11-key human/machine receipt match pass. `profile-data.ts` remains absent.
+- **Step 15 Verification**: The sole `profile-data.ts` contains the exact 77 Approved values, IDs, orders, omissions, block shapes and relations with no receipt/review/fixture data. Build-only production gating performs recursive exact-key source inspection, C01 validation, exact evidence and decision-record construction, recomputes Approved-record/materialized-profile/production-diff SHA-256 including numeric order and absence/relation structure, validates the fixed 11-key receipt, then and only then issues `FactApprovedProfile` and S01 assembly. Astro config setup executes this before output; final build-done scanning rejects private receipt markers in content and file/directory paths after sitemap generation. Full/project-tools TypeScript, seven unit files/84 tests, four PBT files/27 properties × 100 at seed `1729`, framework two tests, four-route Astro build, independent output scan and diff checks pass. Independent reviews reproduced all 77 records and digests, found and closed two P2 exact-key/path-leak cases, and report no remaining finding.
+- **Step 16 Verification**: `presentation.ts` maps only validated résumé/portfolio projections plus the C11 document-link descriptor into frozen semantic trees, retaining approved fact IDs, entity/evidence IDs and orders, typed content, tagged periods and exact optional omission without sorting or repair. Eight Astro components render one shell h1/local nav, exact résumé sections with initially closed native details, 3~6 semantic portfolio articles and all six dimensions through literal text/list nodes and normal labelled anchors. Stable component-role test IDs use approved entity suffixes; an independently found repeated evidence-wrapper ID P2 was removed and focused re-review is clean. `npx astro check` reports 0 errors, existing seven unit files/84 tests and four PBT files/27 properties × 100 at seed `1729` pass, as do the reduced four-route Astro build and `git diff --check`. Step 18 retains renderer/static-markup test closure.
+- **Step 17 Verification**: `/resume` and `/portfolio` compose only the approved S01/C02/C03 boundaries, while BaseLayout hosts one typed metadata set, serializer-only JSON-LD and pathname-validated profile/legacy resources. Header and native static MobileNav share one immutable ordered four-anchor state without MobileNav hydration; inherited search/theme behavior remains. Four profile CSS layers use the 480/768 boundaries and no truncation; résumé print owns A4/12mm, 10pt/1.4, CSS-only details expansion, screen-only omission and fitting-entry/long-detail break policy. Profile jsDelivr/Pretendard/KaTeX resources are zero, legacy three-link defaults remain, and the current profile CSS sanity union is 18,738 gzip bytes below 24KiB. `npx astro check` reports 0 errors, existing 84 unit tests and 27 properties × 100 at seed `1729` pass, as do the direct six-page build, output assertions and `git diff --check`. One print fragmentation P1 was fixed and focused re-review is clean; Step 18 still owns canonical presentation/metadata/navigation/static-output unit/PBT closure.
+- **Step 18 Verification**: `profile-presentation.test.ts` adds fixed presentation examples and an isolated lockfile-local Astro build to an exact temporary output root; the canonical presentation PBT now invokes the actual résumé/portfolio mappers and checks hierarchy, typed fact/block attribution, optional-node-only removal, closed disclosures, declarative actions and exact six dimensions. Static output verifies one h1, logical headings including required ARIA levels, item-matched native details/summary, exact local/desktop/mobile SSR anchors/current parity, MobileNav outside an island, unique automation IDs, canonical/visible-summary metadata equality, ordered JSON-LD hosting and structured search/nav-tree isolation. Full and profile-tools TypeScript, `npx astro check` with 0 errors and six existing hints, 8 unit files/89 tests, 4 PBT files/26 properties × 100 at seed `1729`, two same-seed full PBT runs, exact focused replay, direct six-page Astro build and `git diff --check` pass. Three Step 18 deferrals are closed while Step 21 C11 and Step 22 release deferrals remain. Independent reviews found and closed two static-output P2s plus two summary P2s; focused re-reviews report no remaining finding.
+- **Step 19 Verification**: Ancestry-only descendant discovery could not prove zero residual processes, because a grandchild whose intermediate parent exits first is reparented to init and leaves every ppid walk. `owned-process-registry.mjs` now opens an ownership scope before the first spawn, mints `PROFILE_OWNED_PROCESS_OWNERSHIP_TOKEN`, inherits it through the whole owned subtree and rediscovers survivors by probing candidate environments with `ps eww -p`, as explicitly approved by the human operator on 2026-07-25. Candidacy is decided against a scope-start `pid → identityKey` baseline rather than parsed `lstart`, so recycled pids are reconsidered and pre-existing processes are never probed; the verifier and its ancestors are excluded, a 256-probe budget fails closed, survivors are signalled by pid only because `-pid` would target an unrelated group when the survivor does not lead one, and the probe returns nothing but a boolean — execFile rejections are re-raised carrying only an outcome code so captured environment text cannot reach an error, log or evidence field. `clean-profile-build.mjs`, `preview-supervisor.mjs` and `verification-provider.mjs` open the scope before spawning and AND the sweep verdict into `ownershipReleaseSafe`; paths that open no scope keep their prior behaviour. Two new registry regressions assert that a token-owned orphan whose parent is init is reaped, and that a same-window process without the token is left running. 14 unit files/130 tests, 4 PBT files/26 properties × 100 at both the default seed and seed `1729`, `npx astro check` with 0 errors and the same 6 inherited hints, and `node --check` on all four tooling modules pass. A live `test:e2e` run exercised clean build → owned preview on an ephemeral `127.0.0.1` port → three browser contexts → Playwright spawn, with `residualResources: 0`, `status: succeeded`, `portReleased: true` and empty `failures` for the preview, browser-preflight and Playwright process trees. The run also exercised both retry branches: a classified `BROWSER_ENGINE_LAUNCH_FAILED` retried exactly once after clean teardown, while the terminal test failure recorded `retryDecision: stage-not-eligible`. It terminates at `Error: No tests found` because `site/tests/e2e/` is Step 20 scope; `request-ledger.mjs` non-loopback abort and `asset-budget.mjs` gzip/hydration budgets carry unit coverage but await Step 20 specs for end-to-end exercise. The pinned Playwright engines were materialized locally (`firefox-1532`, `webkit-2311`); no fact, route, PDF, external Vault, deployment, push or merge changed.
+- **Step 20 Verification**: `site/tests/e2e/` now closes the contract Step 19 pinned. Six specs and five support modules record the exact 48-key completion matrix, and because that matrix spans three Playwright projects — and therefore three worker processes — no single process can observe it: each spec seals a fragment on disk and a `globalTeardown` merges them in the parent, writing the record even when incomplete so a missing cell is diagnosable rather than absent. The contract is imported, never restated: `verificationEvidenceSchema` supplies the matrix, obligations and spec-file list, every emitted key is checked against it, and `computeAccessibilityReviewSubject` recomputes the digest through the provider's own boundary. A fragment is written only once the checks backing its obligations actually held, so a spec with a failing test contributes nothing. `profile-resources.spec.ts` installs the existing request ledger on a context created before its first page and finalizes it after every page has settled, since an aborted island request would otherwise record an attempt with no response. Axe ran WCAG 2.0/2.1 A/AA plus 2.2 AA with no blanket exclusion and found five real contrast defects: `--c-accent` (`#0d9488`) measures 3.59:1 on the light background against the 4.5:1 AA asks of text. The profile now scopes `--c-profile-accent-text` (`#0f766e`, 5.31:1) for the résumé headline, contact actions, local-navigation current link and case-study dimension headings, and `global.css` moves the site-navigation current-page label to `--c-accent-hover`; borders and the dark theme (already 10.6:1) are unchanged. Three composition validators then failed closed in turn and were each fixed empirically rather than worked around: approved external destinations now emit `checkedAt` in the canonical ISO-8601 form `isIsoTimestamp` requires, without touching `PUBLIC_SOURCE_CHECKED_AT` itself because it is an approval-digest input; and `readBuildIdentity` supplies `manifestSha256` by hashing the written manifest bytes exactly as `clean-profile-build.mjs` does, since that digest is the hash of the manifest file and cannot live inside it. `npm run test:e2e` exits 0 with `result: pass` across all four groups — browser, linkMetadata, resource and manualWebAccessibility — over 59 browser tests, a 43-attempted/43-successful request ledger with zero external requests, print pagination reported as 2 pages on both A4 and Letter, and tools `axe 4.12.1`, `chromium 149.0.7827.55`, `firefox 151.0`, `webkit 26.5`, `playwright 1.61.1`. `npx astro check` reports 0 errors with the same 6 inherited hints and 128 unit tests pass. The human PAUSE was honoured: reviewer 조준희 reviewed the live routes on 2026-07-25 and recorded a full pass over all 12 manual states with no target-size exception, stamped with review-subject digest `f9688988f1bcd93e23e088b4b1db26148e1eff370ef8001d945f173c7499e902`. No PDF, external Vault, deployment, push or merge changed.
+- **Step 21 Verification**: The S04 pipeline is generated and was driven end to end against a live loopback preview: clean build → `pdf-renderer.mjs` → `pdf-inspector.mjs` → `compareRenderedManifest` on both surfaces → `mapPdfEvidence` → `compareResumeSurfaces` → `assembleDraftResumeInspectionReceipt` → `pdf-viewer.mjs`, all passing. Step 21 turned out smaller than the plan reads, because the C11 mapper, the surface comparison and the draft receipt were already generated in Steps 15–18; what was missing were the three tools that feed them. Ordinals are the interesting design decision. Chromium does not carry `data-profile-entity-*` into the PDF, and the tag tree cannot separate a contact link from a skill — both are `L > LI`, yet one has no entity and the other is an entity of its own — so the renderer observes the section/entity/fact skeleton from the print-media DOM and the inspector aligns extraction to it. Reading the boundaries off the approved manifest was rejected: that takes the ordinals from the answer key, so a PDF disagreeing with the rendered document could still pass. Three real defects surfaced, and each shared one shape — a check that passed while the content was wrong. Periods store an approved token (`start:year-month:2023-07|end:year-month:2023-08`) but render a label (`2023-07 – 2023-08`), and `normalizePdfOccurrence` compared them directly, so four of the 51 entries could never map; it now inverts the presentation and returns `null` on an unreadable period rather than passing it through as text. Closed `<details>` content did not print at all: the user agent hides it with content-visibility on its slot, which `display: block !important` on a descendant does not defeat, while `getComputedStyle` still reports `block` — so the renderer now opens every disclosure before printing and measures real layout height instead of computed display, and the candidate grew from 317,938 to 330,153 bytes with the experience detail restored. PDF text-item order is paint order, not reading order — the `<summary>` painted after the section following it — so occurrences are claimed from a stream assembled by walking the tagged structure tree through marked content, which is what `PdfStructureObservation.readingOrder` and `structurePath` exist for. A line wrap contributes a space only where the rendered text has one, because Korean wraps mid-word and treating every wrap as a space silently corrupts the value. `isValidPrintCheck` machine-enforces `bodyTextMinimumPt >= 10`; period and organisation text sat at 9pt (0.9rem under a 10pt print root), so `print.css` lifts those and `.evidence-actions a` to 10pt in print only, leaving the deliberate on-screen 0.9rem hierarchy alone, and the measurement rounds to a hundredth of a point so the browser's 13.3333px quantization does not read as a shortfall. The draft receipt assembles as `resume-inspection-draft` / `private-candidate` / `not-reviewed` / `not-authorized`; every one of those is a type-level literal, so a draft cannot claim approval. 14 unit files / 146 tests and `npx astro check` with 0 errors and the same 6 inherited hints pass; the new suite fails missing, extra, changed, reordered, ambiguous, link, structure, outline, stale and unreadable candidates by name. **The print change moves the review subject.** `src/styles/profile` is a review-subject directory, so the recorded Step 20 manual accessibility review is now stale: the digest moved from `f9688988f1bcd93e23e088b4b1db26148e1eff370ef8001d945f173c7499e902` to `ea01e41e125c9662aa04cb226736f74e0403e1cbb158efe29bc51c017f046870`, and `npm run test:e2e` will fail `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE` until the 12 states are reviewed again. One nuance is recorded rather than claimed: `PdfRenderedPageEvidence` carries a per-page `evidenceId`, and the inspector derives it from the page's extracted text; no raster page image is produced, because the evidence type does not carry one. No PDF was promoted, and no external Vault, deployment, push or merge changed.
+- **Step 22 Verification**: The release transaction, its pure journal model and the five-command surface are generated. The journal runs `PREPARED → PROMOTION_VALIDATED → RECOVERY_SNAPSHOTTED → RECEIPT_PROMOTED → PDF_COMMITTED → FINAL_VERIFIED` with a four-state rollback arm. `PDF_COMMITTED` is the public-file commit point: before it, failure is recovered by restoring nothing; after it, only by restoring the verified snapshot the journal names. The pure model is the single authority on the next transition and the filesystem layer asks it before every mutation, so the order is never written down twice. The lock is decided by `O_CREAT|O_EXCL` alone, and a lock whose owner has died is deliberately not broken — a stale lock and a live one are indistinguishable from outside, and guessing wrong puts two writers on the public file. The receipt is replaced before the candidate is renamed, so a crash in between leaves a receipt naming a PDF that is not there, which is exactly the signal that stops the old PDF being reported as current. The pending capability lives only in a `WeakMap` and its `toJSON` throws, so a capability restored from a file, an environment variable or a CLI argument cannot exist. **PBT-06 found two real defects, both in the properties rather than the model.** `["open","crash"]` showed that `crash`/`resume` are legal everywhere and move nothing, so the no-rung-skipping invariant belongs only to state-changing transitions. `["open","requireRollback",…,"cleanup","open"]` showed that the one-way rollback property is scoped to a transaction rather than a process, because `cleanup` ends the transaction and a fresh promote may legitimately go forward afterwards; a hand-written example would not have crossed that boundary. The reference transition table is enumerated by hand from the NFR Design state table rather than imported from `FORWARD_TRANSITIONS`, since comparing a lookup against itself proves only that it is deterministic. **Two items outside the planned checkboxes were required.** `compile-profile-tools.mjs` appears in plan section 4.4 but no step had generated it, and without it S04 cannot call the pure C11 release functions at all, because only Astro's Vite graph can import the authored `.ts`. Second, approved by the user as option (a): `buildApprovedResumeManifest` and the route-facing `buildApprovedResumeDocumentRequest` could never succeed against the real approved profile, leaving the whole PDF document path unreachable in production while every stage looked correct in isolation. `resume-manifest.ts` had restated the identifier rule locally as a lowercase slug, while `fact-approval.ts`, which mints those identifiers, accepts any canonical identifier; Step 14's uppercase `decisionAuditId` was therefore rejected by the stricter copy. `isCanonicalApprovalIdentifier` is now exported from the owning module and used for the four approval fields, while `isIdentifier` still governs `entity.id` and `entry.factId` where slugs are correct. The audit ID was not renumbered: all 77 approved records bind to it, and changing it would void the recorded digests and force human re-approval. Three regressions pin this against the real production assembly, because a synthetic approval with a lowercase ID would have passed the broken code. Verification: `npm run test:unit` 176 tests / 15 files, PBT 32 properties / 5 files at seed `1729`, `npx astro check` 0 errors with the same 6 inherited hints, and `resume:pdf:verify`, an unknown command and a mode-less `resume:pdf` each exit 1. Five new `toThrowError` deprecation hints were introduced and removed, restoring the inherited count. No PDF was promoted and no external Vault, deployment, push or merge changed.
+- **Step 22 Residual**: The negative-example checkbox is partial. Cross-device, stale review/source and the exact rollback cycle all require mutating the tracked pair, and the store's fixed paths are the safety property itself, so injecting them in a unit test would weaken what is being verified; they close in the Step 23 live run. `FD-P-C11-01` also remains in `deferredCoverage` at `remainingStep: 21` — Step 21 built the document pipeline but never cleared its entry, and clearing it was not Step 22's to do.
+- **AI-DLC Artifact Location**: `aidlc-docs/` was brought onto `codex/feature/resume-profile-experience` during Step 22, which this state file already required before commit preparation. It also remains on `codex/chore/aidlc-scaffolding`; the two converge when the feature branch merges.
+- **Current Generation Step**: Step 23 — prepare, human-review and promote the exact résumé PDF behind its own exact-SHA human gate. Step 22 is closed apart from the recorded residual.
+- **Mutation Boundary Before Part 2**: Planning changed AI-DLC markdown only. No application source in the implementation worktree was changed before plan approval.
+- **Deployment Boundary**: No Sites hosting, `just deploy`, Jenkins Deploy, AWS/Terraform/DNS mutation, external Vault write, push or merge is authorized.
+- **PBT Boundary**: U1 owns all approved profile-domain generators/properties/examples; U3 may later aggregate stable commands but cannot defer or duplicate them.
+
+## Next Step
+
+Execute Step 23. Run `npm run resume:pdf -- --prepare` to produce the first clean build, the private candidate, its PDF.js evidence, full four-surface parity and the draft receipt; present the exact candidate ID/SHA, source fingerprint, manifest digest and viewer path; then **PAUSE** until the user has reviewed those exact pages and authored the fixed review record. Only then run `npm run resume:pdf -- --promote <candidate-id> --review <path>`, which revalidates the review against the current candidate and source, assembles the final receipt, promotes under the single-writer lock, runs the clean second build, and routes the transaction-scoped verdict to `finalize` or `rollback`.
+
+The prepare and promote paths have not yet been driven live; Step 22 verified them by unit and property coverage plus the approved-manifest path, not by a full run. Expect the first live prepare to surface wiring detail, and treat any failure as evidence rather than as something to work around.
+
+Three residuals close here: cross-device, stale review/source and the exact rollback cycle, none of which a unit test can observe without weakening the store's fixed-path safety property. `npm run test:e2e` should also be re-run, since the Step 20 manual accessibility record is current at digest `ea01e41e125c9662aa04cb226736f74e0403e1cbb158efe29bc51c017f046870` but has not been exercised since the Step 22 changes.
+
+Do not change external Vault, deployment, push or merge state.
