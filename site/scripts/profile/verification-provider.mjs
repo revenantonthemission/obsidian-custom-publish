@@ -3567,7 +3567,10 @@ export const verificationEvidenceSchema = deepFreeze({
  * not an option it could take even if that looked helpful — an incomplete
  * release reported as current is exactly what this exists to prevent.
  */
-export async function verifyCurrentRelease() {
+export async function verifyCurrentRelease({
+  buildTimeoutMs,
+  renderTimeoutMs,
+} = {}) {
   const { inspectReleaseState, readCurrentReleasePair } = await import(
     './release-store.mjs'
   );
@@ -3621,6 +3624,20 @@ export async function verifyCurrentRelease() {
     );
   }
 
+  // Everything above is cheap correspondence and runs first so a stale or
+  // mismatched pair fails before a multi-minute build. Everything below is the
+  // §5.2 obligation proper: the tracked PDF is re-inspected against surfaces
+  // freshly rendered from current source, because digests only prove the
+  // receipt and the bytes agree — not that those bytes still say what the site
+  // says today.
+  const reinspection = await reinspectTrackedRelease({
+    pair,
+    manifest,
+    tools,
+    buildTimeoutMs,
+    renderTimeoutMs,
+  });
+
   return deepFreeze({
     rule: PROVIDER_RULE,
     group: 'document',
@@ -3631,7 +3648,137 @@ export async function verifyCurrentRelease() {
     receiptSha256: pair.receipt.sha256,
     sourceIdentity: manifest.sourceIdentity.digest,
     manifestFingerprint: manifest.fingerprint.digest,
+    buildId: reinspection.buildId,
+    pageCount: reinspection.pageCount,
+    mappedFacts: reinspection.mappedFacts,
+    surfaceParity: reinspection.surfaceParity,
   });
+}
+
+/** Routes for the supervised preview the reinspection observes. */
+const REINSPECTION_ROUTES = Object.freeze(['/resume', '/portfolio']);
+
+/**
+ * Unwraps a pure result, which reports issues instead of throwing.
+ *
+ * Reading `.value` without checking would hand the caller `undefined` and let a
+ * structurally valid verdict describe nothing — the exact failure shape this
+ * unit has produced five times.
+ */
+function requireReinspectionValue(result, what) {
+  if (result?.ok) return result.value;
+  throw providerError(
+    'RELEASE_REINSPECTION_INVALID',
+    `The tracked release failed reinspection at the ${what} stage.`,
+    'verification.release.reinspect',
+    { what, issues: result?.issues ?? null },
+  );
+}
+
+/**
+ * Clean build, supervised preview, and full four-surface reinspection of the
+ * PDF already on disk.
+ *
+ * The tracked PDF is never re-rendered. Re-rendering would compare the source
+ * against a second render of itself and always agree, while the file actually
+ * published went unchecked — and since the renderer is not byte-reproducible,
+ * a fresh render could not be compared to the tracked bytes anyway. So the
+ * surfaces are observed fresh and the *existing* bytes are extracted and
+ * matched against them.
+ *
+ * This mutates nothing tracked. The build writes gitignored `dist/`, the
+ * preview is a local loopback process, and the inspector only reads.
+ */
+async function reinspectTrackedRelease({
+  pair,
+  manifest,
+  tools,
+  buildTimeoutMs,
+  renderTimeoutMs,
+}) {
+  const { renderResumePdfCandidate } = await import('./pdf-renderer.mjs');
+  const { inspectResumePdfCandidate } = await import('./pdf-inspector.mjs');
+
+  const buildIdentity = await cleanProfileBuild(
+    buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs },
+  );
+
+  let lease;
+  try {
+    lease = await startStaticPreview({
+      distRoot: buildIdentity.root,
+      buildIdentity,
+      requiredRoutes: REINSPECTION_ROUTES,
+    });
+
+    // The ledger maps each response back to a file the build emitted, so the
+    // identities must come from the build manifest. An empty list does not
+    // disable the check; it makes every response unmappable.
+    const buildManifest = JSON.parse(
+      await readFile(buildIdentity.manifestPath, 'utf8'),
+    );
+
+    const observed = await renderResumePdfCandidate({
+      baseURL: lease.baseURL,
+      buildIdentity,
+      manifest,
+      schemaVersion: tools.RESUME_EVIDENCE_SCHEMA_VERSION,
+      emittedAssets: buildManifest.outputFiles,
+      // No candidate is minted. This call is here for its observations only.
+      emitCandidate: false,
+      ...(renderTimeoutMs === undefined ? {} : { timeoutMs: renderTimeoutMs }),
+    });
+
+    const snapshot = (
+      await inspectResumePdfCandidate({
+        candidatePath: pair.pdf.path,
+        candidate: Object.freeze({
+          candidateId: pair.receipt.value.candidateId,
+          pdfSha256: pair.pdf.sha256,
+        }),
+        sourceIdentity: manifest.sourceIdentity,
+        manifestFingerprint: manifest.fingerprint,
+        skeleton: observed.skeleton,
+        tools: observed.tools,
+      })
+    ).snapshot;
+
+    const web = requireReinspectionValue(
+      tools.compareRenderedManifest(manifest, observed.webSurface),
+      'web surface',
+    );
+    const print = requireReinspectionValue(
+      tools.compareRenderedManifest(manifest, observed.printSurface),
+      'print surface',
+    );
+    const pdfEvidence = requireReinspectionValue(
+      tools.mapPdfEvidence(manifest, snapshot),
+      'PDF evidence',
+    );
+    requireReinspectionValue(
+      tools.compareResumeSurfaces({
+        expected: manifest,
+        web,
+        print,
+        pdf: pdfEvidence,
+      }),
+      'cross-surface comparison',
+    );
+
+    return Object.freeze({
+      // The field is `id` on the build identity, not `buildId`. Naming it
+      // wrong produced no error at all — JSON.stringify simply omitted the
+      // undefined value, so the verdict silently lost a field it claimed.
+      buildId: buildIdentity.id,
+      pageCount: snapshot.pageCount,
+      mappedFacts: pdfEvidence.mappings.length,
+      surfaceParity: 'pass',
+    });
+  } finally {
+    if (lease !== undefined) {
+      await lease.cleanup();
+    }
+  }
 }
 
 /**

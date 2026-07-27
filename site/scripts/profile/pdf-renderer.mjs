@@ -82,6 +82,12 @@ export async function renderResumePdfCandidate({
   schemaVersion,
   emittedAssets = [],
   timeoutMs = DEFAULT_RENDER_TIMEOUT_MS,
+  // `resume:pdf:verify` needs the observed surfaces without minting a new
+  // candidate: it re-inspects the PDF already on disk. Observing through this
+  // same function rather than a parallel one is deliberate — a second
+  // observation path would be free to drift from the one the release used, and
+  // the parity claim rests on both being measured identically.
+  emitCandidate = true,
 } = {}) {
   requireSupervisedOrigin(baseURL);
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
@@ -179,25 +185,28 @@ export async function renderResumePdfCandidate({
     );
     await page.emulateMedia({ media: null });
 
-    const bytes = await page.pdf({
-      format: PAPER,
-      margin: {
-        top: `${MARGIN_MM}mm`,
-        right: `${MARGIN_MM}mm`,
-        bottom: `${MARGIN_MM}mm`,
-        left: `${MARGIN_MM}mm`,
-      },
-      preferCSSPageSize: true,
-      printBackground: false,
-      tagged: true,
-      outline: true,
-    });
-    if (bytes.byteLength === 0) {
-      throw rendererError(
-        'PDF_RENDER_EMPTY',
-        'The renderer produced an empty candidate.',
-        'pdf.render.print',
-      );
+    let bytes = null;
+    if (emitCandidate) {
+      bytes = await page.pdf({
+        format: PAPER,
+        margin: {
+          top: `${MARGIN_MM}mm`,
+          right: `${MARGIN_MM}mm`,
+          bottom: `${MARGIN_MM}mm`,
+          left: `${MARGIN_MM}mm`,
+        },
+        preferCSSPageSize: true,
+        printBackground: false,
+        tagged: true,
+        outline: true,
+      });
+      if (bytes.byteLength === 0) {
+        throw rendererError(
+          'PDF_RENDER_EMPTY',
+          'The renderer produced an empty candidate.',
+          'pdf.render.print',
+        );
+      }
     }
 
     // Every subresource must have settled before the page goes away, or the
@@ -221,18 +230,23 @@ export async function renderResumePdfCandidate({
       );
     }
 
-    const pdfSha256 = sha256(bytes);
-    const candidateId = deriveCandidateId(buildIdentity, pdfSha256);
-    const candidatePath = resolve(
-      PROFILE_PATHS.pdfCandidateRoot,
-      `${candidateId}.pdf`,
-    );
-    await mkdir(PROFILE_PATHS.pdfCandidateRoot, { recursive: true });
-    await writeFile(candidatePath, bytes);
+    let candidate = null;
+    let candidatePath = null;
+    if (emitCandidate) {
+      const pdfSha256 = sha256(bytes);
+      const candidateId = deriveCandidateId(buildIdentity, pdfSha256);
+      candidatePath = resolve(
+        PROFILE_PATHS.pdfCandidateRoot,
+        `${candidateId}.pdf`,
+      );
+      await mkdir(PROFILE_PATHS.pdfCandidateRoot, { recursive: true });
+      await writeFile(candidatePath, bytes);
+      candidate = Object.freeze({ candidateId, pdfSha256 });
+    }
 
     return Object.freeze({
       rule: RENDER_RULE,
-      candidate: Object.freeze({ candidateId, pdfSha256 }),
+      candidate,
       candidatePath,
       bytes,
       skeleton,

@@ -10,6 +10,18 @@ interface CanonicalTest {
   readonly semanticPropertyId?: string;
 }
 
+/**
+ * Declared rather than inferred, because the list is now empty: TypeScript
+ * infers `never[]` from the JSON and every field access becomes an error. The
+ * shape has to outlive the entries so a future deferral still type-checks.
+ */
+interface DeferredCoverage {
+  readonly ids: readonly string[];
+  readonly canonicalTestId: string;
+  readonly remainingStep: number;
+  readonly rationale: string;
+}
+
 const requiredObligationIds = [
   ...rangeIds('U1-P', 1, 12),
   ...rangeIds('DE-P', 1, 15),
@@ -95,10 +107,11 @@ describe('U1 obligation map', () => {
     const obligationIds = new Set(
       obligationMap.obligations.map(({ id }) => id),
     );
-    const deferredIds = obligationMap.deferredCoverage.flatMap(({ ids }) => ids);
+    const deferred = obligationMap.deferredCoverage as DeferredCoverage[];
+    const deferredIds = deferred.flatMap(({ ids }) => ids);
 
     expect(new Set(deferredIds).size).toBe(deferredIds.length);
-    for (const item of obligationMap.deferredCoverage) {
+    for (const item of deferred) {
       expect(
         canonicalIds.has(item.canonicalTestId),
         `unknown deferred canonical test ${item.canonicalTestId}`,
@@ -121,13 +134,11 @@ describe('U1 obligation map', () => {
     // evidence mapping. Clearing the entry while it still named that suite
     // would have asserted coverage no test performs.
     expect(
-      obligationMap.deferredCoverage.map(
-        ({ canonicalTestId, remainingStep, ids }) => ({
-          canonicalTestId,
-          remainingStep,
-          ids,
-        }),
-      ),
+      deferred.map(({ canonicalTestId, remainingStep, ids }) => ({
+        canonicalTestId,
+        remainingStep,
+        ids,
+      })),
     ).toEqual([]);
   });
 
@@ -139,7 +150,9 @@ describe('U1 obligation map', () => {
       ]),
     );
     const deferredIds = new Set(
-      obligationMap.deferredCoverage.flatMap(({ ids }) => ids),
+      (obligationMap.deferredCoverage as DeferredCoverage[]).flatMap(
+        ({ ids }) => ids,
+      ),
     );
 
     const presentationAliases = [

@@ -805,7 +805,8 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
 - [x] `npm run test:e2e`를 실행한다.
   - `result: pass`, buildId `ea921152229f6d987e29168ff397f570f57da70ab92a0075476a6a647ed82fb2`. Step 23 과 동일한 buildId 로 빌드 결정성이 유지된다.
 - [x] `npm run resume:pdf:verify`를 실행한다.
-  - `result: pass`, `releaseState: ABSENT`, `pdfSha256` `834faa3b…`. 단 §5.2 계약 편차는 미해결로 남아 있다.
+  - `result: pass`, `releaseState: ABSENT`, `pdfSha256` `834faa3b…`, `buildId` `ea921152…`, `pageCount: 3`, `mappedFacts: 51`, `surfaceParity: pass`.
+  - **§5.2 계약 편차는 해결되었다.** 사용자가 좁은 계약 재승인 대신 전체 흐름 구현을 선택했고, 이제 명령이 `no lock/journal → clean build/preview → full reinspection` 을 실제로 수행한다. tracked PDF 는 다시 렌더하지 않고 재추출해 새로 관측한 web/print surface 와 대조한다. 다시 렌더하면 소스를 자기 자신의 두 번째 렌더와 비교하게 되어 정작 발행된 파일이 검사되지 않는다.
 - [x] Internal `test:pbt:framework` proof와 direct `npx astro build`를 재검증한다.
   - Framework proof 1 file / 2 tests pass. Direct build `Complete!`.
 - [x] `git diff --check`, duplicate-file scan, source/generated/public/private scan과 no-edit set diff를 검사한다.

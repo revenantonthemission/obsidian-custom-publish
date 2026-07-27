@@ -154,17 +154,26 @@ CLI 인자에서 복원된 capability 는 **존재할 수 없다.**
    `validateResumeHumanReview` 는 NFC 문자열만 요구하므로 통과하지만 receipt 는
    관찰 기술이 없는 11개 판정을 싣는다. **감사 시 attested 로 읽어야 하며
    described 로 읽으면 안 된다.**
-4. **`resume:pdf:verify` 의 계약 편차.** 실제 동작은 digest 대조이며 계획 §5.2 가
-   규정한 `clean build/preview → full reinspection` 이 아니다. clean build 도
-   PDF.js 재추출도 하지 않는다. 수행하는 currentness 검사는 실제이고 fail-closed
-   이지만 승인된 계약보다 좁다. Step 25 가 이 명령을 최종 증거로 재실행하므로
-   그 전에 해결하거나 좁은 계약을 명시적으로 재승인해야 한다.
-5. **`FD-P-C11-01` 은 아직 `deferredCoverage` 에 있다.** 이 의무는
-   `PBT-U1-DOCUMENT` 를 가리키는데 그 suite 는 `compareResumeFactManifests` 로
-   manifest 끼리만 비교하고 `compareRenderedManifest`, `mapPdfEvidence`,
-   `compareResumeSurfaces` 를 실행하지 않는다. 실제 4-surface 커버리지는
-   `canonicalTests` 에 등록되지 않은 `tests/unit/resume-pdf.test.ts` 에 있다.
-   재지정 없이 지우면 없는 커버리지를 주장하게 되므로 Step 25 로 넘긴다.
+4. ~~`resume:pdf:verify` 의 계약 편차~~ — **Step 25 에서 해결됨.** 이제 계획
+   §5.2 대로 `no lock/journal → clean build/preview → full reinspection` 을
+   수행한다. 값싼 대조를 먼저 돌려 stale pair 는 빌드 비용 없이 밀리초 안에
+   실패시키고, 그 다음에 clean build → 감독된 loopback preview → web/print
+   surface 관측 → **tracked** PDF 재추출 → `mapPdfEvidence` →
+   `compareResumeSurfaces` 로 이어진다. tracked PDF 를 다시 렌더하지 않는다.
+   다시 렌더하면 소스를 자기 자신의 두 번째 렌더와 비교하게 되어 항상 일치하고
+   정작 발행된 파일은 검사되지 않으며, 렌더러가 byte-reproducible 하지 않으므로
+   새 바이트를 tracked 바이트와 비교할 수도 없다. digest 대조 대비 추가되는 것은
+   명확하다. `sourceIdentity` 는 사실을 digest 하므로 사실 변경은 이미 잡지만,
+   사실 digest 를 전혀 건드리지 않으면서 print 레이아웃이나 cross-surface parity
+   를 깨뜨리는 **렌더링 회귀**는 잡지 못한다. 현재 판정은 `result: pass`,
+   `buildId: ea921152…`, `pageCount: 3`, `mappedFacts: 51`,
+   `surfaceParity: pass` 다. 51개 매핑은 tracked 바이트에서 추출한 것이므로 이
+   단계는 구조적으로 비어 있지 않다. 비어 있다면 0 이 나온다.
+5. ~~`FD-P-C11-01` 은 아직 `deferredCoverage` 에 있다~~ — **Step 25 에서
+   해결됨.** `UNIT-U1-PDF` 로 `tests/unit/resume-pdf.test.ts` 를 등록하고 의무를
+   거기로 옮긴 뒤 deferral 을 비웠다. 그냥 지우지 않은 이유는 그대로다.
+   `PBT-U1-DOCUMENT` 를 가리킨 채 지웠다면 어떤 테스트도 수행하지 않는 커버리지를
+   주장하게 된다.
 
 ## 7. 현재 검증 상태
 
