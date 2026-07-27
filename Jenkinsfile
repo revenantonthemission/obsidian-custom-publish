@@ -28,7 +28,7 @@ pipeline {
                 }
                 stage('cargo build') {
                     steps {
-                        sh 'cargo build --release -p obsidian-press'
+                        sh 'cargo build --release --manifest-path preprocessor/Cargo.toml'
                     }
                 }
             }
@@ -37,7 +37,7 @@ pipeline {
         stage('Preprocess') {
             steps {
                 sh 'rm -rf content/posts content/meta content/assets'
-                sh './target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content'
+                sh './preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content'
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
                 sh 'cp content/previews.json site/public/previews.json'
