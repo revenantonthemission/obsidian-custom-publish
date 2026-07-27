@@ -22,6 +22,14 @@ import {
   monitorOwnedDescendants,
   prepareOwnedSpawn,
 } from './owned-process-registry.mjs';
+import {
+  ACCESSIBILITY_REVIEW_SUBJECT_DOMAIN,
+  ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION,
+  REQUIRED_MANUAL_CHECKS,
+  REQUIRED_MANUAL_MATRIX,
+  REVIEW_SUBJECT_SOURCE_DIRECTORIES,
+  REVIEW_SUBJECT_SOURCE_FILES,
+} from './accessibility-review-contract.mjs';
 import { PROFILE_PATHS } from './profile-paths.mjs';
 import {
   assertFreshStartupIdentity,
@@ -40,9 +48,6 @@ const PRIVATE_RUN_EVIDENCE = Object.freeze([
 ]);
 const DEFAULT_PLAYWRIGHT_TIMEOUT_MS = 15 * 60 * 1000;
 const DEFAULT_OUTPUT_LIMIT_BYTES = 512 * 1024;
-const ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION = 1;
-const ACCESSIBILITY_REVIEW_SUBJECT_DOMAIN =
-  'rvnnt.accessibility-review-subject.v1';
 const PROFILE_CSS_LIMIT_BYTES = 24 * 1024;
 const REQUIRED_INHERITED_CLIENT_ENTRIES = Object.freeze([
   'node_modules/@astrojs/preact/dist/client.js',
@@ -77,43 +82,7 @@ const REQUIRED_LINK_CHECKS = Object.freeze([
   'json-ld-visible-fact-parity',
   'metadata-visible-summary-parity',
 ]);
-const REQUIRED_MANUAL_CHECKS = Object.freeze([
-  'colorIndependentMeaning',
-  'focusAppearance',
-  'focusObscuration',
-  'readingOrder',
-]);
 const REQUIRED_BROWSER_MATRIX = createRequiredBrowserMatrix();
-const REQUIRED_MANUAL_MATRIX = createRequiredManualMatrix();
-const REVIEW_SUBJECT_SOURCE_FILES = Object.freeze([
-  'astro.config.mjs',
-  'package-lock.json',
-  'package.json',
-  'playwright.config.ts',
-  'scripts/profile/asset-budget.mjs',
-  'scripts/profile/astro-profile-integration.mjs',
-  'scripts/profile/browser-launch-preflight.mjs',
-  'scripts/profile/clean-profile-build.mjs',
-  'scripts/profile/owned-process-registry.mjs',
-  'scripts/profile/owned-node-bootstrap.mjs',
-  'scripts/profile/preview-supervisor.mjs',
-  'scripts/profile/profile-paths.mjs',
-  'scripts/profile/request-ledger.mjs',
-  'scripts/profile/startup-retry.mjs',
-  'scripts/profile/verification-provider.mjs',
-  'src/components/Header.astro',
-  'src/islands/MobileNav.tsx',
-  'src/layouts/BaseLayout.astro',
-  'src/lib/navigation.ts',
-  'src/pages/portfolio.astro',
-  'src/pages/resume.astro',
-  'src/styles/global.css',
-]);
-const REVIEW_SUBJECT_SOURCE_DIRECTORIES = Object.freeze([
-  'src/components/profile',
-  'src/lib/layout',
-  'src/styles/profile',
-]);
 
 export class VerificationProviderError extends Error {
   constructor(message, { code, stage, details = {}, cause }) {
@@ -2435,21 +2404,6 @@ function createRequiredBrowserMatrix() {
   }
   keys.push('print|chromium|/resume|A4');
   keys.push('print|chromium|/resume|Letter');
-  return Object.freeze(keys.sort());
-}
-
-function createRequiredManualMatrix() {
-  const keys = [];
-  for (const viewport of ['320x800', '1440x900']) {
-    for (const theme of ['light', 'dark']) {
-      for (const details of ['closed', 'all-open']) {
-        keys.push(`/resume|chromium|${viewport}|${theme}|${details}`);
-      }
-      keys.push(
-        `/portfolio|chromium|${viewport}|${theme}|not-applicable`,
-      );
-    }
-  }
   return Object.freeze(keys.sort());
 }
 

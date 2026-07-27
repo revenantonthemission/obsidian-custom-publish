@@ -162,12 +162,33 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
   test('recomputes the review subject from fixed source, config, lock, and route assets', async () => {
     const fixture = await createReviewSubjectFixture();
     const first = await computeAccessibilityReviewSubject(fixture);
-    const configPath = join(fixture.siteRoot, 'playwright.config.ts');
-    await writeFile(configPath, 'export default { retries: 0 };\n');
-    const second = await computeAccessibilityReviewSubject(fixture);
+
+    // A file inside the subject must move the digest: changing a stylesheet
+    // changes what a reviewer sees, so prior reviews have to go stale.
+    await writeFile(
+      join(fixture.siteRoot, 'src/styles/global.css'),
+      ':root { --c-accent: #0f766e; }\n',
+    );
+    const afterStyleChange = await computeAccessibilityReviewSubject(fixture);
+
+    // A file outside it must not. `playwright.config.ts` configures the
+    // automated run; the twelve reviewed states come from
+    // REQUIRED_MANUAL_MATRIX, not from the runner. Keeping it in the subject
+    // twice invalidated completed reviews for edits that could not change a
+    // single rendered pixel.
+    await writeFile(
+      join(fixture.siteRoot, 'playwright.config.ts'),
+      'export default { retries: 0 };\n',
+    );
+    const afterRunnerChange = await computeAccessibilityReviewSubject(fixture);
 
     expect(first.digest).toMatch(/^[a-f0-9]{64}$/u);
-    expect(first.digest).not.toBe(second.digest);
+    expect(afterStyleChange.digest).not.toBe(first.digest);
+    expect(afterRunnerChange.digest).toBe(afterStyleChange.digest);
+    // The provider must never again be its own review subject.
+    expect(verificationEvidenceSchema.reviewSubjectSourceFiles).not.toContain(
+      'scripts/profile/verification-provider.mjs',
+    );
     expect(first.authoredFiles.map(({ path }) => path)).toContain(
       'package-lock.json',
     );
