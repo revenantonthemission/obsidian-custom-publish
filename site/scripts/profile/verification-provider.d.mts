@@ -213,6 +213,32 @@ export function computeAccessibilityReviewSubject(input: {
   siteRoot?: string;
 }): Promise<AccessibilityReviewSubject>;
 
+export interface CurrentReleaseVerdict {
+  readonly rule: string;
+  readonly group: 'document';
+  readonly result: VerificationResult;
+  readonly releaseState: string;
+  readonly candidateId: string;
+  readonly pdfSha256: string;
+  readonly receiptSha256: string;
+  readonly sourceIdentity: string;
+  readonly manifestFingerprint: string;
+  readonly buildId: string;
+  readonly pageCount: number;
+  readonly mappedFacts: number;
+  readonly surfaceParity: VerificationResult;
+}
+
+/**
+ * Read-only revalidation of the tracked pair. Rejects rather than resolving
+ * when a lock or journal is present, so the caller cannot mistake an in-flight
+ * or wedged release for a verified one.
+ */
+export function verifyCurrentRelease(options?: {
+  buildTimeoutMs?: number;
+  renderTimeoutMs?: number;
+}): Promise<CurrentReleaseVerdict>;
+
 export interface ComposeVerificationEvidenceInput {
   command?: 'test:e2e';
   buildIdentity: CleanBuildIdentity;

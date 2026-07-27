@@ -3575,12 +3575,29 @@ export async function verifyCurrentRelease({
     './release-store.mjs'
   );
   const state = await inspectReleaseState();
+  // A lock with no journal is not an interrupted transaction. The journal is
+  // removed only at finalize, so this is a release that completed and then
+  // could not unlink its own lock. The two need opposite handling — one needs
+  // rollback, the other only needs the lock removed — and reporting both as
+  // RELEASE_INCOMPLETE left the operator unable to tell which they had.
+  if (state.lockPresent && !state.journalPresent) {
+    throw providerError(
+      'RELEASE_LOCK_ORPHANED',
+      'A release lock remains with no journal: the last release completed but could not remove its lock. Remove the lock file to unblock further releases; no rollback is required.',
+      'verification.release.current',
+      { lockPresent: true, journalPresent: false, state: state.state },
+    );
+  }
   if (state.active) {
     throw providerError(
       'RELEASE_INCOMPLETE',
-      'A release lock or journal is present; the tracked pair cannot be verified as current.',
+      'An unresolved release journal is present; the tracked pair cannot be verified as current.',
       'verification.release.current',
-      { state: state.state, lockPresent: state.lockPresent },
+      {
+        state: state.state,
+        lockPresent: state.lockPresent,
+        journalPresent: state.journalPresent,
+      },
     );
   }
 
