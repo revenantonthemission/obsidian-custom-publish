@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U1 Code Generation, Part 2 Generation, Step 25
-- **상태**: **미완** — Step 25 체크박스 8~11 완료, 12 는 열려 있다. §8 참조
+- **상태**: Step 1~25 실행 완료, 명시적 artifact 승인 대기. 완료 정의 1항의 rollback arm 잔여는 §9 참조
 - **작성 시각**: 2026-07-26T15:52:31Z
 - **Unit**: U1 Profile Domain and Native Experience
 - **Feature Branch**: `codex/feature/resume-profile-experience`
@@ -12,13 +12,19 @@
 
 ## 1. 결론부터
 
-U1 은 Step 1~24 를 닫았고 Step 25 의 검증 체크박스도 닫았으나 **U1 Code
-Generation 완료를 주장하지 않는다.** 계획 §9 의 완료 정의 5항이 "five stable
-commands 가 required evidence 를 만든다" 를 요구하는데 현재 트리에서
-`npm run test:e2e` 가 실패한다. 이유는 §8 에 있다.
+U1 은 Step 1~25 를 실행 완료했고 다섯 stable 명령이 모두 required evidence 를
+만든다. 완료 정의 2~8 항을 충족한다.
 
-이 문서는 그 상태를 그대로 기록한다. 완료 주장과 미완 항목을 같은 표에 섞지
-않는 것이 `verification-and-document-summary.md` 와 동일한 편집 규칙이다.
+**1항은 충족하지 않는다.** "Step 1~25 checkbox 가 모두 `[x]`" 를 요구하는데
+Step 22 의 negative-example 체크박스와 Step 23 체크박스 7 이 열려 있다. 둘 다
+rollback arm 진입을 전제로 하고, 릴리스 트랜잭션이 forward arm 으로 성공했으므로
+관측할 기회가 없었다. §9 에 그대로 남긴다.
+
+따라서 이 문서는 **완료를 주장하지 않고 제시한다.** 잔여를 기록된 deviation 으로
+수용할지, rollback arm 을 실제로 구동해 닫을지는 사용자의 명시적 결정이다.
+
+완료 주장과 미완 항목을 같은 표에 섞지 않는 것이
+`verification-and-document-summary.md` 와 동일한 편집 규칙이다.
 
 ## 2. 생성·수정·삭제 파일
 
@@ -150,35 +156,36 @@ SHA 에만 유효하며, prepare 를 다시 돌리면 후보가 교체되어 리
 preprocessor 가 만든 `content/` 를 요구하므로 이 `dist/` 를 S3 에 동기화하면
 사이트 콘텐츠가 사라진다.
 
-## 8. U1 이 완료가 아닌 이유
-
-**`npm run test:e2e` 가 현재 트리에서 실패한다.**
-`MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE`, stage `verification.compose`.
+## 8. 접근성 게이트가 되돌아갔다가 닫힌 경위
 
 Step 25 가 계획 §5.2 를 구현하려고 `scripts/profile/verification-provider.mjs`
 와 `scripts/profile/pdf-renderer.mjs` 를 수정했다. 두 파일 모두
 `REVIEW_SUBJECT_SOURCE_FILES` 에 들어 있으므로 manual web accessibility 의
 review subject digest 가 `e8ca5dcc…` 에서
 `0c4ed919c96cb753ee132fb3097625369453cf9bc6b9ce3b3d56dc1016fab035` 로
-이동했고, tracked 기록은 이전 digest 에 서명되어 있어 stale 이 되었다.
+이동했고, tracked 기록이 이전 digest 에 서명되어 있어 stale 이 되면서
+`npm run test:e2e` 가 `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE` 로
+fail-closed 했다.
 
 계획 §7 이 정확히 이 동작을 규정한다. "Fact/profile style/config/tool change
 after review invalidates the relevant manual accessibility/PDF evidence and
-returns to its checkpoint." 게이트는 설계대로 fail-closed 했다.
+returns to its checkpoint." 게이트는 설계대로 동작했다.
 
 **주목할 점은 렌더링 표면이 실제로는 하나도 바뀌지 않았다는 것이다.**
-`dc6acf8..HEAD` 에서 review subject 에 해당하는 변경은 위 두 tooling 파일뿐이고
+`dc6acf8..a1b3356` 에서 review subject 에 해당하는 변경은 위 두 tooling 파일뿐이고
 `src/` 아래는 단 한 바이트도 바뀌지 않았다. review subject 가 verification
 provider 전체를 포함하므로, 렌더링에 영향을 줄 수 없는 릴리스 검증 경로 변경조차
 웹 접근성 사람 검토를 무효화한다. subject 를 좁힐지 여부는 승인된 계약의 설계
-결정이므로 이 문서는 관측만 기록하고 변경하지 않는다.
+결정이므로 이 문서는 관측만 기록하고 변경하지 않는다. **앞으로도 verification
+provider 를 건드리면 12개 상태 재검토 비용이 발생한다.**
 
-닫으려면 사람이 digest `0c4ed919…` 기준으로 12개 상태를 다시 검토해
-`site/verification/profile/manual-web-accessibility.json` 을 갱신해야 한다.
-생성자가 대신할 수 없는 게이트다.
+조준희 가 2026-07-27T22:56:55Z 에 digest `0c4ed919…` 기준으로 12개 상태를 다시
+검토해 게이트를 닫았다. 48개 check 전부 `pass`, target-size 예외 0, skip 0.
+이후 `npm run test:e2e` 는 build `ea921152…` 에서 `result: pass` 다.
 
-PDF 사람 게이트는 무효화되지 않았다. 그 증거는 `sourceIdentity` 와 manifest 에
-묶여 있고 둘 다 이동하지 않았으며 `resume:pdf:verify` 는 계속 통과한다.
+PDF 사람 게이트는 이 과정에서 한 번도 무효화되지 않았다. 그 증거는
+`sourceIdentity` 와 manifest 에 묶여 있고 둘 다 이동하지 않았으며
+`resume:pdf:verify` 는 계속 통과한다.
 
 ## 9. 남은 잔여
 

@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "result": "pass",
   "reviewSubjectSchemaVersion": 1,
-  "reviewSubjectDigest": "e8ca5dcc56ab04c9d913ef2bd3b49066e799edffaa686ba5754ab0f111ebc172",
+  "reviewSubjectDigest": "0c4ed919c96cb753ee132fb3097625369453cf9bc6b9ce3b3d56dc1016fab035",
   "reviewer": "조준희",
-  "reviewedAt": "2026-07-25T23:56:55.538Z",
+  "reviewedAt": "2026-07-27T22:56:55.538Z",
   "states": [
     {
       "route": "/resume",
