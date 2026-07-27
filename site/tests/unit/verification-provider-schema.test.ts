@@ -206,6 +206,36 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     );
   });
 
+  test('the review subject digest does not depend on build output', async () => {
+    const fixture = await createReviewSubjectFixture();
+    const before = await computeAccessibilityReviewSubject(fixture);
+
+    // A build that emitted different bytes at the same paths — which is what a
+    // full-site build looks like next to a profile-only one. The manifest is
+    // updated alongside the file so the state stays internally valid; the
+    // point is that a *legitimately different build* must not restage human
+    // review work.
+    const changed = '.profile{display:flex}';
+    await writeFile(
+      join(fixture.siteRoot, 'dist/_astro/profile.css'),
+      changed,
+    );
+    const entry = fixture.manifest.outputFiles.find(
+      ({ path }: { path: string }) => path === '_astro/profile.css',
+    );
+    if (entry === undefined) {
+      throw new Error('fixture is missing the profile stylesheet');
+    }
+    entry.bytes = Buffer.byteLength(changed);
+    entry.sha256 = createHash('sha256').update(changed).digest('hex');
+
+    const after = await computeAccessibilityReviewSubject(fixture);
+
+    expect(after.digest).toBe(before.digest);
+    // Still recorded as evidence, just not hashed.
+    expect(after.buildAssets.length).toBeGreaterThan(0);
+  });
+
   test('never reclassifies a mixed or semantic Playwright failure as startup-retryable', () => {
     const classify =
       verificationProviderTesting

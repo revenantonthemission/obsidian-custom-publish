@@ -1931,14 +1931,11 @@ function digestAccessibilityReviewSubject(value) {
     appendDigestField(hash, String(file.bytes));
     appendDigestField(hash, file.sha256);
   }
-  for (const asset of value.buildAssets) {
-    appendDigestField(hash, 'build');
-    appendDigestField(hash, asset.route);
-    appendDigestField(hash, asset.kind);
-    appendDigestField(hash, asset.path);
-    appendDigestField(hash, String(asset.bytes));
-    appendDigestField(hash, asset.sha256);
-  }
+  // `buildAssets` is deliberately not hashed — see the schema-version note in
+  // accessibility-review-contract.mjs. Their paths carry content hashes that
+  // shift with chunking, so a full-site build and a profile-only build
+  // disagreed from identical authored source and the tracked record could not
+  // be merged between branches. The assets remain on the subject as evidence.
   for (const name of ['node', 'astro', 'vite', 'playwright', 'axe']) {
     appendDigestField(hash, `tool:${name}`);
     appendDigestField(hash, value.tools[name]);

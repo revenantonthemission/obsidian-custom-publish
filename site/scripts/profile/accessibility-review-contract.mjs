@@ -14,6 +14,24 @@
  * them decide what a reviewer looks at.
  */
 
+/**
+ * The digest covers authored source and the toolchain, not build output.
+ *
+ * It once also hashed `buildAssets`, whose paths carry content hashes that
+ * shift with chunking. A full-site build and a profile-only build therefore
+ * produced different digests from identical authored source, which made the
+ * tracked record structurally unmergeable between branches: each branch's
+ * value was correct only there. Every input that decides what a reviewer sees
+ * is already an authored file — `src/**`, `astro.config.mjs`, `package.json`,
+ * the lockfile and the build and serve scripts — so hashing the output added
+ * no coverage, only that branch dependence. Build assets are still recorded on
+ * the subject as evidence; they are simply no longer hashed.
+ *
+ * The version is deliberately not bumped. Dropping a field changes the digest
+ * value, so a record signed under the old rule already fails comparison and
+ * cannot be silently accepted; a new version number would label that, not
+ * enforce it.
+ */
 export const ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION = 1;
 export const ACCESSIBILITY_REVIEW_SUBJECT_DOMAIN =
   'rvnnt.accessibility-review-subject.v1';
