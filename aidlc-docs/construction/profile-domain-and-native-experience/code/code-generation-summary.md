@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U1 Code Generation, Part 2 Generation, Step 25
-- **상태**: Step 1~25 실행 완료, 명시적 artifact 승인 대기. 완료 정의 1항의 rollback arm 잔여는 §9 참조
+- **상태**: **승인됨** — 2026-07-27T14:15:49Z, 사용자 응답 "accept the rollback residual and approve". 완료 정의 1항은 §9 의 rollback arm 잔여를 명시적 accepted deviation 으로 수용해 충족한다
 - **작성 시각**: 2026-07-26T15:52:31Z
 - **Unit**: U1 Profile Domain and Native Experience
 - **Feature Branch**: `codex/feature/resume-profile-experience`
@@ -13,15 +13,18 @@
 ## 1. 결론부터
 
 U1 은 Step 1~25 를 실행 완료했고 다섯 stable 명령이 모두 required evidence 를
-만든다. 완료 정의 2~8 항을 충족한다.
+만든다. 완료 정의 2~8 항을 증거로 충족한다.
 
-**1항은 충족하지 않는다.** "Step 1~25 checkbox 가 모두 `[x]`" 를 요구하는데
-Step 22 의 negative-example 체크박스와 Step 23 체크박스 7 이 열려 있다. 둘 다
-rollback arm 진입을 전제로 하고, 릴리스 트랜잭션이 forward arm 으로 성공했으므로
-관측할 기회가 없었다. §9 에 그대로 남긴다.
+**1항은 accepted deviation 으로 충족한다.** "Step 1~25 checkbox 가 모두 `[x]`"
+를 요구하지만 Step 22 의 negative-example 체크박스와 Step 23 체크박스 7 은
+`[ ]` 로 남는다. 둘 다 rollback arm 진입을 전제로 하고 릴리스 트랜잭션이
+forward arm 으로 성공했으므로 관측할 기회가 없었다. 사용자가
+2026-07-27T14:15:49Z 에 "accept the rollback residual and approve" 로 이 잔여를
+명시적으로 수용했다.
 
-따라서 이 문서는 **완료를 주장하지 않고 제시한다.** 잔여를 기록된 deviation 으로
-수용할지, rollback arm 을 실제로 구동해 닫을지는 사용자의 명시적 결정이다.
+**두 체크박스는 앞으로도 `[x]` 로 바꾸지 않는다.** 수용된 것은 잔여이지 수행된
+작업이 아니다. 실제로 검증되지 않은 채 남은 것은 4-state rollback 경로,
+cross-device 승격, stale review/source 거부 세 가지다. §9 가 그대로 유지한다.
 
 완료 주장과 미완 항목을 같은 표에 섞지 않는 것이
 `verification-and-document-summary.md` 와 동일한 편집 규칙이다.
@@ -190,11 +193,15 @@ PDF 사람 게이트는 이 과정에서 한 번도 무효화되지 않았다. �
 ## 9. 남은 잔여
 
 1. **§8 의 manual web accessibility 재검토.** 유일한 blocking 항목이다.
-2. **Rollback arm 라이브 증거 없음.** 트랜잭션이 forward arm 을 끝까지 갔으므로
-   4-state rollback 경로와 Step 22 가 넘긴 cross-device, stale review/source 는
-   pure journal model 과 `release-state-machine.pbt.test.ts` 로만 검증된다.
-   유도된 실패나, store 의 고정 경로 안전성을 약화시키지 않는 별도 주입 지점이
-   필요하다.
+2. **Rollback arm 라이브 증거 없음 — accepted deviation.** 2026-07-27T14:15:49Z
+   에 사용자가 명시적으로 수용했다. 트랜잭션이 forward arm 을 끝까지 갔으므로
+   4-state rollback 경로, cross-device 승격, stale review/source 거부는 실제
+   구동으로 검증되지 않았다. 남아 있는 커버리지는 pure journal transition model
+   과 `release-state-machine.pbt.test.ts` 이며, 생성된 명령 시퀀스에 대해 모든
+   전이를 손으로 나열한 reference table 과 대조하지만 실제 파일시스템 복구를
+   구동하지는 않는다. 나중에 닫으려면 유도된 실패나, store 의 고정 경로 안전성을
+   약화시키지 않는 별도 주입 지점이 필요하다. Step 22 에서 unit test 주입을
+   거부한 이유는 그 고정 경로가 곧 안전성 속성이기 때문이다.
 3. **사람 체크리스트 11행의 note 가 빈 문자열이다.** receipt 는 관찰 기술 없는
    11개 판정을 싣는다. 감사 시 attested 로 읽어야 하며 described 로 읽으면 안
    된다.

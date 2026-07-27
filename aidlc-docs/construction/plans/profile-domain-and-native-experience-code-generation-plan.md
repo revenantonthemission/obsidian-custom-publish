@@ -860,6 +860,7 @@ Fact/profile style/config/tool change after review invalidates the relevant manu
 U1 Code Generation은 다음이 모두 참일 때만 generation complete다.
 
 1. Step 1~25 checkbox가 모두 `[x]`이고 plan deviation이 없다.
+   - **Accepted deviation 으로 충족.** 2026-07-27T14:15:49Z, 사용자 응답 "accept the rollback residual and approve". Step 22 의 negative-example 체크박스와 Step 23 체크박스 7 은 `[ ]` 로 남으며 앞으로도 `[x]` 로 바꾸지 않는다. 수용된 것은 잔여이지 수행된 작업이 아니다. 실제로 라이브 검증되지 않은 것은 4-state rollback 경로, cross-device 승격, stale review/source 거부 셋이며 pure journal model 과 `release-state-machine.pbt.test.ts` 커버리지는 유지된다.
 2. Actual approved facts만 one production source에 있고 inventory-production diff가 zero다.
 3. `/resume`와 `/portfolio`가 exact static/no-JS/metadata/accessibility/resource contracts를 만족한다.
 4. Tracked `site/public/resume.pdf`와 non-public current receipt가 exact reviewed source/manifest에 current다.
