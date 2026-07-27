@@ -10,6 +10,18 @@ interface CanonicalTest {
   readonly semanticPropertyId?: string;
 }
 
+/**
+ * Declared rather than inferred, because the list is now empty: TypeScript
+ * infers `never[]` from the JSON and every field access becomes an error. The
+ * shape has to outlive the entries so a future deferral still type-checks.
+ */
+interface DeferredCoverage {
+  readonly ids: readonly string[];
+  readonly canonicalTestId: string;
+  readonly remainingStep: number;
+  readonly rationale: string;
+}
+
 const requiredObligationIds = [
   ...rangeIds('U1-P', 1, 12),
   ...rangeIds('DE-P', 1, 15),
@@ -95,10 +107,11 @@ describe('U1 obligation map', () => {
     const obligationIds = new Set(
       obligationMap.obligations.map(({ id }) => id),
     );
-    const deferredIds = obligationMap.deferredCoverage.flatMap(({ ids }) => ids);
+    const deferred = obligationMap.deferredCoverage as DeferredCoverage[];
+    const deferredIds = deferred.flatMap(({ ids }) => ids);
 
     expect(new Set(deferredIds).size).toBe(deferredIds.length);
-    for (const item of obligationMap.deferredCoverage) {
+    for (const item of deferred) {
       expect(
         canonicalIds.has(item.canonicalTestId),
         `unknown deferred canonical test ${item.canonicalTestId}`,
@@ -113,25 +126,20 @@ describe('U1 obligation map', () => {
       }
     }
 
+    // Nothing is deferred any more. Step 22 closed NFR-P-RELEASE-01 with the
+    // pure journal transition model and its state-machine suite. Step 25
+    // closed FD-P-C11-01, but by re-pointing it rather than by declaring the
+    // wait over: it had named PBT-U1-DOCUMENT, whose properties compare
+    // manifest against manifest and never exercise the rendered or PDF
+    // evidence mapping. Clearing the entry while it still named that suite
+    // would have asserted coverage no test performs.
     expect(
-      obligationMap.deferredCoverage.map(
-        ({ canonicalTestId, remainingStep, ids }) => ({
-          canonicalTestId,
-          remainingStep,
-          ids,
-        }),
-      ),
-    ).toEqual([
-      // Step 22 closed NFR-P-RELEASE-01 by generating the pure journal
-      // transition model and its state-machine suite. FD-P-C11-01 remains
-      // deferred: Step 21 built the document pipeline but never cleared its
-      // entry, and clearing it is not Step 22's to do.
-      {
-        canonicalTestId: 'PBT-U1-DOCUMENT',
-        remainingStep: 21,
-        ids: ['FD-P-C11-01'],
-      },
-    ]);
+      deferred.map(({ canonicalTestId, remainingStep, ids }) => ({
+        canonicalTestId,
+        remainingStep,
+        ids,
+      })),
+    ).toEqual([]);
   });
 
   test('closes frontend aliases in their canonical suites and preserves later owners', () => {
@@ -142,7 +150,9 @@ describe('U1 obligation map', () => {
       ]),
     );
     const deferredIds = new Set(
-      obligationMap.deferredCoverage.flatMap(({ ids }) => ids),
+      (obligationMap.deferredCoverage as DeferredCoverage[]).flatMap(
+        ({ ids }) => ids,
+      ),
     );
 
     const presentationAliases = [
@@ -188,14 +198,14 @@ describe('U1 obligation map', () => {
     expect(canonicalByObligation.get('DE-P15')).toBe(
       'PBT-U1-DOCUMENT',
     );
-    expect(
-      obligationMap.deferredCoverage.find(({ ids }) =>
-        ids.includes('FD-P-C11-01'),
-      ),
-    ).toMatchObject({
-      canonicalTestId: 'PBT-U1-DOCUMENT',
-      remainingStep: 21,
-    });
+    // FD-P-C11-01 is the four-surface mapping obligation. It pointed at
+    // PBT-U1-DOCUMENT while that suite only compares manifest against
+    // manifest — it never calls compareRenderedManifest, mapPdfEvidence or
+    // compareResumeSurfaces. The suite that does is resume-pdf.test.ts, so
+    // the obligation now names it and nothing is deferred any more.
+    expect(canonicalByObligation.get('FD-P-C11-01')).toBe('UNIT-U1-PDF');
+    expect(deferredIds.has('FD-P-C11-01')).toBe(false);
+    expect(obligationMap.deferredCoverage).toStrictEqual([]);
   });
 
   test('keeps test fixtures out of production modules', () => {

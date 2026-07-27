@@ -761,42 +761,70 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
 
 **Stories/requirements**: ST-U03, ST-U05, ST-E02; hard exact-SHA human gate.
 
-- [ ] `npm run resume:pdf -- --prepare`로 first clean build, candidate, PDF.js evidence, full parity와 draft receipt를 생성한다.
-- [ ] Candidate ID/SHA, source fingerprint, manifest digest와 viewer path를 사용자에게 제시한다.
-- [ ] **PAUSE**: 사용자가 exact candidate pages의 reading order, tagged structure, clipping, grayscale hierarchy, page breaks, Korean font/readability와 links를 검토해 fixed review record를 작성·승인할 때까지 기다린다.
-- [ ] Review SHA/source/manifest/checklist가 current candidate와 exact match인지 재검증한다.
-- [ ] `npm run resume:pdf -- --promote <candidate-id>`로 receipt/PDF transaction을 시작한다.
-- [ ] Clean second build와 transaction-scoped final route/MIME/source/full-parity check가 pass하면 finalize한다.
+- [x] `npm run resume:pdf -- --prepare`로 first clean build, candidate, PDF.js evidence, full parity와 draft receipt를 생성한다.
+- [x] Candidate ID/SHA, source fingerprint, manifest digest와 viewer path를 사용자에게 제시한다.
+- [x] **PAUSE**: 사용자가 exact candidate pages의 reading order, tagged structure, clipping, grayscale hierarchy, page breaks, Korean font/readability와 links를 검토해 fixed review record를 작성·승인할 때까지 기다린다.
+- [x] Review SHA/source/manifest/checklist가 current candidate와 exact match인지 재검증한다.
+- [x] `npm run resume:pdf -- --promote <candidate-id>`로 receipt/PDF transaction을 시작한다.
+- [x] Clean second build와 transaction-scoped final route/MIME/source/full-parity check가 pass하면 finalize한다.
 - [ ] Failure이면 same lock 아래 previous pair/first-release absence를 exact rollback하고 original failure를 non-zero로 반환한다.
-- [ ] Independent `npm run resume:pdf:verify`가 current tracked PDF/receipt를 read-only로 재검증하는지 확인한다.
+  - 미실행: 트랜잭션이 forward arm 을 끝까지 갔으므로 이 분기는 한 번도 진입하지 않았다. 4-state rollback 경로는 Step 22 의 pure journal model 과 `release-state-machine.pbt.test.ts` 로만 검증되어 있고 라이브 구동 증거가 없다.
+  - Step 22 가 이 스텝으로 넘긴 cross-device 와 stale review/source 잔여도 같은 이유로 닫히지 않았다. 셋 다 rollback arm 진입이 전제이며 forward arm 이 성공하면 관측할 방법이 없다. 다음 릴리스에서 실패를 유도하거나, store 의 고정 경로 안전성을 약화시키지 않는 별도 주입 지점을 설계해야 닫힌다.
+- [x] Independent `npm run resume:pdf:verify`가 current tracked PDF/receipt를 read-only로 재검증하는지 확인한다.
+  - 확인 과정에서 `cli.mjs` 의 다섯 번째 배선 결함을 찾아 고쳤다. 출력 조건이 `result.result !== 'pass'` 였고, CLI 가 스스로 계산한 통과 판정을 갖는 명령은 이것뿐이라 판정 전체가 조용히 버려졌다. 무출력 + exit 0 은 동작하는 검증과 no-op 을 구분할 수 없어 이 체크박스를 정직하게 닫을 수 없었다.
+  - 수정 뒤 판정이 출력된다. `releaseState: ABSENT`, candidate `e36d47c6…`, `pdfSha256` `834faa3b…`, `receiptSha256` `2f6b2496…`, `sourceIdentity` `6ea953a0…`, `manifestFingerprint` `aab8a08b…` 로 현재 tracked pair 가 current source 에 대해 재검증된다.
+  - 다만 이 명령의 실제 동작은 digest 대조이며 §5.2 가 규정한 `clean build/preview → full reinspection` 이 아니다. PDF.js 재추출도 clean build 도 하지 않는다. Step 22 구현 범위의 편차이므로 Step 24~25 로 넘긴다.
 
 ### Step 24 — Generate documentation and deployment-artifact no-change evidence
 
 **Stories/requirements**: FR-017/018; U1→U2/U3 handoff; AI-DLC Documentation and Deployment Artifacts.
 
-- [ ] `site/README.md`에 five commands, PBT replay, fact gate, manual accessibility, PDF prepare/review/promote/verify와 no-deploy warning을 기록한다.
-- [ ] `code/verification-and-document-summary.md`에 browser/manual/PDF evidence, receipt/currentness와 negative gates를 기록한다.
-- [ ] `code/deployment-artifacts-summary.md`에 Infrastructure implementation N/A/no-change를 기록한다.
-- [ ] Local output에서 `/resume/index.html`, `/portfolio/index.html`, `/resume.pdf`, hashed CSS/WOFF2 mapping, MIME/non-empty와 private evidence exclusion을 확인한다.
-- [ ] `infra/`, Terraform, AWS, DNS, CloudFront/cache, Jenkins Deploy와 Vault가 unchanged인지 확인한다.
-- [ ] Reduced direct build가 profile-validation output일 뿐 full-site deployment candidate가 아님을 명시한다.
+- [x] `site/README.md`에 five commands, PBT replay, fact gate, manual accessibility, PDF prepare/review/promote/verify와 no-deploy warning을 기록한다.
+  - 기존 파일은 손대지 않은 Astro starter-kit 템플릿이었다. 실제 운영 문서로 교체하면서 세 사람 게이트, PBT replay 문법, 후보 PDF 의 non-reproducibility, canonical digest 객체 함정을 기록했다.
+- [x] `code/verification-and-document-summary.md`에 browser/manual/PDF evidence, receipt/currentness와 negative gates를 기록한다.
+  - 통과 주장과 미실행 주장을 분리해 기록한다. §6 이 rollback arm 미진입, cross-device/stale review-source, 빈 note 11행, `resume:pdf:verify` 계약 편차, `FD-P-C11-01` 다섯 건을 미실행/잔여로 남긴다.
+- [x] `code/deployment-artifacts-summary.md`에 Infrastructure implementation N/A/no-change를 기록한다.
+- [x] Local output에서 `/resume/index.html`, `/portfolio/index.html`, `/resume.pdf`, hashed CSS/WOFF2 mapping, MIME/non-empty와 private evidence exclusion을 확인한다.
+  - `/resume/index.html` 30,454B, `/portfolio/index.html` 34,277B, `/resume.pdf` 323,173B. `/_astro/` 아래 content-hashed CSS 4개와 WOFF2 92개가 전부 `url(/_astro/…)` 루트 상대 same-origin 이다. profile route 의 외부 CDN 참조 0, private evidence 유출 0. `dist/resume.pdf` 의 SHA-256 이 tracked `public/resume.pdf` 및 승격된 `pdfSha256` `834faa3b…` 와 일치한다.
+- [x] `infra/`, Terraform, AWS, DNS, CloudFront/cache, Jenkins Deploy와 Vault가 unchanged인지 확인한다.
+  - validated base `67f70a4` 대비 `infra/`, `Jenkinsfile`, `Justfile`, `preprocessor/`, `index.astro`, `data.ts`, `render.ts` 변경 0. `site/scripts/` 에 `aws s3`/`cloudfront`/`terraform` 참조 0. AWS/DNS/CloudFront mutation, Vault 쓰기, push/merge 없음.
+- [x] Reduced direct build가 profile-validation output일 뿐 full-site deployment candidate가 아님을 명시한다.
+  - README 의 "배포 경계" 와 deployment 요약 §4 양쪽에 기록했다. 전체 사이트 빌드는 preprocessor 가 만든 `content/` 를 요구하므로 축소 빌드의 `dist/` 를 S3 에 동기화하면 사이트 콘텐츠가 사라진다.
 
 ### Step 25 — Complete owner-local generation verification and summaries
 
 **Stories/requirements**: all U1-owned stories; U1 provider slice for U2/U3.
 
-- [ ] `npm run test:unit`을 실행한다.
-- [ ] `npm run test:pbt` local default를 실행하고 printed seed를 기록한다.
-- [ ] Same-seed/focused replay evidence를 실행한다.
-- [ ] `npm run test:e2e`를 실행한다.
-- [ ] `npm run resume:pdf:verify`를 실행한다.
-- [ ] Internal `test:pbt:framework` proof와 direct `npx astro build`를 재검증한다.
-- [ ] `git diff --check`, duplicate-file scan, source/generated/public/private scan과 no-edit set diff를 검사한다.
-- [ ] All U1-P/refinement/NFR/AC/EDGE/negative obligations가 one canonical evidence에 연결되는지 검사한다.
-- [ ] `code/code-generation-summary.md`에 modified/created/removed files, tests, facts, PDF identity, deferred U2/U3 work와 no-deploy result를 기록한다.
-- [ ] Workflow-owned `aidlc-docs/`를 feature worktree에 포함할 commit handoff를 준비하되 stage/push/merge는 별도 사용자 권한 전에는 수행하지 않는다.
-- [ ] 이 계획의 각 completed checkbox와 associated story status를 즉시 갱신한다.
-- [ ] 표준 Code Generation completion message로 application/document paths를 제시하고 explicit artifact approval을 기다린다.
+- [x] `npm run test:unit`을 실행한다.
+  - 15 files / 179 tests pass.
+- [x] `npm run test:pbt` local default를 실행하고 printed seed를 기록한다.
+  - 5 files / 32 properties × 100 runs. Printed seed `369705162`.
+- [x] Same-seed/focused replay evidence를 실행한다.
+  - `PBT_SEED=369705162` 전체 재실행이 5 files / 32 tests 로 동일하게 통과한다. Focused replay 는 `PBT_SEED=369705162 PBT_PATH=0 PBT_FILE=tests/pbt/u1/resume-document.pbt.test.ts PBT_FOCUS='U1-P12 canonical digests are deterministic, NFC-stable and field-sensitive'` 로 1 passed / 4 skipped.
+  - **Step 24 문서 결함을 발견해 고쳤다.** README 가 focused replay 를 `npm run test:pbt -- <file> -t '<name>'` 로 적었으나 runner 는 `PBT_FILE`/`PBT_FOCUS` 환경변수만 읽고 CLI 인자 형태는 `PBT_CONFIG_INVALID` 로 거부한다. 문서대로 따라 하면 반드시 실패한다.
+- [x] `npm run test:e2e`를 실행한다.
+  - `result: pass`, buildId `ea921152229f6d987e29168ff397f570f57da70ab92a0075476a6a647ed82fb2`. Step 23 과 동일한 buildId 로 빌드 결정성이 유지된다.
+  - 이 체크박스는 한 번 되돌아갔다. 같은 Step 25 안에서 §5.2 를 구현하며 `verification-provider.mjs` 와 `pdf-renderer.mjs` 를 수정했고 둘 다 `REVIEW_SUBJECT_SOURCE_FILES` 에 있어 review subject digest 가 `e8ca5dcc…` 에서 `0c4ed919…` 로 이동, `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE` 로 fail-closed 했다. 계획 §7 이 규정한 동작 그대로다.
+  - **사람이 재검토해 닫혔다.** 조준희 가 2026-07-27T22:56:55Z 에 digest `0c4ed919…` 기준으로 12개 상태를 다시 검토했고 48개 check 전부 `pass`, target-size 예외 0, skip 0 이다. 렌더링 표면은 실제로 바뀌지 않았지만 게이트는 tooling 변경도 subject 로 세므로 재검토를 요구했다.
+- [x] `npm run resume:pdf:verify`를 실행한다.
+  - `result: pass`, `releaseState: ABSENT`, `pdfSha256` `834faa3b…`, `buildId` `ea921152…`, `pageCount: 3`, `mappedFacts: 51`, `surfaceParity: pass`.
+  - **§5.2 계약 편차는 해결되었다.** 사용자가 좁은 계약 재승인 대신 전체 흐름 구현을 선택했고, 이제 명령이 `no lock/journal → clean build/preview → full reinspection` 을 실제로 수행한다. tracked PDF 는 다시 렌더하지 않고 재추출해 새로 관측한 web/print surface 와 대조한다. 다시 렌더하면 소스를 자기 자신의 두 번째 렌더와 비교하게 되어 정작 발행된 파일이 검사되지 않는다.
+- [x] Internal `test:pbt:framework` proof와 direct `npx astro build`를 재검증한다.
+  - Framework proof 1 file / 2 tests pass. Direct build `Complete!`.
+- [x] `git diff --check`, duplicate-file scan, source/generated/public/private scan과 no-edit set diff를 검사한다.
+  - Whitespace clean. No-edit set 변경 0. Tracked `dist`/`.generated`/`.artifacts` 파일 0. Profile source 중복 basename 0.
+- [x] All U1-P/refinement/NFR/AC/EDGE/negative obligations가 one canonical evidence에 연결되는지 검사한다.
+  - 135 obligations → 22 canonical tests (pbt 5, unit 8, e2e 6, human-gate 3), deferredCoverage **0**, explicit N/A 9. `obligation-map.test.ts` 7 tests 가 missing mapping, unknown test ID, duplicate semantic execution 을 fail-closed 로 검증한다.
+  - `FD-P-C11-01` 을 `PBT-U1-DOCUMENT` 에서 `UNIT-U1-PDF` 로 재지정해 마지막 deferral 을 닫았다. 그냥 지웠다면 어떤 테스트도 수행하지 않는 커버리지를 주장하게 된다.
+- [x] `code/code-generation-summary.md`에 modified/created/removed files, tests, facts, PDF identity, deferred U2/U3 work와 no-deploy result를 기록한다.
+  - 116 added / 9 modified / 0 removed, 테스트·의무·사실·PDF identity·배포 결과·U2/U3 이연을 기록한다. §8 이 U1 이 완료가 아닌 이유를 명시한다.
+- [x] Workflow-owned `aidlc-docs/`를 feature worktree에 포함할 commit handoff를 준비하되 stage/push/merge는 별도 사용자 권한 전에는 수행하지 않는다.
+  - `aidlc-docs/` 는 Step 22 에 feature branch 로 옮겨졌고 이후 모든 스텝이 함께 커밋되었다. 사용자가 각 커밋을 명시적으로 승인했다. push, merge, PR 은 수행하지 않았다.
+- [x] 이 계획의 각 completed checkbox와 associated story status를 즉시 갱신한다.
+  - 체크박스 4 는 되돌렸다. 한때 통과했으나 같은 스텝의 §5.2 구현이 review subject 를 이동시켜 현재 트리에서는 실패한다.
+- [x] 표준 Code Generation completion message로 application/document paths를 제시하고 explicit artifact approval을 기다린다.
+  - 다섯 stable 명령이 모두 required evidence 를 만든다. `test:unit` 15/179, `test:pbt` 5/32 at seed `197290827`, `test:e2e` `pass`, `resume:pdf:verify` `pass` (`pageCount 3`, `mappedFacts 51`, `surfaceParity pass`), `resume:pdf --prepare/--promote` 는 Step 23 에서 실릴리스로 구동되었다. `npx astro check` 0 errors / 6 inherited hints.
+  - **완료 정의 1항은 아직 충족되지 않는다.** Step 22 의 negative-example 체크박스와 Step 23 체크박스 7 이 열려 있다. 둘 다 rollback arm 진입을 전제로 하며 forward arm 이 성공하면 관측할 방법이 없다. 완료 메시지는 이 잔여를 명시한 채 제시하고, 잔여를 기록된 deviation 으로 수용할지 아니면 rollback arm 을 실제로 구동할지는 사용자의 명시적 결정에 맡긴다.
 
 ## 7. Checkpoints and stop conditions
 
@@ -832,6 +860,7 @@ Fact/profile style/config/tool change after review invalidates the relevant manu
 U1 Code Generation은 다음이 모두 참일 때만 generation complete다.
 
 1. Step 1~25 checkbox가 모두 `[x]`이고 plan deviation이 없다.
+   - **Accepted deviation 으로 충족.** 2026-07-27T14:15:49Z, 사용자 응답 "accept the rollback residual and approve". Step 22 의 negative-example 체크박스와 Step 23 체크박스 7 은 `[ ]` 로 남으며 앞으로도 `[x]` 로 바꾸지 않는다. 수용된 것은 잔여이지 수행된 작업이 아니다. 실제로 라이브 검증되지 않은 것은 4-state rollback 경로, cross-device 승격, stale review/source 거부 셋이며 pure journal model 과 `release-state-machine.pbt.test.ts` 커버리지는 유지된다.
 2. Actual approved facts만 one production source에 있고 inventory-production diff가 zero다.
 3. `/resume`와 `/portfolio`가 exact static/no-JS/metadata/accessibility/resource contracts를 만족한다.
 4. Tracked `site/public/resume.pdf`와 non-public current receipt가 exact reviewed source/manifest에 current다.

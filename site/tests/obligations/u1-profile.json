@@ -68,6 +68,11 @@
       "kind": "unit"
     },
     {
+      "id": "UNIT-U1-PDF",
+      "path": "tests/unit/resume-pdf.test.ts",
+      "kind": "unit"
+    },
+    {
       "id": "E2E-U1-ROUTES",
       "path": "tests/e2e/profile-routes.spec.ts",
       "kind": "e2e"
@@ -155,7 +160,7 @@
     { "id": "FD-P-C04-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
     { "id": "FD-P-C05-01", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
     { "id": "FD-P-C05-02", "canonicalTestId": "PBT-U1-METADATA-NAVIGATION" },
-    { "id": "FD-P-C11-01", "canonicalTestId": "PBT-U1-DOCUMENT" },
+    { "id": "FD-P-C11-01", "canonicalTestId": "UNIT-U1-PDF" },
     { "id": "FD-P-C11-02", "canonicalTestId": "PBT-U1-DOCUMENT" },
     { "id": "DE-P01", "canonicalTestId": "PBT-U1-DOMAIN" },
     { "id": "DE-P02", "canonicalTestId": "PBT-U1-DOMAIN" },
@@ -250,16 +255,7 @@
     { "id": "NEG-RELEASE-INTERRUPTED-ROLLBACK", "canonicalTestId": "UNIT-U1-RELEASE" },
     { "id": "NEG-ACTIVE-LOCK-JOURNAL-READONLY", "canonicalTestId": "UNIT-U1-RELEASE" }
   ],
-  "deferredCoverage": [
-    {
-      "ids": [
-        "FD-P-C11-01"
-      ],
-      "canonicalTestId": "PBT-U1-DOCUMENT",
-      "remainingStep": 21,
-      "rationale": "Step 9 closes canonical manifest and document-request parity; mapping the rendered web, print and PDF evidence back to that approved manifest requires the document generation and inspection boundary produced in Step 21."
-    }
-  ],
+  "deferredCoverage": [],
   "notApplicable": [
     {
       "id": "PBT-C01-ROUNDTRIP",

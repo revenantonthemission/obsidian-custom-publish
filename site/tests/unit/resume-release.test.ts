@@ -19,6 +19,7 @@ import {
   READ_ONLY_COMMANDS,
   STABLE_COMMANDS,
   main as cliMain,
+  shouldReportResult,
 } from '../../scripts/profile/cli.mjs';
 
 const SHA_A = 'a'.repeat(64);
@@ -131,9 +132,43 @@ describe('single-writer lock', () => {
 
   test('releasing is idempotent so a failed flow cannot double-free the lock', async () => {
     const lock = await acquireReleaseLock();
-    await lock.release();
-    await expect(lock.release()).resolves.toBeUndefined();
+    const first = await lock.release();
+    // The second call must not unlink again — it replays the first outcome.
+    await expect(lock.release()).resolves.toBe(first);
     expect(lock.released).toBe(true);
+  });
+
+  test('releasing reports that the lock file actually went away', async () => {
+    const lock = await acquireReleaseLock();
+    const outcome = await lock.release();
+
+    // Swallowing this was what made a wedged release indistinguishable from a
+    // crash: the lock survives, every later release fails RELEASE_LOCK_HELD,
+    // and a stale lock is deliberately never broken.
+    expect(outcome).toMatchObject({ lockFileRemoved: true, fault: null });
+    expect(lock.releaseOutcome).toBe(outcome);
+    await expect(inspectReleaseState()).resolves.toMatchObject({
+      lockPresent: false,
+    });
+  });
+
+  test('a lock with no journal is reported as orphaned, not as interrupted', async () => {
+    const { verifyCurrentRelease } = await import(
+      '../../scripts/profile/verification-provider.mjs'
+    );
+    const lock = await acquireReleaseLock();
+    try {
+      await expect(readReleaseJournal({})).resolves.toBeNull();
+      // The journal is removed only at finalize, so a lock without one means
+      // the release completed and could not unlink. That needs the lock
+      // removed, not a rollback — the opposite of an interrupted transaction.
+      await expect(verifyCurrentRelease()).rejects.toMatchObject({
+        code: 'RELEASE_LOCK_ORPHANED',
+        details: { lockPresent: true, journalPresent: false },
+      });
+    } finally {
+      await lock.release();
+    }
   });
 });
 
@@ -384,5 +419,34 @@ describe('the stable command surface', () => {
     await expect(
       cliMain(['resume:pdf', '--promote', SHA_A]),
     ).rejects.toMatchObject({ code: 'CLI_PROMOTE_ARGUMENTS_REQUIRED' });
+  });
+
+  test('a passing verdict the CLI computed itself is still reported', () => {
+    // `resume:pdf:verify` is the only command that both passes and produces its
+    // own verdict. Reported silently, a working verification and a no-op are
+    // the same observation, so the read-only gate could never be confirmed.
+    expect(
+      shouldReportResult({
+        rule: 'LC-U1-19/NFR-U1-010',
+        result: 'pass',
+        candidateId: SHA_A,
+        pdfSha256: SHA_B,
+      }),
+    ).toBe(true);
+  });
+
+  test('a routed pass adds nothing, because the child already reported', () => {
+    expect(
+      shouldReportResult({
+        rule: 'LC-U1-19/NFR-U1-010',
+        result: 'pass',
+        routed: true,
+      }),
+    ).toBe(false);
+  });
+
+  test('a non-pass verdict is reported and an absent one is not', () => {
+    expect(shouldReportResult({ result: 'released' })).toBe(true);
+    expect(shouldReportResult(undefined)).toBe(false);
   });
 });

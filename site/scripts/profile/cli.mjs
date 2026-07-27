@@ -301,7 +301,12 @@ function runProcess(command, args, stage) {
     });
     child.on('close', (code, signal) => {
       if (code === 0) {
-        resolveRun(Object.freeze({ rule: CLI_RULE, result: 'pass' }));
+        // `routed` marks a pass-through: the child owned stdio and has already
+        // written its own report, so the CLI has nothing to add. Anything the
+        // CLI computes itself carries no such marker and is always reported.
+        resolveRun(
+          Object.freeze({ rule: CLI_RULE, result: 'pass', routed: true }),
+        );
         return;
       }
       rejectRun(
@@ -316,9 +321,25 @@ function runProcess(command, args, stage) {
   });
 }
 
+/**
+ * Whether the CLI itself must serialize a verdict to stdout.
+ *
+ * The distinction is authorship, not outcome. A routed command's child already
+ * wrote its own report through inherited stdio, so repeating a bare
+ * acknowledgement adds nothing. Every verdict the CLI computes itself is
+ * reported, including a passing one: `resume:pdf:verify` returns
+ * `result: 'pass'` carrying the release identity it just checked, and a silent
+ * success is indistinguishable from a command that did nothing at all.
+ */
+export function shouldReportResult(result) {
+  if (result === undefined || result === null) return false;
+  return result.routed !== true;
+}
+
 export const cliTesting = Object.freeze({
   READ_ONLY_COMMANDS,
   STABLE_COMMANDS,
+  shouldReportResult,
 });
 
 const invokedPath = process.argv[1];
@@ -329,7 +350,7 @@ const isDirectInvocation =
 if (isDirectInvocation) {
   main()
     .then((result) => {
-      if (result !== undefined && result.result !== 'pass') {
+      if (shouldReportResult(result)) {
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       }
       process.exitCode = 0;

@@ -422,17 +422,45 @@ export async function acquireReleaseLock({ stage = 'release.lock' } = {}) {
   await fsyncDirectory(PROFILE_PATHS.releaseRoot);
 
   let released = false;
+  let outcome = null;
   return Object.freeze({
     lockId,
     lockPath: PROFILE_PATHS.releaseLockPath,
     get released() {
       return released;
     },
+    /** The last `release()` outcome, or null if it has not been called. */
+    get releaseOutcome() {
+      return outcome;
+    },
+    /**
+     * Removes the lock file and reports whether it actually went away.
+     *
+     * The unlink still must not throw: `release()` runs in cleanup paths where
+     * an exception would mask the failure that brought us there. But
+     * discarding the cause outright is what made a wedged release
+     * indistinguishable from a crash — the lock survives, every later release
+     * fails `RELEASE_LOCK_HELD`, and a stale lock is deliberately never
+     * broken. So the fault is recorded and returned instead of swallowed.
+     */
     async release() {
-      if (released) return;
+      if (released) return outcome;
       released = true;
-      await unlink(PROFILE_PATHS.releaseLockPath).catch(() => {});
+      let fault = null;
+      try {
+        await unlink(PROFILE_PATHS.releaseLockPath);
+      } catch (cause) {
+        // ENOENT is the outcome we wanted, reached by another route.
+        if (cause?.code !== 'ENOENT') {
+          fault = Object.freeze({
+            code: cause?.code ?? 'RELEASE_LOCK_UNLINK_FAILED',
+            lockPath: PROFILE_PATHS.releaseLockPath,
+          });
+        }
+      }
+      outcome = Object.freeze({ lockFileRemoved: fault === null, fault });
       await fsyncDirectory(PROFILE_PATHS.releaseRoot).catch(() => {});
+      return outcome;
     },
   });
 }
@@ -1074,7 +1102,12 @@ export async function finalizeResumeRelease(capability) {
   await rm(PROFILE_PATHS.releaseRecoveryRoot, { recursive: true, force: true });
   await fsyncDirectory(PROFILE_PATHS.releaseRoot).catch(() => {});
   record.settled = true;
-  await record.lock.release();
+  // The release itself is complete and verified, so a lock file that would not
+  // unlink is not a failure of the release and must not be thrown as one. It
+  // does leave a lock that blocks every later release, so it is reported here
+  // rather than discarded — the journal is already gone, which is exactly what
+  // distinguishes this residue from an interrupted transaction.
+  const lockRelease = await record.lock.release();
 
   return Object.freeze({
     rule: RELEASE_RULE,
@@ -1082,6 +1115,8 @@ export async function finalizeResumeRelease(capability) {
     candidateId: settled.candidateId,
     pdfSha256: settled.newPdfSha256,
     receiptSha256: settled.newReceiptSha256,
+    lockFileRemoved: lockRelease?.lockFileRemoved ?? true,
+    lockFault: lockRelease?.fault ?? null,
   });
 }
 
