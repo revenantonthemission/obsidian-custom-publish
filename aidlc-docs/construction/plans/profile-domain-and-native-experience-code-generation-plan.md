@@ -802,8 +802,10 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
 - [x] Same-seed/focused replay evidence를 실행한다.
   - `PBT_SEED=369705162` 전체 재실행이 5 files / 32 tests 로 동일하게 통과한다. Focused replay 는 `PBT_SEED=369705162 PBT_PATH=0 PBT_FILE=tests/pbt/u1/resume-document.pbt.test.ts PBT_FOCUS='U1-P12 canonical digests are deterministic, NFC-stable and field-sensitive'` 로 1 passed / 4 skipped.
   - **Step 24 문서 결함을 발견해 고쳤다.** README 가 focused replay 를 `npm run test:pbt -- <file> -t '<name>'` 로 적었으나 runner 는 `PBT_FILE`/`PBT_FOCUS` 환경변수만 읽고 CLI 인자 형태는 `PBT_CONFIG_INVALID` 로 거부한다. 문서대로 따라 하면 반드시 실패한다.
-- [x] `npm run test:e2e`를 실행한다.
-  - `result: pass`, buildId `ea921152229f6d987e29168ff397f570f57da70ab92a0075476a6a647ed82fb2`. Step 23 과 동일한 buildId 로 빌드 결정성이 유지된다.
+- [ ] `npm run test:e2e`를 실행한다.
+  - 실행했고 한때 통과했다. `result: pass`, buildId `ea921152229f6d987e29168ff397f570f57da70ab92a0075476a6a647ed82fb2`. Step 23 과 동일한 buildId 로 빌드 결정성이 유지된다.
+  - **그러나 현재 트리에서는 실패한다.** 같은 Step 25 안에서 §5.2 를 구현하며 `verification-provider.mjs` 와 `pdf-renderer.mjs` 를 수정했고, 둘 다 `REVIEW_SUBJECT_SOURCE_FILES` 에 있어 manual web accessibility review subject digest 가 `e8ca5dcc…` 에서 `0c4ed919…` 로 이동했다. `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE` 로 fail-closed 한다.
+  - 계획 §7 이 규정한 동작 그대로다. 렌더링 표면은 하나도 바뀌지 않았고 `src/` 아래는 단 한 바이트도 변경되지 않았지만, review subject 가 verification provider 전체를 포함하므로 릴리스 검증 경로 변경이 웹 접근성 검토를 무효화한다. 사람이 digest `0c4ed919…` 기준으로 12개 상태를 다시 검토해야 닫힌다.
 - [x] `npm run resume:pdf:verify`를 실행한다.
   - `result: pass`, `releaseState: ABSENT`, `pdfSha256` `834faa3b…`, `buildId` `ea921152…`, `pageCount: 3`, `mappedFacts: 51`, `surfaceParity: pass`.
   - **§5.2 계약 편차는 해결되었다.** 사용자가 좁은 계약 재승인 대신 전체 흐름 구현을 선택했고, 이제 명령이 `no lock/journal → clean build/preview → full reinspection` 을 실제로 수행한다. tracked PDF 는 다시 렌더하지 않고 재추출해 새로 관측한 web/print surface 와 대조한다. 다시 렌더하면 소스를 자기 자신의 두 번째 렌더와 비교하게 되어 정작 발행된 파일이 검사되지 않는다.
@@ -811,11 +813,17 @@ Required browser/tool/record가 missing이면 skip-success를 허용하지 않�
   - Framework proof 1 file / 2 tests pass. Direct build `Complete!`.
 - [x] `git diff --check`, duplicate-file scan, source/generated/public/private scan과 no-edit set diff를 검사한다.
   - Whitespace clean. No-edit set 변경 0. Tracked `dist`/`.generated`/`.artifacts` 파일 0. Profile source 중복 basename 0.
-- [ ] All U1-P/refinement/NFR/AC/EDGE/negative obligations가 one canonical evidence에 연결되는지 검사한다.
-- [ ] `code/code-generation-summary.md`에 modified/created/removed files, tests, facts, PDF identity, deferred U2/U3 work와 no-deploy result를 기록한다.
-- [ ] Workflow-owned `aidlc-docs/`를 feature worktree에 포함할 commit handoff를 준비하되 stage/push/merge는 별도 사용자 권한 전에는 수행하지 않는다.
-- [ ] 이 계획의 각 completed checkbox와 associated story status를 즉시 갱신한다.
+- [x] All U1-P/refinement/NFR/AC/EDGE/negative obligations가 one canonical evidence에 연결되는지 검사한다.
+  - 135 obligations → 22 canonical tests (pbt 5, unit 8, e2e 6, human-gate 3), deferredCoverage **0**, explicit N/A 9. `obligation-map.test.ts` 7 tests 가 missing mapping, unknown test ID, duplicate semantic execution 을 fail-closed 로 검증한다.
+  - `FD-P-C11-01` 을 `PBT-U1-DOCUMENT` 에서 `UNIT-U1-PDF` 로 재지정해 마지막 deferral 을 닫았다. 그냥 지웠다면 어떤 테스트도 수행하지 않는 커버리지를 주장하게 된다.
+- [x] `code/code-generation-summary.md`에 modified/created/removed files, tests, facts, PDF identity, deferred U2/U3 work와 no-deploy result를 기록한다.
+  - 116 added / 9 modified / 0 removed, 테스트·의무·사실·PDF identity·배포 결과·U2/U3 이연을 기록한다. §8 이 U1 이 완료가 아닌 이유를 명시한다.
+- [x] Workflow-owned `aidlc-docs/`를 feature worktree에 포함할 commit handoff를 준비하되 stage/push/merge는 별도 사용자 권한 전에는 수행하지 않는다.
+  - `aidlc-docs/` 는 Step 22 에 feature branch 로 옮겨졌고 이후 모든 스텝이 함께 커밋되었다. 사용자가 각 커밋을 명시적으로 승인했다. push, merge, PR 은 수행하지 않았다.
+- [x] 이 계획의 각 completed checkbox와 associated story status를 즉시 갱신한다.
+  - 체크박스 4 는 되돌렸다. 한때 통과했으나 같은 스텝의 §5.2 구현이 review subject 를 이동시켜 현재 트리에서는 실패한다.
 - [ ] 표준 Code Generation completion message로 application/document paths를 제시하고 explicit artifact approval을 기다린다.
+  - **차단됨.** 계획 §9 완료 정의 5항이 five stable commands 가 required evidence 를 만들 것을 요구하는데 `test:e2e` 가 실패한다. 사람이 digest `0c4ed919…` 기준으로 12개 manual web accessibility 상태를 재검토해야 이 체크박스를 정직하게 열 수 있다. 재검토 없이 완료 메시지를 내는 것은 완료 정의를 위반한다.
 
 ## 7. Checkpoints and stop conditions
 
