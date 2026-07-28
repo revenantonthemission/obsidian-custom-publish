@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Functional Design
-- **상태**: artifact 4/4 생성·검증·독립 검토 완료 — 완료 gate 승인 대기
+- **상태**: 완료 및 승인됨 (2026-07-28, 사용자 응답 "승인")
 - **Unit**: U2 Homepage Publication Boundary
 - **Bounded Context**: Homepage Publication
 - **작성일**: 2026-07-28
@@ -335,4 +335,4 @@ X) Other (please describe after [Answer]: tag below) — getter 유지/신설 �
 - **구조 검증**: 4개 artifact의 code fence balance, BR-U2 ID 46개 중복 없음, FD-P ID 17개 중복 없음, 상대 링크 해석 가능성을 확인했다.
 - **기록된 FD 신규 결정**: BR-U2-043(`/` `<title>`을 meta.title로 이동; 현재 값과 동일)은 Q 선택이 아닌 S03 metadata 책임 기반의 신규 결정으로 명시했다. Vault write gate는 U2 authored diff만 규율하며 scanner의 기존 `published` 자동 기록과 충돌하지 않음을 기록했다.
 - **Fact/Mutation Boundary**: application source, external Vault, generated output, Git ref(remote), Terraform/AWS resource와 deployment는 변경하지 않았다.
-- **Artifact Gate**: 제시됨 — 명시적 승인 대기.
+- **Artifact Gate**: 2026-07-28에 사용자 응답 `"승인"`으로 승인됨.

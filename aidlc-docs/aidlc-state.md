@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Functional Design — artifacts generated, validated and independently reviewed; awaiting artifact approval gate
+- **Current Stage**: U2 NFR Requirements — plan and 10 questions generated; awaiting question answers
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -482,11 +482,25 @@
 - **Independent Artifact Review**: Passed after one independent review reported 0 blocking, 3 material (staged-aggregation inconsistency across the three documents, missing 404 surface row, undefined `path` for PUB002/PUB003) and 8 minor findings; all 11 were fixed. The review also fact-checked the artifacts against current code (getters, output layout, index.astro, scanner) with no factual errors found.
 - **Recorded New FD Decision**: BR-U2-043 moves the `/` page `<title>` source to `meta.title` (value identical today since scanner derives title from the filename); cited to S03's metadata responsibility, not to a question answer. The Vault write gate is recorded as governing only the authored U2 diff, leaving the scanner's pre-existing `published` auto-stamp behavior unchanged.
 - **Structural Validation**: Code-fence balance, 46 unique BR IDs, 17 unique FD-P IDs and resolvable relative links verified across the four artifacts.
-- **Artifact Gate**: Presented — awaiting explicit approval.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved.
+
+## U2 NFR Requirements Status
+
+- **Started**: 2026-07-28 after explicit U2 Functional Design approval.
+- **Execution Decision**: EXECUTE; unit-of-work §4.9 requires Rust PBT framework selection, determinism/error/test performance and static contract requirements.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-requirements-plan.md`.
+- **Questions Generated**: 10, covering Rust PBT framework (PBT-09), failure persistence/regression-pinning policy, run count and time budget, preprocessor byte-determinism, diagnostic output/exit-code contract, today-post time-dependency injection, `/` accessibility verification scope, browser/viewport matrix, `/` static resource contract, and U2 stable command topology for the U3 handoff.
+- **Question Structure Validation**: Passed. Exactly 10 question headings, 10 empty `[Answer]:` tags, 10 final `X) Other` options and 10 recommended choices; 23 lettered options with every question offering at least two meaningful choices.
+- **Current Stack Analysis**: Rust edition 2024 on rustc/cargo 1.97.1 with no existing PBT dependency (anyhow/serde/serde_yml/regex/chrono/lindera present); `just test` = `cargo test` with 85 existing tests; the Justfile currently performs the output `rm -rf` that BR-U2-026 moves into C09; the site reuses U1's Vitest/fast-check/Playwright/axe stack.
+- **Excluded From Questions**: Already-approved decisions (full PBT, TS framework reuse, property ownership, no-new-JS, Cargo.toml change scope, Jenkins/U3 boundary, counterexample-to-example promotion principle).
+- **PBT-09 Obligation**: After answers, the selected Rust framework is installed as a dev-dependency on this feature branch and proven with a framework smoke covering custom generators, shrinking, seed reproduction and cargo test integration.
+- **Mutation Boundary**: AI-DLC documentation only. No application source, external Vault, generated output, Cargo manifest, Terraform/AWS resource, push, remote branch or deployment changed.
 
 ## Next Step
 
-The U2 Functional Design artifact approval gate is open. On approval, U2 NFR Requirements begins (Rust PBT framework/generator/seed selection, determinism/error/test performance and static contract requirements). If changes are requested, the artifacts are revised and re-presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
+Answer the 10 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-requirements-plan.md` (one letter after each `[Answer]:` tag; describe rules inline for `X`), then reply that answers are complete. After answer validation, `nfr-requirements.md` and `tech-stack-decisions.md` are generated under `aidlc-docs/construction/homepage-publication-boundary/nfr-requirements/`, the PBT-09 installation/smoke proof is performed, and the standard approval gate is presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
