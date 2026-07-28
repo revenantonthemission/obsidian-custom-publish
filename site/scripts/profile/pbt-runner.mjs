@@ -13,7 +13,7 @@ import * as ts from 'typescript';
 const SIGNED_INT32_MIN = -2_147_483_648;
 const SIGNED_INT32_MAX = 2_147_483_647;
 const COUNTEREXAMPLE_PATH = /^(?:0|[1-9]\d*)(?::(?:0|[1-9]\d*))*$/;
-const PBT_FILE = /^tests\/pbt\/u1\/[a-z0-9-]+\.pbt\.test\.ts$/;
+const PBT_FILE = /^tests\/pbt\/u[12]\/[a-z0-9-]+\.pbt\.test\.ts$/;
 const siteRoot = fileURLToPath(new URL('../../', import.meta.url));
 
 class PbtConfigurationError extends Error {
