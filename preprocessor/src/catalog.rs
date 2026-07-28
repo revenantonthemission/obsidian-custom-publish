@@ -67,10 +67,15 @@ pub fn sort_diagnostics(diags: &mut Vec<PublicationDiagnostic>) {
     diags.sort_by(|a, b| (a.path.as_str(), a.code).cmp(&(b.path.as_str(), b.code)));
 }
 
+/// Exact stderr line for one diagnostic: `CODE path: detail` (NFR-U2-005).
+pub fn format_diagnostic(d: &PublicationDiagnostic) -> String {
+    format!("{} {}: {}", d.code.as_str(), d.path, d.detail)
+}
+
 /// Print one line per diagnostic to stderr in batch order (NFR-U2-005).
 pub fn report_diagnostics(diags: &[PublicationDiagnostic]) {
     for d in diags {
-        eprintln!("{} {}: {}", d.code.as_str(), d.path, d.detail);
+        eprintln!("{}", format_diagnostic(d));
     }
 }
 
