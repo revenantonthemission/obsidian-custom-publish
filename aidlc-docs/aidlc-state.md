@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 NFR Design — plan and 9 questions generated; awaiting question answers
+- **Current Stage**: U2 NFR Design — artifacts generated, validated and independently reviewed; awaiting artifact approval gate
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -517,10 +517,18 @@
 - **Question Structure Validation**: Passed. Exactly 9 question headings, 9 empty `[Answer]:` tags, 9 final `X) Other` options and 9 recommended choices; 19 lettered options with every question offering at least two meaningful choices.
 - **Category Coverage**: Resilience, Scalability, Performance, Security/Integrity and Logical Components are each addressed by a question or an explicit evidence-backed N/A candidate (Q9), following the U1 precedent of no silent omission.
 - **Mutation Boundary**: AI-DLC documentation only.
+- **First Answer Submission**: 2026-07-28 with the user response "작성 완료" — 8/9. Q1 was empty and Q8's answer sat on the line after its tag; Q8 was mechanically normalized onto the tag line (unique meaning, U1 precedent) and Q1 was re-asked rather than guessed.
+- **Complete Answer Submission**: 2026-07-28 with the user response "작성 완료" — Q1 answered directly; 9/9.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed — format, clarity, mutual consistency and prior-approval compatibility. No clarification file required.
+- **Artifacts Generated and Validated**: 2026-07-28 — `nfr-design-patterns.md` (PD-U2-01~09 with 5-category verdicts) and `logical-components.md` (LC-U2-01~12) under `aidlc-docs/construction/homepage-publication-boundary/nfr-design/`.
+- **Design Contract**: 6-pass logical pipeline with catalog as sole source supplier; data-structure-layer determinism; single-owner clean with both Justfile `rm -rf` lines (preprocess and deploy-preprocess) removed; parameterized today-date with e2e env override; pure composition module `site/src/lib/homepage.ts`; coded immediate-throw errors; additive Playwright expansion via two new firefox/webkit homepage projects (existing three project definitions untouched); U1-convention test layout with a mandatory additive extension of `vitest.pbt.config.ts` include and the `pbt-runner.mjs` `PBT_FILE` regex so U2 site PBT files cannot be silently skipped; runtime resilience/scalability recorded as evidence-backed N/A.
+- **Independent Artifact Review**: Passed after 0 blocking, 3 material and 5 minor findings, all fixed. Material: the firefox/webkit `testMatch` pinning made "add the spec to their run targets" contradict "U1 project definitions unchanged" (resolved per TSD-U2-07 as new projects); the approved site PBT path fell outside the current PBT runner's include/regex and would have been silently skipped; the Justfile `rm -rf` exists in two recipes, not one.
+- **Artifact Gate**: Presented — awaiting explicit approval.
 
 ## Next Step
 
-Answer the 9 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-design-plan.md` (one letter after each `[Answer]:` tag; describe rules inline for `X`), then reply that answers are complete. After answer validation, `nfr-design-patterns.md` and `logical-components.md` are generated under `aidlc-docs/construction/homepage-publication-boundary/nfr-design/` and the standard approval gate is presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
+The U2 NFR Design artifact approval gate is open. On approval, U2 Infrastructure Design begins — the compatibility/no-change gate covering route addition (`/` unchanged, `/posts/passion-project` absence), static asset/cache/invalidation/rollback compatibility per unit-of-work §4.9, with no Terraform/AWS mutation authorized. If changes are requested, the artifacts are revised and re-presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
