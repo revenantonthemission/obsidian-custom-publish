@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Infrastructure Design
-- **상태**: artifact 3건 생성·검증·독립 검토 완료 — 완료 gate 승인 대기
+- **상태**: 완료 및 승인됨 (2026-07-28, 사용자 응답 "승인")
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
@@ -43,7 +43,7 @@ U2 산출물이 기존 정적 전달 topology와 호환되는지 검증하고 no
 - **핵심 판정**: 완전 no-change. 제거 route는 기존 403→404 mapping의 자연 404; `sync --delete` + `/*` invalidation이 origin/cache 정리를 이미 수행; 새 공개 파일 없음; Justfile 접촉은 rm -rf 2줄 제거 + 동작 보존 refactoring 한정; rollback·monitoring 현상 유지.
 - **독립 검토**: APPROVE — BLOCKING/MATERIAL 0, MINOR 2 수정 반영.
 - **Mutation Boundary**: 문서만 변경. Terraform/AWS/DNS/cache policy/배포 실행/external Vault/application source 불변.
-- **Artifact Gate**: 제시됨 — 명시적 승인 대기.
+- **Artifact Gate**: 2026-07-28에 사용자 응답 `"승인"`으로 승인됨.
 
 ## 4. Infrastructure Design Questions
 

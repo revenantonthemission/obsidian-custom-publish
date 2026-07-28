@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Infrastructure Design — no-change verdict recorded, artifacts generated and independently reviewed; awaiting artifact approval gate
+- **Current Stage**: U2 Code Generation Part 1 — plan generated and independently reviewed; awaiting plan approval
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -545,11 +545,23 @@
 - **Artifacts Generated and Validated**: 2026-07-28 — `infrastructure-design.md` and `deployment-architecture.md` under `aidlc-docs/construction/homepage-publication-boundary/infrastructure-design/`, plus the `shared-infrastructure.md` §4 U2 row updated from its "Later confirm" placeholder to the confirmed verdict.
 - **Infrastructure Result**: **Compatible — no change.** The removed `/posts/passion-project/` route resolves as a natural 404 through the existing 403→404 `custom_error_response` (`/404.html`, 60s min TTL); existing `aws s3 sync --delete` + `/*` invalidation in both deploy paths removes the stale object and cache; `content/homepage/` and `content/manifest.json` are build inputs with no path to the public surface; the CloudFront redirect alternative (Q1-B) was considered and rejected — the old URL 404s as an accepted product outcome. U1's nine inherited deployment risks remain recorded unchanged for U3/deploy-authority handoff.
 - **Independent Artifact Review**: APPROVE — 0 blocking, 0 material, 2 minor (the frozen copy set description omitted the pre-existing `assets/` copy; the local-rollback claim needed the same-vault-input qualifier since NFR-U2-004 determinism conditions on vault content + code). Both fixed. All cited line numbers, config values and the 9-risk count were verified against the actual files.
-- **Artifact Gate**: Presented — awaiting explicit approval.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved. This closes all four U2 design stages before Code Generation.
+
+## U2 Code Generation Status
+
+- **Started**: 2026-07-28 after explicit U2 Infrastructure Design approval.
+- **Current Part**: Part 1 — plan approval gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-code-generation-plan.md`.
+- **Plan Inventory**: 15 sequential steps covering fixture strategy (error cases via tempfile vaults, never the shared fixture vault), the Rust publication pipeline (scope parsing → catalog/diagnostics → reference/transclusion → output lifecycle → orchestration), three Rust test files with all FD-P/DE-P properties and PUB examples, the site gateway/pure-composition/page rewrite, site unit/PBT tests with the mandatory PBT-runner additive extension, e2e with two new Playwright projects and discovery-exclusion surface assertions, the hard human gate for the exact `Passion Project.md` diff, and a final sweep with obligation closure and the code-generation summary.
+- **Fixture Impact Analysis**: Existing assertions verified lenient (`scanner_test.rs` `>= 7`; `search_test.rs` relative equality) — the homepage fixture scans as a normal post until the projection lands, so interim steps stay green; the `search_test` semantic rewrite is sequenced at Step 5~6, not Step 1.
+- **Independent Plan Review**: 0 blocking, 3 material, 6 minor — all amended. Material: site-side discovery-exclusion examples (route 404, RSS, sitemap, 404-page recent list) were unassigned; the `search_test` rewrite was mis-sequenced before the behavior existed; and `npm run test:e2e` is U1's evidence-sealed provider whose 48-key record rejects extra matrix keys, so `homepage.spec.ts` must stay entirely outside the U1 evidence machinery (now an explicit Step 13 constraint, with U1 `tests/e2e/support/*` frozen). The review also verified all file-path/config claims (pbt-runner regex, 3-project Playwright topology, two Justfile rm -rf lines) against the actual tree.
+- **Hard Human Gates**: (1) this plan's approval; (2) Step 14's exact Vault diff approval before any external Vault change.
+- **Mutation Boundary Before Part 2**: Planning changed AI-DLC markdown only. No application source changed before plan approval.
 
 ## Next Step
 
-The U2 Infrastructure Design artifact approval gate is open. On approval, all five U2 design stages are closed and **U2 Code Generation** begins: a Part-1 plan with exact file inventory and sequential steps (Rust publication pipeline per LC-U2-01~08, site composition per LC-U2-09~12, fixtures, examples/PBT, the gated `Passion Project.md` Vault edit, and verification evidence), followed by plan approval and Part-2 generation. No push, external Vault edit, deployment or merge is authorized before its own gates.
+The U2 Code Generation plan approval gate is open. On approval, Part 2 executes Steps 1~15 with per-step verification; Step 14 pauses for the exact `Passion Project.md` diff approval. No push, merge, deployment, Jenkins/Terraform/AWS change or Vault commit/push occurs anywhere in this stage.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
