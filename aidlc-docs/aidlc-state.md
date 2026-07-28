@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 NFR Requirements — plan and 10 questions generated; awaiting question answers
+- **Current Stage**: U2 NFR Requirements — artifacts generated, PBT-09 proven, independently reviewed; awaiting artifact approval gate
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -497,10 +497,18 @@
 - **Excluded From Questions**: Already-approved decisions (full PBT, TS framework reuse, property ownership, no-new-JS, Cargo.toml change scope, Jenkins/U3 boundary, counterexample-to-example promotion principle).
 - **PBT-09 Obligation**: After answers, the selected Rust framework is installed as a dev-dependency on this feature branch and proven with a framework smoke covering custom generators, shrinking, seed reproduction and cargo test integration.
 - **Mutation Boundary**: AI-DLC documentation only. No application source, external Vault, generated output, Cargo manifest, Terraform/AWS resource, push, remote branch or deployment changed.
+- **First Answer Submission**: 2026-07-28 with the user response "작성 완료" — 9/10. Q3's tag was empty and Q3's option-A text sat under Q4's tag; the misplaced text was mechanically relocated to Q3 (unique meaning, U1 precedent), and Q4 was re-asked rather than guessed because its A/B options are materially different commitments.
+- **Complete Answer Submission**: 2026-07-28 with the user response "작성 완료" — Q4 answered directly; 10/10.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed — format, clarity, mutual consistency and prior-approval compatibility. No clarification file required.
+- **Artifacts Generated and Validated**: 2026-07-28 — `nfr-requirements.md` (NFR-U2-001~011) and `tech-stack-decisions.md` (TSD-U2-01~07) under `aidlc-docs/construction/homepage-publication-boundary/nfr-requirements/`.
+- **PBT-09 Status**: Compliant, proven by execution. proptest 1.11.0 installed as the sole approved Cargo manifest change; `preprocessor/tests/pbt_framework_smoke.rs` proves structural Korean/Unicode Strategy generators (2 properties × 256 cases), automatic shrinking (deliberate failure shrank to minimal `[0,0,0,0,0]`), seed persistence/replay (`cc d5a76a82…` recorded; rerun reproduced the exact case in 0.00s with 0 successes before novel generation) and cargo test integration. The throwaway failing property and its persistence file were removed after capture, per the U1 precedent. Full `cargo test`: 87 passed / 0 failed in ~26s — the 3-minute budget baseline.
+- **Independent Artifact Review**: Passed after 0 blocking, 2 material and 3 minor findings, all fixed. Material: TSD-U2-02's claim that no seed env var exists contradicted proptest 1.11.0's `PROPTEST_RNG_SEED` (reworded: persistence file is the recorded-failure replay path; the u64 env seed fixes the whole-run RNG and cannot ingest a `cc` seed); Q8's "same as U1" browser-matrix premise did not match U1's real topology (firefox/webkit run only the focused cross-browser spec at 320×800/1280×800) — recorded as premise correction TSD-U2-07: the 3-browser × 320×800/1440×900 `/` smoke is achieved by adding Playwright projects/specs, with tool versions reused. Minor: PUB007 exit-1 noted as deliberate tightening of BR-U2-028, NFR-U2-011 citation corrected to the ST-E03 checklist, and new U2 CSS must live outside U1's manual-accessibility review-subject files/directories so NFR-U2-007's subject-invariance holds.
+- **Artifact Gate**: Presented — awaiting explicit approval.
 
 ## Next Step
 
-Answer the 10 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-requirements-plan.md` (one letter after each `[Answer]:` tag; describe rules inline for `X`), then reply that answers are complete. After answer validation, `nfr-requirements.md` and `tech-stack-decisions.md` are generated under `aidlc-docs/construction/homepage-publication-boundary/nfr-requirements/`, the PBT-09 installation/smoke proof is performed, and the standard approval gate is presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
+The U2 NFR Requirements artifact approval gate is open. On approval, U2 NFR Design begins (producer-side partition patterns, artifact schema/read gate, error propagation and owner-local test patterns per unit-of-work §4.9). If changes are requested, the artifacts are revised and re-presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
