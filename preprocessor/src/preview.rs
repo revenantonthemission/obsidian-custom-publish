@@ -1,6 +1,6 @@
 use crate::syntax::{
-    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE,
-    INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE, MULTI_SPACE_RE,
+    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE, INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE,
+    MULTI_SPACE_RE,
 };
 use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
@@ -86,7 +86,11 @@ fn extract_first_sentence(text: &str) -> String {
     if char_count <= MAX_SUMMARY_CHARS {
         return text.to_string();
     }
-    let byte_idx = text.char_indices().nth(MAX_SUMMARY_CHARS).map(|(i, _)| i).unwrap_or(text.len());
+    let byte_idx = text
+        .char_indices()
+        .nth(MAX_SUMMARY_CHARS)
+        .map(|(i, _)| i)
+        .unwrap_or(text.len());
     let truncated = &text[..byte_idx];
     if let Some(last_space) = truncated.rfind(' ') {
         format!("{}...", &text[..last_space])

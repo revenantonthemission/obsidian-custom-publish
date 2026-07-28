@@ -8,7 +8,6 @@ cf_dist_id  := env("CF_DIST_ID", "E35HZFVGD0OJ04")
 build: preprocess site-build
 
 preprocess:
-    rm -rf {{content}}/posts {{content}}/meta {{content}}/assets
     cargo run --release --manifest-path preprocessor/Cargo.toml -- {{vault}} {{content}}
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
@@ -28,7 +27,6 @@ deploy: deploy-preprocess site-build
     AWS_PROFILE={{aws_profile}} aws cloudfront create-invalidation --distribution-id {{cf_dist_id}} --paths "/*"
 
 deploy-preprocess:
-    rm -rf {{content}}/posts {{content}}/meta {{content}}/assets
     cargo run --release --manifest-path preprocessor/Cargo.toml -- --stamp-published {{vault}} {{content}}
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json

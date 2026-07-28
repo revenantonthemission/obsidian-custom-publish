@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use walkdir::WalkDir;
 
-use crate::syntax::{frontmatter_range, BLOCK_ID_RE, HEADING_RE};
-use crate::types::{is_korean, PostMeta, VaultIndex};
+use crate::syntax::{BLOCK_ID_RE, HEADING_RE, frontmatter_range};
+use crate::types::{PostMeta, RawVisibility, VaultIndex, is_korean};
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -25,6 +25,17 @@ struct RawFrontmatter {
     hub_parent: Option<String>,
     #[serde(default)]
     description: Option<String>,
+    #[serde(default)]
+    visibility: Option<serde_yml::Value>,
+}
+
+/// Capture the raw `visibility` value without normalizing it — the publication
+/// catalog owns validation and must see exactly what was authored (BR-U2-002~004).
+fn raw_visibility(value: Option<serde_yml::Value>) -> Option<RawVisibility> {
+    value.map(|v| match v {
+        serde_yml::Value::String(s) => RawVisibility::Scalar(s),
+        other => RawVisibility::NonScalar(format!("{other:?}")),
+    })
 }
 
 /// Deserializes a YAML value that may be a date, integer, or string into `Option<String>`.
@@ -210,7 +221,9 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
 
         let title = filename.clone();
 
-        let updated = path.canonicalize().ok()
+        let updated = path
+            .canonicalize()
+            .ok()
             .and_then(|canonical| git_dates.get(&canonical).cloned());
 
         let created = frontmatter.created.or_else(|| file_created_date(path));
@@ -230,6 +243,7 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
             is_hub: frontmatter.is_hub,
             hub_parent: frontmatter.hub_parent,
             description: frontmatter.description,
+            visibility: raw_visibility(frontmatter.visibility),
             raw_content: content,
         };
         heading_map.insert(post.title.clone(), headings);
@@ -298,7 +312,14 @@ fn git_last_modified_batch(vault_path: &Path) -> HashMap<PathBuf, String> {
 
     // Use a prefixed format to unambiguously distinguish date lines from filenames
     let output = Command::new("git")
-        .args(["--no-pager", "log", "--format=DATE:%cs", "--name-only", "--diff-filter=ACMR", "--"])
+        .args([
+            "--no-pager",
+            "log",
+            "--format=DATE:%cs",
+            "--name-only",
+            "--diff-filter=ACMR",
+            "--",
+        ])
         .arg(vault_path)
         .output();
 
@@ -325,7 +346,9 @@ fn git_last_modified_batch(vault_path: &Path) -> HashMap<PathBuf, String> {
             // File path — only store the first (most recent) date per file
             let path = Path::new(trimmed);
             let canonical = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
-            result.entry(canonical).or_insert_with(|| current_date.clone());
+            result
+                .entry(canonical)
+                .or_insert_with(|| current_date.clone());
         }
     }
 

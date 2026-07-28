@@ -34,12 +34,10 @@ static MMDC_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
     None
 });
 
-static INIT_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
+static INIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
 
-static THEME_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?:'theme'\s*:\s*'[^']*'|"theme"\s*:\s*"[^"]*")"#).unwrap()
-});
+static THEME_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?:'theme'\s*:\s*'[^']*'|"theme"\s*:\s*"[^"]*")"#).unwrap());
 
 /// Infer and prepend a Mermaid diagram-type header when one is missing.
 ///
@@ -50,11 +48,26 @@ fn ensure_mermaid_header(source: &str) -> String {
 
     // Already has a valid type declaration — pass through unchanged
     let known_types = [
-        "graph", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram",
-        "erDiagram", "journey", "gantt", "pie", "gitGraph", "mindmap",
-        "timeline", "xychart-beta", "block-beta", "packet-beta",
-        "architecture-beta", "quadrantChart", "requirementDiagram",
-        "%%{", "---",
+        "graph",
+        "flowchart",
+        "sequenceDiagram",
+        "classDiagram",
+        "stateDiagram",
+        "erDiagram",
+        "journey",
+        "gantt",
+        "pie",
+        "gitGraph",
+        "mindmap",
+        "timeline",
+        "xychart-beta",
+        "block-beta",
+        "packet-beta",
+        "architecture-beta",
+        "quadrantChart",
+        "requirementDiagram",
+        "%%{",
+        "---",
     ];
     if known_types.iter().any(|t| first_line.starts_with(t)) {
         return source.to_string();
@@ -102,7 +115,9 @@ fn apply_theme_to_source(source: &str, theme: &str) -> (String, bool) {
         let init_block = &caps[0];
         // Replace 'theme': '...' or "theme": "..." with the desired theme
         if THEME_RE.is_match(init_block) {
-            THEME_RE.replace(init_block, format!("'theme': '{theme}'")).to_string()
+            THEME_RE
+                .replace(init_block, format!("'theme': '{theme}'"))
+                .to_string()
         } else {
             // No theme key — inject one after the opening %%{init: {
             init_block.replacen("{", &format!("{{ 'theme': '{theme}',"), 2)
@@ -120,17 +135,18 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
     let source = ensure_mermaid_header(source);
     let (source, has_init) = apply_theme_to_source(&source, theme);
 
-    let mut input = NamedTempFile::with_suffix(".mmd")
-        .context("failed to create temp input file")?;
+    let mut input =
+        NamedTempFile::with_suffix(".mmd").context("failed to create temp input file")?;
     input
         .write_all(source.as_bytes())
         .context("failed to write mermaid source")?;
 
-    let output_file = NamedTempFile::with_suffix(".svg")
-        .context("failed to create temp output file")?;
+    let output_file =
+        NamedTempFile::with_suffix(".svg").context("failed to create temp output file")?;
     let output_path = output_file.path().to_path_buf();
 
-    let mmdc = MMDC_PATH.as_ref()
+    let mmdc = MMDC_PATH
+        .as_ref()
         .context("mmdc not found — install with: npm install -g @mermaid-js/mermaid-cli")?;
 
     let mut cmd = std::process::Command::new(mmdc);
