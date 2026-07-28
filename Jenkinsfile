@@ -11,6 +11,12 @@ pipeline {
         S3_BUCKET     = 'obsidian-custom-s3'
         CF_DIST_ID    = 'E35HZFVGD0OJ04'
         VAULT_PATH    = "${env.OBSIDIAN_VAULT_PATH ?: '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'}"
+        // mmdc renders Mermaid through puppeteer, which needs a browser. The
+        // local checkout supplies one via `.puppeteer-config.json`, but that
+        // file is gitignored, so a CI workspace never receives it and every
+        // diagram failed silently while the build still went green. Naming the
+        // browser here is something a fresh checkout can actually rely on.
+        PUPPETEER_EXECUTABLE_PATH = "${env.PUPPETEER_EXECUTABLE_PATH ?: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}"
         CARGO_HOME    = "${WORKSPACE}/.cargo"
     }
 

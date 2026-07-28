@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -612,6 +613,31 @@ fn render_single_diagram(
 }
 
 /// Render a diagram twice (light + dark), wrap in theme-gated markup.
+/// Count of diagrams that failed to render during this run.
+///
+/// A failed diagram is a content defect, not a cosmetic one: the page ships
+/// without the picture it was written around. Rendering still falls back so the
+/// operator can see what was produced, but the count makes the run
+/// unmistakably unsuccessful — 65 failures once reached production behind a
+/// green build because these were warnings and nothing else.
+static DIAGRAM_FAILURES: AtomicUsize = AtomicUsize::new(0);
+
+fn record_diagram_failure() {
+    DIAGRAM_FAILURES.fetch_add(1, Ordering::Relaxed);
+}
+
+/// How many diagram renders failed. Zero means every diagram was produced.
+pub fn diagram_failure_count() -> usize {
+    DIAGRAM_FAILURES.load(Ordering::Relaxed)
+}
+
+/// Resets the counter. Test-only: the counter is process-global, so tests that
+/// assert on it must not inherit another test's failures.
+#[cfg(test)]
+pub fn reset_diagram_failures() {
+    DIAGRAM_FAILURES.store(0, Ordering::Relaxed);
+}
+
 fn render_themed_diagram(
     lang: &str,
     source: &str,
@@ -627,6 +653,7 @@ fn render_themed_diagram(
     // If both fail, fall back to source code
     if let (Err(e), Err(_)) = (&light_result, &dark_result) {
         eprintln!("warning: {lang} rendering failed for {slug}: {e}");
+        record_diagram_failure();
         return format!("```{lang}\n{source}```");
     }
 
@@ -653,6 +680,7 @@ fn render_themed_diagram(
             }
             Err(e) => {
                 eprintln!("warning: {lang} {variant} theme rendering failed for {slug}: {e}");
+                record_diagram_failure();
             }
         }
     }
