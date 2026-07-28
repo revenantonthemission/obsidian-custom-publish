@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Code Generation, Part 1 (계획)
-- **상태**: 계획 승인 대기
+- **상태**: 계획 승인됨 (2026-07-28, "승인") — Part 2 실행 중
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
