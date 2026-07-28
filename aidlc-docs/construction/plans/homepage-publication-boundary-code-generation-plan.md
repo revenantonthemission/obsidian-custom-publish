@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Code Generation, Part 1 (계획)
-- **상태**: 계획 승인됨 (2026-07-28, "승인") — Part 2 실행 중
+- **상태**: Part 2 완료 — Step 1~15 전 checkbox 닫힘, 완료 gate 승인 대기
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
@@ -40,70 +40,70 @@
 각 step은 컴파일·관련 test 통과·`git diff --check`를 종료 조건으로 하고, 발견된 결함은 해당 step에서 수정한다.
 
 ### Step 1 — Fixture 전략과 확장
-- [ ] `fixtures/vault/`에 정확히 하나의 homepage fixture(`visibility: homepage`, slot token, 오늘 발행 글 heading, 일반 wikilink 몇 개)를 추가한다.
-- [ ] 일반 post fixture 하나에 homepage 대상 wikilink(bare/alias/heading/block)를 추가해 truth table happy path를 fixture로 만든다.
-- [ ] **오류 사례(unknown visibility, 중복 homepage, homepage transclusion)는 main fixture vault에 넣지 않는다** — 넣으면 모든 실행이 실패한다. tempfile 기반 per-test vault로 구성한다.
-- [ ] 기존 test 기대를 확인한다: fixture 추가 시점에는 `visibility:`가 무시되어 homepage fixture가 normal post로 scan되므로 기존 단언(`scanner_test.rs`의 `>= 7`, `search_test.rs`의 상대 등식)은 그대로 green이어야 한다. **`search_test.rs`의 post-only 의미 갱신은 Step 5~6(projection이 실제로 바뀌는 시점)에서 수행한다** — 미리 바꾸면 중간 단계 gate가 깨진다.
+- [x] `fixtures/vault/`에 정확히 하나의 homepage fixture(`visibility: homepage`, slot token, 오늘 발행 글 heading, 일반 wikilink 몇 개)를 추가한다.
+- [x] 일반 post fixture 하나에 homepage 대상 wikilink(bare/alias/heading/block)를 추가해 truth table happy path를 fixture로 만든다.
+- [x] **오류 사례(unknown visibility, 중복 homepage, homepage transclusion)는 main fixture vault에 넣지 않는다** — 넣으면 모든 실행이 실패한다. tempfile 기반 per-test vault로 구성한다.
+- [x] 기존 test 기대를 확인한다: fixture 추가 시점에는 `visibility:`가 무시되어 homepage fixture가 normal post로 scan되므로 기존 단언(`scanner_test.rs`의 `>= 7`, `search_test.rs`의 상대 등식)은 그대로 green이어야 한다. **`search_test.rs`의 post-only 의미 갱신은 Step 5~6(projection이 실제로 바뀌는 시점)에서 수행한다** — 미리 바꾸면 중간 단계 gate가 깨진다.
 
 ### Step 2 — Scope 파싱 (LC-U2-01)
-- [ ] `types.rs`에 `PublicationScope` + visibility 표현을 추가하고 `scanner.rs`가 원본 무변경으로 수집하게 한다 (BR-U2-001~004; frontmatter 자동 삽입에 visibility 미추가).
+- [x] `types.rs`에 `PublicationScope` + visibility 표현을 추가하고 `scanner.rs`가 원본 무변경으로 수집하게 한다 (BR-U2-001~004; frontmatter 자동 삽입에 visibility 미추가).
 
 ### Step 3 — Catalog와 진단 (LC-U2-02/03)
-- [ ] `catalog.rs`: builder(exactly-one, PUB001~003, path 규약), immutable 정렬 projection(BTreeMap/정렬 Vec — PD-U2-02), `LinkableSources`.
-- [ ] DiagnosticCollector + stderr reporter(`PUB### {path}: {detail}`, 정렬 유지, exit 1 — NFR-U2-005).
+- [x] `catalog.rs`: builder(exactly-one, PUB001~003, path 규약), immutable 정렬 projection(BTreeMap/정렬 Vec — PD-U2-02), `LinkableSources`.
+- [x] DiagnosticCollector + stderr reporter(`PUB### {path}: {detail}`, 정렬 유지, exit 1 — NFR-U2-005).
 
 ### Step 4 — Reference/Transclusion (LC-U2-04)
-- [ ] `linker.rs`/`transform.rs`: truth table BR-U2-013~017(기존 anchor 파생 재사용), transclusion 거부 PUB004~006(일괄 수집), 비-homepage 결과 불변, fence 보호 재사용 (BR-U2-018~022).
+- [x] `linker.rs`/`transform.rs`: truth table BR-U2-013~017(기존 anchor 파생 재사용), transclusion 거부 PUB004~006(일괄 수집), 비-homepage 결과 불변, fence 보호 재사용 (BR-U2-018~022).
 
 ### Step 5 — Output lifecycle (LC-U2-05~07)
-- [ ] `output.rs`: 검증→정리→쓰기 순서로 관리 namespace 전체 정리(PD-U2-03), `content/homepage/index.md`+`meta.json`(BR-U2-030~032), `content/manifest.json`(자기 제외 정렬 목록), post-only discovery 출력 (BR-U2-009~012, §2.1 matrix).
-- [ ] Justfile `preprocess`·`deploy-preprocess`의 rm -rf 2줄을 제거한다 (C1-A).
-- [ ] projection 전환에 따라 기존 test 기대를 이 시점에 갱신한다: `search_test.rs`의 등식을 post-only 의미로, catalog 소비로 서명이 바뀌는 기존 test 호출부(`linker_test`·`output_test`·`preview_test`·`nav_tree_test` 등)를 함께 조정한다 — 각 서명 변경은 그것을 도입한 step이 호출부 갱신까지 책임진다.
+- [x] `output.rs`: 검증→정리→쓰기 순서로 관리 namespace 전체 정리(PD-U2-03), `content/homepage/index.md`+`meta.json`(BR-U2-030~032), `content/manifest.json`(자기 제외 정렬 목록), post-only discovery 출력 (BR-U2-009~012, §2.1 matrix).
+- [x] Justfile `preprocess`·`deploy-preprocess`의 rm -rf 2줄을 제거한다 (C1-A).
+- [x] projection 전환에 따라 기존 test 기대를 이 시점에 갱신한다: `search_test.rs`의 등식을 post-only 의미로, catalog 소비로 서명이 바뀌는 기존 test 호출부(`linker_test`·`output_test`·`preview_test`·`nav_tree_test` 등)를 함께 조정한다 — 각 서명 변경은 그것을 도입한 step이 호출부 갱신까지 책임진다.
 
 ### Step 6 — Pipeline orchestration
-- [ ] `lib.rs`/`main.rs`: scan → catalog(1차 진단) → link/transform(2차 진단) → search → output의 논리 순서와 fail-closed 종료 (PD-U2-01; PUB007 wiring).
+- [x] `lib.rs`/`main.rs`: scan → catalog(1차 진단) → link/transform(2차 진단) → search → output의 논리 순서와 fail-closed 종료 (PD-U2-01; PUB007 wiring).
 
 ### Step 7 — Rust test: catalog
-- [ ] `publication_catalog.rs`: FD-P-C07-01~05 + DE-P-U2-01/02 property(256 cases), PUB001~003 형식·순서·exit example, EDGE-012 blocker example.
+- [x] `publication_catalog.rs`: FD-P-C07-01~05 + DE-P-U2-01/02 property(256 cases), PUB001~003 형식·순서·exit example, EDGE-012 blocker example.
 
 ### Step 8 — Rust test: transform
-- [ ] `publication_transform.rs`: FD-P-C08-01~04(DE-P-U2-04 Rust 절반), PUB004~006 example, truth table 전 variant example.
+- [x] `publication_transform.rs`: FD-P-C08-01~04(DE-P-U2-04 Rust 절반), PUB004~006 example, truth table 전 variant example.
 
 ### Step 9 — Rust test: output + 결정성
-- [ ] `publication_output.rs`: FD-P-C09-01~04 + DE-P-U2-03, manifest 정확성, homepage 부재 전수 검사, stale 잔존 불가(EDGE-007 회귀), PUB007 example, 이중 실행 byte 결정성 integration test (LC-U2-08; NFR-U2-004).
-- [ ] `just test` 전체 green + 3분 예산 내 확인 (NFR-U2-003).
+- [x] `publication_output.rs`: FD-P-C09-01~04 + DE-P-U2-03, manifest 정확성, homepage 부재 전수 검사, stale 잔존 불가(EDGE-007 회귀), PUB007 example, 이중 실행 byte 결정성 integration test (LC-U2-08; NFR-U2-004).
+- [x] `just test` 전체 green + 3분 예산 내 확인 (NFR-U2-003).
 
 ### Step 10 — Site gateway와 순수 조합 (LC-U2-09/10)
-- [ ] `data.ts`: `getHomepage()` — HP001/HP002 즉시 throw (PD-U2-06); 기존 getter 불변.
-- [ ] `homepage.ts`: fence-aware token 계수·치환 분할·오늘 발행 글 분할·날짜 매개변수 순수 함수 (BR-U2-036~042; PD-U2-04/05); HP003/HP004.
+- [x] `data.ts`: `getHomepage()` — HP001/HP002 즉시 throw (PD-U2-06); 기존 getter 불변.
+- [x] `homepage.ts`: fence-aware token 계수·치환 분할·오늘 발행 글 분할·날짜 매개변수 순수 함수 (BR-U2-036~042; PD-U2-04/05); HP003/HP004.
 
 ### Step 11 — Page 조합 (LC-U2-11)
-- [ ] `index.astro` 재작성: getHomepage + homepage.ts + U1 canonical fragment 조합, `<title>`=meta.title(BR-U2-043), page-scoped CSS(PD-U2-09, gzip 4KiB 이내), build 시작 1회 날짜 계산, 새 client JS 0.
+- [x] `index.astro` 재작성: getHomepage + homepage.ts + U1 canonical fragment 조합, `<title>`=meta.title(BR-U2-043), page-scoped CSS(PD-U2-09, gzip 4KiB 이내), build 시작 1회 날짜 계산, 새 client JS 0.
 
 ### Step 12 — Site test: unit + PBT
-- [ ] `homepage-composition.test.ts`(손상 mode, FE-P-U2-02/03) + `homepage-composition.pbt.test.ts`(FD-P-C06-01/02, FD-P-C10-01/02, FE-P-U2-05).
-- [ ] `vitest.pbt.config.ts` include와 `pbt-runner.mjs` `PBT_FILE` regex를 U2 경로로 가산 확장하고, **U2 PBT가 실제로 실행됨을 test 수 증가로 확인한다** (침묵 스킵 방지 — PD-U2-08).
+- [x] `homepage-composition.test.ts`(손상 mode, FE-P-U2-02/03) + `homepage-composition.pbt.test.ts`(FD-P-C06-01/02, FD-P-C10-01/02, FE-P-U2-05).
+- [x] `vitest.pbt.config.ts` include와 `pbt-runner.mjs` `PBT_FILE` regex를 U2 경로로 가산 확장하고, **U2 PBT가 실제로 실행됨을 test 수 증가로 확인한다** (침묵 스킵 방지 — PD-U2-08).
 
 ### Step 13 — e2e와 예산
-- [ ] `homepage.spec.ts`: axe(무 위반), keyboard·reduced-motion smoke, CTA·Notion 부재(FE-P-U2-01), 공통 nav 보존(FE-P-U2-06), hydration marker 부재(FE-P-U2-04), 외부 요청 0.
-- [ ] **discovery 제외 표면 단언**: `/posts/{homepage-slug}` route가 404이고, homepage 항목이 `rss.xml`·sitemap·404 페이지 최근 글 목록에 부재함을 build output/e2e로 단언한다 (BR-U2 §2.1의 site 표면 절반).
-- [ ] **U1 evidence 기계 격리**: `homepage.spec.ts`는 U1의 evidence fragment/matrix key/obligation 기계(`tests/e2e/support/evidence` 등)를 사용하지도 기록하지도 않는다 — U1의 sealed 48-key record에 항목을 추가하면 `BROWSER_EVIDENCE_INCOMPLETE`로 `test:e2e` 전체가 깨진다. e2e 지원 코드가 필요하면 U2 전용 신규 모듈로 한정하고 U1 support 파일은 변경하지 않는다.
-- [ ] `playwright.config.ts`에 homepage firefox/webkit 신규 project 2개 추가(기존 3 project 불변 — TSD-U2-07/PD-U2-07).
-- [ ] 오늘 발행 글 양 경우 검증: env override를 fixture published 날짜로 설정한 실행(글 있음)과 어떤 fixture에도 없는 날짜로 설정한 실행(글 없음) 두 번으로 결정적으로 검증한다 (PD-U2-04) — 명령 topology는 불변.
-- [ ] 예산 검증: 새 JS 0 bytes, 신규 CSS gzip ≤ 4KiB, `npm run test:*` 모두 green.
+- [x] `homepage.spec.ts`: axe(무 위반), keyboard·reduced-motion smoke, CTA·Notion 부재(FE-P-U2-01), 공통 nav 보존(FE-P-U2-06), hydration marker 부재(FE-P-U2-04), 외부 요청 0.
+- [x] **discovery 제외 표면 단언**: `/posts/{homepage-slug}` route가 404이고, homepage 항목이 `rss.xml`·sitemap·404 페이지 최근 글 목록에 부재함을 build output/e2e로 단언한다 (BR-U2 §2.1의 site 표면 절반).
+- [x] **U1 evidence 기계 격리**: `homepage.spec.ts`는 U1의 evidence fragment/matrix key/obligation 기계(`tests/e2e/support/evidence` 등)를 사용하지도 기록하지도 않는다 — U1의 sealed 48-key record에 항목을 추가하면 `BROWSER_EVIDENCE_INCOMPLETE`로 `test:e2e` 전체가 깨진다. e2e 지원 코드가 필요하면 U2 전용 신규 모듈로 한정하고 U1 support 파일은 변경하지 않는다.
+- [x] `playwright.config.ts`에 homepage firefox/webkit 신규 project 2개 추가(기존 3 project 불변 — TSD-U2-07/PD-U2-07).
+- [x] 오늘 발행 글 양 경우 검증: env override를 fixture published 날짜로 설정한 실행(글 있음)과 어떤 fixture에도 없는 날짜로 설정한 실행(글 없음) 두 번으로 결정적으로 검증한다 (PD-U2-04) — 명령 topology는 불변.
+- [x] 예산 검증: 새 JS 0 bytes, 신규 CSS gzip ≤ 4KiB, `npm run test:*` 모두 green.
 
 ### Step 14 — **HUMAN GATE: Vault 편집**
-- [ ] 소비 동작·fixture·test가 모두 green인 상태에서 `Passion Project.md`의 **정확한 제안 diff**(visibility 추가, slot token 추가, 임시 Notion block 제거)를 사용자에게 제시하고 명시적 승인을 기다린다.
-- [ ] 승인 후 편집을 적용하고, 실제 Vault 대상 `just preprocess` + full build 증거를 수집한다 (FD Q1-A의 실제 Vault 증거).
-- [ ] Vault repository의 commit/push는 수행하지 않는다 (BR-U2-046).
+- [x] 소비 동작·fixture·test가 모두 green인 상태에서 `Passion Project.md`의 **정확한 제안 diff**(visibility 추가, slot token 추가, 임시 Notion block 제거)를 사용자에게 제시하고 명시적 승인을 기다린다.
+- [x] 승인 후 편집을 적용하고, 실제 Vault 대상 `just preprocess` + full build 증거를 수집한다 (FD Q1-A의 실제 Vault 증거).
+- [x] Vault repository의 commit/push는 수행하지 않는다 (BR-U2-046).
 
 ### Step 15 — 최종 검증과 요약
-- [ ] 전체 sweep: `just test`, `npm run test:unit`·`test:pbt`(U2 포함 확인)·`test:e2e`, `npx astro check`(U1 상속 hint baseline 대비; `astro build`가 진실 원천), direct astro build, 결정성 이중 실행.
-- [ ] NFR-U2-010 부정 검사: Justfile·package.json에 U2 전용 신규 명령이 없음을 확인한다.
-- [ ] NFR-U2-011: U2 test 전체가 외부 네트워크 없이 실행 가능함을 확인한다 (fixture·generator의 로컬 자원 한정; e2e는 loopback만).
-- [ ] U1 명령 회귀 확인: `resume:pdf:verify` 포함 U1 stable command가 여전히 green인지 확인 (U1 provider 계약 보존).
-- [ ] obligation closure: FD-P 17 + DE-P 4 + FE-P 6 + example 의무 전부가 실제 test에 매핑되고 실행됐는지 검증하고 누락을 fail-closed로 보고한다.
-- [ ] `aidlc-docs/construction/homepage-publication-boundary/code/code-generation-summary.md` 작성 (delta, 명령 결과, PBT seed 정책 증거, Vault diff 기록, U3 handoff).
+- [x] 전체 sweep: `just test`, `npm run test:unit`·`test:pbt`(U2 포함 확인)·`test:e2e`, `npx astro check`(U1 상속 hint baseline 대비; `astro build`가 진실 원천), direct astro build, 결정성 이중 실행.
+- [x] NFR-U2-010 부정 검사: Justfile·package.json에 U2 전용 신규 명령이 없음을 확인한다.
+- [x] NFR-U2-011: U2 test 전체가 외부 네트워크 없이 실행 가능함을 확인한다 (fixture·generator의 로컬 자원 한정; e2e는 loopback만).
+- [x] U1 명령 회귀 확인: `resume:pdf:verify` 포함 U1 stable command가 여전히 green인지 확인 (U1 provider 계약 보존).
+- [x] obligation closure: FD-P 17 + DE-P 4 + FE-P 6 + example 의무 전부가 실제 test에 매핑되고 실행됐는지 검증하고 누락을 fail-closed로 보고한다.
+- [x] `aidlc-docs/construction/homepage-publication-boundary/code/code-generation-summary.md` 작성 (delta, 명령 결과, PBT seed 정책 증거, Vault diff 기록, U3 handoff).
 
 ## 4. PBT-02~10 Disposition
 

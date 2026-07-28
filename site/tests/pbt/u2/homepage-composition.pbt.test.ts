@@ -36,9 +36,9 @@ test.prop([safeBlock, fc.integer({ min: 0, max: 3 }), fc.integer({ min: 0, max: 
     expect(countSlotTokens(markdown)).toBe(unfenced);
 
     if (unfenced === 0) {
-      expect(() => assertExactlyOneSlot(markdown, 'src.md')).toThrowError(/^HP003 src\.md:/);
+      expect(() => assertExactlyOneSlot(markdown, 'src.md')).toThrow(/^HP003 src\.md:/);
     } else if (unfenced > 1) {
-      expect(() => assertExactlyOneSlot(markdown, 'src.md')).toThrowError(/^HP004 src\.md:/);
+      expect(() => assertExactlyOneSlot(markdown, 'src.md')).toThrow(/^HP004 src\.md:/);
     } else {
       assertExactlyOneSlot(markdown, 'src.md');
     }
@@ -94,7 +94,7 @@ test.prop([corruptionMode])(
       }
 
       const expected = mode.startsWith('missing') ? /^HP001 / : /^HP002 /;
-      expect(() => getHomepage(dir)).toThrowError(expected);
+      expect(() => getHomepage(dir)).toThrow(expected);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

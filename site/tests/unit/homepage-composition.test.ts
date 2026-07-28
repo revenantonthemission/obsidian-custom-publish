@@ -29,14 +29,14 @@ describe('slot token recognition (BR-U2-036~038)', () => {
   });
 
   test('zero tokens throw HP003 with the source path', () => {
-    expect(() => assertExactlyOneSlot('본문뿐', 'content/homepage/index.md')).toThrowError(
+    expect(() => assertExactlyOneSlot('본문뿐', 'content/homepage/index.md')).toThrow(
       /^HP003 content\/homepage\/index\.md:/,
     );
   });
 
   test('duplicate tokens throw HP004 with the count', () => {
     const markdown = `${PROFILE_SLOT_TOKEN}\n중간\n${PROFILE_SLOT_TOKEN}`;
-    expect(() => assertExactlyOneSlot(markdown, 'x.md')).toThrowError(/^HP004 x\.md: 2 /);
+    expect(() => assertExactlyOneSlot(markdown, 'x.md')).toThrow(/^HP004 x\.md: 2 /);
   });
 });
 
@@ -112,7 +112,7 @@ describe('getHomepage fail-closed gateway (BR-U2-033)', () => {
   test('missing artifact throws HP001, never an empty value', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'u2-unit-'));
     try {
-      expect(() => getHomepage(dir)).toThrowError(/^HP001 /);
+      expect(() => getHomepage(dir)).toThrow(/^HP001 /);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

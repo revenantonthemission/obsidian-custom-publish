@@ -84,7 +84,15 @@ for (const viewport of VIEWPORTS) {
       await page.evaluate(() =>
         document.getAnimations().forEach((animation) => animation.finish()),
       );
-      const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+      // @playwright/test and @axe-core/playwright resolve different playwright-core
+      // copies; the U1 spec uses the same cast.
+      const results = await new AxeBuilder({
+        page: page as unknown as ConstructorParameters<
+          typeof AxeBuilder
+        >[0]['page'],
+      })
+        .withTags(AXE_TAGS)
+        .analyze();
       expect(results.violations).toEqual([]);
     });
 
