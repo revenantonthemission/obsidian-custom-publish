@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 NFR Design
-- **상태**: artifact 2/2 생성·검증·독립 검토 완료 — 완료 gate 승인 대기
+- **상태**: 완료 및 승인됨 (2026-07-28, 사용자 응답 "승인")
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
@@ -52,7 +52,7 @@
 - **독립 검토**: BLOCKING 0, MATERIAL 3, MINOR 5 — 전부 수정 반영. MATERIAL: (1) firefox/webkit가 `testMatch`로 U1 spec에 고정되어 있어 "실행 대상 추가"가 U1 project 불변과 모순 → homepage 전용 신규 project 두 개로 교정(TSD-U2-07 그대로); (2) 승인 경로의 site PBT 파일이 현행 `vitest.pbt.config.ts` include·`pbt-runner.mjs` regex(`tests/pbt/u1/**` 고정)에 걸리지 않아 조용히 스킵될 위험 → 두 곳의 가산 확장을 Code Generation 의무로 명시; (3) Justfile `rm -rf`가 `preprocess`·`deploy-preprocess` 두 recipe에 존재 → 둘 다 제거로 명시. MINOR: 6-pass 논리 모델 표기, PUB007 example의 `publication_output.rs` 귀속, FE-P/DE-P의 명명 파일 배정, NFR-U2-001/003 추적 행 추가, PD-U2-09에 4KiB·외부 요청 0 명문화.
 - **구조 검증**: 9개 PD ID·12개 LC ID 중복 없음, 인용된 모든 BR/FD-P/DE-P/FE-P/NFR/TSD ID 실재, 상대 링크 해석 가능.
 - **Mutation Boundary**: AI-DLC 문서만 변경. application source, manifest, external Vault, generated output, Terraform/AWS, push, deployment 불변.
-- **Artifact Gate**: 제시됨 — 명시적 승인 대기.
+- **Artifact Gate**: 2026-07-28에 사용자 응답 `"승인"`으로 승인됨.
 
 ## 4. NFR Design Questions
 

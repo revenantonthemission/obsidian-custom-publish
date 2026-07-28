@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 NFR Design — artifacts generated, validated and independently reviewed; awaiting artifact approval gate
+- **Current Stage**: U2 Infrastructure Design — plan and 6 questions generated; awaiting question answers
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -524,11 +524,23 @@
 - **Artifacts Generated and Validated**: 2026-07-28 — `nfr-design-patterns.md` (PD-U2-01~09 with 5-category verdicts) and `logical-components.md` (LC-U2-01~12) under `aidlc-docs/construction/homepage-publication-boundary/nfr-design/`.
 - **Design Contract**: 6-pass logical pipeline with catalog as sole source supplier; data-structure-layer determinism; single-owner clean with both Justfile `rm -rf` lines (preprocess and deploy-preprocess) removed; parameterized today-date with e2e env override; pure composition module `site/src/lib/homepage.ts`; coded immediate-throw errors; additive Playwright expansion via two new firefox/webkit homepage projects (existing three project definitions untouched); U1-convention test layout with a mandatory additive extension of `vitest.pbt.config.ts` include and the `pbt-runner.mjs` `PBT_FILE` regex so U2 site PBT files cannot be silently skipped; runtime resilience/scalability recorded as evidence-backed N/A.
 - **Independent Artifact Review**: Passed after 0 blocking, 3 material and 5 minor findings, all fixed. Material: the firefox/webkit `testMatch` pinning made "add the spec to their run targets" contradict "U1 project definitions unchanged" (resolved per TSD-U2-07 as new projects); the approved site PBT path fell outside the current PBT runner's include/regex and would have been silently skipped; the Justfile `rm -rf` exists in two recipes, not one.
-- **Artifact Gate**: Presented — awaiting explicit approval.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved.
+
+## U2 Infrastructure Design Status
+
+- **Started**: 2026-07-28 after explicit U2 NFR Design approval.
+- **Execution Decision**: EXECUTE; the compatibility/no-change gate required by unit-of-work §4.9.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-plan.md`.
+- **Questions Generated**: 6, covering topology no-change verdict (with a CloudFront-redirect alternative), removed-route origin/cache handling, build-side artifact deployment boundary, Justfile touch scope, rollback stance and monitoring/messaging/shared-doc verdicts.
+- **Question Structure Validation**: Passed. 6 question headings, 6 empty `[Answer]:` tags, 6 final `X) Other` options, 6 recommended choices; every question has at least two meaningful options.
+- **Grounding**: Verified 2026-07-28 — both `just deploy` and Jenkins Deploy run `aws s3 sync --delete` plus a full `/*` CloudFront invalidation, so the removed `/posts/passion-project` route is deleted from the origin and cache by existing tooling; `deploy-preprocess` copies only the four discovery JSONs to `site/public/`, so `content/homepage/` and `content/manifest.json` have no path to the public surface.
+- **Mutation Boundary**: AI-DLC documentation only. No Terraform/AWS/DNS/cache-policy mutation is authorized by any option.
 
 ## Next Step
 
-The U2 NFR Design artifact approval gate is open. On approval, U2 Infrastructure Design begins — the compatibility/no-change gate covering route addition (`/` unchanged, `/posts/passion-project` absence), static asset/cache/invalidation/rollback compatibility per unit-of-work §4.9, with no Terraform/AWS mutation authorized. If changes are requested, the artifacts are revised and re-presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
+Answer the 6 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-plan.md`, then reply that answers are complete. After validation, `infrastructure-design.md` and `deployment-architecture.md` are generated under `aidlc-docs/construction/homepage-publication-boundary/infrastructure-design/`, `shared-infrastructure.md` gains the U2 compatibility rows, and the standard approval gate is presented. On its approval, U2 Code Generation begins. No push, external Vault edit, deployment or merge is authorized.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
