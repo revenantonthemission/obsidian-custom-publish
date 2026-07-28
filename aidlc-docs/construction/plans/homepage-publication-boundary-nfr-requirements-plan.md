@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 NFR Requirements
-- **상태**: artifact 2/2 생성·PBT-09 증명·독립 검토 완료 — 완료 gate 승인 대기
+- **상태**: 완료 및 승인됨 (2026-07-28, 사용자 응답 "승인")
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
@@ -87,7 +87,7 @@ PBT-09 준수를 위해 선택된 Rust framework는 dev-dependency로 실제 설
 - **독립 검토**: BLOCKING 0, MATERIAL 2, MINOR 3 — 전부 수정 반영. MATERIAL: (1) TSD-U2-02의 env-var 부정 주장이 proptest 1.11.0의 `PROPTEST_RNG_SEED` 존재와 상충 → 지속 파일=기록 실패 replay 경로, env seed=전체 RNG 고정용으로 정밀화; (2) Q8의 "U1과 동일 matrix" 전제가 실제 U1 topology(firefox/webkit는 320×800·1280×800 집중 spec만)와 불일치 → TSD-U2-07 전제 교정 기록. MINOR: PUB007 exit-1의 의도적 좁힘 명시, NFR-U2-011 인용 교정, 신규 CSS의 review-subject 밖 배치 규칙 추가.
 - **구조 검증**: 11개 NFR ID·7개 TSD ID 중복 없음, 상대 링크 해석 가능, fence balance 통과.
 - **Mutation Boundary**: 저장소 변경은 Cargo.toml/Cargo.lock의 proptest 추가, framework smoke test, AI-DLC 문서뿐. external Vault, generated output, Terraform/AWS, Jenkins, push, deployment 불변.
-- **Artifact Gate**: 제시됨 — 명시적 승인 대기.
+- **Artifact Gate**: 2026-07-28에 사용자 응답 `"승인"`으로 승인됨.
 
 ## 5. NFR Requirements Questions
 

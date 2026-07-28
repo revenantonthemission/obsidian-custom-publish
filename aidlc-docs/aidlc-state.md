@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 NFR Requirements — artifacts generated, PBT-09 proven, independently reviewed; awaiting artifact approval gate
+- **Current Stage**: U2 NFR Design — plan and 9 questions generated; awaiting question answers
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -504,11 +504,23 @@
 - **Artifacts Generated and Validated**: 2026-07-28 — `nfr-requirements.md` (NFR-U2-001~011) and `tech-stack-decisions.md` (TSD-U2-01~07) under `aidlc-docs/construction/homepage-publication-boundary/nfr-requirements/`.
 - **PBT-09 Status**: Compliant, proven by execution. proptest 1.11.0 installed as the sole approved Cargo manifest change; `preprocessor/tests/pbt_framework_smoke.rs` proves structural Korean/Unicode Strategy generators (2 properties × 256 cases), automatic shrinking (deliberate failure shrank to minimal `[0,0,0,0,0]`), seed persistence/replay (`cc d5a76a82…` recorded; rerun reproduced the exact case in 0.00s with 0 successes before novel generation) and cargo test integration. The throwaway failing property and its persistence file were removed after capture, per the U1 precedent. Full `cargo test`: 87 passed / 0 failed in ~26s — the 3-minute budget baseline.
 - **Independent Artifact Review**: Passed after 0 blocking, 2 material and 3 minor findings, all fixed. Material: TSD-U2-02's claim that no seed env var exists contradicted proptest 1.11.0's `PROPTEST_RNG_SEED` (reworded: persistence file is the recorded-failure replay path; the u64 env seed fixes the whole-run RNG and cannot ingest a `cc` seed); Q8's "same as U1" browser-matrix premise did not match U1's real topology (firefox/webkit run only the focused cross-browser spec at 320×800/1280×800) — recorded as premise correction TSD-U2-07: the 3-browser × 320×800/1440×900 `/` smoke is achieved by adding Playwright projects/specs, with tool versions reused. Minor: PUB007 exit-1 noted as deliberate tightening of BR-U2-028, NFR-U2-011 citation corrected to the ST-E03 checklist, and new U2 CSS must live outside U1's manual-accessibility review-subject files/directories so NFR-U2-007's subject-invariance holds.
-- **Artifact Gate**: Presented — awaiting explicit approval.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved.
+
+## U2 NFR Design Status
+
+- **Started**: 2026-07-28 after explicit U2 NFR Requirements approval.
+- **Execution Decision**: EXECUTE; unit-of-work §4.9 requires producer-side partition patterns, artifact schema/read gate, error propagation and owner-local test patterns.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-design-plan.md`.
+- **Questions Generated**: 9, covering pipeline placement of catalog validation, determinism enforcement layer, output-clean ownership transfer (Justfile `rm -rf` removal), the today-date injection mechanism deferred by TSD-U2-04, slot-composition module placement, gateway error propagation, the Playwright project/spec structure deferred by TSD-U2-07, U2 test file organization, and runtime resilience/scalability N/A boundaries.
+- **Question Structure Validation**: Passed. Exactly 9 question headings, 9 empty `[Answer]:` tags, 9 final `X) Other` options and 9 recommended choices; 19 lettered options with every question offering at least two meaningful choices.
+- **Category Coverage**: Resilience, Scalability, Performance, Security/Integrity and Logical Components are each addressed by a question or an explicit evidence-backed N/A candidate (Q9), following the U1 precedent of no silent omission.
+- **Mutation Boundary**: AI-DLC documentation only.
 
 ## Next Step
 
-The U2 NFR Requirements artifact approval gate is open. On approval, U2 NFR Design begins (producer-side partition patterns, artifact schema/read gate, error propagation and owner-local test patterns per unit-of-work §4.9). If changes are requested, the artifacts are revised and re-presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
+Answer the 9 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-design-plan.md` (one letter after each `[Answer]:` tag; describe rules inline for `X`), then reply that answers are complete. After answer validation, `nfr-design-patterns.md` and `logical-components.md` are generated under `aidlc-docs/construction/homepage-publication-boundary/nfr-design/` and the standard approval gate is presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
