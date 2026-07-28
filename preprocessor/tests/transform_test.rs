@@ -115,7 +115,10 @@ fn test_heading_transclusion() {
     let post_idx = index.slug_map["post-with-transclusion"];
     let result = transform_content(&index, post_idx);
     // The heading transclusion syntax should be resolved
-    assert!(!result.contains("![[Simple Post#Introduction]]"), "Heading transclusion syntax should be removed");
+    assert!(
+        !result.contains("![[Simple Post#Introduction]]"),
+        "Heading transclusion syntax should be removed"
+    );
     // Should contain the Introduction section content
     assert!(result.contains("Some intro text here"));
     assert!(result.contains("More introduction content"));
@@ -128,9 +131,18 @@ fn test_heading_transclusion_boundary() {
     let content = "## First\n\nContent A.\n\n## Second\n\nContent B.\n\n## Third\n\nContent C.\n";
     let section = obsidian_press::transform::extract_heading_section(content, "Second");
     let section = section.expect("Section should be found");
-    assert!(section.contains("Content B"), "Should include section content");
-    assert!(!section.contains("Content A"), "Should not include prior section");
-    assert!(!section.contains("Content C"), "Should stop at next same-level heading");
+    assert!(
+        section.contains("Content B"),
+        "Should include section content"
+    );
+    assert!(
+        !section.contains("Content A"),
+        "Should not include prior section"
+    );
+    assert!(
+        !section.contains("Content C"),
+        "Should stop at next same-level heading"
+    );
 }
 
 #[test]
@@ -141,7 +153,9 @@ fn test_hub_page_child_links_get_auto_dates() {
 
     // Simple Post has published: 2025-01-15 in its frontmatter
     assert!(
-        result.contains(r#"<time class="hub-child-date" datetime="2025-01-15">2025년 1월 15일</time>"#),
+        result.contains(
+            r#"<time class="hub-child-date" datetime="2025-01-15">2025년 1월 15일</time>"#
+        ),
         "Expected auto-appended date for Simple Post, got:\n{result}"
     );
     // Manual annotation should be stripped

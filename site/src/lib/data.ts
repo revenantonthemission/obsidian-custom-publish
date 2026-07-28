@@ -36,6 +36,47 @@ export function getPostMeta(slug: string): PostMeta | null {
   return JSON.parse(fs.readFileSync(filePath, "utf-8"));
 }
 
+export interface HomepageData {
+  title: string;
+  body: string;
+}
+
+/**
+ * Read the dedicated homepage artifact (LC-U2-09). Fail-closed by contract
+ * (BR-U2-033): a missing or malformed artifact is a build diagnostic, never an
+ * empty value — unlike the legacy post getters, whose lenient behavior is
+ * deliberately unchanged (BR-U2-034).
+ */
+export function getHomepage(contentDir: string = CONTENT_DIR): HomepageData {
+  const metaPath = path.join(contentDir, "homepage", "meta.json");
+  const bodyPath = path.join(contentDir, "homepage", "index.md");
+
+  if (!fs.existsSync(metaPath)) {
+    throw new Error(`HP001 ${metaPath}: homepage artifact missing — run the preprocessor`);
+  }
+  if (!fs.existsSync(bodyPath)) {
+    throw new Error(`HP001 ${bodyPath}: homepage artifact missing — run the preprocessor`);
+  }
+
+  let meta: unknown;
+  try {
+    meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+  } catch (error) {
+    throw new Error(`HP002 ${metaPath}: homepage metadata is not valid JSON (${String(error)})`);
+  }
+  const title = (meta as { title?: unknown }).title;
+  if (typeof title !== "string" || title.trim() === "") {
+    throw new Error(`HP002 ${metaPath}: homepage title must be a non-empty string`);
+  }
+
+  const body = fs.readFileSync(bodyPath, "utf-8");
+  if (body.trim() === "") {
+    throw new Error(`HP002 ${bodyPath}: homepage body is empty`);
+  }
+
+  return { title, body };
+}
+
 export function getPostContent(slug: string): string {
   const filePath = path.join(CONTENT_DIR, "posts", `${slug}.md`);
   if (!fs.existsSync(filePath)) return "";

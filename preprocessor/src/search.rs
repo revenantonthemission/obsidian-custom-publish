@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use lindera::dictionary::DictionaryKind;
 use lindera::mode::Mode;
@@ -7,8 +7,7 @@ use lindera::tokenizer::Tokenizer;
 use serde::Serialize;
 
 use crate::syntax::{
-    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE,
-    INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE,
+    BLOCK_REF_STRIP_RE, EMBED_OR_WIKILINK_RE, HTML_TAG_RE, INLINE_MARKDOWN_RE, MARKDOWN_LINK_RE,
 };
 use crate::transform::strip_frontmatter;
 use crate::types::VaultIndex;
@@ -16,7 +15,7 @@ use crate::types::VaultIndex;
 #[derive(Debug, Serialize)]
 pub struct SearchIndex {
     pub documents: Vec<SearchDocument>,
-    pub inverted_index: HashMap<String, Vec<SearchHit>>,
+    pub inverted_index: BTreeMap<String, Vec<SearchHit>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -47,7 +46,7 @@ pub fn build_search_index(index: &VaultIndex) -> SearchIndex {
     let tokenizer = build_tokenizer();
 
     let mut documents = Vec::with_capacity(index.posts.len());
-    let mut inverted_index: HashMap<String, Vec<SearchHit>> = HashMap::new();
+    let mut inverted_index: BTreeMap<String, Vec<SearchHit>> = BTreeMap::new();
 
     for (doc_idx, post) in index.posts.iter().enumerate() {
         let plain_text = strip_markdown(&post.raw_content);
@@ -106,7 +105,10 @@ fn tokenize_text(tokenizer: &Tokenizer, text: &str) -> Vec<String> {
         .into_iter()
         .map(|t| t.surface.to_lowercase())
         .filter(|t: &String| t.chars().count() >= MIN_TOKEN_CHARS)
-        .filter(|t: &String| !t.chars().all(|c| c.is_ascii_punctuation() || c.is_whitespace()))
+        .filter(|t: &String| {
+            !t.chars()
+                .all(|c| c.is_ascii_punctuation() || c.is_whitespace())
+        })
         .collect()
 }
 
@@ -130,7 +132,9 @@ fn strip_markdown(content: &str) -> String {
         // 3. Skip horizontal rules (---, ***, ___)
         let trimmed = line.trim();
         if (trimmed.starts_with("---") || trimmed.starts_with("***") || trimmed.starts_with("___"))
-            && trimmed.chars().all(|c| c == '-' || c == '*' || c == '_' || c == ' ')
+            && trimmed
+                .chars()
+                .all(|c| c == '-' || c == '*' || c == '_' || c == ' ')
             && trimmed.len() >= 3
         {
             continue;

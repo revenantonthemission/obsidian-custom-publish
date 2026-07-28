@@ -34,11 +34,9 @@ pub fn build_nav_tree(index: &VaultIndex, graph: &LinkGraph) -> NavTree {
     // Identify top-level hubs (no hub_parent or hub_parent not found)
     let top_level_hubs: Vec<usize> = hub_indices
         .iter()
-        .filter(|&&i| {
-            match &index.posts[i].hub_parent {
-                Some(parent) => !index.name_map.contains_key(parent.as_str()),
-                None => true,
-            }
+        .filter(|&&i| match &index.posts[i].hub_parent {
+            Some(parent) => !index.name_map.contains_key(parent.as_str()),
+            None => true,
         })
         .copied()
         .collect();
@@ -59,17 +57,20 @@ pub fn build_nav_tree(index: &VaultIndex, graph: &LinkGraph) -> NavTree {
         // Forward links from this hub
         for link in &graph.forward_links[hub_idx] {
             if let Some(&target_idx) = index.slug_map.get(&link.target_slug)
-                && !claimed.contains(&target_idx) {
-                    child_indices.push(target_idx);
-                }
+                && !claimed.contains(&target_idx)
+            {
+                child_indices.push(target_idx);
+            }
         }
 
         // Posts whose hub_parent matches this hub's title
         for (i, p) in index.posts.iter().enumerate() {
             if let Some(ref parent) = p.hub_parent
-                && parent == &post.title && !claimed.contains(&i) {
-                    child_indices.push(i);
-                }
+                && parent == &post.title
+                && !claimed.contains(&i)
+            {
+                child_indices.push(i);
+            }
         }
 
         // Deduplicate

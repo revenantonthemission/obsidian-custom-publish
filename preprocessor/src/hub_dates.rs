@@ -5,10 +5,10 @@
 //! field, strips any existing ` @YYYY-MM-DD` annotation and appends a
 //! `<time class="hub-child-date">` element with the Korean-formatted date.
 
-use regex::Regex;
-use std::sync::LazyLock;
 use crate::transform::transform_outside_fences;
 use crate::types::VaultIndex;
+use regex::Regex;
+use std::sync::LazyLock;
 
 /// Matches a list-item prefix followed by a post wikilink anchor.
 ///
@@ -240,6 +240,7 @@ mod tests {
             is_hub: false,
             hub_parent: None,
             description: None,
+            visibility: None,
             raw_content: String::new(),
         }
     }
@@ -250,7 +251,9 @@ mod tests {
         let input = r#"- <a href="/posts/oop">OOP</a>"#;
         let result = augment_hub_child_links(input, &index);
         assert!(
-            result.contains(r#"<time class="hub-child-date" datetime="2026-03-16">2026년 3월 16일</time>"#),
+            result.contains(
+                r#"<time class="hub-child-date" datetime="2026-03-16">2026년 3월 16일</time>"#
+            ),
             "Expected time element, got: {result}"
         );
     }
@@ -260,7 +263,10 @@ mod tests {
         let index = make_test_index(vec![make_post("oop", "OOP", Some("2026-03-16"))]);
         let input = r#"+ <a href="/posts/oop">OOP</a> @2025-12-01"#;
         let result = augment_hub_child_links(input, &index);
-        assert!(!result.contains("@2025-12-01"), "manual annotation should be stripped: {result}");
+        assert!(
+            !result.contains("@2025-12-01"),
+            "manual annotation should be stripped: {result}"
+        );
         assert!(
             result.contains(r#"datetime="2026-03-16""#),
             "Expected real published date, got: {result}"
@@ -272,7 +278,10 @@ mod tests {
         let index = make_test_index(vec![make_post("draft", "Draft", None)]);
         let input = r#"- <a href="/posts/draft">Draft</a>"#;
         let result = augment_hub_child_links(input, &index);
-        assert_eq!(result, input, "line with unpublished target should be unchanged");
+        assert_eq!(
+            result, input,
+            "line with unpublished target should be unchanged"
+        );
     }
 
     #[test]
@@ -322,7 +331,10 @@ mod tests {
         let index = make_test_index(vec![make_post("foo", "Foo", Some("not-a-date"))]);
         let input = r#"- <a href="/posts/foo">Foo</a>"#;
         let result = augment_hub_child_links(input, &index);
-        assert_eq!(result, input, "line with unparseable date should be unchanged");
+        assert_eq!(
+            result, input,
+            "line with unparseable date should be unchanged"
+        );
     }
 
     #[test]
@@ -330,8 +342,14 @@ mod tests {
         let index = make_test_index(vec![make_post("oop", "OOP", Some("2026-03-16"))]);
         let input = r#"- <a href="/posts/oop">OOP</a> @2025-01-01 — a description"#;
         let result = augment_hub_child_links(input, &index);
-        assert!(result.contains("— a description"), "tail text should be preserved: {result}");
-        assert!(!result.contains("@2025-01-01"), "manual annotation should be stripped: {result}");
+        assert!(
+            result.contains("— a description"),
+            "tail text should be preserved: {result}"
+        );
+        assert!(
+            !result.contains("@2025-01-01"),
+            "manual annotation should be stripped: {result}"
+        );
         assert!(result.contains(r#"datetime="2026-03-16""#));
     }
 
@@ -343,8 +361,14 @@ mod tests {
         ]);
         let input = "- <a href=\"/posts/a\">A</a>\n- <a href=\"/posts/b\">B</a>";
         let result = augment_hub_child_links(input, &index);
-        assert!(result.contains("2026년 1월 1일"), "first item date missing: {result}");
-        assert!(result.contains("2026년 2월 2일"), "second item date missing: {result}");
+        assert!(
+            result.contains("2026년 1월 1일"),
+            "first item date missing: {result}"
+        );
+        assert!(
+            result.contains("2026년 2월 2일"),
+            "second item date missing: {result}"
+        );
     }
 
     #[test]
@@ -365,7 +389,10 @@ mod tests {
         let index = make_test_index(vec![make_post("foo", "Foo", Some("2026-01-15"))]);
         let input = "- some intro\n  <a href=\"/posts/foo\">Foo</a>";
         let result = augment_hub_child_links(input, &index);
-        assert_eq!(result, input, "continuation line without bullet should be untouched");
+        assert_eq!(
+            result, input,
+            "continuation line without bullet should be untouched"
+        );
     }
 
     #[test]

@@ -1,3 +1,4 @@
+pub mod catalog;
 pub mod d2;
 pub mod hub_dates;
 pub mod linker;
@@ -10,5 +11,5 @@ pub mod scanner;
 pub mod search;
 pub mod syntax;
 pub mod transform;
-pub mod typst_render;
 pub mod types;
+pub mod typst_render;

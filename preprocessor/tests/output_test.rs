@@ -1,4 +1,4 @@
-use obsidian_press::linker::resolve_links;
+use obsidian_press::catalog::PublicationCatalog;
 use obsidian_press::output::write_output;
 use obsidian_press::scanner::scan_vault;
 use std::path::Path;
@@ -6,8 +6,8 @@ use tempfile::TempDir;
 
 fn run_pipeline(output_dir: &Path) {
     let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
-    let graph = resolve_links(&index);
-    write_output(&index, &graph, output_dir).unwrap();
+    let catalog = PublicationCatalog::build(index).unwrap();
+    write_output(&catalog, output_dir).unwrap();
 }
 
 #[test]
@@ -52,7 +52,10 @@ fn test_output_copies_referenced_images() {
     let tmp = TempDir::new().unwrap();
     run_pipeline(tmp.path());
     let image_path = tmp.path().join("assets/test-image.png");
-    assert!(image_path.is_file(), "Referenced image should be copied to assets/");
+    assert!(
+        image_path.is_file(),
+        "Referenced image should be copied to assets/"
+    );
 }
 
 #[test]

@@ -56,5 +56,21 @@ export default defineConfig({
         browserName: 'webkit',
       },
     },
+    {
+      name: 'homepage-firefox',
+      testMatch: /homepage\.spec\.ts/,
+      use: {
+        ...devices['Desktop Firefox'],
+        browserName: 'firefox',
+      },
+    },
+    {
+      name: 'homepage-webkit',
+      testMatch: /homepage\.spec\.ts/,
+      use: {
+        ...devices['Desktop Safari'],
+        browserName: 'webkit',
+      },
+    },
   ],
 });

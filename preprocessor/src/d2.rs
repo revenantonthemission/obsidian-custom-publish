@@ -51,22 +51,19 @@ pub fn migrate_d2_styles(source: &str) -> String {
         let in_style_scope = style_stack.last().copied().unwrap_or(false);
 
         // Bare style property outside a style block → collect for grouping
-        if !in_style_scope
-            && let Some(caps) = BARE_STYLE_PROP_RE.captures(line) {
-                let prop_indent = caps[1].len();
-                // Flush if the indentation changes (different parent block)
-                if !pending.is_empty() {
-                    let prev_indent: usize = pending[0]
-                        .chars()
-                        .take_while(|c| c.is_whitespace())
-                        .count();
-                    if prev_indent != prop_indent {
-                        flush_style_group(&mut result, &mut pending);
-                    }
+        if !in_style_scope && let Some(caps) = BARE_STYLE_PROP_RE.captures(line) {
+            let prop_indent = caps[1].len();
+            // Flush if the indentation changes (different parent block)
+            if !pending.is_empty() {
+                let prev_indent: usize =
+                    pending[0].chars().take_while(|c| c.is_whitespace()).count();
+                if prev_indent != prop_indent {
+                    flush_style_group(&mut result, &mut pending);
                 }
-                pending.push(line.to_string());
-                continue;
             }
+            pending.push(line.to_string());
+            continue;
+        }
 
         // Non-style line: flush any accumulated style props first
         flush_style_group(&mut result, &mut pending);
@@ -115,25 +112,25 @@ impl D2Format {
     /// Parse from the info-string word after the language tag (e.g. `` ```d2 png ``).
     pub fn parse_format(s: &str) -> Self {
         match s.to_lowercase().as_str() {
-            "png"  => Self::Png,
-            "gif"  => Self::Gif,
-            "pdf"  => Self::Pdf,
+            "png" => Self::Png,
+            "gif" => Self::Gif,
+            "pdf" => Self::Pdf,
             "pptx" => Self::Pptx,
-            "txt"  => Self::Txt,
-            "ascii"=> Self::Ascii,
-            _      => Self::Svg,
+            "txt" => Self::Txt,
+            "ascii" => Self::Ascii,
+            _ => Self::Svg,
         }
     }
 
     /// The `--stdout-format` argument value recognised by the d2 CLI.
     pub fn as_cli_arg(self) -> &'static str {
         match self {
-            Self::Svg   => "svg",
-            Self::Png   => "png",
-            Self::Gif   => "gif",
-            Self::Pdf   => "pdf",
-            Self::Pptx  => "pptx",
-            Self::Txt   => "txt",
+            Self::Svg => "svg",
+            Self::Png => "png",
+            Self::Gif => "gif",
+            Self::Pdf => "pdf",
+            Self::Pptx => "pptx",
+            Self::Txt => "txt",
             Self::Ascii => "ascii",
         }
     }
@@ -142,12 +139,12 @@ impl D2Format {
     pub fn extension(self) -> &'static str {
         match self {
             Self::Ascii => "txt", // ascii mode produces a text file
-            Self::Svg   => "svg",
-            Self::Png   => "png",
-            Self::Gif   => "gif",
-            Self::Pdf   => "pdf",
-            Self::Pptx  => "pptx",
-            Self::Txt   => "txt",
+            Self::Svg => "svg",
+            Self::Png => "png",
+            Self::Gif => "gif",
+            Self::Pdf => "pdf",
+            Self::Pptx => "pptx",
+            Self::Txt => "txt",
         }
     }
 
@@ -186,7 +183,9 @@ pub fn render_d2_bytes(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().context("failed to spawn d2 — is it installed?")?;
+    let mut child = cmd
+        .spawn()
+        .context("failed to spawn d2 — is it installed?")?;
 
     child
         .stdin

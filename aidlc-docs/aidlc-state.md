@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U1 Construction complete and approved; next is the U1 → `develop` merge gate, then U2 Functional Design
+- **Current Stage**: U2 Construction complete and approved; next is the U2 → `develop` merge gate, then U3
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -452,11 +452,137 @@
 - **Verified**: a new regression rewrites a built stylesheet, updates the manifest to stay internally valid, and asserts the digest is unchanged — the property that makes the record mergeable. 15 files / 182 tests, `npx astro check` 0 errors / 6 inherited hints.
 - **Current subject on this branch**: `593a13cccc21e85c6d0fdd10551c025dfcc631f256bc715fa179961d26efe3ae`, over 32 authored files, with 8 build assets recorded but unhashed.
 
+## U1 → develop Merge Gate — Completed (observed on develop)
+
+- The merge gate previously recorded here as pending was completed outside this session: merge commit `b656bb0` (`Merge branch 'codex/feature/resume-profile-experience' into develop`) brought all U1 work plus the workflow-owned `aidlc-docs/` onto `develop` with `--no-ff`, per the project Git Flow.
+- `develop` subsequently absorbed post-merge fixes, each via its own `--no-ff` merge: `a431c3d` (narrowed review-subject manual accessibility signature reflected to develop), `4c326b3`/`bade285` (Jenkins cargo manifest and preprocessor binary paths), and `f82c9eb`/`af32509` (CI browser path; diagram failures now fail the build).
+- The latest validated local `develop` is `af32509`. This session performed no push, merge, deployment or Vault change; the record above is observed git history, not an action taken here.
+
+## U2 Functional Design Status
+
+- **Started**: 2026-07-28 with the user instruction "start U2".
+- **Execution Decision**: EXECUTE; U2 introduces publication cardinality, scope normalization, reference/transclusion semantics, a dedicated homepage artifact/slot contract and owner-local Rust/TS test obligations.
+- **Entry Criteria**: Satisfied. U1's five Construction stages are complete and approved, the `--no-ff` merge is on `develop`, and the latest validated `develop` (`af32509`) contains the stable profile route/panel provider contract.
+- **Feature Branch**: `codex/feature/resume-home-boundary` created at `af32509` — the recommended name from unit-of-work §4.1. Working tree: `.claude/worktrees/u2-home-boundary`.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-functional-design-plan.md`.
+- **Questions Generated**: 12 context-specific questions covering transition sequencing/exactly-one enforcement timing, `visibility` parsing strictness, publication diagnostic contract, catalog representation, dedicated artifact path/schema, rendering boundary, stale-output lifecycle, write ordering/atomicity, wikilink fragment/alias truth table, profile slot token syntax, recent-posts composition rule and Astro gateway compatibility.
+- **Question Structure Validation**: Passed. Exactly 12 question headings, 12 empty `[Answer]:` tags, 12 final `X) Other` options and 12 recommended choices; 35 lettered options total with every question offering at least two meaningful choices.
+- **Excluded From Questions**: Already-approved decisions (exactly-one homepage, discovery-surface exclusion list, transclusion rejection, `/` normalization, slot cardinality, Vault write scope) and NFR-stage tool choices (Rust PBT framework, seeds, run counts).
+- **Grounding**: Questions were written against current implementation reality — `index.astro` reads the homepage via `getPostContent("passion-project")` as a normal post and splits rendered HTML on the `이번주에 작성된 포스트` heading; the scanner has no `visibility` field; generated layout is `content/posts/{slug}.md` + `content/meta/{slug}.json`; `getPostContent` silently returns an empty string for missing files.
+- **Preliminary PBT-01 Inventory**: Recorded in the plan for C06~C10 (property categories per component) and S02/S03 (expected no-independent-property with example coverage), pending final artifact-level judgment.
+- **Mutation Boundary**: AI-DLC documentation and the new feature branch only. No application source, external Vault, generated output, Terraform/AWS resource, push, remote branch or deployment changed.
+- **Answer Submission**: 2026-07-28 with the user response "작성 완료".
+- **Answer Completeness**: 12/12.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed. Every answer exactly matches the A option text; a trailing space on Q9 and a copied `**(권장)**` marker on Q11 were mechanically normalized per the U1 Q3 precedent. Choices are mutually consistent and compatible with all prior approvals. No clarification file was required.
+- **Artifacts Generated and Validated**: 2026-07-28 — `domain-entities.md`, `business-rules.md`, `business-logic-model.md` and `frontend-components.md` under `aidlc-docs/construction/homepage-publication-boundary/functional-design/`.
+- **Functional Contract**: 46 business rules (BR-U2-001~046), a 12-surface discovery exclusion matrix (including the 404 recent-posts surface), a 10-variant reference truth table, the PUB001~PUB007 / HP001~HP004 diagnostic vocabulary with a defined path convention for path-less codes, staged batch diagnostics (PUB001~003 at catalog, PUB004~006 at reference, each fully collected before any write), the dedicated `content/homepage/` artifact and slot contract, and the fail-closed `getHomepage()` gateway contract.
+- **PBT-01 Status**: Compliant. 17 stage-level properties (FD-P-*) across C06~C10 with category, generator domain and oracle; S02/S03 carry explicit `No independent PBT properties identified` rationales; determinism is not mislabeled as idempotence (only FD-P-C09-04 is state idempotence); DE-P-U2-01~04 and FE-P-U2-01~06 refinements all resolve to existing FD-P IDs. Rust framework selection remains a U2 NFR Requirements obligation; the TS side reuses U1's Vitest/fast-check.
+- **Independent Artifact Review**: Passed after one independent review reported 0 blocking, 3 material (staged-aggregation inconsistency across the three documents, missing 404 surface row, undefined `path` for PUB002/PUB003) and 8 minor findings; all 11 were fixed. The review also fact-checked the artifacts against current code (getters, output layout, index.astro, scanner) with no factual errors found.
+- **Recorded New FD Decision**: BR-U2-043 moves the `/` page `<title>` source to `meta.title` (value identical today since scanner derives title from the filename); cited to S03's metadata responsibility, not to a question answer. The Vault write gate is recorded as governing only the authored U2 diff, leaving the scanner's pre-existing `published` auto-stamp behavior unchanged.
+- **Structural Validation**: Code-fence balance, 46 unique BR IDs, 17 unique FD-P IDs and resolvable relative links verified across the four artifacts.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved.
+
+## U2 NFR Requirements Status
+
+- **Started**: 2026-07-28 after explicit U2 Functional Design approval.
+- **Execution Decision**: EXECUTE; unit-of-work §4.9 requires Rust PBT framework selection, determinism/error/test performance and static contract requirements.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-requirements-plan.md`.
+- **Questions Generated**: 10, covering Rust PBT framework (PBT-09), failure persistence/regression-pinning policy, run count and time budget, preprocessor byte-determinism, diagnostic output/exit-code contract, today-post time-dependency injection, `/` accessibility verification scope, browser/viewport matrix, `/` static resource contract, and U2 stable command topology for the U3 handoff.
+- **Question Structure Validation**: Passed. Exactly 10 question headings, 10 empty `[Answer]:` tags, 10 final `X) Other` options and 10 recommended choices; 23 lettered options with every question offering at least two meaningful choices.
+- **Current Stack Analysis**: Rust edition 2024 on rustc/cargo 1.97.1 with no existing PBT dependency (anyhow/serde/serde_yml/regex/chrono/lindera present); `just test` = `cargo test` with 85 existing tests; the Justfile currently performs the output `rm -rf` that BR-U2-026 moves into C09; the site reuses U1's Vitest/fast-check/Playwright/axe stack.
+- **Excluded From Questions**: Already-approved decisions (full PBT, TS framework reuse, property ownership, no-new-JS, Cargo.toml change scope, Jenkins/U3 boundary, counterexample-to-example promotion principle).
+- **PBT-09 Obligation**: After answers, the selected Rust framework is installed as a dev-dependency on this feature branch and proven with a framework smoke covering custom generators, shrinking, seed reproduction and cargo test integration.
+- **Mutation Boundary**: AI-DLC documentation only. No application source, external Vault, generated output, Cargo manifest, Terraform/AWS resource, push, remote branch or deployment changed.
+- **First Answer Submission**: 2026-07-28 with the user response "작성 완료" — 9/10. Q3's tag was empty and Q3's option-A text sat under Q4's tag; the misplaced text was mechanically relocated to Q3 (unique meaning, U1 precedent), and Q4 was re-asked rather than guessed because its A/B options are materially different commitments.
+- **Complete Answer Submission**: 2026-07-28 with the user response "작성 완료" — Q4 answered directly; 10/10.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed — format, clarity, mutual consistency and prior-approval compatibility. No clarification file required.
+- **Artifacts Generated and Validated**: 2026-07-28 — `nfr-requirements.md` (NFR-U2-001~011) and `tech-stack-decisions.md` (TSD-U2-01~07) under `aidlc-docs/construction/homepage-publication-boundary/nfr-requirements/`.
+- **PBT-09 Status**: Compliant, proven by execution. proptest 1.11.0 installed as the sole approved Cargo manifest change; `preprocessor/tests/pbt_framework_smoke.rs` proves structural Korean/Unicode Strategy generators (2 properties × 256 cases), automatic shrinking (deliberate failure shrank to minimal `[0,0,0,0,0]`), seed persistence/replay (`cc d5a76a82…` recorded; rerun reproduced the exact case in 0.00s with 0 successes before novel generation) and cargo test integration. The throwaway failing property and its persistence file were removed after capture, per the U1 precedent. Full `cargo test`: 87 passed / 0 failed in ~26s — the 3-minute budget baseline.
+- **Independent Artifact Review**: Passed after 0 blocking, 2 material and 3 minor findings, all fixed. Material: TSD-U2-02's claim that no seed env var exists contradicted proptest 1.11.0's `PROPTEST_RNG_SEED` (reworded: persistence file is the recorded-failure replay path; the u64 env seed fixes the whole-run RNG and cannot ingest a `cc` seed); Q8's "same as U1" browser-matrix premise did not match U1's real topology (firefox/webkit run only the focused cross-browser spec at 320×800/1280×800) — recorded as premise correction TSD-U2-07: the 3-browser × 320×800/1440×900 `/` smoke is achieved by adding Playwright projects/specs, with tool versions reused. Minor: PUB007 exit-1 noted as deliberate tightening of BR-U2-028, NFR-U2-011 citation corrected to the ST-E03 checklist, and new U2 CSS must live outside U1's manual-accessibility review-subject files/directories so NFR-U2-007's subject-invariance holds.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved.
+
+## U2 NFR Design Status
+
+- **Started**: 2026-07-28 after explicit U2 NFR Requirements approval.
+- **Execution Decision**: EXECUTE; unit-of-work §4.9 requires producer-side partition patterns, artifact schema/read gate, error propagation and owner-local test patterns.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-nfr-design-plan.md`.
+- **Questions Generated**: 9, covering pipeline placement of catalog validation, determinism enforcement layer, output-clean ownership transfer (Justfile `rm -rf` removal), the today-date injection mechanism deferred by TSD-U2-04, slot-composition module placement, gateway error propagation, the Playwright project/spec structure deferred by TSD-U2-07, U2 test file organization, and runtime resilience/scalability N/A boundaries.
+- **Question Structure Validation**: Passed. Exactly 9 question headings, 9 empty `[Answer]:` tags, 9 final `X) Other` options and 9 recommended choices; 19 lettered options with every question offering at least two meaningful choices.
+- **Category Coverage**: Resilience, Scalability, Performance, Security/Integrity and Logical Components are each addressed by a question or an explicit evidence-backed N/A candidate (Q9), following the U1 precedent of no silent omission.
+- **Mutation Boundary**: AI-DLC documentation only.
+- **First Answer Submission**: 2026-07-28 with the user response "작성 완료" — 8/9. Q1 was empty and Q8's answer sat on the line after its tag; Q8 was mechanically normalized onto the tag line (unique meaning, U1 precedent) and Q1 was re-asked rather than guessed.
+- **Complete Answer Submission**: 2026-07-28 with the user response "작성 완료" — Q1 answered directly; 9/9.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed — format, clarity, mutual consistency and prior-approval compatibility. No clarification file required.
+- **Artifacts Generated and Validated**: 2026-07-28 — `nfr-design-patterns.md` (PD-U2-01~09 with 5-category verdicts) and `logical-components.md` (LC-U2-01~12) under `aidlc-docs/construction/homepage-publication-boundary/nfr-design/`.
+- **Design Contract**: 6-pass logical pipeline with catalog as sole source supplier; data-structure-layer determinism; single-owner clean with both Justfile `rm -rf` lines (preprocess and deploy-preprocess) removed; parameterized today-date with e2e env override; pure composition module `site/src/lib/homepage.ts`; coded immediate-throw errors; additive Playwright expansion via two new firefox/webkit homepage projects (existing three project definitions untouched); U1-convention test layout with a mandatory additive extension of `vitest.pbt.config.ts` include and the `pbt-runner.mjs` `PBT_FILE` regex so U2 site PBT files cannot be silently skipped; runtime resilience/scalability recorded as evidence-backed N/A.
+- **Independent Artifact Review**: Passed after 0 blocking, 3 material and 5 minor findings, all fixed. Material: the firefox/webkit `testMatch` pinning made "add the spec to their run targets" contradict "U1 project definitions unchanged" (resolved per TSD-U2-07 as new projects); the approved site PBT path fell outside the current PBT runner's include/regex and would have been silently skipped; the Justfile `rm -rf` exists in two recipes, not one.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved.
+
+## U2 Infrastructure Design Status
+
+- **Started**: 2026-07-28 after explicit U2 NFR Design approval.
+- **Execution Decision**: EXECUTE; the compatibility/no-change gate required by unit-of-work §4.9.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-plan.md`.
+- **Questions Generated**: 6, covering topology no-change verdict (with a CloudFront-redirect alternative), removed-route origin/cache handling, build-side artifact deployment boundary, Justfile touch scope, rollback stance and monitoring/messaging/shared-doc verdicts.
+- **Question Structure Validation**: Passed. 6 question headings, 6 empty `[Answer]:` tags, 6 final `X) Other` options, 6 recommended choices; every question has at least two meaningful options.
+- **Grounding**: Verified 2026-07-28 — both `just deploy` and Jenkins Deploy run `aws s3 sync --delete` plus a full `/*` CloudFront invalidation, so the removed `/posts/passion-project` route is deleted from the origin and cache by existing tooling; `deploy-preprocess` copies only the four discovery JSONs to `site/public/`, so `content/homepage/` and `content/manifest.json` have no path to the public surface.
+- **Mutation Boundary**: AI-DLC documentation only. No Terraform/AWS/DNS/cache-policy mutation is authorized by any option.
+- **Answer Submission**: 2026-07-28 with the user response "작성 완료" — 6/6 submitted as A/A/A/B/A/B.
+- **Answer Validation**: Q1/Q2/Q3/Q5 pass as exact A selections. Q4-B is a valid choice whose permission boundary requires confirmation (unbounded copy-list restructuring could collide with Q3-A's no-new-public-files decision). Q6-B ("일부 항목을 재검토한다") is ambiguous — it does not specify which items, what depth, or whether the shared-infrastructure row is still added. Per the workflow rule and the U1 precedent, a clarification file was created instead of guessing.
+- **Clarification File**: `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-clarification-questions.md` — 2 questions (Q4-B boundary: behavior-preserving refactoring vs set changes; Q6-B scope: document-level re-verification vs actual config-change requests), each with a recommended choice and `X) Other`.
+- **Clarification Status**: Resolved 2026-07-28 with the user response "작성 완료" — C1-A (Justfile touch limited to behavior-preserving refactoring; copied-file set, sync/invalidation commands and observable outputs invariant) and C2-A (document-verification-level monitoring re-review; shared row still added; no AWS/Terraform change).
+- **C2-A Execution**: U1's recorded logging/monitoring facts were re-verified against `infra/main.tf` with no drift — `logging_config` (log bucket, `cloudfront/` prefix, cookies excluded) at main.tf:209~213 and the 90-day log lifecycle at main.tf:86~96 match U1's records exactly; no alarm/dashboard/synthetic/analytics/queue resources exist.
+- **Artifacts Generated and Validated**: 2026-07-28 — `infrastructure-design.md` and `deployment-architecture.md` under `aidlc-docs/construction/homepage-publication-boundary/infrastructure-design/`, plus the `shared-infrastructure.md` §4 U2 row updated from its "Later confirm" placeholder to the confirmed verdict.
+- **Infrastructure Result**: **Compatible — no change.** The removed `/posts/passion-project/` route resolves as a natural 404 through the existing 403→404 `custom_error_response` (`/404.html`, 60s min TTL); existing `aws s3 sync --delete` + `/*` invalidation in both deploy paths removes the stale object and cache; `content/homepage/` and `content/manifest.json` are build inputs with no path to the public surface; the CloudFront redirect alternative (Q1-B) was considered and rejected — the old URL 404s as an accepted product outcome. U1's nine inherited deployment risks remain recorded unchanged for U3/deploy-authority handoff.
+- **Independent Artifact Review**: APPROVE — 0 blocking, 0 material, 2 minor (the frozen copy set description omitted the pre-existing `assets/` copy; the local-rollback claim needed the same-vault-input qualifier since NFR-U2-004 determinism conditions on vault content + code). Both fixed. All cited line numbers, config values and the 9-risk count were verified against the actual files.
+- **Artifact Gate**: Approved on 2026-07-28 with the exact user response `"승인"`.
+- **Stage Status**: Completed and approved. This closes all four U2 design stages before Code Generation.
+
+## U2 Code Generation Status
+
+- **Started**: 2026-07-28 after explicit U2 Infrastructure Design approval.
+- **Current Part**: Part 1 — plan approval gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-code-generation-plan.md`.
+- **Plan Inventory**: 15 sequential steps covering fixture strategy (error cases via tempfile vaults, never the shared fixture vault), the Rust publication pipeline (scope parsing → catalog/diagnostics → reference/transclusion → output lifecycle → orchestration), three Rust test files with all FD-P/DE-P properties and PUB examples, the site gateway/pure-composition/page rewrite, site unit/PBT tests with the mandatory PBT-runner additive extension, e2e with two new Playwright projects and discovery-exclusion surface assertions, the hard human gate for the exact `Passion Project.md` diff, and a final sweep with obligation closure and the code-generation summary.
+- **Fixture Impact Analysis**: Existing assertions verified lenient (`scanner_test.rs` `>= 7`; `search_test.rs` relative equality) — the homepage fixture scans as a normal post until the projection lands, so interim steps stay green; the `search_test` semantic rewrite is sequenced at Step 5~6, not Step 1.
+- **Independent Plan Review**: 0 blocking, 3 material, 6 minor — all amended. Material: site-side discovery-exclusion examples (route 404, RSS, sitemap, 404-page recent list) were unassigned; the `search_test` rewrite was mis-sequenced before the behavior existed; and `npm run test:e2e` is U1's evidence-sealed provider whose 48-key record rejects extra matrix keys, so `homepage.spec.ts` must stay entirely outside the U1 evidence machinery (now an explicit Step 13 constraint, with U1 `tests/e2e/support/*` frozen). The review also verified all file-path/config claims (pbt-runner regex, 3-project Playwright topology, two Justfile rm -rf lines) against the actual tree.
+- **Hard Human Gates**: (1) this plan's approval; (2) Step 14's exact Vault diff approval before any external Vault change.
+- **Mutation Boundary Before Part 2**: Planning changed AI-DLC markdown only. No application source changed before plan approval.
+- **Steps 1~6 (commit 55a2980)**: Fixtures added (error cases confined to tempfile vaults); `RawVisibility` captured without mutation; `catalog.rs` built (builder-only `PublicationCatalog`, staged PUB001~006 diagnostics with the empty-path/first-duplicate path convention, stderr reporter); publication-aware transform resolving homepage links to `/` with the legacy path preserved as the FD-P-C08-03 oracle; `output.rs` rewritten as validate→clean→write with the dedicated `content/homepage/` artifact, sorted self-excluding manifest and post-only discovery (graph built from the posts-only index, so homepage edges cannot exist); both Justfile `rm -rf` lines removed; 6-pass orchestration in `main.rs` with PUB-formatted stderr and exit 1.
+- **Steps 7~9 (commit 5b9ca2a)**: Three Rust suites — all FD-P-C07/C08/C09 properties, DE-P refinements, PUB001~007 and EDGE-007/012 examples, the CLI exit-1 example, and the double-run byte-determinism harness. Two real defects found and fixed by the tests themselves: tempfile roots are dot-hidden and were silently excluded by the scanner (fixture nesting fixed it), and **`search-index.json` had always been nondeterministic** — `inverted_index` was a serialized HashMap; PD-U2-02 fix to BTreeMap. The output property breached the 3-minute budget (321s: every case pays a lindera dictionary load); NFR-U2-003's documented adjustment applied — 32 cases with a shared reference snapshot (23s).
+- **Steps 10~11 (commits 10af7e6, eadb81a)**: Fail-closed `getHomepage()` (HP001/HP002); pure composition module `homepage.ts` (fence-aware token counting, HP003/HP004, verbatim recent-heading rule, parameterized date); `index.astro` rewritten to chunk-plan composition with the U1 `HomepageProfile` fragment inline (components/profile is review-subject and was not touched), `<title>` from `meta.title`, page-scoped CSS. Verified against a fixture build: 27 pages, route absence, sitemap/RSS clean, zero token residue. A real-Vault nuance was caught before the Vault gate: the authored recent-heading is an h3 the verbatim h2 rule never matched, so legacy always appended the dynamic section — the chunk plan now preserves exactly that.
+- **Steps 12~13 (commits d04b2a3, 323ff00)**: Site unit (16 files/195 tests) + fast-check PBT (6 files/37 properties) with the PBT runner/include widened to `tests/pbt/u2/**` and non-skip proven by count increase. e2e: `homepage.spec.ts` outside the U1 evidence machinery, two additive Playwright projects (existing three untouched), fixture-artifact ensure-step in `verification-provider.mjs` (subject-safe) so fail-closed HP001 cannot break verification builds. `npm run test:e2e` returns `result: pass` in both date cases (default and `HOMEPAGE_TODAY_OVERRIDE=2024-03-01`). Three genuine findings fixed en route: `/` was the only page where `.site-title[aria-current]` painted raw `--c-accent` (3.74:1) — corrected page-scoped; content links needed AA color + underline (page-scoped, global.css untouched); axe is chromium-scoped by U1 parity after WebKit reported theme-machinery measurement artifacts U2 does not own — recorded, not silent.
+- **Step 14 (approved and applied)**: The exact diff was approved with `"승인"` and applied to `Areas/Notes/Passion Project.md` — `visibility: homepage` added, the temporary Portfolio/Notion block (including its GitHub link, disclosed at approval) replaced by the slot token. No Vault-repo commit or push. Real-Vault evidence: preprocess exit 0 with **140 posts + 1 homepage artifact**, full site build **221 pages**, `/posts/passion-project` absent, sitemap/RSS clean, `<title>Passion Project</title>`, zero Notion links.
+- **Step 15 (complete)**: Final sweep all green — `just test` 19 suites/55s, `test:unit` 16 files/195, `test:pbt` 6 files/37 × 100 at seed `-1620113663`, `test:e2e` `result: pass` in both date cases, `npx astro check` restored to the exact U1 baseline (0 errors/6 hints; one AxeBuilder Page-type error and six `toThrowError` deprecation hints were introduced and removed), `resume:pdf:verify` pass (51 mapped facts, surface parity) proving the U1 provider contract and the manual accessibility record survived U2 untouched, budgets (0 new JS, 307B gzip new CSS, 0 new commands), obligation closure with no unmapped obligation, and `code/code-generation-summary.md` §5 recording every non-silent decision (chromium-scoped axe, verification-build fixture materialization, the default-e2e today-assertion precondition, the 32-case NFR-U2-003 adjustment).
+- **U2 Code Generation Artifact Gate**: **Approved** on 2026-07-29 with the exact user response `"승인"`. All Step 1~25-equivalent checkboxes for U2 (Steps 1~15) are `[x]` with no accepted deviation — unlike U1, no residual was carried.
+- **U2 Code Generation Stage Status**: Completed and approved. This closes the last of U2's five Construction stages — Functional Design, NFR Requirements, NFR Design, Infrastructure Design and Code Generation.
+
 ## Next Step
 
-U1 Code Generation is approved and U1's Construction loop is complete. The next action is the **U1 → `develop` merge gate**, which requires separate explicit user authorization: the project Git Flow merges the feature branch back with `--no-ff`, and no push, merge or pull request has been performed or authorized. `codex/feature/resume-profile-experience` currently holds all U1 work plus the workflow-owned `aidlc-docs/`.
+U2 Code Generation is approved and U2's Construction loop is complete. The **U2 → `develop` merge gate was explicitly authorized on 2026-07-29 with the user response `"승인"`**; the `--no-ff` merge of `codex/feature/resume-home-boundary` into local `develop` is performed from this state. No push, pull request or deployment accompanies it. After the merge, U3 Quality Gate and CI Integration begins its Construction loop from the latest validated `develop` (recommended branch `codex/feature/resume-quality-gates`).
 
-After that merge, U2 Homebrew Publication Boundary begins its own five-stage Construction loop from the latest validated `develop`, starting with U2 Functional Design. Module strategy is strictly sequential: U1 → U2 → U3, with the integrated Build and Test stage last.
+Carried into U3 rather than re-derived there:
+
+1. **U1's rollback-arm live-evidence residual** remains open (accepted deviation at U1 approval).
+2. **The default (no-override) e2e today-assertion** presumes no post published on the run day; U3's CI wiring should pin `HOMEPAGE_TODAY_OVERRIDE=2024-03-01` for determinism.
+3. **PBT seed reproduction paths**: proptest replays recorded failures via committed `proptest-regressions` `cc` lines (the u64 `PROPTEST_RNG_SEED` env var exists but is not the recorded-failure replay path); fast-check replays via the runner-printed seed.
+4. **The nine inherited deployment risks** and the missing deployment-completeness gate stay with U3/the deploy authority; `sync --delete` + `/*` invalidation already handles the removed route.
+
+Do not change external Vault, deployment, push or merge state without separate authorization.
+
+## Next Step
+
+The U2 Code Generation plan approval gate is open. On approval, Part 2 executes Steps 1~15 with per-step verification; Step 14 pauses for the exact `Passion Project.md` diff approval. No push, merge, deployment, Jenkins/Terraform/AWS change or Vault commit/push occurs anywhere in this stage.
 
 Three things carry into U2/U3 rather than being re-derived there.
 

@@ -37,7 +37,10 @@ fn test_alias_links_resolved() {
         .filter(|l| l.target_slug == "simple-post")
         .count();
     // Two links to Simple Post: [[Simple Post]] and [[Simple Post|alias link]]
-    assert!(count >= 2, "expected >=2 links to simple-post (direct + alias), got {count}");
+    assert!(
+        count >= 2,
+        "expected >=2 links to simple-post (direct + alias), got {count}"
+    );
 }
 
 #[test]
