@@ -116,17 +116,25 @@ export function buildHomepageChunks(
 ): HomepageChunk[] {
   const slot = splitRenderedAtSlot(renderedHtml, sourcePath);
   const chunks: HomepageChunk[] = [];
+  let recentPlaced = false;
   for (const [part, side] of [
     [slot.before, "before"],
     [slot.after, "after"],
   ] as const) {
     const recent = splitAtRecentHeading(part);
     if (recent.before.trim() !== "") chunks.push({ kind: "html", html: recent.before });
-    if (recent.found) chunks.push({ kind: "recent" });
+    if (recent.found) {
+      chunks.push({ kind: "recent" });
+      recentPlaced = true;
+    }
     if (recent.found && recent.after.trim() !== "") {
       chunks.push({ kind: "html", html: recent.after });
     }
     if (side === "before") chunks.push({ kind: "slot" });
   }
+  // Legacy semantics (BR-U2-041): when the heading never matches — the real
+  // Vault uses an h3, which the verbatim h2 rule ignores — the section was
+  // still always rendered, appended after the authored content.
+  if (!recentPlaced) chunks.push({ kind: "recent" });
   return chunks;
 }
