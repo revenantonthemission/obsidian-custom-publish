@@ -569,7 +569,7 @@
 
 ## Next Step
 
-U2 Code Generation is approved and U2's Construction loop is complete. The next action is the **U2 → `develop` merge gate**, which requires separate explicit user authorization: the project Git Flow merges `codex/feature/resume-home-boundary` back into local `develop` with `--no-ff`. No push, pull request or deployment is part of that gate. After the merge, U3 Quality Gate and CI Integration begins its Construction loop from the latest validated `develop` (recommended branch `codex/feature/resume-quality-gates`).
+U2 Code Generation is approved and U2's Construction loop is complete. The **U2 → `develop` merge gate was explicitly authorized on 2026-07-29 with the user response `"승인"`**; the `--no-ff` merge of `codex/feature/resume-home-boundary` into local `develop` is performed from this state. No push, pull request or deployment accompanies it. After the merge, U3 Quality Gate and CI Integration begins its Construction loop from the latest validated `develop` (recommended branch `codex/feature/resume-quality-gates`).
 
 Carried into U3 rather than re-derived there:
 
