@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U1 Construction complete and approved; next is the U1 → `develop` merge gate, then U2 Functional Design
+- **Current Stage**: U2 Functional Design — plan and 12 questions generated; awaiting question answers
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -452,11 +452,30 @@
 - **Verified**: a new regression rewrites a built stylesheet, updates the manifest to stay internally valid, and asserts the digest is unchanged — the property that makes the record mergeable. 15 files / 182 tests, `npx astro check` 0 errors / 6 inherited hints.
 - **Current subject on this branch**: `593a13cccc21e85c6d0fdd10551c025dfcc631f256bc715fa179961d26efe3ae`, over 32 authored files, with 8 build assets recorded but unhashed.
 
+## U1 → develop Merge Gate — Completed (observed on develop)
+
+- The merge gate previously recorded here as pending was completed outside this session: merge commit `b656bb0` (`Merge branch 'codex/feature/resume-profile-experience' into develop`) brought all U1 work plus the workflow-owned `aidlc-docs/` onto `develop` with `--no-ff`, per the project Git Flow.
+- `develop` subsequently absorbed post-merge fixes, each via its own `--no-ff` merge: `a431c3d` (narrowed review-subject manual accessibility signature reflected to develop), `4c326b3`/`bade285` (Jenkins cargo manifest and preprocessor binary paths), and `f82c9eb`/`af32509` (CI browser path; diagram failures now fail the build).
+- The latest validated local `develop` is `af32509`. This session performed no push, merge, deployment or Vault change; the record above is observed git history, not an action taken here.
+
+## U2 Functional Design Status
+
+- **Started**: 2026-07-28 with the user instruction "start U2".
+- **Execution Decision**: EXECUTE; U2 introduces publication cardinality, scope normalization, reference/transclusion semantics, a dedicated homepage artifact/slot contract and owner-local Rust/TS test obligations.
+- **Entry Criteria**: Satisfied. U1's five Construction stages are complete and approved, the `--no-ff` merge is on `develop`, and the latest validated `develop` (`af32509`) contains the stable profile route/panel provider contract.
+- **Feature Branch**: `codex/feature/resume-home-boundary` created at `af32509` — the recommended name from unit-of-work §4.1. Working tree: `.claude/worktrees/u2-home-boundary`.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/homepage-publication-boundary-functional-design-plan.md`.
+- **Questions Generated**: 12 context-specific questions covering transition sequencing/exactly-one enforcement timing, `visibility` parsing strictness, publication diagnostic contract, catalog representation, dedicated artifact path/schema, rendering boundary, stale-output lifecycle, write ordering/atomicity, wikilink fragment/alias truth table, profile slot token syntax, recent-posts composition rule and Astro gateway compatibility.
+- **Question Structure Validation**: Passed. Exactly 12 question headings, 12 empty `[Answer]:` tags, 12 final `X) Other` options and 12 recommended choices; 35 lettered options total with every question offering at least two meaningful choices.
+- **Excluded From Questions**: Already-approved decisions (exactly-one homepage, discovery-surface exclusion list, transclusion rejection, `/` normalization, slot cardinality, Vault write scope) and NFR-stage tool choices (Rust PBT framework, seeds, run counts).
+- **Grounding**: Questions were written against current implementation reality — `index.astro` reads the homepage via `getPostContent("passion-project")` as a normal post and splits rendered HTML on the `이번주에 작성된 포스트` heading; the scanner has no `visibility` field; generated layout is `content/posts/{slug}.md` + `content/meta/{slug}.json`; `getPostContent` silently returns an empty string for missing files.
+- **Preliminary PBT-01 Inventory**: Recorded in the plan for C06~C10 (property categories per component) and S02/S03 (expected no-independent-property with example coverage), pending final artifact-level judgment.
+- **Mutation Boundary**: AI-DLC documentation and the new feature branch only. No application source, external Vault, generated output, Terraform/AWS resource, push, remote branch or deployment changed.
+
 ## Next Step
 
-U1 Code Generation is approved and U1's Construction loop is complete. The next action is the **U1 → `develop` merge gate**, which requires separate explicit user authorization: the project Git Flow merges the feature branch back with `--no-ff`, and no push, merge or pull request has been performed or authorized. `codex/feature/resume-profile-experience` currently holds all U1 work plus the workflow-owned `aidlc-docs/`.
-
-After that merge, U2 Homebrew Publication Boundary begins its own five-stage Construction loop from the latest validated `develop`, starting with U2 Functional Design. Module strategy is strictly sequential: U1 → U2 → U3, with the integrated Build and Test stage last.
+Answer the 12 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-functional-design-plan.md` (one letter after each `[Answer]:` tag; describe rules inline for `X`), then reply that answers are complete. After answer validation, the four U2 Functional Design artifacts are generated under `aidlc-docs/construction/homepage-publication-boundary/functional-design/` and presented for the standard approval gate. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
