@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Infrastructure Design
-- **상태**: 답변 6/6 제출 — Q4-B·Q6-B의 clarification 답변 대기 ([clarification file](homepage-publication-boundary-infrastructure-design-clarification-questions.md))
+- **상태**: artifact 3건 생성·검증·독립 검토 완료 — 완료 gate 승인 대기
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
@@ -31,10 +31,19 @@ U2 산출물이 기존 정적 전달 topology와 호환되는지 검증하고 no
 
 - [x] U2 배포 표면 delta(`/` 내용 변경, `/posts/passion-project` 부재, discovery JSON 내용 변경)와 현재 deploy 명령의 상호작용을 분석한다.
 - [x] 미확정 항목을 질문으로 작성한다.
-- [ ] 답변을 수집·검증한다.
-- [ ] 세 artifact 작업을 생성·검증한다.
-- [ ] 독립 검토와 구조 검증을 수행한다.
-- [ ] 표준 2-option 완료 gate를 제시하고 명시적 승인을 기다린다.
+- [x] 답변을 수집·검증한다 — A/A/A/B/A/B; Q4-B·Q6-B는 clarification file(C1-A·C2-A)로 해소.
+- [x] 세 artifact 작업을 생성·검증한다 — `infrastructure-design.md`, `deployment-architecture.md`, shared-infrastructure §4 U2 row 갱신.
+- [x] 독립 검토와 구조 검증을 수행한다 — BLOCKING 0, MATERIAL 0, MINOR 2(복사 집합의 assets 누락 서술, local rollback의 vault 입력 전제) 모두 수정 반영. 모든 라인 번호·설정값·상속 위험 9건 실측 일치.
+- [x] 표준 2-option 완료 gate를 제시하고 명시적 승인을 기다린다.
+
+## 6. Answer and Artifact Validation Result
+
+- **답변**: A/A/A/B/A/B (2026-07-28, "작성 완료"). Q4-B는 C1-A(동작 보존 refactoring 한정)로, Q6-B는 C2-A(문서 검증 수준 재검토 + shared row 추가)로 명확화됐다 — clarification 2/2 A.
+- **C2-A 이행**: `infra/main.tf` 대조로 U1 monitoring/logging 기록의 무 drift를 확인·기록했다.
+- **핵심 판정**: 완전 no-change. 제거 route는 기존 403→404 mapping의 자연 404; `sync --delete` + `/*` invalidation이 origin/cache 정리를 이미 수행; 새 공개 파일 없음; Justfile 접촉은 rm -rf 2줄 제거 + 동작 보존 refactoring 한정; rollback·monitoring 현상 유지.
+- **독립 검토**: APPROVE — BLOCKING/MATERIAL 0, MINOR 2 수정 반영.
+- **Mutation Boundary**: 문서만 변경. Terraform/AWS/DNS/cache policy/배포 실행/external Vault/application source 불변.
+- **Artifact Gate**: 제시됨 — 명시적 승인 대기.
 
 ## 4. Infrastructure Design Questions
 

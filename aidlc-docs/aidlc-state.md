@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Infrastructure Design — plan and 6 questions generated; awaiting question answers
+- **Current Stage**: U2 Infrastructure Design — no-change verdict recorded, artifacts generated and independently reviewed; awaiting artifact approval gate
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -540,11 +540,16 @@
 - **Answer Submission**: 2026-07-28 with the user response "작성 완료" — 6/6 submitted as A/A/A/B/A/B.
 - **Answer Validation**: Q1/Q2/Q3/Q5 pass as exact A selections. Q4-B is a valid choice whose permission boundary requires confirmation (unbounded copy-list restructuring could collide with Q3-A's no-new-public-files decision). Q6-B ("일부 항목을 재검토한다") is ambiguous — it does not specify which items, what depth, or whether the shared-infrastructure row is still added. Per the workflow rule and the U1 precedent, a clarification file was created instead of guessing.
 - **Clarification File**: `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-clarification-questions.md` — 2 questions (Q4-B boundary: behavior-preserving refactoring vs set changes; Q6-B scope: document-level re-verification vs actual config-change requests), each with a recommended choice and `X) Other`.
-- **Clarification Status**: Awaiting answers.
+- **Clarification Status**: Resolved 2026-07-28 with the user response "작성 완료" — C1-A (Justfile touch limited to behavior-preserving refactoring; copied-file set, sync/invalidation commands and observable outputs invariant) and C2-A (document-verification-level monitoring re-review; shared row still added; no AWS/Terraform change).
+- **C2-A Execution**: U1's recorded logging/monitoring facts were re-verified against `infra/main.tf` with no drift — `logging_config` (log bucket, `cloudfront/` prefix, cookies excluded) at main.tf:209~213 and the 90-day log lifecycle at main.tf:86~96 match U1's records exactly; no alarm/dashboard/synthetic/analytics/queue resources exist.
+- **Artifacts Generated and Validated**: 2026-07-28 — `infrastructure-design.md` and `deployment-architecture.md` under `aidlc-docs/construction/homepage-publication-boundary/infrastructure-design/`, plus the `shared-infrastructure.md` §4 U2 row updated from its "Later confirm" placeholder to the confirmed verdict.
+- **Infrastructure Result**: **Compatible — no change.** The removed `/posts/passion-project/` route resolves as a natural 404 through the existing 403→404 `custom_error_response` (`/404.html`, 60s min TTL); existing `aws s3 sync --delete` + `/*` invalidation in both deploy paths removes the stale object and cache; `content/homepage/` and `content/manifest.json` are build inputs with no path to the public surface; the CloudFront redirect alternative (Q1-B) was considered and rejected — the old URL 404s as an accepted product outcome. U1's nine inherited deployment risks remain recorded unchanged for U3/deploy-authority handoff.
+- **Independent Artifact Review**: APPROVE — 0 blocking, 0 material, 2 minor (the frozen copy set description omitted the pre-existing `assets/` copy; the local-rollback claim needed the same-vault-input qualifier since NFR-U2-004 determinism conditions on vault content + code). Both fixed. All cited line numbers, config values and the 9-risk count were verified against the actual files.
+- **Artifact Gate**: Presented — awaiting explicit approval.
 
 ## Next Step
 
-Answer the 6 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-plan.md`, then reply that answers are complete. After validation, `infrastructure-design.md` and `deployment-architecture.md` are generated under `aidlc-docs/construction/homepage-publication-boundary/infrastructure-design/`, `shared-infrastructure.md` gains the U2 compatibility rows, and the standard approval gate is presented. On its approval, U2 Code Generation begins. No push, external Vault edit, deployment or merge is authorized.
+The U2 Infrastructure Design artifact approval gate is open. On approval, all five U2 design stages are closed and **U2 Code Generation** begins: a Part-1 plan with exact file inventory and sequential steps (Rust publication pipeline per LC-U2-01~08, site composition per LC-U2-09~12, fixtures, examples/PBT, the gated `Passion Project.md` Vault edit, and verification evidence), followed by plan approval and Part-2 generation. No push, external Vault edit, deployment or merge is authorized before its own gates.
 
 Three things carry into U2/U3 rather than being re-derived there.
 
