@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Code Generation — Steps 1~15 complete; completion gate presented
+- **Current Stage**: U2 Construction complete and approved; next is the U2 → `develop` merge gate, then U3
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -564,7 +564,21 @@
 - **Steps 12~13 (commits d04b2a3, 323ff00)**: Site unit (16 files/195 tests) + fast-check PBT (6 files/37 properties) with the PBT runner/include widened to `tests/pbt/u2/**` and non-skip proven by count increase. e2e: `homepage.spec.ts` outside the U1 evidence machinery, two additive Playwright projects (existing three untouched), fixture-artifact ensure-step in `verification-provider.mjs` (subject-safe) so fail-closed HP001 cannot break verification builds. `npm run test:e2e` returns `result: pass` in both date cases (default and `HOMEPAGE_TODAY_OVERRIDE=2024-03-01`). Three genuine findings fixed en route: `/` was the only page where `.site-title[aria-current]` painted raw `--c-accent` (3.74:1) — corrected page-scoped; content links needed AA color + underline (page-scoped, global.css untouched); axe is chromium-scoped by U1 parity after WebKit reported theme-machinery measurement artifacts U2 does not own — recorded, not silent.
 - **Step 14 (approved and applied)**: The exact diff was approved with `"승인"` and applied to `Areas/Notes/Passion Project.md` — `visibility: homepage` added, the temporary Portfolio/Notion block (including its GitHub link, disclosed at approval) replaced by the slot token. No Vault-repo commit or push. Real-Vault evidence: preprocess exit 0 with **140 posts + 1 homepage artifact**, full site build **221 pages**, `/posts/passion-project` absent, sitemap/RSS clean, `<title>Passion Project</title>`, zero Notion links.
 - **Step 15 (complete)**: Final sweep all green — `just test` 19 suites/55s, `test:unit` 16 files/195, `test:pbt` 6 files/37 × 100 at seed `-1620113663`, `test:e2e` `result: pass` in both date cases, `npx astro check` restored to the exact U1 baseline (0 errors/6 hints; one AxeBuilder Page-type error and six `toThrowError` deprecation hints were introduced and removed), `resume:pdf:verify` pass (51 mapped facts, surface parity) proving the U1 provider contract and the manual accessibility record survived U2 untouched, budgets (0 new JS, 307B gzip new CSS, 0 new commands), obligation closure with no unmapped obligation, and `code/code-generation-summary.md` §5 recording every non-silent decision (chromium-scoped axe, verification-build fixture materialization, the default-e2e today-assertion precondition, the 32-case NFR-U2-003 adjustment).
-- **U2 Code Generation Artifact Gate**: Presented — awaiting explicit approval. On approval, U2's five Construction stages close and the U2 → `develop` merge gate (separate authorization) follows, then U3.
+- **U2 Code Generation Artifact Gate**: **Approved** on 2026-07-29 with the exact user response `"승인"`. All Step 1~25-equivalent checkboxes for U2 (Steps 1~15) are `[x]` with no accepted deviation — unlike U1, no residual was carried.
+- **U2 Code Generation Stage Status**: Completed and approved. This closes the last of U2's five Construction stages — Functional Design, NFR Requirements, NFR Design, Infrastructure Design and Code Generation.
+
+## Next Step
+
+U2 Code Generation is approved and U2's Construction loop is complete. The next action is the **U2 → `develop` merge gate**, which requires separate explicit user authorization: the project Git Flow merges `codex/feature/resume-home-boundary` back into local `develop` with `--no-ff`. No push, pull request or deployment is part of that gate. After the merge, U3 Quality Gate and CI Integration begins its Construction loop from the latest validated `develop` (recommended branch `codex/feature/resume-quality-gates`).
+
+Carried into U3 rather than re-derived there:
+
+1. **U1's rollback-arm live-evidence residual** remains open (accepted deviation at U1 approval).
+2. **The default (no-override) e2e today-assertion** presumes no post published on the run day; U3's CI wiring should pin `HOMEPAGE_TODAY_OVERRIDE=2024-03-01` for determinism.
+3. **PBT seed reproduction paths**: proptest replays recorded failures via committed `proptest-regressions` `cc` lines (the u64 `PROPTEST_RNG_SEED` env var exists but is not the recorded-failure replay path); fast-check replays via the runner-printed seed.
+4. **The nine inherited deployment risks** and the missing deployment-completeness gate stay with U3/the deploy authority; `sync --delete` + `/*` invalidation already handles the removed route.
+
+Do not change external Vault, deployment, push or merge state without separate authorization.
 
 ## Next Step
 
