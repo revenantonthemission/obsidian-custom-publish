@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Infrastructure Design
-- **상태**: 질문 답변 대기
+- **상태**: 답변 6/6 제출 — Q4-B·Q6-B의 clarification 답변 대기 ([clarification file](homepage-publication-boundary-infrastructure-design-clarification-questions.md))
 - **Unit**: U2 Homepage Publication Boundary
 - **작성일**: 2026-07-28
 - **Feature Branch**: `codex/feature/resume-home-boundary`
@@ -50,7 +50,7 @@ B) no-change에 더해, 기존에 색인됐을 수 있는 `/posts/passion-projec
 
 X) Other (please describe after [Answer]: tag below) — 필요한 topology 변경을 설명한다 (별도 권한 필요).
 
-[Answer]:
+[Answer]: A) 완전 no-change로 판정한다: S3 bucket, CloudFront distribution/OAC/behavior/function, ACM 인증서, DNS, cache policy 모두 불변. U2는 배포되는 파일 집합의 **내용**만 바꾼다 (`/` HTML, discovery JSON, RSS/sitemap 내용, `/posts/passion-project/` 부재). 제거된 route는 자연스러운 404가 된다.
 
 ### Question 2 — 제거 route의 origin·cache 처리
 
@@ -62,7 +62,7 @@ B) U2 범위에서 배포 절차를 수정해 위험을 직접 해소한다 (FR-
 
 X) Other (please describe after [Answer]: tag below) — 처리 방식을 설명한다.
 
-[Answer]:
+[Answer]: A) 기존 도구가 이미 처리함을 호환 근거로 기록한다: `aws s3 sync --delete`가 origin에서 제거하고 `/*` invalidation이 cache를 비운다. 비원자적 sync 창, 무조건 nightly Jenkins Deploy 등 U1이 기록한 상속 위험 9건은 그대로 유지하며 U3/배포 권한자 이관으로 남긴다.
 
 ### Question 3 — Build-side 신규 산출물의 배포 경계
 
@@ -74,7 +74,7 @@ B) `manifest.json`을 `site/public/`으로 복사해 공개 검증 endpoint로 �
 
 X) Other (please describe after [Answer]: tag below) — 경계를 설명한다.
 
-[Answer]:
+[Answer]: A) 둘 다 build 입력으로만 존재하고 배포 대상이 아니다. `deploy-preprocess`의 `site/public/` 복사 목록에 추가하지 않으며, 공개 표면에 새 파일이 생기지 않는다 — homepage 내용은 Astro가 `/` HTML로 굽는다.
 
 ### Question 4 — Justfile 접촉 범위
 
@@ -86,7 +86,7 @@ B) 추가 정리(예: 복사 목록 재구성)까지 허용한다.
 
 X) Other (please describe after [Answer]: tag below) — 허용 범위를 설명한다.
 
-[Answer]:
+[Answer]: B) 추가 정리(예: 복사 목록 재구성)까지 허용한다.
 
 ### Question 5 — Rollback 입장
 
@@ -98,7 +98,7 @@ B) U2 전용 rollback 절차를 새로 설계한다 (배포 권한 필요).
 
 X) Other (please describe after [Answer]: tag below) — 입장을 설명한다.
 
-[Answer]:
+[Answer]: A) U1 기록을 유지하고 추가하지 않는다: production exact rollback은 보존된 완전한 release 없이는 불가하며 현재는 best-effort 재배포다. local은 git ref + 결정적 재생성(NFR-U2-004가 이를 강화)으로 정확하다.
 
 ### Question 6 — Monitoring·Messaging·공유 문서
 
@@ -110,7 +110,7 @@ B) 일부 항목을 재검토한다.
 
 X) Other (please describe after [Answer]: tag below) — 판정을 설명한다.
 
-[Answer]:
+[Answer]: B) 일부 항목을 재검토한다.
 
 ## 5. 답변 검증과 생성 경계
 

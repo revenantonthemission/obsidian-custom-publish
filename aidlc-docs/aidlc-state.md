@@ -537,6 +537,10 @@
 - **Question Structure Validation**: Passed. 6 question headings, 6 empty `[Answer]:` tags, 6 final `X) Other` options, 6 recommended choices; every question has at least two meaningful options.
 - **Grounding**: Verified 2026-07-28 — both `just deploy` and Jenkins Deploy run `aws s3 sync --delete` plus a full `/*` CloudFront invalidation, so the removed `/posts/passion-project` route is deleted from the origin and cache by existing tooling; `deploy-preprocess` copies only the four discovery JSONs to `site/public/`, so `content/homepage/` and `content/manifest.json` have no path to the public surface.
 - **Mutation Boundary**: AI-DLC documentation only. No Terraform/AWS/DNS/cache-policy mutation is authorized by any option.
+- **Answer Submission**: 2026-07-28 with the user response "작성 완료" — 6/6 submitted as A/A/A/B/A/B.
+- **Answer Validation**: Q1/Q2/Q3/Q5 pass as exact A selections. Q4-B is a valid choice whose permission boundary requires confirmation (unbounded copy-list restructuring could collide with Q3-A's no-new-public-files decision). Q6-B ("일부 항목을 재검토한다") is ambiguous — it does not specify which items, what depth, or whether the shared-infrastructure row is still added. Per the workflow rule and the U1 precedent, a clarification file was created instead of guessing.
+- **Clarification File**: `aidlc-docs/construction/plans/homepage-publication-boundary-infrastructure-design-clarification-questions.md` — 2 questions (Q4-B boundary: behavior-preserving refactoring vs set changes; Q6-B scope: document-level re-verification vs actual config-change requests), each with a recommended choice and `X) Other`.
+- **Clarification Status**: Awaiting answers.
 
 ## Next Step
 
