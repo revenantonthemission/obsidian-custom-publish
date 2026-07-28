@@ -91,3 +91,22 @@ const homepageProfile = getProductionProfileAssembly().homepage;
     font-weight: 600;
   }
 </style>
+
+<style is:global>
+  /* Page-scoped accessibility fix (NFR-U2-007/PD-U2-09): `/` links must pass
+     AA contrast and be distinguishable without color. Scoped styles cannot
+     reach set:html content, so this targets the page's own containers via
+     is:global — global.css itself is U1 review-subject and stays untouched. */
+  .home-content a,
+  .recent-posts a,
+  .home-profile a {
+    color: var(--c-accent-hover);
+    text-decoration: underline;
+  }
+  /* `/` is the only page where the site title carries aria-current, and the
+     global rule paints it raw --c-accent (3.74:1). Corrected here because
+     global.css is U1 review-subject. */
+  .site-title[aria-current='page'] {
+    color: var(--c-accent-hover);
+  }
+</style>
