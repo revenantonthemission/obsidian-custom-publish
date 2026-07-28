@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Functional Design — plan and 12 questions generated; awaiting question answers
+- **Current Stage**: U2 Functional Design — artifacts generated, validated and independently reviewed; awaiting artifact approval gate
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -472,10 +472,21 @@
 - **Grounding**: Questions were written against current implementation reality — `index.astro` reads the homepage via `getPostContent("passion-project")` as a normal post and splits rendered HTML on the `이번주에 작성된 포스트` heading; the scanner has no `visibility` field; generated layout is `content/posts/{slug}.md` + `content/meta/{slug}.json`; `getPostContent` silently returns an empty string for missing files.
 - **Preliminary PBT-01 Inventory**: Recorded in the plan for C06~C10 (property categories per component) and S02/S03 (expected no-independent-property with example coverage), pending final artifact-level judgment.
 - **Mutation Boundary**: AI-DLC documentation and the new feature branch only. No application source, external Vault, generated output, Terraform/AWS resource, push, remote branch or deployment changed.
+- **Answer Submission**: 2026-07-28 with the user response "작성 완료".
+- **Answer Completeness**: 12/12.
+- **Submitted Choices**: A/A/A/A/A/A/A/A/A/A/A/A.
+- **Answer Validation**: Passed. Every answer exactly matches the A option text; a trailing space on Q9 and a copied `**(권장)**` marker on Q11 were mechanically normalized per the U1 Q3 precedent. Choices are mutually consistent and compatible with all prior approvals. No clarification file was required.
+- **Artifacts Generated and Validated**: 2026-07-28 — `domain-entities.md`, `business-rules.md`, `business-logic-model.md` and `frontend-components.md` under `aidlc-docs/construction/homepage-publication-boundary/functional-design/`.
+- **Functional Contract**: 46 business rules (BR-U2-001~046), a 12-surface discovery exclusion matrix (including the 404 recent-posts surface), a 10-variant reference truth table, the PUB001~PUB007 / HP001~HP004 diagnostic vocabulary with a defined path convention for path-less codes, staged batch diagnostics (PUB001~003 at catalog, PUB004~006 at reference, each fully collected before any write), the dedicated `content/homepage/` artifact and slot contract, and the fail-closed `getHomepage()` gateway contract.
+- **PBT-01 Status**: Compliant. 17 stage-level properties (FD-P-*) across C06~C10 with category, generator domain and oracle; S02/S03 carry explicit `No independent PBT properties identified` rationales; determinism is not mislabeled as idempotence (only FD-P-C09-04 is state idempotence); DE-P-U2-01~04 and FE-P-U2-01~06 refinements all resolve to existing FD-P IDs. Rust framework selection remains a U2 NFR Requirements obligation; the TS side reuses U1's Vitest/fast-check.
+- **Independent Artifact Review**: Passed after one independent review reported 0 blocking, 3 material (staged-aggregation inconsistency across the three documents, missing 404 surface row, undefined `path` for PUB002/PUB003) and 8 minor findings; all 11 were fixed. The review also fact-checked the artifacts against current code (getters, output layout, index.astro, scanner) with no factual errors found.
+- **Recorded New FD Decision**: BR-U2-043 moves the `/` page `<title>` source to `meta.title` (value identical today since scanner derives title from the filename); cited to S03's metadata responsibility, not to a question answer. The Vault write gate is recorded as governing only the authored U2 diff, leaving the scanner's pre-existing `published` auto-stamp behavior unchanged.
+- **Structural Validation**: Code-fence balance, 46 unique BR IDs, 17 unique FD-P IDs and resolvable relative links verified across the four artifacts.
+- **Artifact Gate**: Presented — awaiting explicit approval.
 
 ## Next Step
 
-Answer the 12 questions in `aidlc-docs/construction/plans/homepage-publication-boundary-functional-design-plan.md` (one letter after each `[Answer]:` tag; describe rules inline for `X`), then reply that answers are complete. After answer validation, the four U2 Functional Design artifacts are generated under `aidlc-docs/construction/homepage-publication-boundary/functional-design/` and presented for the standard approval gate. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last.
+The U2 Functional Design artifact approval gate is open. On approval, U2 NFR Requirements begins (Rust PBT framework/generator/seed selection, determinism/error/test performance and static contract requirements). If changes are requested, the artifacts are revised and re-presented. Module strategy remains strictly sequential: U2 → U3, with the integrated Build and Test stage last. No push, external Vault edit, deployment or merge is authorized.
 
 Three things carry into U2/U3 rather than being re-derived there.
 

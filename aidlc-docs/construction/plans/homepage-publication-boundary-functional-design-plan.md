@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U2 Functional Design
-- **상태**: 질문 답변 대기
+- **상태**: artifact 4/4 생성·검증·독립 검토 완료 — 완료 gate 승인 대기
 - **Unit**: U2 Homepage Publication Boundary
 - **Bounded Context**: Homepage Publication
 - **작성일**: 2026-07-28
@@ -78,31 +78,31 @@ Rust PBT framework/generator/seed 문법, 성능 수치와 test 도구 구성은
 - [x] 이미 승인된 제품 결정을 반복하지 않는 context-specific 질문을 작성한다.
 - [x] NFR 도구 선택(Rust PBT framework 등)을 이 질문에서 제외한다.
 - [x] 모든 질문에 최소 두 개의 의미 있는 선택지와 마지막 `X) Other`를 제공한다.
-- [ ] 모든 `[Answer]:`를 수집하고 선택 형식, 명확성, 상호 일관성과 기존 승인 호환성을 검증한다.
-- [ ] 모호하거나 혼합된 답변이 있으면 별도 clarification question file을 만들고 모두 해소한다.
+- [x] 모든 `[Answer]:`를 수집하고 선택 형식, 명확성, 상호 일관성과 기존 승인 호환성을 검증한다.
+- [x] 모호하거나 혼합된 답변이 있으면 별도 clarification question file을 만들고 모두 해소한다. 해당 없음 — 12개 답변이 모두 명확한 A 선택이다.
 
 ### 3.3 Functional Design 생성
 
-- [ ] `PublicationScope`, catalog projection, homepage artifact와 slot contract의 entity/value object/lifecycle을 설계한다.
-- [ ] scope 정규화, cardinality, reference truth table과 transclusion 거부의 rule matrix를 설계한다.
-- [ ] deterministic publication 진단 taxonomy와 fail-closed data flow를 설계한다.
-- [ ] discovery surface 포함/제외 matrix를 기존 pipeline output 기준으로 설계한다.
-- [ ] dedicated artifact schema, output lifecycle과 Astro gateway 계약을 설계한다.
-- [ ] homepage composition(slot 치환 + 오늘 발행 글)의 component contract를 설계한다.
-- [ ] 네 개의 필수 Functional Design artifact를 생성한다.
+- [x] `PublicationScope`, catalog projection, homepage artifact와 slot contract의 entity/value object/lifecycle을 설계한다.
+- [x] scope 정규화, cardinality, reference truth table과 transclusion 거부의 rule matrix를 설계한다.
+- [x] deterministic publication 진단 taxonomy와 fail-closed data flow를 설계한다.
+- [x] discovery surface 포함/제외 matrix를 기존 pipeline output 기준으로 설계한다.
+- [x] dedicated artifact schema, output lifecycle과 Astro gateway 계약을 설계한다.
+- [x] homepage composition(slot 치환 + 오늘 발행 글)의 component contract를 설계한다.
+- [x] 네 개의 필수 Functional Design artifact를 생성한다.
 
 ### 3.4 PBT-01과 품질 검증
 
-- [ ] C06~C10, S02, S03의 property/N/A inventory를 최종 확정한다.
-- [ ] 모든 관련 component에 category, precondition, generator domain, operation, assertion/oracle와 traceability가 있는 `Testable Properties`를 문서화한다.
-- [ ] property가 없는 component/operation에 `No PBT properties identified`와 구체적인 이유를 문서화한다.
-- [ ] Round-trip, Invariant, Idempotence, Commutativity, Oracle, Induction과 Easy verification 적용 여부를 각각 판정한다.
-- [ ] determinism을 idempotence로 잘못 분류하지 않고 human review 대상을 PBT로 대체하지 않는다.
-- [ ] identified properties를 U2 Code Generation plan과 ST-E03 publication slice의 binding test requirement로 전달한다.
-- [ ] FR, Story/AC, EDGE와 component traceability를 검증한다.
-- [ ] Obsidian Press project extension OBSIDIAN-01~05 준수 상태를 검증한다.
-- [ ] 완성 prompt 전에 독립 검토, 링크와 Markdown 구조 검증을 수행한다.
-- [ ] 표준 2-option Functional Design 완료 gate를 제시하고 명시적 승인을 기다린다.
+- [x] C06~C10, S02, S03의 property/N/A inventory를 최종 확정한다.
+- [x] 모든 관련 component에 category, precondition, generator domain, operation, assertion/oracle와 traceability가 있는 `Testable Properties`를 문서화한다. precondition/operation은 property 문장에 내장한다.
+- [x] property가 없는 component/operation에 `No PBT properties identified`와 구체적인 이유를 문서화한다 (S02, S03).
+- [x] Round-trip, Invariant, Idempotence, Commutativity, Oracle, Induction과 Easy verification 적용 여부를 각각 판정한다.
+- [x] determinism을 idempotence로 잘못 분류하지 않고 human review 대상을 PBT로 대체하지 않는다.
+- [x] identified properties를 U2 Code Generation plan과 ST-E03 publication slice의 binding test requirement로 전달한다.
+- [x] FR, Story/AC, EDGE와 component traceability를 검증한다.
+- [x] Obsidian Press project extension OBSIDIAN-01~05 준수 상태를 검증한다.
+- [x] 완성 prompt 전에 독립 검토, 링크와 Markdown 구조 검증을 수행한다.
+- [x] 표준 2-option Functional Design 완료 gate를 제시하고 명시적 승인을 기다린다.
 
 ## 4. Preliminary PBT-01 Inventory
 
@@ -136,7 +136,7 @@ C) 강제를 CLI flag opt-in으로 두고 기본은 legacy 동작을 유지한�
 
 X) Other (please describe after [Answer]: tag below) — 전환 기간의 build 의미와 강제 활성화 시점을 설명한다.
 
-[Answer]:
+[Answer]: A) 강제를 조건 없이 항상 활성으로 두고, missing homepage와 duplicate homepage를 별도 진단 코드로 구분한다. U2 Construction 동안 실행 증거는 fixture vault가 제공하고, 실제 Vault 대상 preprocess는 승인된 `Passion Project.md` 편집이 적용된 뒤에만 U2 검증 증거로 사용한다. 편집 전 실제 Vault 실행의 실패는 결함이 아니라 전환 미완료를 정확히 알리는 신호다.
 
 ### Question 2 — `visibility` 값 파싱 규칙
 
@@ -150,7 +150,7 @@ C) A의 exact match를 유지하되, 대소문자·공백만 다른 근접 변�
 
 X) Other (please describe after [Answer]: tag below) — 인식 값, 정규화와 거부 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) YAML scalar string의 exact lowercase `homepage` 또는 `post`만 인식한다. key 부재는 `post` 기본값이고, 그 외 모든 값과 타입(대소문자 변형, 앞뒤 공백, list, boolean 등)은 source path와 실제 값을 포함한 unknown-visibility 오류다.
 
 ### Question 3 — publication 진단 계약
 
@@ -164,7 +164,7 @@ C) 파일 단위로는 이슈를 모두 수집하되, 파일 사이에서는 첫
 
 X) Other (please describe after [Answer]: tag below) — aggregation 범위, ordering과 code vocabulary 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) publication boundary 이슈를 전부 수집해 stable `{code, path, detail}`를 path·code 순으로 정렬한 뒤 어떤 output write 전에 한 번에 실패한다. 진단 코드는 U1 선례를 따른 stable vocabulary로 등록하고, publication 밖 기존 pipeline 오류 경로는 현재 동작을 유지한다.
 
 ### Question 4 — Publication Catalog 표현
 
@@ -178,7 +178,7 @@ C) 기존 `VaultIndex` 구조를 유지하고 각 downstream 호출부에 scope 
 
 X) Other (please describe after [Answer]: tag below) — type 구조, 생성 경로와 불변성 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) `PublicationCatalog`가 `homepage`(exactly-one `HomepageSource`)와 `posts`(`DiscoverablePosts`)를 별개의 immutable typed projection으로 보유하고, cardinality를 검증한 builder만 catalog를 생성할 수 있게 한다. reference resolution용 `LinkableSources`는 두 projection의 read-only 합성 view다.
 
 ### Question 5 — dedicated homepage artifact 경로와 schema
 
@@ -192,7 +192,7 @@ C) body 문자열을 포함한 단일 `content/homepage.json` 하나로 통합�
 
 X) Other (please describe after [Answer]: tag below) — 경로, 파일 구성과 metadata 필드를 설명한다.
 
-[Answer]:
+[Answer]: A) `content/homepage/index.md`(transform 완료 Markdown body)와 `content/homepage/meta.json`을 둔다. meta는 rendering에 필요한 결정적 최소값(`title`과 필수 필드)만 담고 timestamp 같은 비결정 값을 포함하지 않는다. 디렉터리 자체가 publication 경계를 표현한다.
 
 ### Question 6 — homepage body rendering 경계
 
@@ -204,7 +204,7 @@ B) preprocessor가 homepage body를 HTML까지 pre-render해 artifact에 저장�
 
 X) Other (please describe after [Answer]: tag below) — rendering 책임 분담과 그 이유를 설명한다.
 
-[Answer]:
+[Answer]: A) artifact body는 preprocessor transform까지 마친 Markdown으로 두고, HTML rendering은 normal post와 같은 site unified pipeline(`renderMarkdown`)이 담당한다. callout, wikilink anchor, KaTeX, Shiki 등 기존 rendering 동작을 그대로 재사용한다.
 
 ### Question 7 — stale artifact 정리와 output manifest
 
@@ -218,7 +218,7 @@ C) 알려진 전환 사례만 정리한다: homepage로 지정된 slug의 normal
 
 X) Other (please describe after [Answer]: tag below) — 정리 범위, manifest 역할과 최초 실행 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) preprocessor가 관리하는 output namespace(`posts/`, `meta/`, `homepage/`, discovery JSON, 복사된 assets)를 매 실행 시작에 전부 비우고 재생성한다. `GeneratedOutputManifest`는 이번 실행이 생성한 inventory를 기록한다. 결과는 항상 현재 입력만의 함수다.
 
 ### Question 8 — write ordering과 atomicity
 
@@ -232,7 +232,7 @@ C) 파일별 temp 파일 + rename으로 개별 파일 원자성만 보장한다.
 
 X) Other (please describe after [Answer]: tag below) — 검증·쓰기 순서와 실패 시 disk 상태 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) 모든 검증(publication 진단 포함)을 어떤 write보다 앞서 완료하고, write 단계 실패는 명확한 오류로 종료한다. 부분 산출물이 disk에 남을 수 있으나 실패한 실행은 성공을 보고하지 않으며, 다음 실행의 전체 재생성이 이를 덮는다. 별도 staging은 두지 않는다.
 
 ### Question 9 — homepage wikilink fragment/alias truth table
 
@@ -246,7 +246,7 @@ C) 모든 fragment를 버리고 homepage wikilink는 항상 bare `/`로 정규�
 
 X) Other (please describe after [Answer]: tag below) — variant별 결과와 미해결 fragment 처리를 설명한다.
 
-[Answer]:
+[Answer]: A) full parity: `[[Passion Project]]` → `/`, `[[Passion Project|표시명]]`은 alias 보존, `#heading`과 `#^block` fragment는 기존 normal post와 같은 anchor 생성 규칙으로 `/#...`에 연결한다. 존재하지 않는 heading/block은 기존 pipeline의 미해결 fragment 처리와 동일하게 다룬다.
 
 ### Question 10 — profile slot 표기
 
@@ -260,7 +260,7 @@ C) 보이는 구조를 쓴다: 약속된 heading(예: `## 프로필`) section을
 
 X) Other (please describe after [Answer]: tag below) — token 문법, fence 처리와 치환 후 잔존물 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) 단독 줄의 HTML comment token(예: `<!-- profile:slot -->`)을 쓴다. Obsidian reading view와 rendered page 어디에도 보이지 않고, code fence 안의 동일 문자열은 token으로 세지 않으며, 조합 후 결과 HTML에 token이 남지 않는다.
 
 ### Question 11 — 오늘 발행 글 section과 조합 규칙
 
@@ -274,7 +274,8 @@ C) 오늘 발행 글 section을 authored 문서에서 분리해 조합 규칙(�
 
 X) Other (please describe after [Answer]: tag below) — 두 치환의 인식 규칙, 순서와 실패 의미를 설명한다.
 
-[Answer]:
+[Answer]: A) 기존 heading 기반 치환 규칙을 관찰 가능한 동작 그대로 보존하고, profile slot 치환은 그와 독립적인 별도 규칙으로 둔다. 문서 순서는 authored 순서를 따르고 두 치환은 서로의 결과에 간섭하지 않는다. Vault diff는 profile slot 추가와 임시 Notion block 제거로 최소화된다.
+
 
 ### Question 12 — Astro gateway 호환 전략
 
@@ -288,9 +289,34 @@ C) B의 재구성을 하되 기존 getter를 제거하고 모든 consumer(page, 
 
 X) Other (please describe after [Answer]: tag below) — getter 유지/신설 범위와 오류 표면화 규칙을 설명한다.
 
-[Answer]:
+[Answer]: A) 기존 getter 이름과 서명을 유지한다. homepage가 normal output에서 사라지므로 기존 getter는 자연스럽게 post-only가 된다. 새 `getHomepage()`를 추가하고 `index.astro`를 그것으로 이전하며, homepage getter는 artifact 누락·malformed를 빈 값으로 숨기지 않고 명확한 build 진단으로 실패한다. normal post getter의 기존 동작(누락 시 빈 값)은 U2에서 바꾸지 않는다.
 
-## 6. 답변 검증과 생성 경계
+## 6. Answer Validation Result
+
+- **제출 시각**: 2026-07-28 (사용자 응답 "작성 완료")
+- **답변**: A/A/A/A/A/A/A/A/A/A/A/A (12/12)
+- **형식 검증**: 통과. 모든 답변이 해당 질문의 A 선택지 본문과 정확히 일치한다. Q9의 답변 줄 끝 공백 하나와 Q11 답변에 복사된 `**(권장)**` 표기는 의미가 유일해 U1 Q3 선례에 따라 기계적으로 정규화했다.
+- **명확성 검증**: 통과. 조건부, 혼합 선택, 미정 표현 또는 `X` 설명이 없다.
+- **상호 일관성 검증**: 통과. 무조건 활성인 exactly-one 강제(Q1)와 엄격한 scalar 파싱(Q2)이 write 전 일괄 진단(Q3)으로 이어지고, builder 전용 catalog(Q4)가 dedicated `content/homepage/` artifact(Q5)와 site 쪽 rendering 재사용(Q6)에 연결된다. 매 실행 전체 재생성(Q7)이 staging 없는 validate-before-write(Q8)의 부분 산출물 잔존을 다음 실행에서 덮는 전제를 제공한다. full-parity fragment(Q9), HTML comment slot token(Q10), 독립적 heading 치환 보존(Q11), 호환 getter + fail-closed `getHomepage()`(Q12)가 하나의 data flow로 연결되며 상충이 없다.
+- **기존 승인 호환성**: 통과. exactly-one·discovery 제외·transclusion 거부·`/` 정규화·slot cardinality·Vault write 범위·no-JS·no-push/no-deploy 경계를 어느 답변도 변경하지 않는다.
+- **Clarification Status**: Not required.
+
+| Question | Answer | Confirmed Functional Decision |
+|---|---|---|
+| Q1 | A | exactly-one 강제 상시 활성; missing/duplicate 별도 진단 코드; fixture가 전환기 증거, 실제 Vault 증거는 편집 후 |
+| Q2 | A | exact lowercase scalar `homepage`/`post`만 인식; key 부재 → `post`; 그 외 → path·값 포함 오류 |
+| Q3 | A | publication 이슈 전체 수집, `{code, path, detail}` path·code 정렬, write 전 일괄 실패, stable code vocabulary |
+| Q4 | A | builder 전용 `PublicationCatalog`; `HomepageSource`/`DiscoverablePosts` 분리 projection; `LinkableSources` 합성 view |
+| Q5 | A | `content/homepage/index.md` + `content/homepage/meta.json`; 결정적 최소 meta, timestamp 금지 |
+| Q6 | A | artifact body는 transform 완료 Markdown; HTML rendering은 기존 site unified pipeline 재사용 |
+| Q7 | A | 관리 namespace 매 실행 전체 재생성; `GeneratedOutputManifest`가 생성 inventory 기록 |
+| Q8 | A | 모든 검증 후 write; staging 없음; 실패 실행은 성공 미보고, 다음 실행이 덮음 |
+| Q9 | A | full parity: alias 보존, heading/block fragment를 기존 anchor 규칙으로 `/#...` 연결 |
+| Q10 | A | 단독 줄 HTML comment token; fence 내 미인식; 조합 결과에 token 잔존 금지 |
+| Q11 | A | 기존 heading 기반 오늘 발행 글 치환 보존; slot 치환과 상호 독립 |
+| Q12 | A | 기존 getter 유지(자연 post-only) + fail-closed `getHomepage()` 신설; `index.astro` 이전 |
+
+## 7. 답변 검증과 생성 경계
 
 - 모든 답변은 문자 선택과 설명의 일치, 단일 의미, 상호 일관성 및 기존 승인 호환성을 검증한다.
 - `X` 답변은 구현 도구가 아니라 business/domain contract를 충분히 설명해야 한다.
@@ -298,3 +324,15 @@ X) Other (please describe after [Answer]: tag below) — getter 유지/신설 �
 - 최종 artifact에는 component별 Testable Properties 또는 구체적인 N/A 근거가 있어야 한다. 누락되면 PBT-01 blocking finding이므로 완료 gate를 제시하지 않는다.
 - Functional Design 승인 전에는 U2 NFR Requirements로 진행하지 않는다.
 - 이 계획 작성은 application source, external Vault, generated output, Terraform, AWS와 deployment를 변경하지 않는다.
+
+## 8. Artifact Validation Result
+
+- **검증 완료 시각**: 2026-07-28
+- **필수 artifact**: 4/4 생성 — `domain-entities.md`, `business-rules.md`, `business-logic-model.md`, `frontend-components.md` (모두 `aidlc-docs/construction/homepage-publication-boundary/functional-design/`).
+- **설계 내용**: 승인된 A×12 결정을 반영해 46개 business rule(BR-U2-001~046), 12-surface discovery 제외 matrix(404 최근 글 포함), 10-variant reference truth table, PUB001~PUB007·HP001~HP004 진단 vocabulary, 단계별 일괄 진단 계약, dedicated artifact/slot contract와 gateway 계약을 고정했다.
+- **PBT-01**: Compliant. C06~C10에 17개 stage-level property(FD-P-*)를 category·generator domain·oracle과 함께 문서화하고, S02/S03에는 구체적 소유 근거가 있는 `No independent PBT properties identified`를 기록했다. determinism(FD-P-C07-05)은 idempotence로 분류하지 않았고 FD-P-C09-04만 상태 idempotence다. DE-P-U2-01~04와 FE-P-U2-01~06 정밀화가 모두 존재하는 FD-P ID를 참조한다.
+- **독립 검토**: 1회 독립 검토가 BLOCKING 0, MATERIAL 3(단계별 진단 집계 불일치, 404 surface 누락, PUB002/003 path 규약 미정), MINOR 8을 보고했고 11건 전부 수정 반영 후 재확인했다. 검토는 upstream 승인 문서와 현재 코드(getter 이름, output layout, index.astro, scanner)에 대한 사실 검증을 포함하며 코드 대조는 PASS였다.
+- **구조 검증**: 4개 artifact의 code fence balance, BR-U2 ID 46개 중복 없음, FD-P ID 17개 중복 없음, 상대 링크 해석 가능성을 확인했다.
+- **기록된 FD 신규 결정**: BR-U2-043(`/` `<title>`을 meta.title로 이동; 현재 값과 동일)은 Q 선택이 아닌 S03 metadata 책임 기반의 신규 결정으로 명시했다. Vault write gate는 U2 authored diff만 규율하며 scanner의 기존 `published` 자동 기록과 충돌하지 않음을 기록했다.
+- **Fact/Mutation Boundary**: application source, external Vault, generated output, Git ref(remote), Terraform/AWS resource와 deployment는 변경하지 않았다.
+- **Artifact Gate**: 제시됨 — 명시적 승인 대기.
