@@ -9,7 +9,9 @@
 
 ## 1. 결정 — 신규 도입 없음 (Q4-A)
 
-U3는 **어떤 신규 dependency, framework, 외부 도구도 도입하지 않는다**. `site/package.json` / `site/package-lock.json` / `preprocessor/Cargo.toml` / `Cargo.lock`은 U3에서 변경되지 않는다. 도구 부족이 실제로 발생하면 임의 설치 대신 plan-change gate를 연다 (NFR-U3-004).
+U3는 **어떤 신규 dependency, framework, 외부 도구도 도입하지 않는다**. `site/package.json`의 dependency 블록 / `site/package-lock.json` / `preprocessor/Cargo.toml` / `Cargo.lock`은 U3에서 변경되지 않는다. 도구 부족이 실제로 발생하면 임의 설치 대신 plan-change gate를 연다 (NFR-U3-004).
+
+> **정합화 (2026-07-29, NFR Design Q2-A)**: 이 절의 원문은 `site/package.json` 전체 불변으로 서술했으나 — 위 본문 문장 자체도 이 정합화에서 "dependency 블록"으로 한정하도록 수정되었다 — NFR Design Q2-A가 U3 소유 gap adapter의 실행을 위한 **신규 npm script**(scripts 필드 항목) 추가를 승인했다. 두 승인은 양립한다 — dependency 0(NFR Req Q4-A)은 dependency 블록·lockfile에 대한 요구이고, scripts 필드의 U3 script 추가는 unit-of-work §5.6과 verification-orchestration §4 Mutation Boundary("승인된 verification tooling만")의 범위 안이다. lockfile은 scripts 변경으로 움직이지 않는다.
 
 ## 2. 기존 스택 사용 목록
 

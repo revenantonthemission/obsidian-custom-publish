@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U3 NFR Design
-- **상태**: 질문 답변 대기
+- **상태**: artifact 생성 완료, 승인 gate 대기
 - **Unit**: U3 Quality Gate and CI Integration
 - **작성일**: 2026-07-29
 - **Feature Branch**: `codex/feature/resume-quality-gates`
@@ -35,9 +35,9 @@
 
 - [x] 승인된 FD/NFR 결정과 §5.9 NFR Design 산출 요구를 분석한다.
 - [x] 미확정 설계 항목을 질문으로 작성한다 (승인 결정 반복 없음, 각 질문 ≥2 선택지 + `X) Other`).
-- [ ] 답변 수집·검증; 모호하면 clarification file.
-- [ ] 두 artifact 생성, traceability 검증, 독립 검토·구조 검증.
-- [ ] 표준 2-option 완료 gate 제시.
+- [x] 답변 수집·검증; 모호하면 clarification file. — 1회 제출로 5/5 A 확정; Q2-A와 tech-stack §1 포괄 문장의 정합화 수행(비침묵 기록).
+- [x] 두 artifact 생성, traceability 검증, 독립 검토·구조 검증. — 독립 검토가 BLOCKER 1건(Q4-A 예시 glob의 실존하지 않는 경로) 적발, 정정·기록; minor 1·note 2 반영.
+- [x] 표준 2-option 완료 gate 제시.
 
 ## 4. NFR Design Questions
 
@@ -53,7 +53,7 @@ B) Install처럼 Rust ∥ site parallel sub-stage로 나눈다 (wall-clock 단�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **단일 stage 순차 실행**: `cargo test --release` → `cd site && npm run test:unit && npm run test:pbt`를 한 stage에서 순서대로 실행한다. console log의 실패 귀속이 단순하고(1차 증거 품질 — OR-U3-05), nightly cron이라 wall-clock 단축의 실익이 없다.
 
 ### Question 2 — Gap adapter의 로컬 실행 명령 표면
 
@@ -65,7 +65,7 @@ B) 기존 명령에 편입한다 — no-JS smoke는 playwright.config.ts의 새 
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **신규 좁은 npm script**(예: `test:crossunit`)를 추가한다 — U1/U2 stable command(`test:unit`/`test:e2e`)의 실행 집합과 전제(예: `test:unit`은 build 산출물 불요)를 불변으로 유지하고, U3 소유 검증은 U3 명령으로 격리한다. §5.6의 "필요 시 Justfile narrow adapter"는 이 script를 감싸는 경우에만 고려한다.
 
 ### Question 3 — CI의 seed 정책 (seed propagation)
 
@@ -77,7 +77,7 @@ B) 고정 seed를 주입한다 (실행 간 완전 결정성; 대신 nightly가 �
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **주입하지 않는다** — framework 기본 무작위 seed로 실행하고(실행마다 새 입력 공간 탐색 = nightly의 누적 커버리지 가치), 재현은 승인된 경로(fast-check 출력 seed, proptest `cc` regressions)로 한다. OR-U3-05와 정합.
 
 ### Question 4 — 실패 evidence 보존의 구현 위치
 
@@ -89,7 +89,9 @@ B) pipeline 전역 `post { failure }`에 둔다 (Deploy 등 다른 stage 실패�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **Verify stage의 `post { failure }`**에 한정한다 — `archiveArtifacts artifacts: 'preprocessor/proptest-regressions/**', allowEmptyArchive: true`. 보존이 실패한 Verify와만 결합되고, TS 실패(regressions 파일 없음)에도 step이 오류 없이 지나간다.
+
+> (검증 기록 2026-07-29: 선택지 A의 예시 glob `preprocessor/proptest-regressions/**`는 독립 검토에서 실존하지 않는 경로로 판정되었다 — proptest 지속 파일은 `preprocessor/tests/*.proptest-regressions`. 승인된 결정(Verify-국소 post failure + allowEmptyArchive)은 불변이며, glob은 artifact에서 정정되었다.)
 
 ### Question 5 — Evidence mapping 표와 ST-E04 report의 형태 (deterministic reports)
 
@@ -101,7 +103,7 @@ B) markdown에 더해 기계가독 JSON 산출물을 병행 생성한다 (소비
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **AI-DLC markdown 문서**로 Code Generation 단계에서 작성한다 — mapping 표는 §5.5 항목 × 담당 spec 파일·test 이름을 인용하고, report는 로컬 실행과 Jenkins validation 실행의 증거(명령, 결과, 시간, seed 출력 발췌)를 전사한다. 재현 가능한 참조(파일 경로, test 이름, commit)만 담아 결정성을 확보한다.
 
 ## 5. 답변 검증과 생성 경계
 
