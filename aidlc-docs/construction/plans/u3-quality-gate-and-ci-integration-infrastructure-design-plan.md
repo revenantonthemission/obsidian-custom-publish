@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U3 Infrastructure Design
-- **상태**: 질문 답변 대기
+- **상태**: artifact 생성 완료, 승인 gate 대기
 - **Unit**: U3 Quality Gate and CI Integration
 - **작성일**: 2026-07-29
 - **Feature Branch**: `codex/feature/resume-quality-gates`
@@ -38,9 +38,9 @@ no-deployment-infrastructure-change 결정을 기록하고, ST-E04 마감에 필
 
 - [x] 승인된 변경 집합의 인프라 영향(Terraform/S3/CloudFront/IAM/DNS/Jenkins job 설정)을 분석한다.
 - [x] 미확정 항목을 질문으로 작성한다 (승인 결정 반복 없음, 각 질문 ≥2 선택지 + `X) Other`).
-- [ ] 답변 수집·검증; 모호하면 clarification file.
-- [ ] 두 artifact 생성, traceability 검증, 독립 검토·구조 검증.
-- [ ] 표준 2-option 완료 gate 제시.
+- [x] 답변 수집·검증; 모호하면 clarification file. — 2회 제출로 3/3 A 확정 (1차 제출 시 Q1 빈 태그, 재질문 후 완결); Q3-A(main/master 추적)의 귀결(ST-E04 실제 실행 증거가 main 반영 승인과 결합)을 명시.
+- [x] 두 artifact 생성, traceability 검증, 독립 검토·구조 검증. — 독립 검토 PASS (blocker 0; minor 2 수정 — 2-run 실행 순서 재설계, cron 시간창 명시; note 3 반영·수용).
+- [x] 표준 2-option 완료 gate 제시.
 
 ## 5. Infrastructure Design Questions
 
@@ -56,7 +56,7 @@ B) 변경이 필요하다고 판정한다 — §5.10 규정대로 ST-E04를 열�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **no-change 결정을 기록하고 진행한다** — 배포 인프라·Terraform state·AWS 리소스·Jenkins plugin 무변경; Jenkinsfile은 repo 내 코드로만 변경된다. §5.10의 기록 의무를 이 단계 artifact가 이행한다. 
 
 ### Question 2 — 실제 validation 실행의 시점과 대상
 
@@ -68,7 +68,7 @@ B) 병합 전, feature branch 대상으로 — Jenkins job의 branch 지정을 �
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **병합 후, Jenkins job이 추적하는 branch에서** — U3 병합과 그 branch 반영이 끝난 뒤 수동 "Build with Parameters"로 실행한다. Jenkins job 설정은 일절 건드리지 않는다 (§6의 마감 시점 "U3 → Integrated Build and Test에서 ST-E04 closes"와 정합; 단 U3 Code Generation 단계 안에서는 로컬 등가 실행 + Jenkinsfile 정적 검증까지만 확보되고, 실제 실행 증거는 integrated 단계로 이동한다).
 
 ### Question 3 — Jenkins job의 추적 branch 확인 (운영자 확인 사항)
 
@@ -80,7 +80,7 @@ B) `develop` — U3 병합 직후 추적 branch가 새 Jenkinsfile을 본다; Q2
 
 X) Other (please describe after [Answer]: tag below — 기타 branch명 또는 모름)
 
-[Answer]:
+[Answer]: A) `main`/`master` — 이 경우 U3 병합(develop)만으로는 validation 실행이 새 Jenkinsfile을 보지 못하므로, main 반영 시점(별도 승인)과 ST-E04 마감이 결합된다.
 
 ## 6. 답변 검증과 생성 경계
 
