@@ -687,9 +687,13 @@ Do not change external Vault, deployment, push or merge state without separate a
 - **Approved** on 2026-07-29 with the exact user response `"승인"` (code commit `81fb40e`, evidence commit `b555a24`). This closes the last of U3's five Construction stages — Functional Design, NFR Requirements, NFR Design, Infrastructure Design and Code Generation, all approved on 2026-07-29.
 - **Carried out of U3 Code Generation**: ST-E04 remains open pending the real Jenkins 2-run execution (ID-U3-02) — Run 1 "Build Now" (parameter-registering, null-falsy Deploy skip, observation only; perform before the next `H 0 * * *` cron window after main promotion or record the skipped nightly deploy) and Run 2 "Build with Parameters" with explicit `RUN_DEPLOY=false` (the evidence run), transcribed into `code/st-e04-report.md` §7 at the integrated Build and Test handoff. The `CI` env check (PBT run count 100→1,000 if defined) happens at that first real measurement.
 
+## U3 → develop Merge Gate — Authorized
+
+- **Authorized** on 2026-07-29 with the exact user response `"승인"`. The `--no-ff` merge of `codex/feature/resume-quality-gates` into local `develop` (checked out in the primary worktree at the branch base `50937d9`) is performed immediately after this record is committed, so this commit rides inside the merge — the U2 precedent. No push, pull request or deployment accompanies it.
+
 ## Next Step
 
-The U3 → `develop` merge gate is open: authorizing it performs the `--no-ff` merge of `codex/feature/resume-quality-gates` into local `develop` (no push, no pull request, no deployment). After the merge, the develop → main promotion and the Jenkins 2-run validation execution each require separate authorization; the integrated Build and Test stage then closes ST-E04 with the transcribed console log. No external Vault edit or deployment is authorized.
+After the merge: the develop → main promotion and the real Jenkins 2-run validation execution (ID-U3-02: Run 1 "Build Now" registering, Run 2 explicit `RUN_DEPLOY=false` as evidence) each require separate authorization. The integrated Build and Test stage then closes ST-E04 by transcribing the Run 2 console log into `aidlc-docs/construction/u3-quality-gate-and-ci-integration/code/st-e04-report.md` §7. No external Vault edit or deployment is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
