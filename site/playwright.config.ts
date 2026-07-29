@@ -34,7 +34,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /profile-cross-browser\.spec\.ts/,
+      // crossunit.spec.ts belongs to the U3 command surface (test:crossunit,
+      // playwright.crossunit.config.ts) — ignoring it here keeps this
+      // project's execution set exactly what it was before U3.
+      testIgnore: [/profile-cross-browser\.spec\.ts/, /crossunit\.spec\.ts/],
       use: {
         ...devices['Desktop Chrome'],
         browserName: 'chromium',

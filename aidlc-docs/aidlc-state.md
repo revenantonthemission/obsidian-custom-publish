@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Construction complete and approved; next is the U2 → `develop` merge gate, then U3
+- **Current Stage**: U3 Functional Design — plan and 7 questions generated; awaiting question answers
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -591,6 +591,109 @@ Three things carry into U2/U3 rather than being re-derived there.
 3. **The candidate PDF is not byte-reproducible.** A review record is valid only for the exact SHA it names, so `prepare` must not be re-run between review and promote.
 
 Do not change external Vault, deployment, push or merge state without separate authorization.
+
+## U2 → develop Merge Gate — Completed
+
+- Authorized on 2026-07-29 with the exact user response `"승인"` and performed immediately: merge commit `50937d9` (`Merge branch 'codex/feature/resume-home-boundary' into develop`, `--no-ff`, 63 files, +4,948/−349). Post-merge `git diff` between `develop` and the fully verified feature branch is empty; the primary worktree stayed clean. No push, pull request or deployment occurred; `origin/develop` is untouched.
+
+## U3 Functional Design Status
+
+- **Started**: 2026-07-29 with the user instruction "start U3".
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 requires verification orchestration rules and the adapter PBT N/A rationale.
+- **Entry Criteria**: Satisfied — U1 and U2 each completed five approved Construction stages with sequential `--no-ff` merges; `develop` (`50937d9`) exposes the stable owner-local commands and public contracts; no hidden U1/U2 blocker (U1's rollback-arm residual is an accepted recorded deviation, not a hidden task).
+- **Feature Branch**: `codex/feature/resume-quality-gates` created at `50937d9` (recommended name, unit-of-work §5.1). Working tree: `.claude/worktrees/u3-quality-gates`.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-functional-design-plan.md`.
+- **Questions Generated**: 7 — the validation-only Jenkins execution path (parameterized deploy vs separate job vs §5.10 stop), Verify-stage placement and failure semantics, e2e CI-inclusion scope, seed-evidence form (framework outputs + console log vs structured reports), the leftover Jenkins `rm -rf` line, cross-unit smoke ownership (evidence mapping + gap-only adapters vs a new suite), and the C12/S05 PBT N/A disposition.
+- **Question Structure Validation**: Passed — 7 headings, 7 empty `[Answer]:` tags, 7 final `X) Other`, 7 recommended choices, 15 lettered options.
+- **Grounding**: Verified 2026-07-29 — the current Jenkinsfile runs no tests at all (Checkout → Install → Preprocess with its own residual `rm -rf` → Build Site → unconditional Deploy); the path/browser defects were already fixed by 4c326b3/f82c9eb. ST-E04's closure demands a real Jenkins validation execution that does not invoke Deploy, which the pipeline cannot currently express — Q1 exists precisely for that.
+- **Mutation Boundary**: AI-DLC documentation and the new feature branch only.
+- **Answer Gate**: Three submissions, each with the exact user response `"작성 완료"`. First (2026-07-28): 6/7 valid A answers with document corruption found in the plan itself — Q5's `X) Other` line carried an `ererrr` prefix and Q6's option A body was truncated to `rb`; both were restored to the original authored text and Q6's answer normalized to the full option text under the mechanical-normalization precedent, then Q5 was re-asked. Second: the file was unchanged (Q5's `[Answer]:` at line 102 still empty) — re-asked, offering to record a chat-supplied letter. Third (2026-07-29): Q5 filled. **Final: 7/7 answers, all A** (validation-only path = `RUN_DEPLOY` param default true; Verify stage after Install/before Preprocess with pipeline-failure semantics; CI scope = build+example+PBT, e2e stays local; framework-default seed evidence + console log + `archiveArtifacts`; remove the Jenkins `rm -rf`; evidence mapping + gap-only adapters; C12/S05 PBT N/A).
+- **Answer Validation**: Passed — 7 `[Answer]: A)` tags, 0 empty, letter/description match, mutual consistency (Verify content matches the e2e-excluded CI scope; archiveArtifacts presumes the single-Jenkinsfile path of Q1; the `rm -rf` removal carries its FR-016 minimal-change judgment; gap-only adapters mesh with the pure-logic PBT re-review trigger), and compatibility with prior approvals (U2 seed/regressions policy, FR-016/FR-018, §5.10 closure conditions).
+- **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/functional-design/verification-orchestration.md` (OR-U3-01~10 with traceability to AC-E04-01~04/FR-014~018 and the §5.6 mutation boundary) and `adapter-rules.md` (AR-U3-01~05 + the PBT-01 `No PBT properties identified` disposition with the pure-logic re-review trigger).
+- **Independent Review**: PASS — 0 blockers, 2 minor, 3 notes; all five applied before the gate. Minors: the S04 precedent label corrected to Resume Document (S05 is U3's own service), and OR-U3-01 reworded so the Rust stable command is `just test` with the CI release invocation named as the Q2-A-approved equivalent (debug/release delta checked at Code Generation). Notes encoded: the proptest success-run seed asymmetry acknowledged in OR-U3-05 against AC-E04-02's "always recorded" wording; the declarative-pipeline first-run `params` falsy behavior carried as an OR-U3-06 Code Generation wiring check; FR-017 anchored to AR-U3-04.
+
+## U3 Functional Design — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `03954c0` carried the validated answers, both artifacts and the review record). U3 Functional Design is complete; its plan is marked 완료 및 승인됨.
+
+## U3 NFR Requirements Status
+
+- **Started**: 2026-07-29, immediately after the Functional Design approval.
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 requires the browser/viewport/accessibility/PDF matrix and CI evidence·tooling requirements.
+- **PBT Enforcement**: PBT-09 is N/A at this stage — U3 introduces no new properties and no new framework (FD Q7-A); the pure-logic re-review trigger stays with adapter-rules §3.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-nfr-requirements-plan.md`.
+- **Questions Generated**: 7 — CI Verify time budget (measured-baseline vs hard budget), the no-JS gap-adapter browser/viewport matrix (chromium-only + U2 viewport pair vs 3-engine), the link-sweep execution form (static dist analysis vs Playwright crawl), the new-dependency boundary (zero fixed as NFR vs pre-approving one tool), the cross-unit print/PDF parity aggregation seat (local integrated evidence vs CI inclusion), the CI network-dependence boundary (stage-boundary reading of NFR-005 vs full offline), and CI evidence retention (Jenkins defaults vs explicit buildDiscarder).
+- **Grounding**: NFR-005/008/009/010 definitions read from `requirements.md`; measured baselines recorded (just test 19 suites/~55s, 195 unit tests, 37 properties × 100; nightly cron; local Mac agent).
+- **Mutation Boundary**: AI-DLC documentation only.
+
+- **Answer Gate**: One submission with the exact user response `"작성 완료"` (2026-07-29). **7/7 answers, all A** (measured-baseline time policy; chromium-only no-JS matrix with the U2 viewport pair; static-dist link sweep; zero new dependencies fixed as NFR; PDF parity aggregated locally only; stage-boundary network reading of NFR-005; Jenkins default evidence retention). Validation passed — 7 `[Answer]: A)` tags, 0 empty, letter/description match, mutual consistency and prior-approval compatibility confirmed.
+- **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/nfr-requirements/nfr-requirements.md` (NFR-U3-001~008 + the §5.9 browser/viewport/accessibility/PDF matrix + CI evidence summary) and `tech-stack-decisions.md` (zero new dependencies, existing-stack usage table, Jenkins core-syntax-only/no-plugin record, PBT-09 N/A).
+- **Independent Review**: PASS — 0 blockers, 1 minor, 5 notes. Minor fixed: the dependency-zero traceability was re-anchored to verification-orchestration §4 Mutation Boundary (AR-U3-03 alone governs placement, not dependencies). Three notes encoded: the U1 matrix row now states profile-cross-browser is excluded from chromium (its `testIgnore`); NFR-U3-002 now marks NFR-008's remaining no-JS aspects (확장 상세, 인쇄) as staying U1-owned; NFR-U3-001 now records that the site PBT runner raises run count 100→1,000 when a `CI` env var is defined, a precondition to check when the Jenkins baseline is measured. Two notes accepted as-is: the 2× regression threshold concretizes Q1-A's own example; the 195 unit-test figure is a faithful transcription of the U2 Step 15 record (static count 187 + 3 runtime-expanding `test.each`).
+
+## U3 NFR Requirements — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `414eff5` carried the validated answers, both artifacts and the review record). U3 NFR Requirements is complete; its plan is marked 완료 및 승인됨.
+
+## U3 NFR Design Status
+
+- **Started**: 2026-07-29, immediately after the NFR Requirements approval.
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 requires network-independent orchestration, deterministic reports, seed propagation and failure semantics.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-nfr-design-plan.md`.
+- **Questions Generated**: 5 — Verify stage internal structure (single sequential stage vs Rust ∥ site parallel sub-stages), the gap-adapter local command surface (a new narrow npm script vs folding into existing `test:e2e`/`test:unit`), the CI seed policy (no injection/framework default vs fixed seed), the archiveArtifacts implementation seat (Verify-stage `post { failure }` with `allowEmptyArchive` vs pipeline-global post), and the evidence-mapping/ST-E04-report form (AI-DLC markdown with reproducible references vs parallel machine-readable JSON).
+- **Grounding**: All five questions operate strictly inside the approved FD/NFR envelope — Verify placement/content, CI scope, seed-evidence form, dependency-zero and Jenkins-core-syntax bounds are listed as not reopenable.
+- **Mutation Boundary**: AI-DLC documentation only.
+
+- **Answer Gate**: One submission with the exact user response `"작성 완료"` (2026-07-29). **5/5 answers, all A** (single sequential Verify stage; new narrow npm script for gap adapters; no CI seed injection; Verify-stage-local `post { failure }` archiver with `allowEmptyArchive`; markdown-only deterministic reports). Validation found one cross-document tension and reconciled it non-silently: Q2-A's new npm script implies a `site/package.json` scripts-field change, while the approved tech-stack-decisions §1 had over-broadly declared the whole file unchanged — the sentence was narrowed to the dependency block with a dated, attributed blockquote (the two user decisions themselves are compatible: zero dependencies ≠ frozen scripts; unit-of-work §5.6 permits approved verification tooling).
+- **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/nfr-design/nfr-design-patterns.md` (PD-U3-01~05 + §5.9 four-output mapping) and `logical-components.md` (LC-U3-01~09 with the conditional-existence chain: the evidence mapping table LC-U3-05 decides whether LC-U3-06/07/08 exist).
+- **Independent Review**: **FAIL then fixed** — 1 blocker, 1 minor, 2 notes, all resolved before this gate. The blocker: plan Q4-A's illustrative glob `preprocessor/proptest-regressions/**` names a path that does not exist — proptest persistence files are siblings of the test files (`preprocessor/tests/*.proptest-regressions`, per the approved U2 nfr-design record and the committed `publication_output.proptest-regressions`); the wrong glob would archive zero files on a real failure with `allowEmptyArchive` silently masking it. The glob was corrected in both artifacts with a visible dated note, and a validation-record blockquote was added under the plan's Q4 answer; the approved decision itself (Verify-local post-failure archiving) is unchanged. Minor: the tech-stack §1 reconciliation had edited the approved sentence in place as well as annotating it — the blockquote now states this explicitly. Notes: LC-U3-02's Deploy enumeration completed (credential check + sync + invalidation, all three gated at stage level); LC-U3-06's placement tightened to AR-U3-03's specific `site/tests/e2e/` path.
+
+## U3 NFR Design — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `3beda38` carried the validated answers, both artifacts, the corrected archiver glob and the reconciliation records). U3 NFR Design is complete; its plan is marked 완료 및 승인됨.
+
+## U3 Infrastructure Design Status
+
+- **Started**: 2026-07-29, immediately after the NFR Design approval.
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 expects a no-deployment-infrastructure-change confirmation and §5.10 makes recording it mandatory.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-infrastructure-design-plan.md`.
+- **Questions Generated**: 3 — the §5.10-mandated no-change verdict (record and proceed vs declare a needed change and stop at this gate), the timing/target of the real `RUN_DEPLOY=false` validation execution (post-merge on the job's tracked branch with zero job-config changes vs pre-merge on the feature branch with temporary job-config repointing), and an operator fact-check of which branch the nightly Jenkins job actually tracks (main/master vs develop vs other — the job config lives outside the repo and cannot be read from here; Q2's plan depends on this fact).
+- **Grounding**: Deploy infra facts transcribed (S3 `obsidian-custom-s3`, CloudFront `E35HZFVGD0OJ04`, Terraform as compatibility reference only); `RUN_DEPLOY=false` needs no AWS credentials since Deploy is skipped; the nine inherited deployment risks stay with the deploy authority.
+- **Mutation Boundary**: AI-DLC documentation only; no Jenkins job-config change.
+
+- **Answer Gate**: Two submissions, each with the exact user response `"작성 완료"` (2026-07-29). First: Q2/Q3 answered, Q1's tag empty — re-asked. Second: Q1 filled. **Final: 3/3 answers, all A** — the no-change verdict recorded; the validation execution runs post-merge on the job's tracked branch with zero job-config changes; the operator confirmed the nightly job tracks **main/master**. Consequence stated, not smoothed: the ST-E04 real-execution evidence couples with a separately-approved main promotion and moves past U3 Code Generation into the integrated stage (supported by unit-of-work §6's handoff row).
+- **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/infrastructure-design/infrastructure-design.md` (ID-U3-01~04: the §5.10 no-change table covering Terraform/S3/CloudFront/IAM/ACM/DNS/Jenkins plugin/job config; the five-step closure sequence; credential-free validation; the nine inherited risks staying unresolved) and `deployment-architecture.md` (before/after pipeline table, the two execution paths, the unchanged-boundary restatement).
+- **Independent Review**: PASS — 0 blockers, 2 minors, 3 notes. Both minors were real execution-logic flaws, fixed: (1) "first registering build via Build with Parameters with explicit false" is not literally executable — before the `parameters` block registers, the job is unparameterized and offers only "Build Now"; redesigned as a **2-run sequence** (Run 1 "Build Now" registers, null-falsy skips Deploy, observation only; Run 2 explicit `RUN_DEPLOY=false` is the ST-E04 evidence run). (2) The promotion-to-run timing window is now named: if the nightly cron fires first it becomes the registering build and silently skips that night's deploy once (skip-only failure mode; record it in the report if it happens). Notes: the "post block unchanged" claim disambiguated to pipeline-level; the deploy-authority wording and one-hop push/Vault boundary inheritance accepted and recorded.
+
+## U3 Infrastructure Design — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `e5653fb` carried the validated answers, both artifacts and the 2-run execution redesign). U3 Infrastructure Design is complete; its plan is marked 완료 및 승인됨. Four of U3's five Construction stages are now approved.
+
+## U3 Code Generation Status
+
+- **Started**: 2026-07-29, immediately after the Infrastructure Design approval.
+- **Current Part**: Plan approval gate (Part 1). No application source, Jenkinsfile, or site file has been modified yet.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-code-generation-plan.md` — 8 steps: (1) evidence mapping table (decides the conditional gap adapters), (2) conditional gap-adapter implementation, (3) the Jenkinsfile change set LC-U3-01~04 with the corrected archiver glob, (4) static Jenkinsfile verification (local declarative linter if reachable, structural diff review otherwise), (5) local equivalent Verify-sequence run with baseline timing and `CI`-env check, (6) U1/U2 regression sweep (just test / test:unit / test:pbt / test:e2e / astro check baseline), (7) ST-E04 report with the real-Jenkins-execution evidence marked pending per ID-U3-02, (8) obligation closure and code-generation-summary.
+- **Boundary**: No push, merge, deployment, Jenkins job-config change, external Vault change, or dependency addition anywhere in this stage; the changed Jenkinsfile lives only on the feature branch, invisible to the main-tracking nightly cron until separately-approved promotion.
+
+- **Plan Approval**: **Approved** on 2026-07-29 with the exact user response `"승인"`. Part 2 (Steps 1~8) executes from this point with per-step verification recorded below.
+
+- **Steps 1~8 (executed 2026-07-29; code commit `81fb40e`)**: Evidence mapping judged exactly the two designed gaps (no-JS smoke, link sweep) with per-item spec/test citations; both adapters built and verified (fixture dist: the sweep's only failure is the fixture's intentional `nonexistent-image.png` negative — precision proven, zero false positives; real-vault dist: 221 pages, **7,330 internal references all resolve** + smoke 8/8); Jenkinsfile carries all four approved changes plus one recorded extension; static verification by structural diff review (the local Jenkins declarative linter requires authentication — recorded, plan-sanctioned fallback); local equivalent Verify run all green with baselines (Rust release 98s from repo root proving the CWD assumption, site ~15s, `CI` env undefined, fast-check seeds `-1861385005` and `640372461` observed); full U1/U2 regression green (just test, unit 16/195, pbt 6/37, e2e both date cases, astro check 0 errors/6 hints, resume:pdf:verify surfaceParity pass); `just crossunit` recipe verified end-to-end.
+- **Three mid-execution discoveries, all resolved non-silently** (detail in `code/st-e04-report.md` §6): (1) fresh-workspace Verify precedes Preprocess so test:unit's U1 isolated build fails closed at HP001 — U2's fixture materializer is reused via a U3 wrapper (`ensure-fixture-content.mjs`) added to the Verify site leg, a recorded extension of OR-U3-02's command list; (2) **`site/package.json` is a review subject** — adding the planned `test:crossunit` script moved the accessibility-record digest and e2e failed closed; the edit was reverted (recovery proven by e2e pass) and NFR Design Q2-A's command isolation was delivered as the §5.6-sanctioned Justfile recipe `just crossunit` instead, with the tech-stack §1 blockquote updated; (3) a **real WCAG AA defect** — `.post-tag` chips render `--c-text-muted` on `--c-code-bg` = 4.40:1 in light theme, exposed by axe only in the override date case and latent on /posts and /tags (outside axe coverage); attributed to the owning surface per OR-U3-10, and fixed with the exact user response `"1"` authorizing the minimal owner-side change (`post.css` + `PostCard.astro` color → `--c-text`, 16.03/13.93 both themes; neither file is a review subject); the conflict with U2 Step 15's recorded both-case pass is explained as axe color-contrast violation/incomplete nondeterminism.
+- **Artifacts**: `code/evidence-mapping.md`, `code/st-e04-report.md` (AC-E04-01~04 evidence; **the real Jenkins 2-run execution is pending** behind the develop merge and main promotion per ID-U3-02 — ST-E04 stays open until that console log is transcribed at the integrated handoff), `code/code-generation-summary.md` (obligation closure including the link-sweep PBT-01 disposition; change-surface reconciliation showing package.json finally unchanged).
+
+## U3 Code Generation — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (code commit `81fb40e`, evidence commit `b555a24`). This closes the last of U3's five Construction stages — Functional Design, NFR Requirements, NFR Design, Infrastructure Design and Code Generation, all approved on 2026-07-29.
+- **Carried out of U3 Code Generation**: ST-E04 remains open pending the real Jenkins 2-run execution (ID-U3-02) — Run 1 "Build Now" (parameter-registering, null-falsy Deploy skip, observation only; perform before the next `H 0 * * *` cron window after main promotion or record the skipped nightly deploy) and Run 2 "Build with Parameters" with explicit `RUN_DEPLOY=false` (the evidence run), transcribed into `code/st-e04-report.md` §7 at the integrated Build and Test handoff. The `CI` env check (PBT run count 100→1,000 if defined) happens at that first real measurement.
+
+## U3 → develop Merge Gate — Authorized
+
+- **Authorized** on 2026-07-29 with the exact user response `"승인"`. The `--no-ff` merge of `codex/feature/resume-quality-gates` into local `develop` (checked out in the primary worktree at the branch base `50937d9`) is performed immediately after this record is committed, so this commit rides inside the merge — the U2 precedent. No push, pull request or deployment accompanies it.
+
+## Next Step
+
+After the merge: the develop → main promotion and the real Jenkins 2-run validation execution (ID-U3-02: Run 1 "Build Now" registering, Run 2 explicit `RUN_DEPLOY=false` as evidence) each require separate authorization. The integrated Build and Test stage then closes ST-E04 by transcribing the Run 2 console log into `aidlc-docs/construction/u3-quality-gate-and-ci-integration/code/st-e04-report.md` §7. No external Vault edit or deployment is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 

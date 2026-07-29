@@ -38,6 +38,12 @@ deploy-preprocess:
 test:
     cd preprocessor && cargo test
 
+# U3 cross-unit gate (LC-U3-06/07). Lives here, not in site/package.json:
+# that file is a review subject — any edit moves the accessibility-record
+# digest and fails test:e2e closed. Requires an existing site build.
+crossunit:
+    cd {{site_dir}} && node scripts/crossunit/link-sweep.mjs && npx playwright test --config playwright.crossunit.config.ts
+
 d2-watch file:
     d2 --watch {{file}}
 
