@@ -12,6 +12,8 @@
 U3는 **어떤 신규 dependency, framework, 외부 도구도 도입하지 않는다**. `site/package.json`의 dependency 블록 / `site/package-lock.json` / `preprocessor/Cargo.toml` / `Cargo.lock`은 U3에서 변경되지 않는다. 도구 부족이 실제로 발생하면 임의 설치 대신 plan-change gate를 연다 (NFR-U3-004).
 
 > **정합화 (2026-07-29, NFR Design Q2-A)**: 이 절의 원문은 `site/package.json` 전체 불변으로 서술했으나 — 위 본문 문장 자체도 이 정합화에서 "dependency 블록"으로 한정하도록 수정되었다 — NFR Design Q2-A가 U3 소유 gap adapter의 실행을 위한 **신규 npm script**(scripts 필드 항목) 추가를 승인했다. 두 승인은 양립한다 — dependency 0(NFR Req Q4-A)은 dependency 블록·lockfile에 대한 요구이고, scripts 필드의 U3 script 추가는 unit-of-work §5.6과 verification-orchestration §4 Mutation Boundary("승인된 verification tooling만")의 범위 안이다. lockfile은 scripts 변경으로 움직이지 않는다.
+>
+> **후속 실증 (2026-07-29, Code Generation)**: `site/package.json`은 `REVIEW_SUBJECT_SOURCE_FILES`에 포함되어 있어 scripts 필드 변경조차 수동 접근성 기록의 subject digest를 이동시킨다 — `test:crossunit` 추가 시 `test:e2e`가 `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE`로 fail-closed됨을 관측하고 즉시 원상 복구했다(복구 후 e2e pass로 기록 유효성 회복 실증). Q2-A의 명령 격리는 §5.6이 허용하는 Justfile narrow recipe **`just crossunit`** 으로 이행되었고, package.json은 U3에서 **최종적으로 무변경**이다.
 
 ## 2. 기존 스택 사용 목록
 
