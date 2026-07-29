@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U3 NFR Requirements
-- **상태**: 질문 답변 대기
+- **상태**: artifact 생성 완료, 승인 gate 대기
 - **Unit**: U3 Quality Gate and CI Integration
 - **작성일**: 2026-07-29
 - **Feature Branch**: `codex/feature/resume-quality-gates`
@@ -45,9 +45,9 @@ CI Verify의 시간·결정성·증거 보존 요구, gap adapter의 browser/vie
 - [x] 승인된 FD 규칙과 NFR-005/008/009/010, §5.9 산출 요구를 분석한다.
 - [x] 측정 기준선(테스트 수·시간·CI 환경)을 확인한다.
 - [x] 미확정 NFR 항목을 질문으로 작성한다 (승인 결정 반복 없음, 각 질문 ≥2 선택지 + `X) Other`).
-- [ ] 답변 수집·검증; 모호하면 clarification file.
-- [ ] 두 artifact 생성, traceability 검증, 독립 검토·구조 검증.
-- [ ] 표준 2-option 완료 gate 제시.
+- [x] 답변 수집·검증; 모호하면 clarification file. — 1회 제출로 7/7 A 확정, 상호 일관성·기존 승인 호환성 통과.
+- [x] 두 artifact 생성, traceability 검증, 독립 검토·구조 검증. — 독립 검토 PASS (blocker 0; minor 1 수정, note 3 반영·2 수용).
+- [x] 표준 2-option 완료 gate 제시.
 
 ## 5. NFR Requirements Questions
 
@@ -63,7 +63,7 @@ B) hard budget을 설정한다 (예: Verify ≤ 15분; 초과는 설계 이슈�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **측정 기준선 방식**: hard budget을 두지 않는다. Code Generation의 실제 Jenkins validation 실행에서 Verify 소요 시간을 측정·기록해 기준선으로 삼고, 이후 현저한 회귀(예: 기준선의 2배 초과)를 발견하면 보고한다 — nightly 특성에 비례한 최소 규칙.
 
 ### Question 2 — Gap adapter의 browser/viewport matrix (NFR-008)
 
@@ -75,7 +75,7 @@ B) U2와 동일하게 firefox/webkit project를 추가해 3-engine으로 실행�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **최소 matrix**: chromium 단일 engine에서 JavaScript 비활성 context로 실행하고, U2 homepage.spec.ts의 viewport 쌍(320×800 / 1440×900)을 재사용한다. engine 다양성 검증은 U1/U2 기존 spec이 이미 소유하므로 aggregation unit이 중복하지 않는다.
 
 ### Question 3 — 내부 link 무결성 sweep의 실행 형태 (NFR-005)
 
@@ -87,7 +87,7 @@ B) Playwright로 실제 페이지를 crawl하며 링크를 따라간다 (렌더�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **정적 산출물 분석**: browser 없이 `site/dist/`의 HTML을 정적으로 순회하며 내부 href/src의 대상 존재를 확인한다 (Node 내장 + 기존 설치 도구만; 결정적이고 빠르며 NFR-005의 네트워크 비의존을 자동 충족). 새 순수 로직(파서 등)이 생기면 adapter-rules §3의 PBT 재검토 조건이 발동한다.
 
 ### Question 4 — 신규 tooling·dependency 경계
 
@@ -99,7 +99,7 @@ B) 이 단계에서 link-check 등 검증 tooling 후보를 심사해 최대 1�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **신규 dependency 0을 NFR로 고정**: gap adapter는 기존 Playwright/Vitest/Node 내장만 사용한다. 도구가 부족한 상황이 실제로 발생하면 임의 설치 대신 plan-change gate를 연다.
 
 ### Question 5 — Cross-unit print/PDF parity의 집계 위치 (NFR-009)
 
@@ -111,7 +111,7 @@ B) CI Verify에도 `resume:pdf:verify`를 포함한다 (FD Q3-A의 CI 범위 문
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **로컬 integrated 증거로 집계**: U1의 `resume:pdf:verify`를 변경 없이 U3의 로컬 integrated Build and Test 증거에 포함하고, CI Verify에는 넣지 않는다 — PDF pipeline은 browser 의존 + PDF 바이트 비재현(U1 기록)이라 CI 부적합. parity 실패는 ST-U03 reopen 규칙(OR-U3-10)을 따른다.
 
 ### Question 6 — CI 네트워크 의존 경계 (NFR-005)
 
@@ -123,7 +123,7 @@ B) pipeline 전체 오프라인 실행을 요구한다 (의존성 사전 캐시 
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **stage 경계로 해석**: Install stage(npm ci, cargo 의존성 다운로드)는 네트워크를 사용할 수 있고, Verify stage의 test 실행 자체는 네트워크 비의존이어야 한다 — 위반(테스트 중 외부 호출)이 발견되면 소유 unit의 결함으로 보고한다.
 
 ### Question 7 — CI 증거 보존 정책
 
@@ -135,7 +135,7 @@ B) `buildDiscarder`로 명시 보존(예: 최근 30 build)을 설정한다 (Jenk
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **Jenkins job 기본 보존 정책 그대로** 둔다 — 새 보존 규칙을 추가하지 않는다. ST-E04 마감에 쓰이는 validation 실행의 증거는 aidlc-docs에 요약·전사되므로 build 기록 자체의 만료와 독립적으로 남는다.
 
 ## 6. 답변 검증과 생성 경계
 
