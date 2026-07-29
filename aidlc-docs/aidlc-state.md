@@ -613,9 +613,23 @@ Do not change external Vault, deployment, push or merge state without separate a
 - **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/functional-design/verification-orchestration.md` (OR-U3-01~10 with traceability to AC-E04-01~04/FR-014~018 and the §5.6 mutation boundary) and `adapter-rules.md` (AR-U3-01~05 + the PBT-01 `No PBT properties identified` disposition with the pure-logic re-review trigger).
 - **Independent Review**: PASS — 0 blockers, 2 minor, 3 notes; all five applied before the gate. Minors: the S04 precedent label corrected to Resume Document (S05 is U3's own service), and OR-U3-01 reworded so the Rust stable command is `just test` with the CI release invocation named as the Q2-A-approved equivalent (debug/release delta checked at Code Generation). Notes encoded: the proptest success-run seed asymmetry acknowledged in OR-U3-05 against AC-E04-02's "always recorded" wording; the declarative-pipeline first-run `params` falsy behavior carried as an OR-U3-06 Code Generation wiring check; FR-017 anchored to AR-U3-04.
 
+## U3 Functional Design — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `03954c0` carried the validated answers, both artifacts and the review record). U3 Functional Design is complete; its plan is marked 완료 및 승인됨.
+
+## U3 NFR Requirements Status
+
+- **Started**: 2026-07-29, immediately after the Functional Design approval.
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 requires the browser/viewport/accessibility/PDF matrix and CI evidence·tooling requirements.
+- **PBT Enforcement**: PBT-09 is N/A at this stage — U3 introduces no new properties and no new framework (FD Q7-A); the pure-logic re-review trigger stays with adapter-rules §3.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-nfr-requirements-plan.md`.
+- **Questions Generated**: 7 — CI Verify time budget (measured-baseline vs hard budget), the no-JS gap-adapter browser/viewport matrix (chromium-only + U2 viewport pair vs 3-engine), the link-sweep execution form (static dist analysis vs Playwright crawl), the new-dependency boundary (zero fixed as NFR vs pre-approving one tool), the cross-unit print/PDF parity aggregation seat (local integrated evidence vs CI inclusion), the CI network-dependence boundary (stage-boundary reading of NFR-005 vs full offline), and CI evidence retention (Jenkins defaults vs explicit buildDiscarder).
+- **Grounding**: NFR-005/008/009/010 definitions read from `requirements.md`; measured baselines recorded (just test 19 suites/~55s, 195 unit tests, 37 properties × 100; nightly cron; local Mac agent).
+- **Mutation Boundary**: AI-DLC documentation only.
+
 ## Next Step
 
-The U3 Functional Design artifact approval gate is open: approve to proceed to U3 NFR Requirements, or request changes to the two functional-design artifacts. No push, external Vault edit, deployment or merge is authorized at this gate.
+Answer the 7 questions in `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-nfr-requirements-plan.md` (one letter per `[Answer]:` tag; `X` with inline requirements), then reply that answers are complete. After validation, `nfr-requirements.md` and `tech-stack-decisions.md` are generated under `aidlc-docs/construction/u3-quality-gate-and-ci-integration/nfr-requirements/` and the standard approval gate is presented. No push, external Vault edit, deployment or merge is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 

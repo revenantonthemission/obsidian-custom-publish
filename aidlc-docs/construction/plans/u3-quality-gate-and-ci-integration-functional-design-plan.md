@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U3 Functional Design
-- **상태**: 질문 답변 대기
+- **상태**: 완료 및 승인됨 (2026-07-29, 사용자 응답 "승인")
 - **Unit**: U3 Quality Gate and CI Integration
 - **작성일**: 2026-07-29
 - **Feature Branch**: `codex/feature/resume-quality-gates`
@@ -31,9 +31,9 @@ verification orchestration 규칙과 adapter의 PBT N/A 근거를 확정한다. 
 
 - [x] U3 정의·ST-E04 AC·현재 Jenkinsfile·U1/U2 stable command와 seed 재현 경로를 분석한다.
 - [x] 미확정 orchestration 항목을 질문으로 작성한다 (승인 결정 반복 없음, 각 질문 ≥2 선택지 + `X) Other`).
-- [ ] 답변 수집·검증(형식·명확성·상호 일관성·기존 승인 호환성); 모호하면 clarification file.
-- [ ] 두 artifact 생성, PBT-01 N/A 근거·traceability 검증, 독립 검토·구조 검증.
-- [ ] 표준 2-option 완료 gate 제시.
+- [x] 답변 수집·검증(형식·명확성·상호 일관성·기존 승인 호환성); 모호하면 clarification file. — 3회 제출로 7/7 A 확정 (문서 손상 복구·Q5 재질문 이력은 aidlc-state.md에 기록).
+- [x] 두 artifact 생성, PBT-01 N/A 근거·traceability 검증, 독립 검토·구조 검증. — 독립 검토 PASS (blocker 0; minor 2 수정, note 3 반영).
+- [x] 표준 2-option 완료 gate 제시. — 2026-07-29 "승인".
 
 ## 4. Functional Design Questions
 
