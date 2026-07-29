@@ -51,7 +51,7 @@ C) 안전 경로를 만들 수 없다고 판정하고 §5.10 규정대로 ST-E04
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) `RUN_DEPLOY` boolean parameter(기본값 **true**)를 추가하고 Deploy stage에 `when { expression { params.RUN_DEPLOY } }`를 건다. nightly cron은 기본값으로 오늘과 동일하게 배포하고, 수동 validation 실행은 `RUN_DEPLOY=false`로 Deploy를 건너뛴다 — 배포 동작 불변 + 안전 경로 확보.
 
 ### Question 2 — Test stage 배치와 실패 의미
 
@@ -63,7 +63,7 @@ B) Build Site 뒤에 Verify를 두어 실제 build 산출물 이후 검증한다
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) Install 뒤·Preprocess 앞에 **Verify stage 신설**: `cargo test`(release build 재활용 경로) + `cd site && npm run test:unit && npm run test:pbt`를 실행하고, 실패는 pipeline 실패(이후 stage 미진행 → 배포 차단)다. silent retry 없음.
 
 ### Question 3 — e2e의 CI 편입 범위
 
@@ -75,7 +75,7 @@ B) e2e도 Verify stage에 포함한다 — agent가 로컬 Mac이라 브라우�
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **CI는 build + example + PBT까지만** (결정적·경량; ST-E04의 "relevant build/example/PBT" 문언 충족). e2e는 U1/U2 stable local command로 유지하고, CI 편입은 별도 후속 결정으로 남긴다.
 
 ### Question 4 — Seed evidence 형식 (AC-E04-02)
 
@@ -87,7 +87,7 @@ B) 실행마다 구조화된 seed-report 파일을 생성·archive하는 adapter
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) framework 기본 출력을 증거로 삼는다: fast-check runner는 매 실행 seed를 출력하고, proptest는 실패 시 `cc` 라인을 출력·지속 파일에 기록한다(커밋 정책은 U2 승인). Jenkins console log가 1차 증거이고, 실패 시 `proptest-regressions` 변화를 archiveArtifacts로 보존한다 — 새 기계 없음.
 
 ### Question 5 — Jenkins Preprocess의 잔존 `rm -rf`
 
@@ -99,7 +99,7 @@ B) 유지한다 — Jenkins 변경 표면을 최소화한다 (규칙 이중화 �
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) 제거한다 — Justfile C1-A와 같은 동작 보존 정리이며 정리 규칙의 단일 소유를 완성한다 (FR-016 경로·test 범위 내의 최소 변경으로 판정).
 
 ### Question 6 — Cross-unit smoke의 소유와 범위 (C12)
 
@@ -111,7 +111,7 @@ B) U3 전용 cross-unit spec suite를 신설해 §5.5 항목 전체를 독립적
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) **재구현 금지 + 부족분만**: 기존 U1 spec(6종)과 U2 `homepage.spec.ts`가 이미 커버하는 항목은 evidence mapping 표로 닫고, 실제 부족분(예: no-JS core navigation smoke, cross-unit 내부 link 무결성 sweep)만 최소 adapter spec으로 추가한다. U1 evidence 기계·record는 불변.
 
 ### Question 7 — Adapter의 PBT-01 처치
 
@@ -123,7 +123,7 @@ B) adapter 산출(report 구조 등)에 property를 식별해 적용한다.
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A) `No PBT properties identified`로 판정한다: C12/S05는 business logic 없이 기존 검증을 orchestration·aggregation하는 adapter이며, U1 S04·U2 S02/S03 선례대로 example/실행-evidence 검증이 맞다. 새 순수 로직(예: link sweep 파서)이 생기면 그 부분만 property를 재검토한다.
 
 ## 5. 답변 검증과 생성 경계
 
