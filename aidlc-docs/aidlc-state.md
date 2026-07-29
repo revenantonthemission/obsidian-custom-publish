@@ -648,9 +648,22 @@ Do not change external Vault, deployment, push or merge state without separate a
 - **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/nfr-design/nfr-design-patterns.md` (PD-U3-01~05 + §5.9 four-output mapping) and `logical-components.md` (LC-U3-01~09 with the conditional-existence chain: the evidence mapping table LC-U3-05 decides whether LC-U3-06/07/08 exist).
 - **Independent Review**: **FAIL then fixed** — 1 blocker, 1 minor, 2 notes, all resolved before this gate. The blocker: plan Q4-A's illustrative glob `preprocessor/proptest-regressions/**` names a path that does not exist — proptest persistence files are siblings of the test files (`preprocessor/tests/*.proptest-regressions`, per the approved U2 nfr-design record and the committed `publication_output.proptest-regressions`); the wrong glob would archive zero files on a real failure with `allowEmptyArchive` silently masking it. The glob was corrected in both artifacts with a visible dated note, and a validation-record blockquote was added under the plan's Q4 answer; the approved decision itself (Verify-local post-failure archiving) is unchanged. Minor: the tech-stack §1 reconciliation had edited the approved sentence in place as well as annotating it — the blockquote now states this explicitly. Notes: LC-U3-02's Deploy enumeration completed (credential check + sync + invalidation, all three gated at stage level); LC-U3-06's placement tightened to AR-U3-03's specific `site/tests/e2e/` path.
 
+## U3 NFR Design — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `3beda38` carried the validated answers, both artifacts, the corrected archiver glob and the reconciliation records). U3 NFR Design is complete; its plan is marked 완료 및 승인됨.
+
+## U3 Infrastructure Design Status
+
+- **Started**: 2026-07-29, immediately after the NFR Design approval.
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 expects a no-deployment-infrastructure-change confirmation and §5.10 makes recording it mandatory.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-infrastructure-design-plan.md`.
+- **Questions Generated**: 3 — the §5.10-mandated no-change verdict (record and proceed vs declare a needed change and stop at this gate), the timing/target of the real `RUN_DEPLOY=false` validation execution (post-merge on the job's tracked branch with zero job-config changes vs pre-merge on the feature branch with temporary job-config repointing), and an operator fact-check of which branch the nightly Jenkins job actually tracks (main/master vs develop vs other — the job config lives outside the repo and cannot be read from here; Q2's plan depends on this fact).
+- **Grounding**: Deploy infra facts transcribed (S3 `obsidian-custom-s3`, CloudFront `E35HZFVGD0OJ04`, Terraform as compatibility reference only); `RUN_DEPLOY=false` needs no AWS credentials since Deploy is skipped; the nine inherited deployment risks stay with the deploy authority.
+- **Mutation Boundary**: AI-DLC documentation only; no Jenkins job-config change.
+
 ## Next Step
 
-The U3 NFR Design artifact approval gate is open: approve to proceed to U3 Infrastructure Design (expected no-deployment-infrastructure-change confirmation), or request changes to the two nfr-design artifacts. No push, external Vault edit, deployment or merge is authorized at this gate.
+Answer the 3 questions in `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-infrastructure-design-plan.md` (one letter per `[Answer]:` tag; `X` with inline detail — Q3 accepts a branch name), then reply that answers are complete. After validation, `infrastructure-design.md` and `deployment-architecture.md` are generated under `aidlc-docs/construction/u3-quality-gate-and-ci-integration/infrastructure-design/` and the standard approval gate is presented. No push, external Vault edit, deployment or merge is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 

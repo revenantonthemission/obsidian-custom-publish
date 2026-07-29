@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U3 NFR Design
-- **상태**: artifact 생성 완료, 승인 gate 대기
+- **상태**: 완료 및 승인됨 (2026-07-29, 사용자 응답 "승인")
 - **Unit**: U3 Quality Gate and CI Integration
 - **작성일**: 2026-07-29
 - **Feature Branch**: `codex/feature/resume-quality-gates`
