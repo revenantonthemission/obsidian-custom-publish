@@ -665,9 +665,20 @@ Do not change external Vault, deployment, push or merge state without separate a
 - **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/infrastructure-design/infrastructure-design.md` (ID-U3-01~04: the §5.10 no-change table covering Terraform/S3/CloudFront/IAM/ACM/DNS/Jenkins plugin/job config; the five-step closure sequence; credential-free validation; the nine inherited risks staying unresolved) and `deployment-architecture.md` (before/after pipeline table, the two execution paths, the unchanged-boundary restatement).
 - **Independent Review**: PASS — 0 blockers, 2 minors, 3 notes. Both minors were real execution-logic flaws, fixed: (1) "first registering build via Build with Parameters with explicit false" is not literally executable — before the `parameters` block registers, the job is unparameterized and offers only "Build Now"; redesigned as a **2-run sequence** (Run 1 "Build Now" registers, null-falsy skips Deploy, observation only; Run 2 explicit `RUN_DEPLOY=false` is the ST-E04 evidence run). (2) The promotion-to-run timing window is now named: if the nightly cron fires first it becomes the registering build and silently skips that night's deploy once (skip-only failure mode; record it in the report if it happens). Notes: the "post block unchanged" claim disambiguated to pipeline-level; the deploy-authority wording and one-hop push/Vault boundary inheritance accepted and recorded.
 
+## U3 Infrastructure Design — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `e5653fb` carried the validated answers, both artifacts and the 2-run execution redesign). U3 Infrastructure Design is complete; its plan is marked 완료 및 승인됨. Four of U3's five Construction stages are now approved.
+
+## U3 Code Generation Status
+
+- **Started**: 2026-07-29, immediately after the Infrastructure Design approval.
+- **Current Part**: Plan approval gate (Part 1). No application source, Jenkinsfile, or site file has been modified yet.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-code-generation-plan.md` — 8 steps: (1) evidence mapping table (decides the conditional gap adapters), (2) conditional gap-adapter implementation, (3) the Jenkinsfile change set LC-U3-01~04 with the corrected archiver glob, (4) static Jenkinsfile verification (local declarative linter if reachable, structural diff review otherwise), (5) local equivalent Verify-sequence run with baseline timing and `CI`-env check, (6) U1/U2 regression sweep (just test / test:unit / test:pbt / test:e2e / astro check baseline), (7) ST-E04 report with the real-Jenkins-execution evidence marked pending per ID-U3-02, (8) obligation closure and code-generation-summary.
+- **Boundary**: No push, merge, deployment, Jenkins job-config change, external Vault change, or dependency addition anywhere in this stage; the changed Jenkinsfile lives only on the feature branch, invisible to the main-tracking nightly cron until separately-approved promotion.
+
 ## Next Step
 
-The U3 Infrastructure Design artifact approval gate is open: approve to proceed to U3 Code Generation (the plan will cover the Jenkinsfile change set LC-U3-01~04, the evidence mapping table deciding the conditional gap adapters, local-equivalent verification, and the static Jenkinsfile check — the real Jenkins execution stays coupled to the later main promotion per ID-U3-02), or request changes to the two infrastructure-design artifacts. No push, external Vault edit, deployment or merge is authorized at this gate.
+The U3 Code Generation plan approval gate is open: approve to execute Steps 1~8 with per-step verification, or request changes to the plan. The subsequent U3 → develop merge gate, the develop → main promotion and the real Jenkins 2-run execution (ID-U3-02) each require separate authorization and are outside this plan.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
