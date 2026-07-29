@@ -3,7 +3,7 @@
 ## 문서 상태
 
 - **단계**: CONSTRUCTION — U3 Code Generation
-- **상태**: 계획 승인 대기
+- **상태**: 완료 및 승인됨 (계획 승인·완료 승인 모두 2026-07-29, 사용자 응답 "승인"; Step 1~8 실행 기록은 aidlc-state.md와 code/ 산출물 참조)
 - **Unit**: U3 Quality Gate and CI Integration
 - **작성일**: 2026-07-29
 - **Feature Branch**: `codex/feature/resume-quality-gates`
