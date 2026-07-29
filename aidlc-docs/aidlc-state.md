@@ -691,9 +691,26 @@ Do not change external Vault, deployment, push or merge state without separate a
 
 - **Authorized** on 2026-07-29 with the exact user response `"승인"`. The `--no-ff` merge of `codex/feature/resume-quality-gates` into local `develop` (checked out in the primary worktree at the branch base `50937d9`) is performed immediately after this record is committed, so this commit rides inside the merge — the U2 precedent. No push, pull request or deployment accompanies it.
 
+## Post-Merge Promotion and Jenkins Run 1 — Completed
+
+- **U3 → develop merge performed** (authorized `"승인"`): merge commit `9022826`, `--no-ff`, 26 files +1,558/−5; post-merge diff between develop and the feature branch is 0 lines; primary worktree tracked-clean.
+- **develop → main promotion performed** (authorized "develop을 main에 반영해 주세요"): merge commit `323baa1` ("Merge branch 'develop'", repo precedent format); main==develop diff 0 lines.
+- **Push performed** (authorized `"push 승인"`): fast-forward pushes `main 24ae762..323baa1`, `develop af32509..9022826` to origin — no force, no deletion.
+- **Jenkins Run 1 executed and transcribed** (user-submitted console log, "Started by user admin", Finished: SUCCESS): the new Verify stage ran green in a real Jenkins execution — cargo test (release) all suites, ensure step, unit 16/195, **pbt 37/37 at numRuns 1000 with seed `1804141478` recorded in the console log** (the `CI` env var is defined on the Jenkins agent, confirming the NFR-U3-001 flagged 100→1,000 uplift; CI baseline is now recorded on the 1,000-run basis, Verify ≈1 minute); Preprocess ran correctly without the removed `rm -rf` (140 posts + 1 homepage); Build Site 221 pages; **`Stage "Deploy" skipped due to when conditional`** — the no-deploy validation path works. Transcription: `code/st-e04-report.md` §7.1.
+- **Empirical correction, recorded non-silently**: the job checks out **`origin/develop`** (workspace `obsidian-blog-develop`), not main/master as Infrastructure Q3-A answered — corrected via a dated blockquote in `infrastructure-design.md` ID-U3-02; the sequencing substance is unchanged (Q2-A's "tracked branch" is develop; the develop push alone made the Jenkinsfile visible; the main promotion stands as a harmless fast-forward). Also observed: the pipeline-level post success message "Blog deployed successfully." prints even when Deploy is skipped — a pre-existing cosmetic defect, out of U3 scope, recorded for a future decision.
+
+## ST-E04 — Closed (2026-07-30)
+
+- **Reclassification, recorded non-silently**: the transcribed Jenkins run was initially filed as Run 1 (registering build), but the operator confirmed the launch mode with the exact response `"방금 그게 RUN_DEPLOY 체크를 해제한 거야."` — the run was "Build with Parameters" with **explicit `RUN_DEPLOY=false`**, satisfying ID-U3-02's evidence-run parameter state. The registering/evidence 2-run choreography collapsed into this single run (how the parameter came to be registered at launch time is unresolved but immaterial to closure — Deploy is not invoked on either path); `st-e04-report.md` §7.1 carries the reclassification.
+- **Closure**: `st-e04-report.md` §7.2 records every §5.10 condition met — real Jenkins validation execution without Deploy, relevant build/example/PBT executed (pbt 37 @ 1,000 runs), seed evidence (`1804141478` in the console log), repo-local reproduction paths, cross-unit gates green, integrated PDF/parity pass, Jenkins changes within scope with deploy behavior unchanged (parameter registered with default true — the next cron deploys as today). **ST-E04 closes at the U3 → Integrated Build and Test handoff** per unit-of-work §6; the report is the handoff evidence document. This completes the last open story of the AI-DLC construction: U1, U2, U3 delivered and merged, ST-E04 closed.
+
+## Final Docs Merge — Authorized
+
+- **Authorized** on 2026-07-30 with the exact user response `"승인"`: the docs-only `--no-ff` merge of the remaining journal commits into `develop`, the same develop → main reflection, and the push of both branches are performed immediately after this record is committed (riding inside the merge). No deployment, no external Vault edit.
+
 ## Next Step
 
-After the merge: the develop → main promotion and the real Jenkins 2-run validation execution (ID-U3-02: Run 1 "Build Now" registering, Run 2 explicit `RUN_DEPLOY=false` as evidence) each require separate authorization. The integrated Build and Test stage then closes ST-E04 by transcribing the Run 2 console log into `aidlc-docs/construction/u3-quality-gate-and-ci-integration/code/st-e04-report.md` §7. No external Vault edit or deployment is authorized.
+None — the AI-DLC construction is complete: U1, U2 and U3 each closed five approved Construction stages and merged; ST-E04 is closed with real Jenkins evidence. Operational life continues outside the staged workflow: the nightly cron deploys from develop with `RUN_DEPLOY` defaulting to true, `RUN_DEPLOY=false` remains the standing validation path, and the recorded residuals (U1 rollback-arm live evidence, the cosmetic post-success message, the deploy-authority risk register) await their own occasions.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
