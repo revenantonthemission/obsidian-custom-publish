@@ -6,7 +6,7 @@
 - **Project Type**: Brownfield
 - **Start Date**: 2026-07-23T06:19:28Z
 - **Current Phase**: CONSTRUCTION
-- **Current Stage**: U2 Construction complete and approved; next is the U2 → `develop` merge gate, then U3
+- **Current Stage**: U3 Functional Design — plan and 7 questions generated; awaiting question answers
 - **Workflow Status**: In progress
 
 ## Workspace State
@@ -591,6 +591,27 @@ Three things carry into U2/U3 rather than being re-derived there.
 3. **The candidate PDF is not byte-reproducible.** A review record is valid only for the exact SHA it names, so `prepare` must not be re-run between review and promote.
 
 Do not change external Vault, deployment, push or merge state without separate authorization.
+
+## U2 → develop Merge Gate — Completed
+
+- Authorized on 2026-07-29 with the exact user response `"승인"` and performed immediately: merge commit `50937d9` (`Merge branch 'codex/feature/resume-home-boundary' into develop`, `--no-ff`, 63 files, +4,948/−349). Post-merge `git diff` between `develop` and the fully verified feature branch is empty; the primary worktree stayed clean. No push, pull request or deployment occurred; `origin/develop` is untouched.
+
+## U3 Functional Design Status
+
+- **Started**: 2026-07-29 with the user instruction "start U3".
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 requires verification orchestration rules and the adapter PBT N/A rationale.
+- **Entry Criteria**: Satisfied — U1 and U2 each completed five approved Construction stages with sequential `--no-ff` merges; `develop` (`50937d9`) exposes the stable owner-local commands and public contracts; no hidden U1/U2 blocker (U1's rollback-arm residual is an accepted recorded deviation, not a hidden task).
+- **Feature Branch**: `codex/feature/resume-quality-gates` created at `50937d9` (recommended name, unit-of-work §5.1). Working tree: `.claude/worktrees/u3-quality-gates`.
+- **Current Part**: Question answer gate.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-functional-design-plan.md`.
+- **Questions Generated**: 7 — the validation-only Jenkins execution path (parameterized deploy vs separate job vs §5.10 stop), Verify-stage placement and failure semantics, e2e CI-inclusion scope, seed-evidence form (framework outputs + console log vs structured reports), the leftover Jenkins `rm -rf` line, cross-unit smoke ownership (evidence mapping + gap-only adapters vs a new suite), and the C12/S05 PBT N/A disposition.
+- **Question Structure Validation**: Passed — 7 headings, 7 empty `[Answer]:` tags, 7 final `X) Other`, 7 recommended choices, 15 lettered options.
+- **Grounding**: Verified 2026-07-29 — the current Jenkinsfile runs no tests at all (Checkout → Install → Preprocess with its own residual `rm -rf` → Build Site → unconditional Deploy); the path/browser defects were already fixed by 4c326b3/f82c9eb. ST-E04's closure demands a real Jenkins validation execution that does not invoke Deploy, which the pipeline cannot currently express — Q1 exists precisely for that.
+- **Mutation Boundary**: AI-DLC documentation and the new feature branch only.
+
+## Next Step
+
+Answer the 7 questions in `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-functional-design-plan.md` (one letter per `[Answer]:` tag; `X` with inline rules), then reply that answers are complete. After validation, `verification-orchestration.md` and `adapter-rules.md` are generated under `aidlc-docs/construction/u3-quality-gate-and-ci-integration/functional-design/` and the standard approval gate is presented. U3 then continues through NFR Requirements, NFR Design, Infrastructure Design and Code Generation, followed by the integrated Build and Test stage. No push, external Vault edit, deployment or merge is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
