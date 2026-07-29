@@ -68,3 +68,25 @@ ST-E04의 마감 필요조건인 **Deploy 미호출 실제 Jenkins validation �
 4. **Run 2**: "Build with Parameters" + 명시적 `RUN_DEPLOY=false` — **증거 실행**; console log(Verify 결과·seed 라인·stage skip)를 이 report에 전사.
 
 이 실행이 전사되기 전까지 ST-E04는 열려 있으며, 마감은 §6 handoff(U3 → Integrated Build and Test)에서 일어난다.
+
+### 7.1 Run 1 전사 (2026-07-29, "Started by user admin")
+
+새 Jenkinsfile의 첫 실제 실행. console log 핵심 발췌:
+
+- **Checkout**: `origin/develop` → `9022826` ("Merge branch 'codex/feature/resume-quality-gates' into develop") — **job의 추적 branch는 실측상 `develop`** (workspace `obsidian-blog-develop`). Infrastructure Q3-A의 운영자 답변(main/master)과 다름 — 정정 기록은 [infrastructure-design.md ID-U3-02](../infrastructure-design/infrastructure-design.md) 참조. develop push(`af32509..9022826`)만으로 가시성이 충족되었다.
+- **Install**: npm ci ∥ cargo build --release — 캐시로 빠르게 완료.
+- **Verify (신설 stage 실전 첫 실행, 전부 green)**:
+  - `cargo test --release` — 전 suite ok (unit 33, publication_catalog 11, publication_output 6, publication_transform 6 포함).
+  - `ensure-fixture-content: homepage artifact present`.
+  - `test:unit` — 16 files / **195 passed** (7.68s).
+  - `test:pbt` — `[pbt-run-config] {"numRuns":1000,"seed":1804141478,...}` → 6 files / **37 passed** (26.96s). **`CI` env가 Jenkins에 정의되어 있음이 실측 확인** — NFR-U3-001이 예고한 100→1,000 상향이 실제로 발생; CI Verify 기준선은 1,000-run 전제로 기록한다 (Verify 전체 약 1분).
+  - **seed 상시 기록 실증 (AC-E04-02)**: seed `1804141478`이 console log에 남음.
+- **Preprocess**: `rm -rf` 없이 정상 동작 (C09 정리 소유 실증) — "Stamped 0 posts", 140 posts + 1 homepage artifact.
+- **Build Site**: 221 pages.
+- **Deploy**: `Stage "Deploy" skipped due to when conditional` — **Deploy 미호출 실제 Jenkins 실행이 성립** (`params.RUN_DEPLOY` 미등록/false falsy 경로).
+- Finished: **SUCCESS**.
+- 관찰: pipeline-level post success의 "Blog deployed successfully." 메시지는 Deploy skip 시에도 출력된다 — 기존 post block의 표시 결함(무해; U3 범위 밖, 후속 결정 사항으로 기록).
+
+### 7.2 Run 2 (증거 실행) — 대기
+
+parameter가 등록된 상태에서 **"Build with Parameters" + 명시적 `RUN_DEPLOY=false`** 실행의 console log가 전사되면 ST-E04 마감 조건이 완결된다.

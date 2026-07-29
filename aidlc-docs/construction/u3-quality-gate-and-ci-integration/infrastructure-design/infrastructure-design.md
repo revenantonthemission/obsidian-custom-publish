@@ -26,6 +26,8 @@ U3는 배포 인프라를 **변경하지 않는다**:
 
 Jenkins nightly job은 **`main`/`master`를 추적**한다 (Q3-A, 운영자 확인). 따라서 ST-E04 마감용 실제 실행의 순서는:
 
+> **실측 정정 (2026-07-29, Run 1)**: 첫 실제 실행의 console log가 job이 **`origin/develop`을 checkout**함을 보였다 (workspace `obsidian-blog-develop`, revision `9022826`). Q3-A의 답변(main/master)은 실측과 다르며, 이 정정은 순서의 실질을 바꾸지 않는다 — "job이 추적하는 branch"(Q2-A)가 develop이므로 develop push만으로 새 Jenkinsfile이 보였고, 3단계(main 반영)는 무해한 전진으로 수행 완료된 상태다. nightly cron 배포의 소스도 develop이다.
+
 1. U3 Code Generation 완료 — 이 단계 안에서 확보하는 증거: **로컬 등가 실행**(Verify와 동일한 명령 sequence) + **Jenkinsfile 정적 검증**.
 2. U3 → `develop` `--no-ff` 병합 (병합 gate 별도 승인).
 3. `develop` → main 반영 (**별도 승인** — U3 범위 밖의 promotion).
