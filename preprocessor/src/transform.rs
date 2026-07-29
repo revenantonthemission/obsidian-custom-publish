@@ -1,18 +1,17 @@
 use std::path::Path;
 use std::sync::LazyLock;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use regex::Regex;
 
-use crate::syntax::{frontmatter_range, BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE};
+use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE, frontmatter_range};
 use crate::types::VaultIndex;
 
 /// Matches Obsidian comments: `%%inline%%` or block `%%\n...\n%%`.
-static INLINE_COMMENT_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"%%(.+?)%%").unwrap());
+static INLINE_COMMENT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%%(.+?)%%").unwrap());
 
 /// Matches `==highlighted text==` for conversion to `<mark>` tags.
-static HIGHLIGHT_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"==([^=\n]+?)==").unwrap());
+static HIGHLIGHT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"==([^=\n]+?)==").unwrap());
 
 /// Escape HTML special characters to prevent XSS.
 fn html_escape(s: &str) -> String {
@@ -25,8 +24,9 @@ fn html_escape(s: &str) -> String {
 static CALLOUT_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^>\s*\[!(\w+)\]([+-])?\s*(.*)$").unwrap());
 
-static FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:[ \t]+(\w+))?\n(.*?)^```").unwrap());
+static FENCE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?ms)^```(d2|typst|mermaid)(?:[ \t]+(\w+))?\n(.*?)^```").unwrap()
+});
 
 /// Transform a post's raw content into clean markdown ready for Astro.
 ///
@@ -45,6 +45,18 @@ pub fn transform_content_with_assets(
     post_idx: usize,
     asset_dir: Option<&Path>,
 ) -> (String, Vec<String>) {
+    transform_content_publication(index, post_idx, None, asset_dir)
+}
+
+/// Publication-aware transform: wikilinks targeting `homepage_idx` resolve to
+/// `/` with the same alias/fragment rules as post links (BR-U2-013~017).
+/// `None` preserves the legacy behavior byte-for-byte (FD-P-C08-03 oracle).
+pub fn transform_content_publication(
+    index: &VaultIndex,
+    post_idx: usize,
+    homepage_idx: Option<usize>,
+    asset_dir: Option<&Path>,
+) -> (String, Vec<String>) {
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
     let is_hub = index.posts[post_idx].is_hub;
@@ -52,7 +64,7 @@ pub fn transform_content_with_assets(
     let content = strip_comments(&content);
     let (content, images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
-    let content = convert_wikilinks(&content, index);
+    let content = convert_wikilinks(&content, index, homepage_idx);
     let content = if is_hub {
         crate::hub_dates::augment_hub_child_links(&content, index)
     } else {
@@ -244,40 +256,41 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
 /// and won't match TRANSCLUSION_RE.
 fn resolve_transclusions(content: &str, index: &VaultIndex) -> String {
     transform_outside_fences(content, |line| {
-        TRANSCLUSION_RE.replace_all(line, |caps: &regex::Captures| {
-            let name = caps[1].trim();
-            let block_id = caps.get(2).map(|m| m.as_str());
-            let heading = caps.get(3).map(|m| m.as_str().trim());
+        TRANSCLUSION_RE
+            .replace_all(line, |caps: &regex::Captures| {
+                let name = caps[1].trim();
+                let block_id = caps.get(2).map(|m| m.as_str());
+                let heading = caps.get(3).map(|m| m.as_str().trim());
 
-            if let Some(block_id) = block_id {
-                // Block transclusion: inline the specific paragraph
-                if let Some(blocks) = index.block_map.get(name)
-                    && let Some(text) = blocks.get(block_id) {
+                if let Some(block_id) = block_id {
+                    // Block transclusion: inline the specific paragraph
+                    if let Some(blocks) = index.block_map.get(name)
+                        && let Some(text) = blocks.get(block_id)
+                    {
                         return text.clone();
                     }
-                format!("{name}#^{block_id}")
-            } else if let Some(heading) = heading {
-                // Heading transclusion: inline content under a specific heading
-                if let Some(&target_idx) = index.name_map.get(name) {
-                    let target_content = &index.posts[target_idx].raw_content;
-                    let body = strip_frontmatter(target_content);
-                    extract_heading_section(&body, heading)
-                        .unwrap_or_else(|| {
+                    format!("{name}#^{block_id}")
+                } else if let Some(heading) = heading {
+                    // Heading transclusion: inline content under a specific heading
+                    if let Some(&target_idx) = index.name_map.get(name) {
+                        let target_content = &index.posts[target_idx].raw_content;
+                        let body = strip_frontmatter(target_content);
+                        extract_heading_section(&body, heading).unwrap_or_else(|| {
                             eprintln!("warning: heading '{heading}' not found in '{name}'");
                             format!("{name}#{heading}")
                         })
+                    } else {
+                        format!("{name}#{heading}")
+                    }
+                } else if let Some(&target_idx) = index.name_map.get(name) {
+                    // Full-note transclusion
+                    let target_content = &index.posts[target_idx].raw_content;
+                    strip_frontmatter(target_content)
                 } else {
-                    format!("{name}#{heading}")
+                    name.to_string()
                 }
-            } else if let Some(&target_idx) = index.name_map.get(name) {
-                // Full-note transclusion
-                let target_content = &index.posts[target_idx].raw_content;
-                strip_frontmatter(target_content)
-            } else {
-                name.to_string()
-            }
-        })
-        .to_string()
+            })
+            .to_string()
     })
 }
 
@@ -320,55 +333,62 @@ pub fn extract_heading_section(content: &str, heading: &str) -> Option<String> {
 
 /// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
 /// Supports heading fragments: `[[Note#Heading]]` and `[[Note#Heading|alias]]`.
-fn convert_wikilinks(content: &str, index: &VaultIndex) -> String {
+fn convert_wikilinks(content: &str, index: &VaultIndex, homepage_idx: Option<usize>) -> String {
     transform_outside_fences(content, |line| {
-        WIKILINK_RE.replace_all(line, |caps: &regex::Captures| {
-            let target_name = caps[1].trim();
-            let heading_raw = caps.get(2).map(|m| m.as_str().trim());
-            let alias = caps.get(3).map(|m| m.as_str().trim());
+        WIKILINK_RE
+            .replace_all(line, |caps: &regex::Captures| {
+                let target_name = caps[1].trim();
+                let heading_raw = caps.get(2).map(|m| m.as_str().trim());
+                let alias = caps.get(3).map(|m| m.as_str().trim());
 
-            if let Some(&target_idx) = index.name_map.get(target_name) {
-                let slug = &index.posts[target_idx].slug;
+                if let Some(&target_idx) = index.name_map.get(target_name) {
+                    let slug = &index.posts[target_idx].slug;
 
-                // Determine fragment: block reference (^id) or heading reference
-                let (fragment, is_block_ref) = match heading_raw {
-                    Some(h) if h.starts_with('^') => {
-                        // Block reference — use as-is, no slugification needed
-                        (Some(format!("#{h}")), true)
-                    }
-                    Some(h) => {
-                        // Heading reference — slugify and validate
-                        let h_slug = crate::scanner::slugify_heading(h);
-                        let valid = index.heading_map
-                            .get(target_name)
-                            .is_some_and(|headings| headings.contains(&h_slug));
-                        if !valid {
-                            eprintln!("warning: heading '{h}' not found in '{target_name}'");
+                    // Determine fragment: block reference (^id) or heading reference
+                    let (fragment, is_block_ref) = match heading_raw {
+                        Some(h) if h.starts_with('^') => {
+                            // Block reference — use as-is, no slugification needed
+                            (Some(format!("#{h}")), true)
                         }
-                        (valid.then(|| format!("#{h_slug}")), false)
-                    }
-                    None => (None, false),
-                };
+                        Some(h) => {
+                            // Heading reference — slugify and validate
+                            let h_slug = crate::scanner::slugify_heading(h);
+                            let valid = index
+                                .heading_map
+                                .get(target_name)
+                                .is_some_and(|headings| headings.contains(&h_slug));
+                            if !valid {
+                                eprintln!("warning: heading '{h}' not found in '{target_name}'");
+                            }
+                            (valid.then(|| format!("#{h_slug}")), false)
+                        }
+                        None => (None, false),
+                    };
 
-                let href = match &fragment {
-                    Some(frag) => format!("/posts/{slug}{frag}"),
-                    None => format!("/posts/{slug}"),
-                };
-                let display = match (alias, heading_raw, is_block_ref) {
-                    (Some(a), _, _) => html_escape(a),
-                    (None, Some(h), false) if fragment.is_some() => {
-                        format!("{} &gt; {}", html_escape(target_name), html_escape(h))
-                    }
-                    (None, Some(_), _) => html_escape(target_name), // block ref or invalid heading: show note name only
-                    (None, None, _) => html_escape(target_name),
-                };
-                format!(r#"<a href="{href}">{display}</a>"#)
-            } else {
-                // Unresolved link — render as plain text
-                alias.unwrap_or(target_name).to_string()
-            }
-        })
-        .to_string()
+                    let base = if homepage_idx == Some(target_idx) {
+                        String::from("/")
+                    } else {
+                        format!("/posts/{slug}")
+                    };
+                    let href = match &fragment {
+                        Some(frag) => format!("{base}{frag}"),
+                        None => base,
+                    };
+                    let display = match (alias, heading_raw, is_block_ref) {
+                        (Some(a), _, _) => html_escape(a),
+                        (None, Some(h), false) if fragment.is_some() => {
+                            format!("{} &gt; {}", html_escape(target_name), html_escape(h))
+                        }
+                        (None, Some(_), _) => html_escape(target_name), // block ref or invalid heading: show note name only
+                        (None, None, _) => html_escape(target_name),
+                    };
+                    format!(r#"<a href="{href}">{display}</a>"#)
+                } else {
+                    // Unresolved link — render as plain text
+                    alias.unwrap_or(target_name).to_string()
+                }
+            })
+            .to_string()
     })
 }
 
@@ -401,7 +421,13 @@ fn convert_callouts(content: &str) -> String {
 
             match collapse_marker {
                 Some("-") | Some("+") => {
-                    render_collapsible_callout(&mut result, &callout_type, &title, &body, collapse_marker.unwrap());
+                    render_collapsible_callout(
+                        &mut result,
+                        &callout_type,
+                        &title,
+                        &body,
+                        collapse_marker.unwrap(),
+                    );
                 }
                 _ => {
                     render_static_callout(&mut result, &callout_type, &title, &body);
@@ -433,15 +459,25 @@ fn collect_callout_body(lines: &mut std::iter::Peekable<std::str::Lines<'_>>) ->
 }
 
 /// Render a collapsible callout as `<details>/<summary>`.
-fn render_collapsible_callout(result: &mut Vec<String>, callout_type: &str, title: &str, body: &str, marker: &str) {
+fn render_collapsible_callout(
+    result: &mut Vec<String>,
+    callout_type: &str,
+    title: &str,
+    body: &str,
+    marker: &str,
+) {
     let open_attr = if marker == "+" { " open" } else { "" };
-    result.push(format!(r#"<details class="callout callout-{callout_type}"{open_attr}>"#));
+    result.push(format!(
+        r#"<details class="callout callout-{callout_type}"{open_attr}>"#
+    ));
     let summary = if !title.is_empty() {
         html_escape(title)
     } else {
         callout_type.to_string()
     };
-    result.push(format!(r#"<summary class="callout-title">{summary}</summary>"#));
+    result.push(format!(
+        r#"<summary class="callout-title">{summary}</summary>"#
+    ));
     result.push(String::new());
     result.push(body.to_string());
     result.push(String::new());
@@ -452,7 +488,10 @@ fn render_collapsible_callout(result: &mut Vec<String>, callout_type: &str, titl
 fn render_static_callout(result: &mut Vec<String>, callout_type: &str, title: &str, body: &str) {
     result.push(format!(r#"<div class="callout callout-{callout_type}">"#));
     if !title.is_empty() {
-        result.push(format!(r#"<div class="callout-title">{}</div>"#, html_escape(title)));
+        result.push(format!(
+            r#"<div class="callout-title">{}</div>"#,
+            html_escape(title)
+        ));
     }
     result.push(String::new());
     result.push(body.to_string());
@@ -466,8 +505,14 @@ struct ThemePair {
     dark: &'static str,
 }
 
-const D2_THEMES: ThemePair = ThemePair { light: "0", dark: "200" };
-const MERMAID_THEMES: ThemePair = ThemePair { light: "default", dark: "dark" };
+const D2_THEMES: ThemePair = ThemePair {
+    light: "0",
+    dark: "200",
+};
+const MERMAID_THEMES: ThemePair = ThemePair {
+    light: "default",
+    dark: "dark",
+};
 
 /// Render D2, Typst, and Mermaid fenced code blocks to HTML.
 ///
@@ -494,23 +539,31 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
                 "d2" => {
                     let format = D2Format::parse_format(fmt_str);
                     match format {
-                        D2Format::Svg => {
-                            render_themed_diagram(lang, source, slug, counter, asset_dir, &D2_THEMES, |src, theme| {
-                                crate::d2::render_d2(src, theme, None)
-                            })
-                        }
-                        _ if format.is_text_art() => {
-                            render_d2_text(source, slug, counter, format)
-                        }
+                        D2Format::Svg => render_themed_diagram(
+                            lang,
+                            source,
+                            slug,
+                            counter,
+                            asset_dir,
+                            &D2_THEMES,
+                            |src, theme| crate::d2::render_d2(src, theme, None),
+                        ),
+                        _ if format.is_text_art() => render_d2_text(source, slug, counter, format),
                         _ => {
                             // Binary or download formats (png, gif, pdf, pptx)
                             render_d2_binary(source, slug, counter, asset_dir, format)
                         }
                     }
                 }
-                "mermaid" => render_themed_diagram(lang, source, slug, counter, asset_dir, &MERMAID_THEMES, |src, theme| {
-                    crate::mermaid::render_mermaid(src, theme)
-                }),
+                "mermaid" => render_themed_diagram(
+                    lang,
+                    source,
+                    slug,
+                    counter,
+                    asset_dir,
+                    &MERMAID_THEMES,
+                    |src, theme| crate::mermaid::render_mermaid(src, theme),
+                ),
                 "typst" => render_single_diagram(lang, source, slug, counter, asset_dir, |src| {
                     crate::typst_render::render_typst(src)
                 }),
@@ -545,7 +598,9 @@ fn render_d2_binary(
             match format {
                 crate::d2::D2Format::Pdf | crate::d2::D2Format::Pptx => {
                     let label = ext.to_uppercase();
-                    format!(r#"<a href="/assets/{filename}" download class="diagram-download">{label} 다운로드</a>"#)
+                    format!(
+                        r#"<a href="/assets/{filename}" download class="diagram-download">{label} 다운로드</a>"#
+                    )
                 }
                 _ => {
                     format!(r#"<img src="/assets/{filename}" class="diagram diagram-d2" alt="" />"#)
@@ -560,15 +615,13 @@ fn render_d2_binary(
 }
 
 /// Render a D2 diagram to ASCII/text art and wrap in a `<pre>` block.
-fn render_d2_text(
-    source: &str,
-    slug: &str,
-    counter: usize,
-    format: crate::d2::D2Format,
-) -> String {
+fn render_d2_text(source: &str, slug: &str, counter: usize, format: crate::d2::D2Format) -> String {
     match crate::d2::render_d2_bytes(source, format, None, None) {
         Ok(bytes) => match String::from_utf8(bytes) {
-            Ok(text) => format!(r#"<pre class="diagram diagram-d2-ascii">{}</pre>"#, html_escape(&text)),
+            Ok(text) => format!(
+                r#"<pre class="diagram diagram-d2-ascii">{}</pre>"#,
+                html_escape(&text)
+            ),
             Err(e) => {
                 eprintln!("warning: d2 ascii output was not UTF-8 for {slug}: {e}");
                 "<!-- d2 ascii render failed: not UTF-8 -->".to_string()
@@ -612,6 +665,31 @@ fn render_single_diagram(
 }
 
 /// Render a diagram twice (light + dark), wrap in theme-gated markup.
+/// Count of diagrams that failed to render during this run.
+///
+/// A failed diagram is a content defect, not a cosmetic one: the page ships
+/// without the picture it was written around. Rendering still falls back so the
+/// operator can see what was produced, but the count makes the run
+/// unmistakably unsuccessful — 65 failures once reached production behind a
+/// green build because these were warnings and nothing else.
+static DIAGRAM_FAILURES: AtomicUsize = AtomicUsize::new(0);
+
+fn record_diagram_failure() {
+    DIAGRAM_FAILURES.fetch_add(1, Ordering::Relaxed);
+}
+
+/// How many diagram renders failed. Zero means every diagram was produced.
+pub fn diagram_failure_count() -> usize {
+    DIAGRAM_FAILURES.load(Ordering::Relaxed)
+}
+
+/// Resets the counter. Test-only: the counter is process-global, so tests that
+/// assert on it must not inherit another test's failures.
+#[cfg(test)]
+pub fn reset_diagram_failures() {
+    DIAGRAM_FAILURES.store(0, Ordering::Relaxed);
+}
+
 fn render_themed_diagram(
     lang: &str,
     source: &str,
@@ -627,6 +705,7 @@ fn render_themed_diagram(
     // If both fail, fall back to source code
     if let (Err(e), Err(_)) = (&light_result, &dark_result) {
         eprintln!("warning: {lang} rendering failed for {slug}: {e}");
+        record_diagram_failure();
         return format!("```{lang}\n{source}```");
     }
 
@@ -653,11 +732,15 @@ fn render_themed_diagram(
             }
             Err(e) => {
                 eprintln!("warning: {lang} {variant} theme rendering failed for {slug}: {e}");
+                record_diagram_failure();
             }
         }
     }
 
-    format!(r#"<div class="diagram-container">{}</div>"#, parts.join("\n"))
+    format!(
+        r#"<div class="diagram-container">{}</div>"#,
+        parts.join("\n")
+    )
 }
 
 #[cfg(test)]
@@ -679,9 +762,7 @@ mod tests {
     #[test]
     fn test_transform_outside_fences_preserves_code_blocks() {
         let input = "before [[link]]\n```\n[[inside fence]]\n```\nafter [[link]]";
-        let result = transform_outside_fences(input, |line| {
-            line.replace("[[link]]", "REPLACED")
-        });
+        let result = transform_outside_fences(input, |line| line.replace("[[link]]", "REPLACED"));
         assert!(result.contains("before REPLACED"));
         assert!(result.contains("[[inside fence]]"));
         assert!(result.contains("after REPLACED"));
@@ -691,7 +772,10 @@ mod tests {
     fn test_fence_language_lowercased() {
         let input = "```C\nint x = 1;\n```\n";
         let result = transform_outside_fences(input, |line| line.to_string());
-        assert!(result.starts_with("```c\n"), "Expected lowercase lang, got: {result}");
+        assert!(
+            result.starts_with("```c\n"),
+            "Expected lowercase lang, got: {result}"
+        );
     }
 
     #[test]
@@ -716,7 +800,10 @@ mod tests {
             "my-slug",
             1,
             None,
-            &ThemePair { light: "light", dark: "dark" },
+            &ThemePair {
+                light: "light",
+                dark: "dark",
+            },
             |_src, _theme| Ok("<svg>mock</svg>".to_string()),
         );
         assert!(

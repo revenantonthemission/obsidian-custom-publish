@@ -13,7 +13,11 @@ fn test_scan_vault_finds_all_markdown_files() {
 fn test_scan_vault_parses_frontmatter() {
     let vault = Path::new("../fixtures/vault");
     let index = scan_vault(vault).unwrap();
-    let simple = index.posts.iter().find(|p| p.slug == "simple-post").unwrap();
+    let simple = index
+        .posts
+        .iter()
+        .find(|p| p.slug == "simple-post")
+        .unwrap();
     assert_eq!(simple.title, "Simple Post");
     assert!(simple.tags.contains(&"test".to_string()));
     assert_eq!(simple.created, Some("2025-01-01".to_string()));
@@ -23,7 +27,11 @@ fn test_scan_vault_parses_frontmatter() {
 fn test_scan_vault_generates_slugs_from_filename() {
     let vault = Path::new("../fixtures/vault");
     let index = scan_vault(vault).unwrap();
-    let post = index.posts.iter().find(|p| p.slug == "post-with-links").unwrap();
+    let post = index
+        .posts
+        .iter()
+        .find(|p| p.slug == "post-with-links")
+        .unwrap();
     assert_eq!(post.title, "Post With Links");
 }
 

@@ -38,7 +38,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Compile regexes with `LazyLock`, not inside functions
 - Regex transforms in `transform.rs` must use `transform_outside_fences()` to skip fenced code blocks
 - Korean (Hangul) is alphabetic, not logographic — don't count syllable blocks as individual words
-- `![[image.png]]` embeds → `<img>` tags with optional `|width` or `|widthxheight` sizing
+- `![[image.png]]` embeds → `<img>` tags with optional `|width` or `|widthxheight` sizing; only referenced images are copied from `attachment/` to output assets
 - Shared regexes (`WIKILINK_RE`, `BLOCK_ID_RE`, etc.) live in `syntax.rs` — never duplicate in other modules
 - Korean text is multi-byte UTF-8 (3 bytes/char) — use `char_indices()` not byte slicing for truncation
 
@@ -63,7 +63,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
-- 55 Rust tests (7 unit + 48 integration) using `fixtures/vault/` (10 test markdown files)
+- 85 Rust tests (33 unit + 52 integration) using `fixtures/vault/` (11 test markdown files)
 - Tests run against real fixture data, not mocks
 - `cargo test` from `preprocessor/` directory (tests use relative path `../fixtures/vault`)
 - Diagram rendering tests use inline closures for `render_fn` parameter (no real CLI spawn) — see `test_render_themed_diagram_wraps_in_container`

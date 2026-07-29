@@ -1,0 +1,45 @@
+---
+import CaseStudy from "./CaseStudy.astro";
+import ContactActions from "./ContactActions.astro";
+import type { PortfolioPresentation } from "./presentation.js";
+
+interface Props {
+  presentation: PortfolioPresentation;
+}
+
+const { presentation } = Astro.props;
+---
+
+<div class="portfolio-content" data-testid="portfolio-content">
+  {presentation.sections.map((section) => (
+    section.kind === "intro" ? (
+      <section
+        class="profile-section portfolio-intro"
+        data-profile-section="intro"
+      >
+        <h2>{section.heading}</h2>
+        <p
+          class="portfolio-summary"
+          data-profile-fact-id={section.summary.factId}
+        >
+          {section.summary.value}
+        </p>
+        <ContactActions
+          actions={section.actions}
+          label="연락처"
+          variant="contact-actions"
+        />
+      </section>
+    ) : (
+      <section
+        class="profile-section portfolio-projects"
+        data-profile-section="projects"
+      >
+        <h2>{section.heading}</h2>
+        {section.projects.map((project) => (
+          <CaseStudy project={project} />
+        ))}
+      </section>
+    )
+  ))}
+</div>

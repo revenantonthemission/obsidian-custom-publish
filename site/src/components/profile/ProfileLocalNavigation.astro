@@ -1,0 +1,29 @@
+---
+import type { ProfileLocalNavigationItemView } from "./presentation.js";
+
+interface Props {
+  items: readonly ProfileLocalNavigationItemView[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav
+  class="profile-local-navigation"
+  aria-label="프로필 탐색"
+  data-testid="profile-local-navigation"
+>
+  <ul>
+    {items.map((item) => (
+      <li>
+        <a
+          href={item.href}
+          aria-current={item.current ? "page" : undefined}
+          data-testid={`profile-local-navigation-link-${item.id}`}
+        >
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

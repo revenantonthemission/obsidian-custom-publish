@@ -1,4 +1,4 @@
-use obsidian_press::linker::resolve_links;
+use obsidian_press::catalog::PublicationCatalog;
 use obsidian_press::output::write_output;
 use obsidian_press::scanner::scan_vault;
 use std::path::Path;
@@ -7,9 +7,9 @@ use tempfile::TempDir;
 #[test]
 fn test_previews_json_generated() {
     let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
-    let graph = resolve_links(&index);
     let tmp = TempDir::new().unwrap();
-    write_output(&index, &graph, tmp.path()).unwrap();
+    let catalog = PublicationCatalog::build(index).unwrap();
+    write_output(&catalog, tmp.path()).unwrap();
 
     let previews_path = tmp.path().join("previews.json");
     assert!(previews_path.exists(), "previews.json should be generated");

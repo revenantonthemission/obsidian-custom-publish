@@ -46,7 +46,8 @@
   padding: 0.15em 0.5em;
   border-radius: 3px;
   font-size: 0.8rem;
-  color: var(--c-text-muted);
+  /* --c-text-muted on --c-code-bg is 4.40:1 in light theme — under WCAG AA. */
+  color: var(--c-text);
 }
 .post-tag:hover {
   color: var(--c-accent);

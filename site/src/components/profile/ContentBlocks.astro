@@ -1,0 +1,32 @@
+---
+import type { TextBlockView } from "./presentation.js";
+
+interface Props {
+  blocks: readonly TextBlockView[];
+}
+
+const { blocks } = Astro.props;
+---
+
+{blocks.map((block) => (
+  block.tag === "paragraph" ? (
+    <p
+      class="profile-content-paragraph"
+      data-profile-fact-id={block.text.factId}
+    >
+      {block.text.value}
+    </p>
+  ) : block.style === "ordered" ? (
+    <ol class="profile-content-list profile-content-list-ordered">
+      {block.items.map((item) => (
+        <li data-profile-fact-id={item.factId}>{item.value}</li>
+      ))}
+    </ol>
+  ) : (
+    <ul class="profile-content-list profile-content-list-unordered">
+      {block.items.map((item) => (
+        <li data-profile-fact-id={item.factId}>{item.value}</li>
+      ))}
+    </ul>
+  )
+))}

@@ -7,6 +7,15 @@ pub fn is_korean(c: char) -> bool {
     matches!(c, '\u{AC00}'..='\u{D7AF}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
 }
 
+/// Raw `visibility` frontmatter value as authored, before publication-scope
+/// validation. `Scalar` keeps the exact string; `NonScalar` keeps a display
+/// representation of a non-string value so diagnostics can show what was found.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum RawVisibility {
+    Scalar(String),
+    NonScalar(String),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostMeta {
     pub slug: String,
@@ -19,6 +28,8 @@ pub struct PostMeta {
     pub is_hub: bool,
     pub hub_parent: Option<String>,
     pub description: Option<String>,
+    #[serde(default)]
+    pub visibility: Option<RawVisibility>,
     pub raw_content: String,
 }
 

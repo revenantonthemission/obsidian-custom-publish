@@ -1,0 +1,65 @@
+---
+import ContactActions from "./ContactActions.astro";
+import ContentBlocks from "./ContentBlocks.astro";
+import type { CaseStudyView } from "./presentation.js";
+
+interface Props {
+  project: CaseStudyView;
+}
+
+const { project } = Astro.props;
+---
+
+<article
+  id={`project-${project.id}`}
+  class="portfolio-case-study"
+  data-profile-entity-kind="project"
+  data-profile-entity-id={project.id}
+  data-profile-entity-order={project.order}
+  data-testid={`case-study-article-${project.id}`}
+>
+  <header class="portfolio-case-study-header">
+    <h3
+      data-profile-fact-id={project.title.factId}
+      data-testid={`case-study-title-${project.id}`}
+    >
+      {project.title.value}
+    </h3>
+    {project.period !== undefined && (
+      <p
+        class="profile-period"
+        data-profile-fact-id={project.period.factId}
+      >
+        {project.period.text}
+      </p>
+    )}
+    <p
+      class="portfolio-outcome-summary"
+      data-profile-fact-id={project.outcomeSummary.factId}
+    >
+      {project.outcomeSummary.value}
+    </p>
+  </header>
+
+  {project.dimensions.map((dimension) => (
+    <section
+      class={`case-study-dimension case-study-dimension-${dimension.key}`}
+      data-profile-dimension={dimension.key}
+      data-testid={`case-study-dimension-${dimension.key}-${project.id}`}
+    >
+      <h4>{dimension.heading}</h4>
+      <ContentBlocks blocks={dimension.blocks} />
+    </section>
+  ))}
+
+  {project.evidence.length > 0 && (
+    <section class="case-study-evidence">
+      <h4>근거</h4>
+      <ContactActions
+        actions={project.evidence}
+        label={`${project.title.value} 근거`}
+        variant="evidence-actions"
+      />
+    </section>
+  )}
+</article>

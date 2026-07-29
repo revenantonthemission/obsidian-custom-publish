@@ -1,54 +1,32 @@
-import { useState } from "preact/hooks";
+import type { NavigationState } from "../lib/navigation.js";
 
 interface Props {
-  links: { href: string; label: string }[];
-  pathname?: string;
+  items: readonly NavigationState[];
 }
 
-export default function MobileNav({ links, pathname = "" }: Props) {
-  const [open, setOpen] = useState(false);
-
+export default function MobileNav({ items }: Props) {
   return (
-    <>
-      <button
+    <details class="mobile-nav-disclosure">
+      <summary
         class="mobile-nav-toggle"
-        onClick={() => setOpen(!open)}
-        aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
-        aria-expanded={open}
+        aria-label="주요 탐색 메뉴"
+        data-testid="mobile-navigation-toggle"
       >
-        {open ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="4" y1="6" x2="20" y2="6" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <line x1="4" y1="18" x2="20" y2="18" />
-          </svg>
-        )}
-      </button>
-      {open && (
-        <div class="mobile-nav-dropdown">
-          {links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              class="mobile-nav-link"
-              aria-current={
-                pathname === link.href || pathname.startsWith(link.href + "/")
-                  ? "page"
-                  : undefined
-              }
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-      )}
-    </>
+        <span class="mobile-nav-toggle-label">메뉴</span>
+      </summary>
+      <nav class="mobile-nav-dropdown" aria-label="주요 탐색">
+        {items.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            class="mobile-nav-link"
+            aria-current={item.current ? "page" : undefined}
+            data-testid={`mobile-navigation-link-${item.href.slice(1)}`}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+    </details>
   );
 }

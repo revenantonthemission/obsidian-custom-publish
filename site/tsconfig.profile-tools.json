@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "declaration": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "noEmitOnError": true,
+    "outDir": ".artifacts/profile/tools",
+    "rootDir": ".",
+    "sourceMap": false
+  },
+  "include": [
+    "src/lib/profile/**/*.ts",
+    "src/lib/layout/**/*.ts",
+    "src/lib/navigation.ts",
+    "verification/profile/fact-approval.json"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "tests"
+  ]
+}

@@ -1,0 +1,34 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PortfolioContent from "../components/profile/PortfolioContent.astro";
+import ProfileShell from "../components/profile/ProfileShell.astro";
+import { buildPortfolioPresentation } from "../components/profile/presentation.js";
+import { buildApprovedPortfolioMetadata } from "../lib/profile/metadata.js";
+import { getProductionProfileAssembly } from "../lib/profile/production-profile.js";
+import "../styles/profile/font.css";
+import "../styles/profile/foundation.css";
+import "../styles/profile/portfolio.css";
+
+const origin = Astro.site?.origin;
+if (origin === undefined) {
+  throw new TypeError("Profile metadata requires Astro.site.");
+}
+
+const assembly = getProductionProfileAssembly();
+const metadataResult = buildApprovedPortfolioMetadata(
+  Object.freeze({ origin }),
+  assembly.source,
+);
+if (!metadataResult.ok) {
+  throw new TypeError("Invalid approved portfolio metadata.");
+}
+
+const metadata = metadataResult.value;
+const presentation = buildPortfolioPresentation(assembly.portfolio);
+---
+
+<BaseLayout metadata={metadata}>
+  <ProfileShell shell={presentation.shell}>
+    <PortfolioContent presentation={presentation} />
+  </ProfileShell>
+</BaseLayout>

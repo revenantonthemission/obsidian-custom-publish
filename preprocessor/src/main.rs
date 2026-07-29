@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-use obsidian_press::linker::resolve_links;
+use obsidian_press::catalog::{PublicationCatalog, report_diagnostics};
 use obsidian_press::output::write_output;
 use obsidian_press::scanner::{scan_vault, stamp_published_dates};
 
@@ -29,13 +29,43 @@ fn main() -> anyhow::Result<()> {
 
     println!("Scanning vault: {:?}", cli.vault);
     let index = scan_vault(&cli.vault)?;
-    println!("Found {} posts", index.posts.len());
+    println!("Found {} sources", index.posts.len());
 
-    println!("Resolving links...");
-    let graph = resolve_links(&index);
+    // Stage 1: scope + cardinality. Stage 2: homepage-target references.
+    // Each stage reports its full batch and fails before any output write
+    // (BR-U2-023/024); a failed run leaves the previous output untouched.
+    let catalog = match PublicationCatalog::build(index) {
+        Ok(catalog) => catalog,
+        Err(diags) => {
+            report_diagnostics(&diags);
+            std::process::exit(1);
+        }
+    };
+    let reference_diags = catalog.validate_references();
+    if !reference_diags.is_empty() {
+        report_diagnostics(&reference_diags);
+        std::process::exit(1);
+    }
+    println!("Homepage source: {}", catalog.homepage().title);
 
     println!("Writing output to {:?}", cli.output);
-    write_output(&index, &graph, &cli.output)?;
+    if let Err(e) = write_output(&catalog, &cli.output) {
+        eprintln!("{e:#}");
+        std::process::exit(1);
+    }
+
+    // Output is written first on purpose: the operator should be able to
+    // inspect exactly what was produced. But a run that dropped diagrams must
+    // not report success — 65 missing diagrams reached production behind a
+    // green build precisely because these were warnings and nothing read them.
+    let failures = obsidian_press::transform::diagram_failure_count();
+    if failures > 0 {
+        anyhow::bail!(
+            "{failures} diagram render(s) failed; output is incomplete and must not be published. \
+             mmdc needs a browser: set PUPPETEER_EXECUTABLE_PATH, or run \
+             `npx puppeteer browsers install chrome-headless-shell`."
+        );
+    }
 
     println!("Done.");
     Ok(())

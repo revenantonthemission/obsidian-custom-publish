@@ -1,15 +1,32 @@
 ---
 import ThemeToggle from "../islands/ThemeToggle.tsx";
 import MobileNav from "../islands/MobileNav.tsx";
-import { Split, Tags, Waypoints, Search } from "lucide-static";
+import {
+  BriefcaseBusiness,
+  FileText,
+  Search,
+  Split,
+  Tags,
+  Waypoints,
+} from "lucide-static";
+import { getPrimaryNavigationState } from "../lib/navigation.js";
 
 interface Props {
   pathname?: string;
 }
 
-const { pathname = "" } = Astro.props;
-const isCurrent = (href: string) =>
-  pathname === href || pathname.startsWith(href + "/") ? "page" : undefined;
+const { pathname = "/" } = Astro.props;
+const navigationResult = getPrimaryNavigationState(pathname);
+if (!navigationResult.ok) {
+  throw new TypeError("Invalid primary navigation state.");
+}
+const primaryNavigation = navigationResult.value;
+const navigationIcons = Object.freeze({
+  "/tags": Tags,
+  "/graph": Waypoints,
+  "/resume": FileText,
+  "/portfolio": BriefcaseBusiness,
+}) as Readonly<Record<string, string>>;
 ---
 
 <header class="site-header">
@@ -17,15 +34,22 @@ const isCurrent = (href: string) =>
     <span class="nav-icon" set:html={Split} />
     obsidian-press
   </a>
-  <nav class="desktop-nav">
-    <a href="/tags" class="site-nav-link" aria-current={isCurrent("/tags")}>
-      <span class="nav-icon" set:html={Tags} />
-      Tags
-    </a>
-    <a href="/graph" class="site-nav-link" aria-current={isCurrent("/graph")}>
-      <span class="nav-icon" set:html={Waypoints} />
-      Graph
-    </a>
+  <nav class="desktop-nav" aria-label="주요 탐색">
+    {primaryNavigation.map((item) => (
+      <a
+        href={item.href}
+        class="site-nav-link"
+        aria-current={item.current ? "page" : undefined}
+        data-testid={`primary-navigation-link-${item.href.slice(1)}`}
+      >
+        <span
+          class="nav-icon"
+          aria-hidden="true"
+          set:html={navigationIcons[item.href]}
+        />
+        {item.label}
+      </a>
+    ))}
     <button class="search-trigger" aria-label="검색 열기" data-search-open>
       <span class="nav-icon" set:html={Search} />
       <kbd>⌘K</kbd>
@@ -37,14 +61,7 @@ const isCurrent = (href: string) =>
       <span class="nav-icon" set:html={Search} />
     </button>
     <ThemeToggle client:load />
-    <MobileNav
-      client:load
-      pathname={pathname}
-      links={[
-        { href: "/tags", label: "Tags" },
-        { href: "/graph", label: "Graph" },
-      ]}
-    />
+    <MobileNav items={primaryNavigation} />
   </div>
 </header>
 

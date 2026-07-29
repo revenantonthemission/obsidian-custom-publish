@@ -120,7 +120,7 @@ declare module 'astro:content' {
 		: any;
 
 	type DataEntryMap = {
-		
+
 	};
 
 	type ExtractLoaderTypes<T> = T extends import('astro/loaders').LiveLoader<
