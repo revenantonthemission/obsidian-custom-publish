@@ -631,9 +631,22 @@ Do not change external Vault, deployment, push or merge state without separate a
 - **Artifacts Generated**: `aidlc-docs/construction/u3-quality-gate-and-ci-integration/nfr-requirements/nfr-requirements.md` (NFR-U3-001~008 + the §5.9 browser/viewport/accessibility/PDF matrix + CI evidence summary) and `tech-stack-decisions.md` (zero new dependencies, existing-stack usage table, Jenkins core-syntax-only/no-plugin record, PBT-09 N/A).
 - **Independent Review**: PASS — 0 blockers, 1 minor, 5 notes. Minor fixed: the dependency-zero traceability was re-anchored to verification-orchestration §4 Mutation Boundary (AR-U3-03 alone governs placement, not dependencies). Three notes encoded: the U1 matrix row now states profile-cross-browser is excluded from chromium (its `testIgnore`); NFR-U3-002 now marks NFR-008's remaining no-JS aspects (확장 상세, 인쇄) as staying U1-owned; NFR-U3-001 now records that the site PBT runner raises run count 100→1,000 when a `CI` env var is defined, a precondition to check when the Jenkins baseline is measured. Two notes accepted as-is: the 2× regression threshold concretizes Q1-A's own example; the 195 unit-test figure is a faithful transcription of the U2 Step 15 record (static count 187 + 3 runtime-expanding `test.each`).
 
+## U3 NFR Requirements — Approved
+
+- **Approved** on 2026-07-29 with the exact user response `"승인"` (commit `414eff5` carried the validated answers, both artifacts and the review record). U3 NFR Requirements is complete; its plan is marked 완료 및 승인됨.
+
+## U3 NFR Design Status
+
+- **Started**: 2026-07-29, immediately after the NFR Requirements approval.
+- **Execution Decision**: EXECUTE; unit-of-work §5.9 requires network-independent orchestration, deterministic reports, seed propagation and failure semantics.
+- **Plan**: `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-nfr-design-plan.md`.
+- **Questions Generated**: 5 — Verify stage internal structure (single sequential stage vs Rust ∥ site parallel sub-stages), the gap-adapter local command surface (a new narrow npm script vs folding into existing `test:e2e`/`test:unit`), the CI seed policy (no injection/framework default vs fixed seed), the archiveArtifacts implementation seat (Verify-stage `post { failure }` with `allowEmptyArchive` vs pipeline-global post), and the evidence-mapping/ST-E04-report form (AI-DLC markdown with reproducible references vs parallel machine-readable JSON).
+- **Grounding**: All five questions operate strictly inside the approved FD/NFR envelope — Verify placement/content, CI scope, seed-evidence form, dependency-zero and Jenkins-core-syntax bounds are listed as not reopenable.
+- **Mutation Boundary**: AI-DLC documentation only.
+
 ## Next Step
 
-The U3 NFR Requirements artifact approval gate is open: approve to proceed to U3 NFR Design, or request changes to the two nfr-requirements artifacts. No push, external Vault edit, deployment or merge is authorized at this gate.
+Answer the 5 questions in `aidlc-docs/construction/plans/u3-quality-gate-and-ci-integration-nfr-design-plan.md` (one letter per `[Answer]:` tag; `X` with inline design), then reply that answers are complete. After validation, `nfr-design-patterns.md` and `logical-components.md` are generated under `aidlc-docs/construction/u3-quality-gate-and-ci-integration/nfr-design/` and the standard approval gate is presented. No push, external Vault edit, deployment or merge is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
