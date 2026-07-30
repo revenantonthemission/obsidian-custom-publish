@@ -708,9 +708,15 @@ Do not change external Vault, deployment, push or merge state without separate a
 
 - **Authorized** on 2026-07-30 with the exact user response `"승인"`: the docs-only `--no-ff` merge of the remaining journal commits into `develop`, the same develop → main reflection, and the push of both branches are performed immediately after this record is committed (riding inside the merge). No deployment, no external Vault edit.
 
+## Integrated Build and Test — Executed (2026-07-30)
+
+- **Instructed** with the exact user response "Integrated Build and Test 단계를 실행해 주세요". Executed once against a tree proven byte-identical to merged `develop` (`700766c`); record: `aidlc-docs/construction/integrated-build-and-test.md`.
+- **All gates green**: just test 19 suites; `just build` against the real Vault (140 posts + 1 homepage → 221 pages, no deploy command; tracked `site/public` JSONs restored after); `just crossunit` 7,330 references + smoke 8/8; unit 16/195; pbt 6/37 seed `-656865565`; astro check 0 errors/6 hints; e2e both date cases pass; resume:pdf:verify surfaceParity pass; Jenkins minimal verification referenced from st-e04-report §7.1 (seed `1804141478` @ 1,000 runs, Deploy skipped). No story reopened; ST-E04 closure confirmed at this handoff.
+- **One real defect found and fixed (behavior-preserving)**: the Justfile `preprocess`/`deploy-preprocess` recipes passed `{{vault}}` unquoted, so the real space-containing `VAULT_PATH` split into multiple arguments and `just build`/`just preprocess` could never have worked against the documented production path (latent — only the space-free fixture default had ever been used; Jenkins is unaffected since it quotes the binary call directly). Both recipes now quote the variable.
+
 ## Next Step
 
-None — the AI-DLC construction is complete: U1, U2 and U3 each closed five approved Construction stages and merged; ST-E04 is closed with real Jenkins evidence. Operational life continues outside the staged workflow: the nightly cron deploys from develop with `RUN_DEPLOY` defaulting to true, `RUN_DEPLOY=false` remains the standing validation path, and the recorded residuals (U1 rollback-arm live evidence, the cosmetic post-success message, the deploy-authority risk register) await their own occasions.
+The Integrated Build and Test records and the Justfile quoting fix live on the feature branch. **Authorized** on 2026-07-30 with the exact user response `"승인"` — the final merge (including the two-line Justfile quoting fix), main reflection and push are performed immediately after this record is committed. No deployment or external Vault edit is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
