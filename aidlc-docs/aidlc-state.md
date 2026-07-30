@@ -716,7 +716,7 @@ Do not change external Vault, deployment, push or merge state without separate a
 
 ## Next Step
 
-The Integrated Build and Test records and the Justfile quoting fix live on the feature branch. A final `--no-ff` merge into `develop` (then the same main reflection and push) is proposed — note this one carries **one code change** (the two-line Justfile quoting fix), not docs only. No deployment or external Vault edit is authorized.
+The Integrated Build and Test records and the Justfile quoting fix live on the feature branch. **Authorized** on 2026-07-30 with the exact user response `"승인"` — the final merge (including the two-line Justfile quoting fix), main reflection and push are performed immediately after this record is committed. No deployment or external Vault edit is authorized.
 
 **Step 23 attempt 1 (stopped, no promotion).** Three prepare runs were made and none completed. All three failures were wiring defects in the Step 22 CLI/coordinator, and each had the same shape — a return value whose structure was assumed rather than checked. No tracked file was touched: `public/resume.pdf` is still absent, and no release journal or lock was ever created, because prepare takes neither.
 
