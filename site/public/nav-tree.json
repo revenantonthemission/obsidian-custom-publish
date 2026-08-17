@@ -6,14 +6,14 @@
       "is_hub": true,
       "children": [
         {
-          "slug": "cidr-블록-설계",
-          "title": "CIDR 블록 설계",
+          "slug": "cidr-블록-설계",
+          "title": "CIDR 블록 설계",
           "is_hub": false,
           "children": []
         },
         {
-          "slug": "dhcp와-vpc-dns",
-          "title": "DHCP와 VPC DNS",
+          "slug": "dhcp와-vpc-dns",
+          "title": "DHCP와 VPC DNS",
           "is_hub": false,
           "children": []
         },
@@ -84,64 +84,20 @@
           "children": []
         },
         {
-          "slug": "vpc-라우팅-테이블",
-          "title": "VPC 라우팅 테이블",
+          "slug": "vpc-라우팅-테이블",
+          "title": "VPC 라우팅 테이블",
           "is_hub": false,
           "children": []
         },
         {
-          "slug": "서브넷-아키텍처",
-          "title": "서브넷 아키텍처",
+          "slug": "서브넷-아키텍처",
+          "title": "서브넷 아키텍처",
           "is_hub": false,
           "children": []
         },
         {
-          "slug": "하이브리드-연결",
-          "title": "하이브리드 연결",
-          "is_hub": false,
-          "children": []
-        }
-      ]
-    },
-    {
-      "slug": "c",
-      "title": "C",
-      "is_hub": true,
-      "children": [
-        {
-          "slug": "c-프로그램을-만드는-과정",
-          "title": "C 프로그램을 만드는 과정",
-          "is_hub": false,
-          "children": []
-        },
-        {
-          "slug": "자료형c",
-          "title": "자료형(C)",
-          "is_hub": false,
-          "children": []
-        },
-        {
-          "slug": "전처리",
-          "title": "전처리",
-          "is_hub": false,
-          "children": []
-        },
-        {
-          "slug": "전처리기-지시자",
-          "title": "전처리기 지시자",
-          "is_hub": false,
-          "children": []
-        }
-      ]
-    },
-    {
-      "slug": "dart",
-      "title": "Dart",
-      "is_hub": true,
-      "children": [
-        {
-          "slug": "기본-구조",
-          "title": "기본 구조",
+          "slug": "하이브리드-연결",
+          "title": "하이브리드 연결",
           "is_hub": false,
           "children": []
         }
@@ -226,6 +182,12 @@
           "children": []
         },
         {
+          "slug": "non-unified-memory-access",
+          "title": "Non-Unified Memory Access",
+          "is_hub": false,
+          "children": []
+        },
+        {
           "slug": "overlayfs",
           "title": "OverlayFS",
           "is_hub": false,
@@ -274,6 +236,12 @@
           "children": []
         },
         {
+          "slug": "unified-memory-access",
+          "title": "Unified Memory Access",
+          "is_hub": false,
+          "children": []
+        },
+        {
           "slug": "virtual-machine",
           "title": "Virtual Machine",
           "is_hub": false,
@@ -299,10 +267,71 @@
       "is_hub": true,
       "children": [
         {
+          "slug": "c",
+          "title": "C",
+          "is_hub": true,
+          "children": [
+            {
+              "slug": "c-프로그램을-만드는-과정",
+              "title": "C 프로그램을 만드는 과정",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "genericc",
+              "title": "Generic(C)",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "함수c",
+              "title": "함수(C)",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "자료형c",
+              "title": "자료형(C)",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "전처리",
+              "title": "전처리",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "전처리기-지시자",
+              "title": "전처리기 지시자",
+              "is_hub": false,
+              "children": []
+            }
+          ]
+        },
+        {
           "slug": "rust",
           "title": "Rust",
           "is_hub": true,
           "children": [
+            {
+              "slug": "genericrust",
+              "title": "Generic(Rust)",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "iterator",
+              "title": "Iterator",
+              "is_hub": false,
+              "children": []
+            },
+            {
+              "slug": "test",
+              "title": "Test",
+              "is_hub": false,
+              "children": []
+            },
             {
               "slug": "trait",
               "title": "Trait",
@@ -379,6 +408,12 @@
       "is_hub": true,
       "children": [
         {
+          "slug": "generic-programming",
+          "title": "Generic Programming",
+          "is_hub": false,
+          "children": []
+        },
+        {
           "slug": "object-oriented-programming",
           "title": "Object-Oriented Programming",
           "is_hub": false,
@@ -387,10 +422,23 @@
       ]
     },
     {
-      "slug": "rust",
-      "title": "Rust",
+      "slug": "딥러닝",
+      "title": "딥러닝",
       "is_hub": true,
-      "children": []
+      "children": [
+        {
+          "slug": "gradient-descent",
+          "title": "Gradient Descent",
+          "is_hub": false,
+          "children": []
+        },
+        {
+          "slug": "transformer",
+          "title": "Transformer",
+          "is_hub": false,
+          "children": []
+        }
+      ]
     },
     {
       "slug": "내-멋대로-맛보기",
@@ -684,14 +732,32 @@
           "children": []
         },
         {
+          "slug": "heap-sort",
+          "title": "Heap Sort",
+          "is_hub": false,
+          "children": []
+        },
+        {
+          "slug": "karatsuba-multiplication",
+          "title": "Karatsuba Multiplication",
+          "is_hub": false,
+          "children": []
+        },
+        {
+          "slug": "master-theorem",
+          "title": "Master Theorem",
+          "is_hub": false,
+          "children": []
+        },
+        {
           "slug": "minimax-algorithm",
           "title": "Minimax Algorithm",
           "is_hub": false,
           "children": []
         },
         {
-          "slug": "monte-carlo-tree-searchmcts",
-          "title": "Monte Carlo Tree Search(MCTS)",
+          "slug": "monte-carlo-tree-search",
+          "title": "Monte Carlo Tree Search",
           "is_hub": false,
           "children": []
         },
@@ -710,6 +776,12 @@
         {
           "slug": "stack",
           "title": "Stack",
+          "is_hub": false,
+          "children": []
+        },
+        {
+          "slug": "strassen-algorithm",
+          "title": "Strassen Algorithm",
           "is_hub": false,
           "children": []
         },
@@ -783,12 +855,5 @@
       ]
     }
   ],
-  "orphans": [
-    {
-      "slug": "passion-project",
-      "title": "Passion Project",
-      "is_hub": false,
-      "children": []
-    }
-  ]
+  "orphans": []
 }

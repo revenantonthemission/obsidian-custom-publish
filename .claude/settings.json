@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx astro check)",
+      "Bash(npm run test:unit)",
+      "Bash(npm run test:pbt)",
+      "Bash(npx vitest run)",
+      "Bash(cargo test)",
+      "Bash(cargo test *)",
+      "Bash(cargo check)",
+      "Bash(launchctl print *)",
+      "mcp__claude_ai_Gmail__search_threads"
+    ]
+  }
+}

@@ -19,3 +19,6 @@ fixtures/vault/attachment/*.png
 
 # Written by Puppeteer's postinstall during `npm ci`, not authored here.
 .puppeteer-config.json
+
+# Session worktrees are nested checkouts of this repo — never commit them.
+.claude/worktrees/
