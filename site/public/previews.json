@@ -24,7 +24,7 @@
     "title": "Agile Software Developement"
   },
   "aws": {
-    "summary": "- VPC @2026-03-05 - CIDR 블록 설계 @2026-03-05 - 서브넷 아키텍처 @2026-03-05 - DHCP와 VPC DNS @2026-03-05 - VPC 라우팅 테이블 @2026-03-05 - Internet Gateway...",
+    "summary": "- VPC - CIDR 블록 설계 - 서브넷 아키텍처 - DHCP와 VPC DNS - VPC 라우팅 테이블 - Internet Gateway - NAT Gateway - Elastic IP - Security Group - NACL - VPC Flow Logs -...",
     "tags": [
       "aws"
     ],
@@ -49,7 +49,7 @@
     "title": "Best-First Search"
   },
   "boyce-codd-normal-form": {
-    "summary": "Normalization에서 살펴본 3NF의 조건을 다시 정리하면 다음과 같다.",
+    "summary": "정규화에서 살펴본 3NF의 조건을 다시 정리하면 다음과 같다.",
     "tags": [
       "database",
       "normalization"
@@ -66,7 +66,7 @@
     "title": "Breadth-First Search"
   },
   "c": {
-    "summary": "+ C 프로그램을 만드는 과정 + 전처리 + 자료형 + 전처리기 지시자 + 빌드 시스템 (예정) + 제네릭 매크로 (예정) + 함수 (예정) + 포인터 (예정) + 구조체 (예정) 추후 업데이트됩니다.",
+    "summary": "+ C 프로그램을 만드는 과정 + 전처리 + 자료형 + 함수 + 전처리기 지시자 + 제네릭 매크로 + 빌드 시스템 (예정) + 포인터 (예정) + 구조체 (예정) 추후 업데이트됩니다.",
     "tags": [
       "c",
       "programminglanguage"
@@ -89,14 +89,14 @@
     ],
     "title": "Capability Maturity Model Integration"
   },
-  "cidr-블록-설계": {
+  "cidr-블록-설계": {
     "summary": "CIDR(Classless Inter-Domain Routing)[^cidr-definition]은 IP 주소 범위를 표기하는 방법이다.",
     "tags": [
       "aws",
       "network",
       "cloud"
     ],
-    "title": "CIDR 블록 설계"
+    "title": "CIDR 블록 설계"
   },
   "completely-fair-scheduler": {
     "summary": "스케줄러의 근본적인 과제는 한정된 CPU 시간을 여러 태스크에 배분하는 것이다.",
@@ -125,7 +125,7 @@
     "title": "Configuration Management"
   },
   "container": {
-    "summary": "컨테이너container란 호스트 OS의 커널을 공유하면서, 파일 시스템·네트워크·프로세스 ID 등을 격리하여 독립된 실행 환경을 제공하는 기술이다.",
+    "summary": "컨테이너(container)란 호스트 OS의 커널을 공유하면서, 파일 시스템·네트워크·프로세스 ID 등을 격리하여 독립된 실행 환경을 제공하는 기술이다.",
     "tags": [
       "os",
       "linux",
@@ -134,7 +134,7 @@
     "title": "Container"
   },
   "context-switch": {
-    "summary": "컨텍스트context란 CPU가 특정 태스크의 실행을 재개하기 위해 필요한 모든 상태 정보의 총합이다.",
+    "summary": "컨텍스트(context)란 CPU가 특정 태스크의 실행을 재개하기 위해 필요한 모든 상태 정보의 총합이다.",
     "tags": [
       "os",
       "computerarchitecture",
@@ -168,14 +168,6 @@
     ],
     "title": "Critical Path Method"
   },
-  "dart": {
-    "summary": "+ 첫 만남 + Dart 노트 (예정) + Flutter 노트 (예정)",
-    "tags": [
-      "dart",
-      "programminglanguage"
-    ],
-    "title": "Dart"
-  },
   "database-management-system": {
     "summary": "과거부터 기업이나 정부는 다수의 이용자들에게 정보를 제공하거나 내부에서 필요로 하는 정보를 체계적으로 보관할 필요가 있었다.",
     "tags": [
@@ -207,14 +199,14 @@
     ],
     "title": "DevOps"
   },
-  "dhcp와-vpc-dns": {
+  "dhcp와-vpc-dns": {
     "summary": "VPC 내 인스턴스가 네트워크에 합류할 때 TCP/IP 설정을 자동으로 구성하는 것이 DHCP(Dynamic Host Configuration Protocol) 옵션 세트다.",
     "tags": [
       "aws",
       "network",
       "cloud"
     ],
-    "title": "DHCP와 VPC DNS"
+    "title": "DHCP와 VPC DNS"
   },
   "earliest-eligible-virtual-deadline-first": {
     "summary": "CFS의 태스크 선택 원칙은 \"레드-블랙 트리의 가장 왼쪽에 위치한 노드(최소 vruntime)를 고른다\"로 요약된다.",
@@ -254,7 +246,8 @@
     "tags": [
       "os",
       "linux",
-      "computerarchitecture"
+      "computerarchitecture",
+      "process"
     ],
     "title": "exec()"
   },
@@ -293,6 +286,43 @@
     ],
     "title": "Gateway Endpoint"
   },
+  "generic-programming": {
+    "summary": "배열에서 최솟값을 찾는 알고리즘을 생각해 보자.",
+    "tags": [
+      "programmingparadigm",
+      "typesystem"
+    ],
+    "title": "Generic Programming"
+  },
+  "genericc": {
+    "summary": "C++에는 함수 오버로딩과 템플릿이 있고, 러스트에는 제네릭과 트레이트가 있다.",
+    "tags": [
+      "programminglanguage",
+      "c",
+      "typesystem"
+    ],
+    "title": "Generic(C)"
+  },
+  "genericrust": {
+    "summary": "아래 두 함수는 슬라이스에서 최댓값을 찾는 동일한 로직이다.",
+    "tags": [
+      "programminglanguage",
+      "rust",
+      "typesystem"
+    ],
+    "title": "Generic(Rust)"
+  },
+  "gradient-descent": {
+    "summary": "지도 학습supervised learning의 목표는 입력 $x$에서 출력 $y$를 예측하는 함수 $f\\theta$를 찾는 것이다.",
+    "tags": [
+      "machine-learning",
+      "optimization",
+      "gradient-descent",
+      "supervised-learning",
+      "neural-network"
+    ],
+    "title": "Gradient Descent"
+  },
   "heap": {
     "summary": "힙에는 두 가지 변형이 있다.",
     "tags": [
@@ -300,8 +330,15 @@
     ],
     "title": "Heap"
   },
+  "heap-sort": {
+    "summary": "힙 정렬은 우선순위 큐에서 원소를 하나씩 꺼내면 자동으로 정렬된다는 관찰에서 출발한다.",
+    "tags": [
+      "algorithm"
+    ],
+    "title": "Heap Sort"
+  },
   "hypervisor": {
-    "summary": "가상머신에서 하이퍼바이저의 유형(Type 0/1/2)과 기본 개념을 다루었으므로, 여기서는 하이퍼바이저가 내부적으로 무엇을 해야 하는지에 집중한다.",
+    "summary": "가상 머신을 만들고 관리하는 소프트웨어를 하이퍼바이저[^hypervisor]라 부른다.",
     "tags": [
       "os",
       "virtualization",
@@ -329,26 +366,54 @@
     "title": "Internet Gateway"
   },
   "ipa": {
-    "summary": "IPAInternational Phonetic Alphabet는 현존하는 모든 언어의 말소리Phone를 표현하는 표준적인 방법이며, 언어학에서 주로 사용하는 음성 기록 체계다.",
+    "summary": "IPA(International Phonetic Alphabet, 국제 음성 기호)는 현존하는 모든 언어의 말소리Phone를 표현하는 표준적인 방법이며, 언어학에서 주로 사용하는 음성 기록 체계다.",
     "tags": [
       "certification",
       "linguistics"
     ],
     "title": "IPA"
   },
+  "iterator": {
+    "summary": "러스트에서 반복자는 Iterator 트레이트를 구현한 타입이다.",
+    "tags": [
+      "programminglanguage",
+      "rust",
+      "typesystem"
+    ],
+    "title": "Iterator"
+  },
+  "karatsuba-multiplication": {
+    "summary": "두 개의 $n$자리 정수 $x$와 $y$를 곱한다고 하자.",
+    "tags": [
+      "algorithm",
+      "divide-and-conquer",
+      "number-theory"
+    ],
+    "title": "Karatsuba Multiplication"
+  },
   "mac-address": {
-    "summary": "MACMedia Access Control 주소는 데이터 링크 계층(OSI 7계층에서 2계층)에서 통신을 위해 네트워크 인터페이스(NIC)에 할당된 물리적인 고유 식별 주소다.",
+    "summary": "MAC(Media Access Control, 매체 접근 제어) 주소는 데이터 링크 계층(OSI 7계층에서 2계층)에서 통신을 위해 네트워크 인터페이스(NIC)에 할당된 물리적인 고유 식별 주소다.",
     "tags": [
       "network"
     ],
     "title": "MAC Address"
   },
   "mapping-cardinality": {
-    "summary": "카디널리티Cardinality는 본래 수학에서 비롯된 개념으로, 집합의 크기를 의미한다.",
+    "summary": "카디널리티(Cardinality)는 본래 수학에서 비롯된 개념으로, 집합의 크기를 의미한다.",
     "tags": [
       "database"
     ],
     "title": "Mapping Cardinality"
+  },
+  "master-theorem": {
+    "summary": "병합 정렬의 시간 복잡도를 구한다고 하자.",
+    "tags": [
+      "algorithm",
+      "analysis",
+      "recurrence",
+      "divide-and-conquer"
+    ],
+    "title": "Master Theorem"
   },
   "measurement-and-analysis": {
     "summary": "측정지표Metric란, 시스템 컴포넌트, 프로세스가 특정 속성을 보유한 정도를 나타내는 정량적인 측정변수다.",
@@ -373,12 +438,12 @@
     ],
     "title": "Monitor"
   },
-  "monte-carlo-tree-searchmcts": {
+  "monte-carlo-tree-search": {
     "summary": "어떤 게임을 수행하는 컴퓨터 유저를 설계할 때, 기존의 핵심 알고리즘은 미니맥스 알고리즘이었다.",
     "tags": [
       "algorithm"
     ],
-    "title": "Monte Carlo Tree Search(MCTS)"
+    "title": "Monte Carlo Tree Search"
   },
   "multivalued-dependency": {
     "summary": "다음 릴레이션을 보자.",
@@ -407,6 +472,15 @@
     ],
     "title": "NAT Gateway"
   },
+  "non-unified-memory-access": {
+    "summary": "NUMA(Non-Unified Memory Access)는 멀티프로세서 시스템에서 메모리 접근 지연이 프로세서와 메모리의 물리적 위치 관계에 따라 달라지는 메모리 아키텍처를 말한다.",
+    "tags": [
+      "os",
+      "computerarchitecture",
+      "linux"
+    ],
+    "title": "Non-Unified Memory Access"
+  },
   "normalization": {
     "summary": "정규화를 이해하려면 먼저 \"나쁜 설계\"가 어떤 문제를 일으키는지 알아야 한다.",
     "tags": [
@@ -416,7 +490,7 @@
     "title": "Normalization"
   },
   "object-oriented-programming": {
-    "summary": "OOP에서 가장 기본적인 두 개념은 클래스class와 객체object(인스턴스instance)다.",
+    "summary": "OOP에서 가장 기본적인 두 개념은 클래스(class)와 객체object(인스턴스(instance))다.",
     "tags": [
       "programmingparadigm"
     ],
@@ -432,7 +506,7 @@
     "title": "Object-Relational Mapping"
   },
   "operating-system--computer-architecture": {
-    "summary": "+ 프로세스 @2026-03-16 + PCB @2026-03-05 + 컨텍스트 스위치 @2026-03-05 + 스레드 @2026-03-16 + 시스템 호출 @2026-03-05 + 스케줄러 @2026-03-05 + CFS @2026-03-05 + EEVDF @2026-03-05 + Inter-Process Communication @2026-03-05 + fork() @2026-03-05 + exec() @2026-03-05 + 프로세스 종료 @2026-04-10 + 락 (예정) + 경쟁 조건 (예정) + 모니터 (예정) + 세마포어 (예정) + 최적화 장벽 (예정) + TLB @2026-03-05 + 메모리 관리 (예정) + UMA & NUMA (예정) + 가상화 + 하이퍼바이저 (예정) + 가상 머신 (예정) + Container @2026-03-16 + OverlayFS @2026-03-16 + 운영체제 (예정) + 커널 (예정) + POSIX (예정) + UNIX (예정) + ELF (예정) + API vs ABI (예정) 추후 업데이트됩니다.",
+    "summary": "+ 프로세스 + PCB + 컨텍스트 스위치 + 스레드 + 시스템 호출 + 스케줄러 + CFS + EEVDF + Inter-Process Communication + fork() + exec() + 프로세스 종료 + 모니터 + 세마포어 + 락 (예정) + 경쟁 조건 (예정) + 최적화 장벽 (예정) + TLB + UMA + NUMA + 가상화 + 하이퍼바이저 + 가상 머신 + Container + OverlayFS + 운영체제 (예정) + 커널 (예정) + POSIX (예정) + UNIX (예정) + ELF (예정) + ABI (예정) 추후 업데이트됩니다.",
     "tags": [
       "operatingsystem",
       "os",
@@ -457,11 +531,6 @@
     ],
     "title": "OverlayFS"
   },
-  "passion-project": {
-    "summary": "- GitHub - Résumé - Portfolio - Process Control Block @2026-03-05 - Trait @2026-03-05 - Scheduler @2026-03-05 - Security Group @2026-03-05 - Stack...",
-    "tags": [],
-    "title": "Passion Project"
-  },
   "priority-queue": {
     "summary": "우선순위 큐는 최소한 다음 세 가지 연산을 지원해야 한다.",
     "tags": [
@@ -484,7 +553,8 @@
     "tags": [
       "os",
       "computerarchitecture",
-      "linux"
+      "linux",
+      "process"
     ],
     "title": "Process"
   },
@@ -504,14 +574,14 @@
     "title": "Program Evaluation and Review Technique"
   },
   "programming-language": {
-    "summary": "+ C + Rust + Dart + JavaScript + Python + C++ (예정) + Java (예정) + Swift (예정) 추후 업데이트됩니다.",
+    "summary": "+ C + Rust + JavaScript(예정) + Python(예정) + C++ (예정) + Java (예정) + Swift (예정) 추후 업데이트됩니다.",
     "tags": [
       "programminglanguage"
     ],
     "title": "Programming Language"
   },
   "programming-paradigm": {
-    "summary": "+ 절차적 프로그래밍 (예정) + 함수형 프로그래밍 (예정) + 객체지향 프로그래밍 @2026-03-16 + 제네릭 프로그래밍 (예정)",
+    "summary": "+ 객체지향 프로그래밍 + 제네릭 프로그래밍 + 절차적 프로그래밍 (예정) + 함수형 프로그래밍 (예정)",
     "tags": [
       "programminglanguage",
       "paradigm",
@@ -566,7 +636,7 @@
     "title": "Requirements Management"
   },
   "rust": {
-    "summary": "+ 사전 준비 + 패키지, 크레이트, 모듈, 작업공간 + 함수 + 자료형 + 구조체 + 열거형 + 프로그램의 흐름을 통제하기 + 오류를 처리하는 방법 + 소유권 + 트레이트 + 테스트 (예정) + 제네릭 (예정) + 클로저 + 반복자 (예정) 추후 업데이트됩니다.",
+    "summary": "+ 사전 준비 + 패키지, 크레이트, 모듈, 작업공간 + 함수 + 자료형 + 구조체 + 열거형 + 프로그램의 흐름을 통제하기 + 오류를 처리하는 방법 + 소유권 + 트레이트 + 테스트 + 제네릭 + 클로저 + 반복자 추후 업데이트됩니다.",
     "tags": [
       "rust",
       "programminglanguage"
@@ -582,7 +652,7 @@
     "title": "Scheduler"
   },
   "security-group": {
-    "summary": "보안 그룹Security Group은 VPC 내 리소스의 네트워크 인터페이스(ENI)[^elastic-network-interface]에 적용되는 가상 방화벽이다.",
+    "summary": "보안 그룹(Security Group)은 VPC 내 리소스의 네트워크 인터페이스(ENI)[^elastic-network-interface]에 적용되는 가상 방화벽이다.",
     "tags": [
       "aws",
       "network",
@@ -592,7 +662,7 @@
     "title": "Security Group"
   },
   "semaphore": {
-    "summary": "세마포어Semaphore는 음이 아닌 정수 변수 $S$와, 이 변수에 대해 수행할 수 있는 두 개의 원자적 연산 $P$와 $V$로 구성되는 동기화 프리미티브다(Dijkstra, 1965).",
+    "summary": "세마포어(Semaphore)는 음이 아닌 정수 변수 $S$와, 이 변수에 대해 수행할 수 있는 두 개의 원자적 연산 $P$와 $V$로 구성되는 동기화 프리미티브다(Dijkstra, 1965).",
     "tags": [
       "os",
       "synchronization"
@@ -628,6 +698,15 @@
     ],
     "title": "Stack"
   },
+  "strassen-algorithm": {
+    "summary": "$n \\times n$ 행렬 $A$와 $B$의 곱 $C = AB$를 정의대로 계산하면 각 $C{ij} = \\sum{k=1}^{n} A{ik} B{kj}$에 $n$번의 곱셈이 들고, 원소가 $n^2$개이므로 총 $\\Theta(n^3)$번의 스칼라 곱셈이 필요하다.",
+    "tags": [
+      "algorithm",
+      "divide-and-conquer",
+      "linear-algebra"
+    ],
+    "title": "Strassen Algorithm"
+  },
   "system-call": {
     "summary": "현대 운영체제는 CPU의 이중 모드dual mode[^dual-mode]를 활용하여 커널과 사용자 프로그램을 분리한다.",
     "tags": [
@@ -637,13 +716,21 @@
     ],
     "title": "System Call"
   },
-  "thread": {
-    "summary": "스레드는 프로세스 내부의 흐름이다.",
+  "test": {
+    "summary": "테스트란, 테스트할 코드가 의도대로 기능하는지 검증하는 함수다.",
     "tags": [
-      "operatingsystem",
-      "concurrency",
+      "programminglanguage",
+      "rust"
+    ],
+    "title": "Test"
+  },
+  "thread": {
+    "summary": "스레드는 프로세스 내부의 독립적인 실행 흐름이다(Silberschatz, Galvin and Gagne, 2018).",
+    "tags": [
       "os",
-      "computerarchitecture"
+      "computerarchitecture",
+      "concurrency",
+      "thread"
     ],
     "title": "Thread"
   },
@@ -655,6 +742,17 @@
       "typesystem"
     ],
     "title": "Trait"
+  },
+  "transformer": {
+    "summary": "순환 신경망 (RNN)은 시퀀스 데이터를 처리하는 데 오랫동안 표준으로 쓰였다.",
+    "tags": [
+      "deep-learning",
+      "nlp",
+      "transformer",
+      "attention",
+      "neural-network"
+    ],
+    "title": "Transformer"
   },
   "transit-gateway": {
     "summary": "트랜짓 게이트웨이(TGW)는 대규모 네트워크의 복잡성을 해결하기 위한 중앙 집중형 허브다.",
@@ -673,6 +771,14 @@
       "linux"
     ],
     "title": "Translation Lookaside Buffer"
+  },
+  "unified-memory-access": {
+    "summary": "UMA(Unified Memory Access)는 멀티프로세서 시스템에서 모든 프로세서가 공유 메모리에 균일한 지연 시간으로 접근하는 메모리 아키텍처를 말한다.",
+    "tags": [
+      "os",
+      "computerarchitecture"
+    ],
+    "title": "Unified Memory Access"
   },
   "uniform-cost-search": {
     "summary": "너비 우선 탐색는 얕은 깊이의 노드부터 차례대로 확장한다.",
@@ -736,7 +842,7 @@
     "title": "VPC Flow Logs"
   },
   "vpc-peering": {
-    "summary": "VPC 피어링(Peering)은 두 VPC 사이에 1:1 직접 연결을 생성한다.",
+    "summary": "VPC 피어링은 두 VPC 사이에 1:1 직접 연결을 생성한다.",
     "tags": [
       "aws",
       "network",
@@ -744,14 +850,14 @@
     ],
     "title": "VPC Peering"
   },
-  "vpc-라우팅-테이블": {
+  "vpc-라우팅-테이블": {
     "summary": "라우팅 테이블(Route Table)은 패킷의 목적지 IP 주소를 보고 다음 홉(hop)을 결정하는 규칙의 집합이다.",
     "tags": [
       "aws",
       "network",
       "cloud"
     ],
-    "title": "VPC 라우팅 테이블"
+    "title": "VPC 라우팅 테이블"
   },
   "work-breakdown-structure": {
     "summary": "수많은 인력이 필요한 프로젝트는 매우 거대하고 프로젝트가 구현하고자 하는 기능을 가진 소프트웨어를 실제로 구현하고 소비자에게 전하기까지 굉장히 많은 업무가 필요하다.",
@@ -759,6 +865,41 @@
       "softwareengineering"
     ],
     "title": "Work Breakdown Structure"
+  },
+  "딥러닝": {
+    "summary": "+ 퍼셉트론 (예정) + 신경망 (예정) + 보편 근사 정리 (예정) + 역전파 (예정) + 경사 하강법 (예정) + 합성곱 신경망 (예정) + 순환 신경망 (예정) + 트랜스포머 + 지도 학습 (예정) + 비지도 학습 (예정) + 강화 학습 (예정) + 기계 학습 (예정) + 마르코프 결정 과정 (예정) + Q-러닝 (예정) + SARSA (예정) + 정책 경사 (예정) + DQN (예정) + RAG (예정) + 베이지안 스무딩 (예정) 추후 업데이트됩니다.",
+    "tags": [
+      "deep-learning",
+      "neural-network",
+      "machine-learning"
+    ],
+    "title": "딥러닝"
+  },
+  "서브넷-아키텍처": {
+    "summary": "서브넷(Subnet)은 VPC의 CIDR 블록을 더 작은 단위로 나눈 논리적 파티션이다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "서브넷 아키텍처"
+  },
+  "하이브리드-연결": {
+    "summary": "AWS Site-to-Site VPN은 인터넷을 통해 IPSec(Internet Protocol Security)[^ipsec-definition] 암호화 터널을 연결한다.",
+    "tags": [
+      "aws",
+      "network",
+      "cloud"
+    ],
+    "title": "하이브리드 연결"
+  },
+  "함수c": {
+    "summary": "프로그램을 작성하다 보면 같은 작업을 여러 곳에서 반복해야 하는 상황이 생긴다.",
+    "tags": [
+      "programminglanguage",
+      "c"
+    ],
+    "title": "함수(C)"
   },
   "개소리에-대하여-맛보기": {
     "summary": "『개소리에 대하여』[^on-bullshit-original-title]는 아주 얇은 책이다.",
@@ -770,20 +911,12 @@
     "title": "『개소리에 대하여』 맛보기"
   },
   "구조체rust": {
-    "summary": "struct User { active: bool, username: String, email: String, signincount: u64, } 구조체를 정의하기 위한 키워드는 struct이며, 다음으로 구조체의 이름을 정하고 중괄호{} 안에 구조체의 구성 요소인 필드field의 이름과 타입을 정의하면 된다.",
+    "summary": "구조체를 정의하기 위한 키워드는 struct이며, 다음으로 구조체의 이름을 정하고 중괄호{} 안에 구조체의 구성 요소인 필드(field)의 이름과 타입을 정의하면 된다.",
     "tags": [
       "rust",
       "programminglanguage"
     ],
     "title": "구조체(Rust)"
-  },
-  "기본-구조": {
-    "summary": "Dart로 프로그램을 작성하기 위해서는 우선 개발 환경을 만들어야 한다.",
-    "tags": [
-      "programminglanguage",
-      "dart"
-    ],
-    "title": "기본 구조"
   },
   "낭설을-대하는-태도": {
     "summary": "자주는 아니지만 가끔 볼 수 있는 일화 중에 일본의 소설가 나츠메 소세키夏目漱石에 대한 일화가 있다.",
@@ -794,7 +927,7 @@
     "title": "낭설을 대하는 태도"
   },
   "내-멋대로-맛보기": {
-    "summary": "+ 『사랑의 기술』 맛보기 + 『개소리에 대하여』 맛보기 + 전망 이론 (예정) 추후 업데이트됩니다.",
+    "summary": "+ 『사랑의 기술』 맛보기 + 『개소리에 대하여』 맛보기 추후 업데이트됩니다.",
     "tags": [
       "essay",
       "bookreview"
@@ -802,7 +935,7 @@
     "title": "내 멋대로 맛보기"
   },
   "데이터베이스": {
-    "summary": "- Database Management System @2026-03-24 - Entity-Relationship Model @2026-03-24 - Mapping Cardinality @2026-03-24 - 릴레이션 스키마 (예정) - 논리적 스키마 (예정) -...",
+    "summary": "- Database Management System - Entity-Relationship Model - Mapping Cardinality - 릴레이션 스키마 (예정) - 논리적 스키마 (예정) - 물리적 스키마 (예정) - 관계 대수 (예정) - 관계 해석...",
     "tags": [
       "database"
     ],
@@ -850,17 +983,8 @@
     ],
     "title": "사전 준비"
   },
-  "서브넷-아키텍처": {
-    "summary": "서브넷(Subnet)은 VPC의 CIDR 블록을 더 작은 단위로 나눈 논리적 파티션이다.",
-    "tags": [
-      "aws",
-      "network",
-      "cloud"
-    ],
-    "title": "서브넷 아키텍처"
-  },
   "소유권": {
-    "summary": "모든 프로그램은 작동하는 동안 운영체제로부터 메모리를 빌려오는데, 이 영역을 힙heap 영역이라 부른다.",
+    "summary": "모든 프로그램은 작동하는 동안 운영체제로부터 메모리를 빌려오는데, 이 영역을 힙(heap) 영역이라 부른다.",
     "tags": [
       "rust",
       "programminglanguage"
@@ -868,7 +992,7 @@
     "title": "소유권"
   },
   "소프트웨어-공학": {
-    "summary": "- 소프트웨어, 공학, 그리고 소프트웨어 공학 - DevOps @2025-12-08 - 소프트웨어의 표준 - Requirements Development - Use Case Modeling @2025-10-22 - Software Process @2025-10-23...",
+    "summary": "- 소프트웨어, 공학, 그리고 소프트웨어 공학 - DevOps - 소프트웨어의 표준 - Requirements Development - Use Case Modeling - Software Process - Capability Maturity Model...",
     "tags": [
       "softwareengineering"
     ],
@@ -889,7 +1013,7 @@
     "title": "소프트웨어 생명 주기"
   },
   "소프트웨어-테스팅": {
-    "summary": "테스트란, ==결함을 발견할 의도로 프로그램이나 시스템을 실행시키는 것== 혹은 ==테스트 대상의 특성을 발견하고 평가하기 위해 수행되는 일련의 활동==을 가리킨다.",
+    "summary": "테스트란, 결함을 발견할 의도로 프로그램이나 시스템을 실행시키는 것 혹은 테스트 대상의 특성을 발견하고 평가하기 위해 수행되는 일련의 활동을 가리킨다.",
     "tags": [
       "softwareengineering"
     ],
@@ -910,7 +1034,7 @@
     "title": "언어학"
   },
   "연결-리스트": {
-    "summary": "연결 리스트의 각 원소를 노드node라 부른다.",
+    "summary": "연결 리스트의 각 원소를 노드(node)라 부른다.",
     "tags": [
       "datastructure"
     ],
@@ -934,7 +1058,7 @@
     "title": "오류를 처리하는 방법"
   },
   "자료구조--알고리즘": {
-    "summary": "+ Computational Thinking (예정) + 자료구조의 개념 @2026-03-16 + 재귀 (예정) + 마스터 정리 (예정) + 분할 정복 (예정) + 그리디 알고리즘 (예정) + 비트마스크 (예정) + 배열 @2026-03-05 + 문자열 (예정) + 연결 리스트 @2026-03-05 + Stack @2026-03-05 + Queue @2026-03-05 + Heap @2026-03-05 + 최소 힙 (예정) + Priority Queue @2026-03-16 + 트리 (예정) + 그래프 (예정) + 연결 요소 (예정) + 해싱 (예정) + 이진 탐색 (예정) + Breadth-First Search @2026-03-16 + Depth-First Search @2026-03-16 + 깊이 제한 탐색 (예정) + 반복 깊이 탐색 (예정) + Uniform-Cost Search @2026-03-16 + Best-First Search @2026-03-16 + 양방향 탐색 (예정) + A @2026-03-05 + 언덕 오르기 탐색 (예정) + 지역 빔 탐색 (예정) + 합병 정렬 (예정) + 퀵 정렬 (예정) + 힙 정렬 (예정) + 벨만-포드 알고리즘 (예정) + KMP 알고리즘 (예정) + 크루스칼 알고리즘 (예정) + Minimax Algorithm @2026-02-18 + MCTS의 원리와 단계별 과정 @2026-02-18 + 몬테카를로 방법 @2026-03-16 + 유전 알고리즘 (예정) + 명제 논리 (예정) + 1차 논리 (예정) + DPLL (예정) + WalkSAT (예정) + 전방 연쇄 (예정) + 후방 연쇄 (예정) 추후 업데이트됩니다.",
+    "summary": "+ Computational Thinking + 자료구조의 개념 + 재귀 (예정) + 마스터 정리 + 분할 정복 (예정) + 그리디 알고리즘 (예정) + 비트마스크 (예정) + 배열 + 문자열 (예정) + 연결 리스트 + Stack + Queue + Heap + Priority Queue + 트리 (예정) + 그래프 (예정) + 연결 요소 (예정) + 해싱 (예정) + Breadth-First Search + Depth-First Search + A + Uniform-Cost Search + Best-First Search + 이진 탐색 (예정) + 깊이 제한 탐색 (예정) + 반복 깊이 탐색 (예정) + 양방향 탐색 (예정) + 언덕 오르기 탐색 (예정) + 지역 빔 탐색 (예정) - Strassen Algorithm - Karatsuba Multiplication + 힙 정렬 + 합병 정렬 (예정) + 퀵 정렬 (예정) + 벨만-포드 알고리즘 (예정) + KMP 알고리즘 (예정) + 크루스칼 알고리즘 (예정) + Minimax Algorithm + Monte Carlo Tree Search + 몬테카를로 방법 + 유전 알고리즘 (예정) + 명제 논리 (예정) + 1차 논리 (예정) + DPLL (예정) + WalkSAT (예정) + 전방 연쇄 (예정) + 후방 연쇄 (예정) 추후 업데이트됩니다.",
     "tags": [
       "datastructure",
       "algorithm"
@@ -957,7 +1081,7 @@
     "title": "자료형(C)"
   },
   "자료형rust": {
-    "summary": "일반적인 컴퓨터 언어가 그렇듯, 러스트의 모든 값은 특정한 타입type을 가진다.",
+    "summary": "일반적인 컴퓨터 언어가 그렇듯, 러스트의 모든 값은 특정한 타입(type)을 가진다.",
     "tags": [
       "rust",
       "programminglanguage"
@@ -981,14 +1105,14 @@
     "title": "전처리기 지시자"
   },
   "컴퓨터-네트워크": {
-    "summary": "- OSI 모형 @2025-12-05 - MAC Address @2025-11-02 - Address Resolution Protocol @2025-11-03 - 마인크래프트로 배우는 서버 이야기 @2025-10-15 - CORS가 뭐죠.",
+    "summary": "- OSI 모형 - MAC Address - Address Resolution Protocol - 마인크래프트로 배우는 서버 이야기 - CORS가 뭐죠.",
     "tags": [
       "network"
     ],
     "title": "컴퓨터 네트워크"
   },
   "클로저rust": {
-    "summary": "// unwraporelse를 사용하면 Result가 Ok일 때 Ok 안의 값을 반환하고, // Err일 때 클로저 안의 코드를 호출한다.",
+    "summary": "위에 주어진 예시 코드에서 unwraporelse 메서드 안에 클로저 표현식이 사용되었는데, 이 메서드를 호출한 인스턴스가 의도된 타입이 아닐 때 인자로 주어진 클로저를 실행하게 된다.",
     "tags": [
       "rust",
       "programminglanguage"
@@ -1012,22 +1136,14 @@
     "title": "프로그램의 흐름을 통제하기"
   },
   "프로세스-종료": {
-    "summary": "프로세스가 모든 일을 마치고 종료될 때, 부모 프로세스는 상태 값을 받을 수 있고 자식 프로세스에게 할당됐던 자원들이 운영체제에 의해 해제된다.",
+    "summary": "프로세스 종료는 자발적 종료와 비자발적 종료로 나뉜다.",
     "tags": [
       "os",
       "linux",
-      "computerarchitecture"
+      "computerarchitecture",
+      "process"
     ],
     "title": "프로세스 종료"
-  },
-  "하이브리드-연결": {
-    "summary": "AWS Site-to-Site VPN은 인터넷을 통해 IPSec(Internet Protocol Security)[^ipsec-definition] 암호화 터널을 연결한다.",
-    "tags": [
-      "aws",
-      "network",
-      "cloud"
-    ],
-    "title": "하이브리드 연결"
   },
   "한중-청년의-상호-혐오를-어떻게-해결할-것인가": {
     "summary": "1992년 한 · 중 양국이 수교를 맺은 지 어느덧 30년 이상이 지났다.",

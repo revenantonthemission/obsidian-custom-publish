@@ -1,9 +1,11 @@
-vault       := env("VAULT_PATH", "./fixtures/vault")
-content     := "./content"
-site_dir    := "./site"
-aws_profile := env("AWS_PROFILE", "mfa")
-s3_bucket   := env("S3_BUCKET", "obsidian-custom-s3")
-cf_dist_id  := env("CF_DIST_ID", "E35HZFVGD0OJ04")
+vault    := env("VAULT_PATH", "./fixtures/vault")
+content  := "./content"
+site_dir := "./site"
+web_root := env("WEB_ROOT", env("HOME") / "Sites/obsidian-blog")
+
+# deploy publishes the real vault (dev/test recipes keep the fixtures default)
+publish_vault   := env("VAULT_PATH", env("HOME") / "Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes")
+puppeteer_chrome := env("PUPPETEER_EXECUTABLE_PATH", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 build: preprocess site-build
 
@@ -23,11 +25,15 @@ site-build:
     cd {{site_dir}} && npx astro build
 
 deploy: deploy-preprocess site-build
-    AWS_PROFILE={{aws_profile}} aws s3 sync {{site_dir}}/dist/ s3://{{s3_bucket}} --delete
-    AWS_PROFILE={{aws_profile}} aws cloudfront create-invalidation --distribution-id {{cf_dist_id}} --paths "/*"
+    mkdir -p "{{web_root}}"
+    rsync -a --delete {{site_dir}}/dist/ "{{web_root}}/"
+
+# Foreground run of the local server (launchd runs the same script as dev.rvnnt.blog)
+serve:
+    node {{site_dir}}/scripts/local-server.mjs "{{web_root}}"
 
 deploy-preprocess:
-    cargo run --release --manifest-path preprocessor/Cargo.toml -- --stamp-published "{{vault}}" {{content}}
+    PUPPETEER_EXECUTABLE_PATH="{{puppeteer_chrome}}" cargo run --release --manifest-path preprocessor/Cargo.toml -- --stamp-published "{{publish_vault}}" {{content}}
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
     cp {{content}}/previews.json {{site_dir}}/public/previews.json

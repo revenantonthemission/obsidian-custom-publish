@@ -14,10 +14,7 @@ pipeline {
     }
 
     environment {
-        AWS_REGION    = 'ap-northeast-2'
-        AWS_PROFILE   = 'mfa'
-        S3_BUCKET     = 'obsidian-custom-s3'
-        CF_DIST_ID    = 'E35HZFVGD0OJ04'
+        WEB_ROOT      = "${env.BLOG_WEB_ROOT ?: '/Users/revenantonthemission/Sites/obsidian-blog'}"
         VAULT_PATH    = "${env.OBSIDIAN_VAULT_PATH ?: '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'}"
         // mmdc renders Mermaid through puppeteer, which needs a browser. The
         // local checkout supplies one via `.puppeteer-config.json`, but that
@@ -89,9 +86,10 @@ pipeline {
                 expression { params.RUN_DEPLOY }
             }
             steps {
-                sh 'aws sts get-caller-identity > /dev/null 2>&1 || (echo "ERROR: AWS credentials expired or invalid" && exit 1)'
-                sh "aws s3 sync site/dist/ s3://${S3_BUCKET} --delete"
-                sh "aws cloudfront create-invalidation --distribution-id ${CF_DIST_ID} --paths '/*'"
+                // Local publish: the launchd service (dev.rvnnt.blog) serves WEB_ROOT,
+                // so a synced tree is live immediately — no invalidation step.
+                sh 'mkdir -p "${WEB_ROOT}"'
+                sh 'rsync -a --delete site/dist/ "${WEB_ROOT}/"'
             }
         }
     }
