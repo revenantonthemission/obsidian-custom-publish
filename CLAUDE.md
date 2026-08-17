@@ -1,7 +1,7 @@
 # obsidian-blog (obsidian-press)
 
 Obsidian Publish replacement: Rust preprocessor + Astro static site.
-Served locally at http://127.0.0.1:8080 (launchd service `dev.rvnnt.blog`; AWS decommissioned)
+Self-hosted on this machine: https://rvnnt.dev via Cloudflare Tunnel → launchd service `dev.rvnnt.blog` on 127.0.0.1:8080 (AWS decommissioned)
 
 ## Architecture
 - `preprocessor/` — Rust CLI, 5-pass pipeline (scan → link → transform → search → output). Shared regexes in `syntax.rs`, preview generation in `preview.rs`, nav tree in `nav_tree.rs`
@@ -28,7 +28,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Server: `site/scripts/local-server.mjs` (dependency-free Node, clean-URL rewrite + 404.html, port 8080, HOST=0.0.0.0 — reachable from LAN)
 - launchd service: `dev.rvnnt.blog` (`~/Library/LaunchAgents/dev.rvnnt.blog.plist`, KeepAlive; node path is the absolute nvm binary — update plist when node version changes)
 - Logs: `~/Library/Logs/obsidian-blog-server.log`; restart: `launchctl kickstart -k gui/$UID/dev.rvnnt.blog`
-- Site: http://127.0.0.1:8080 — rvnnt.dev DNS (Cloudflare) no longer resolves to anything
+- Public: https://rvnnt.dev — Cloudflare Tunnel `obsidian-blog` (launchd `dev.rvnnt.tunnel`, config `~/.cloudflared/obsidian-blog.yml` — dedicated file, the shared `~/.cloudflared/config.yml` belongs to other tunnels on this machine; logs `~/Library/Logs/obsidian-blog-tunnel.log`); DNS CNAME managed by `cloudflared tunnel route dns`
 - Ports: blog 8080 (0.0.0.0), Jenkins 8081 (127.0.0.1 only, set in both `~/Library/LaunchAgents/homebrew.mxcl.jenkins.plist` and the brew template at `/opt/homebrew/opt/jenkins/` — re-apply after `brew upgrade jenkins` regenerates the template), astro dev 4321
 
 ## Git Flow
