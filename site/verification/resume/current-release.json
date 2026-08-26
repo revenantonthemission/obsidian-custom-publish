@@ -2,52 +2,52 @@
   "schemaVersion": 1,
   "kind": "resume-release",
   "result": "approved",
-  "assembledAt": "2026-07-26T12:51:04.855Z",
+  "assembledAt": "2026-08-26T15:46:15.231Z",
   "publicTarget": {
     "href": "/resume.pdf",
     "repositoryPath": "site/public/resume.pdf"
   },
-  "candidateId": "e36d47c64b61c27cbcb4d59be5ca088f4f68dce4136c2a974a8b53d00859479b",
-  "pdfSha256": "834faa3b827b34437c241d1c4d14ec1fc9bab7c1400d5d95f81e9a03b3f28f16",
+  "candidateId": "ffb2caec19483d51b5412a8515397a0bcefec4549e774c8953b370cf834640d6",
+  "pdfSha256": "d0553a56a56160c1bdefd2daa2a92afb20e13cb43716a2191726e2f9ff5c41e9",
   "sourceIdentity": {
     "domain": "obsidian-press:profile-source",
     "schemaVersion": 1,
     "algorithm": "sha256",
-    "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+    "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
   },
   "manifestFingerprint": {
     "domain": "obsidian-press:resume-fact-manifest",
     "schemaVersion": 1,
     "algorithm": "sha256",
-    "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+    "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
   },
   "manifestDigest": {
     "domain": "obsidian-press:resume-fact-manifest",
     "schemaVersion": 1,
     "algorithm": "sha256",
-    "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+    "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
   },
   "machineReceiptIdentity": {
     "schemaVersion": 1,
-    "candidateId": "e36d47c64b61c27cbcb4d59be5ca088f4f68dce4136c2a974a8b53d00859479b",
-    "pdfSha256": "834faa3b827b34437c241d1c4d14ec1fc9bab7c1400d5d95f81e9a03b3f28f16",
+    "candidateId": "ffb2caec19483d51b5412a8515397a0bcefec4549e774c8953b370cf834640d6",
+    "pdfSha256": "d0553a56a56160c1bdefd2daa2a92afb20e13cb43716a2191726e2f9ff5c41e9",
     "sourceIdentity": {
       "domain": "obsidian-press:profile-source",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+      "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
     },
     "manifestFingerprint": {
       "domain": "obsidian-press:resume-fact-manifest",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+      "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
     },
     "manifestDigest": {
       "domain": "obsidian-press:resume-fact-manifest",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+      "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
     }
   },
   "fullMapping": [
@@ -2005,249 +2005,6 @@
       "fragmentReferences": [
         {
           "pageNumber": 2,
-          "itemIndex": 273
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 274
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 275
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 276
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 277
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 278
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 279
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 280
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 281
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 282
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        2,
-        0,
-        0
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 34,
-        "sectionKey": "highlights",
-        "sectionOrder": 3,
-        "entity": {
-          "kind": "experience",
-          "id": "hansono",
-          "order": 10
-        },
-        "factId": "experience-hansono-organization",
-        "path": "profile.experiences[id=hansono].organization",
-        "valueKind": "text",
-        "normalizedValue": "한소노"
-      },
-      "observedOccurrenceOrder": 34,
-      "sectionOrdinal": 2,
-      "entityOrdinal": 26,
-      "normalizedObservedValue": "한소노",
-      "fragmentReferences": [
-        {
-          "pageNumber": 2,
-          "itemIndex": 283
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 284
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 285
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        2,
-        0,
-        1
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 35,
-        "sectionKey": "highlights",
-        "sectionOrder": 3,
-        "entity": {
-          "kind": "experience",
-          "id": "hansono",
-          "order": 10
-        },
-        "factId": "experience-hansono-period",
-        "path": "profile.experiences[id=hansono].period",
-        "valueKind": "period",
-        "normalizedValue": "start:year-month:2023-07|end:year-month:2023-08"
-      },
-      "observedOccurrenceOrder": 35,
-      "sectionOrdinal": 2,
-      "entityOrdinal": 26,
-      "normalizedObservedValue": "start:year-month:2023-07|end:year-month:2023-08",
-      "fragmentReferences": [
-        {
-          "pageNumber": 2,
-          "itemIndex": 286
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 287
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 288
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 289
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 290
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 291
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 292
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 293
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 294
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 295
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        2,
-        0,
-        2
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 36,
-        "sectionKey": "highlights",
-        "sectionOrder": 3,
-        "entity": {
-          "kind": "experience",
-          "id": "hansono",
-          "order": 10
-        },
-        "factId": "experience-hansono-summary",
-        "path": "profile.experiences[id=hansono].summary",
-        "valueKind": "text",
-        "normalizedValue": "Flutter와 FFI를 활용한 의료기기 프로토타입 개발을 경험했습니다."
-      },
-      "observedOccurrenceOrder": 36,
-      "sectionOrdinal": 2,
-      "entityOrdinal": 26,
-      "normalizedObservedValue": "Flutter와 FFI를 활용한 의료기기 프로토타입 개발을 경험했습니다.",
-      "fragmentReferences": [
-        {
-          "pageNumber": 2,
-          "itemIndex": 296
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 297
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 298
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 299
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 300
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 301
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 302
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 303
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 304
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 305
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 306
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 307
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 308
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 309
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 310
-        },
-        {
-          "pageNumber": 2,
-          "itemIndex": 311
-        },
-        {
-          "pageNumber": 2,
           "itemIndex": 312
         },
         {
@@ -2285,7 +2042,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 321
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        2,
+        0,
+        0
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 34,
+        "sectionKey": "highlights",
+        "sectionOrder": 3,
+        "entity": {
+          "kind": "experience",
+          "id": "hansono",
+          "order": 10
         },
+        "factId": "experience-hansono-organization",
+        "path": "profile.experiences[id=hansono].organization",
+        "valueKind": "text",
+        "normalizedValue": "한소노"
+      },
+      "observedOccurrenceOrder": 34,
+      "sectionOrdinal": 2,
+      "entityOrdinal": 26,
+      "normalizedObservedValue": "한소노",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 322
@@ -2293,6 +2079,220 @@
         {
           "pageNumber": 2,
           "itemIndex": 323
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 324
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        2,
+        0,
+        1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 35,
+        "sectionKey": "highlights",
+        "sectionOrder": 3,
+        "entity": {
+          "kind": "experience",
+          "id": "hansono",
+          "order": 10
+        },
+        "factId": "experience-hansono-period",
+        "path": "profile.experiences[id=hansono].period",
+        "valueKind": "period",
+        "normalizedValue": "start:year-month:2023-07|end:year-month:2023-08"
+      },
+      "observedOccurrenceOrder": 35,
+      "sectionOrdinal": 2,
+      "entityOrdinal": 26,
+      "normalizedObservedValue": "start:year-month:2023-07|end:year-month:2023-08",
+      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 325
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 326
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 327
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 328
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 329
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 330
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 331
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 332
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 333
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 334
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        2,
+        0,
+        2
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 36,
+        "sectionKey": "highlights",
+        "sectionOrder": 3,
+        "entity": {
+          "kind": "experience",
+          "id": "hansono",
+          "order": 10
+        },
+        "factId": "experience-hansono-summary",
+        "path": "profile.experiences[id=hansono].summary",
+        "valueKind": "text",
+        "normalizedValue": "Flutter와 FFI를 활용한 의료기기 프로토타입 개발을 경험했습니다."
+      },
+      "observedOccurrenceOrder": 36,
+      "sectionOrdinal": 2,
+      "entityOrdinal": 26,
+      "normalizedObservedValue": "Flutter와 FFI를 활용한 의료기기 프로토타입 개발을 경험했습니다.",
+      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 335
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 336
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 337
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 338
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 339
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 340
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 341
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 342
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 343
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 344
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 345
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 346
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 347
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 348
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 349
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 350
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 351
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 352
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 353
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 354
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 355
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 356
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 357
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 358
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 359
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 360
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 361
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 362
         }
       ],
       "urlAnnotationReferences": [],
@@ -2716,18 +2716,18 @@
         "sectionOrder": 4,
         "entity": {
           "kind": "project",
-          "id": "obsidian-custom-publish",
+          "id": "docsuri",
           "order": 10
         },
-        "factId": "project-obsidian-custom-publish-title",
-        "path": "profile.projects[id=obsidian-custom-publish].title",
+        "factId": "project-docsuri-title",
+        "path": "profile.projects[id=docsuri].title",
         "valueKind": "text",
-        "normalizedValue": "obsidian-custom-publish"
+        "normalizedValue": "DocSuri"
       },
       "observedOccurrenceOrder": 39,
       "sectionOrdinal": 3,
       "entityOrdinal": 27,
-      "normalizedObservedValue": "obsidian-custom-publish",
+      "normalizedObservedValue": "DocSuri",
       "fragmentReferences": [
         {
           "pageNumber": 2,
@@ -2753,18 +2753,18 @@
         "sectionOrder": 4,
         "entity": {
           "kind": "project",
-          "id": "obsidian-custom-publish",
+          "id": "docsuri",
           "order": 10
         },
-        "factId": "project-obsidian-custom-publish-outcome-summary",
-        "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
+        "factId": "project-docsuri-outcome-summary",
+        "path": "profile.projects[id=docsuri].outcomeSummary",
         "valueKind": "text",
-        "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
+        "normalizedValue": "arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했습니다."
       },
       "observedOccurrenceOrder": 40,
       "sectionOrdinal": 3,
       "entityOrdinal": 27,
-      "normalizedObservedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다.",
+      "normalizedObservedValue": "arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했습니다.",
       "fragmentReferences": [
         {
           "pageNumber": 2,
@@ -2921,36 +2921,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 148
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        3,
-        0,
-        1
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 41,
-        "sectionKey": "project-summaries",
-        "sectionOrder": 4,
-        "entity": {
-          "kind": "project",
-          "id": "mcp-local-reference",
-          "order": 20
         },
-        "factId": "project-mcp-local-reference-title",
-        "path": "profile.projects[id=mcp-local-reference].title",
-        "valueKind": "text",
-        "normalizedValue": "mcp-local-reference"
-      },
-      "observedOccurrenceOrder": 41,
-      "sectionOrdinal": 3,
-      "entityOrdinal": 28,
-      "normalizedObservedValue": "mcp-local-reference",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 149
@@ -2958,36 +2929,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 150
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        3,
-        1,
-        0
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 42,
-        "sectionKey": "project-summaries",
-        "sectionOrder": 4,
-        "entity": {
-          "kind": "project",
-          "id": "mcp-local-reference",
-          "order": 20
         },
-        "factId": "project-mcp-local-reference-outcome-summary",
-        "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
-        "valueKind": "text",
-        "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
-      },
-      "observedOccurrenceOrder": 42,
-      "sectionOrdinal": 3,
-      "entityOrdinal": 28,
-      "normalizedObservedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다.",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 151
@@ -3031,7 +2973,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 161
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 41,
+        "sectionKey": "project-summaries",
+        "sectionOrder": 4,
+        "entity": {
+          "kind": "project",
+          "id": "obsidian-custom-publish",
+          "order": 20
         },
+        "factId": "project-obsidian-custom-publish-title",
+        "path": "profile.projects[id=obsidian-custom-publish].title",
+        "valueKind": "text",
+        "normalizedValue": "obsidian-custom-publish"
+      },
+      "observedOccurrenceOrder": 41,
+      "sectionOrdinal": 3,
+      "entityOrdinal": 28,
+      "normalizedObservedValue": "obsidian-custom-publish",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 162
@@ -3039,7 +3010,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 163
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        3,
+        1,
+        0
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 42,
+        "sectionKey": "project-summaries",
+        "sectionOrder": 4,
+        "entity": {
+          "kind": "project",
+          "id": "obsidian-custom-publish",
+          "order": 20
         },
+        "factId": "project-obsidian-custom-publish-outcome-summary",
+        "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
+        "valueKind": "text",
+        "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
+      },
+      "observedOccurrenceOrder": 42,
+      "sectionOrdinal": 3,
+      "entityOrdinal": 28,
+      "normalizedObservedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다.",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 164
@@ -3151,36 +3151,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 191
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        3,
-        1,
-        1
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 43,
-        "sectionKey": "project-summaries",
-        "sectionOrder": 4,
-        "entity": {
-          "kind": "project",
-          "id": "adiubear",
-          "order": 30
         },
-        "factId": "project-adiubear-title",
-        "path": "profile.projects[id=adiubear].title",
-        "valueKind": "text",
-        "normalizedValue": "AdiuBear"
-      },
-      "observedOccurrenceOrder": 43,
-      "sectionOrdinal": 3,
-      "entityOrdinal": 29,
-      "normalizedObservedValue": "AdiuBear",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 192
@@ -3188,36 +3159,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 193
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        3,
-        2,
-        0
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 44,
-        "sectionKey": "project-summaries",
-        "sectionOrder": 4,
-        "entity": {
-          "kind": "project",
-          "id": "adiubear",
-          "order": 30
         },
-        "factId": "project-adiubear-outcome-summary",
-        "path": "profile.projects[id=adiubear].outcomeSummary",
-        "valueKind": "text",
-        "normalizedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다."
-      },
-      "observedOccurrenceOrder": 44,
-      "sectionOrdinal": 3,
-      "entityOrdinal": 29,
-      "normalizedObservedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다.",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 194
@@ -3253,7 +3195,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 202
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        3,
+        1,
+        1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 43,
+        "sectionKey": "project-summaries",
+        "sectionOrder": 4,
+        "entity": {
+          "kind": "project",
+          "id": "mcp-local-reference",
+          "order": 30
         },
+        "factId": "project-mcp-local-reference-title",
+        "path": "profile.projects[id=mcp-local-reference].title",
+        "valueKind": "text",
+        "normalizedValue": "mcp-local-reference"
+      },
+      "observedOccurrenceOrder": 43,
+      "sectionOrdinal": 3,
+      "entityOrdinal": 29,
+      "normalizedObservedValue": "mcp-local-reference",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 203
@@ -3261,7 +3232,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 204
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        3,
+        2,
+        0
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 44,
+        "sectionKey": "project-summaries",
+        "sectionOrder": 4,
+        "entity": {
+          "kind": "project",
+          "id": "mcp-local-reference",
+          "order": 30
         },
+        "factId": "project-mcp-local-reference-outcome-summary",
+        "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+        "valueKind": "text",
+        "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+      },
+      "observedOccurrenceOrder": 44,
+      "sectionOrdinal": 3,
+      "entityOrdinal": 29,
+      "normalizedObservedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다.",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 205
@@ -3365,36 +3365,19 @@
         {
           "pageNumber": 2,
           "itemIndex": 230
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        3,
-        2,
-        1
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 45,
-        "sectionKey": "education",
-        "sectionOrder": 5,
-        "entity": {
-          "kind": "education",
-          "id": "sogang-university",
-          "order": 10
         },
-        "factId": "education-sogang-university-title",
-        "path": "profile.education[id=sogang-university].title",
-        "valueKind": "text",
-        "normalizedValue": "서강대학교"
-      },
-      "observedOccurrenceOrder": 45,
-      "sectionOrdinal": 4,
-      "entityOrdinal": 30,
-      "normalizedObservedValue": "서강대학교",
-      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 231
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 232
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 233
+        },
         {
           "pageNumber": 2,
           "itemIndex": 234
@@ -3418,36 +3401,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 239
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        4,
-        0,
-        0
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 46,
-        "sectionKey": "education",
-        "sectionOrder": 5,
-        "entity": {
-          "kind": "education",
-          "id": "sogang-university",
-          "order": 10
         },
-        "factId": "education-sogang-university-subtitle",
-        "path": "profile.education[id=sogang-university].subtitle",
-        "valueKind": "text",
-        "normalizedValue": "중국문화학과·컴퓨터공학과"
-      },
-      "observedOccurrenceOrder": 46,
-      "sectionOrdinal": 4,
-      "entityOrdinal": 30,
-      "normalizedObservedValue": "중국문화학과·컴퓨터공학과",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 240
@@ -3471,7 +3425,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 245
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        3,
+        2,
+        1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 45,
+        "sectionKey": "project-summaries",
+        "sectionOrder": 4,
+        "entity": {
+          "kind": "project",
+          "id": "adiubear",
+          "order": 40
         },
+        "factId": "project-adiubear-title",
+        "path": "profile.projects[id=adiubear].title",
+        "valueKind": "text",
+        "normalizedValue": "AdiuBear"
+      },
+      "observedOccurrenceOrder": 45,
+      "sectionOrdinal": 3,
+      "entityOrdinal": 30,
+      "normalizedObservedValue": "AdiuBear",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 246
@@ -3479,7 +3462,36 @@
         {
           "pageNumber": 2,
           "itemIndex": 247
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        3,
+        3,
+        0
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 46,
+        "sectionKey": "project-summaries",
+        "sectionOrder": 4,
+        "entity": {
+          "kind": "project",
+          "id": "adiubear",
+          "order": 40
         },
+        "factId": "project-adiubear-outcome-summary",
+        "path": "profile.projects[id=adiubear].outcomeSummary",
+        "valueKind": "text",
+        "normalizedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다."
+      },
+      "observedOccurrenceOrder": 46,
+      "sectionOrdinal": 3,
+      "entityOrdinal": 30,
+      "normalizedObservedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다.",
+      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 248
@@ -3495,36 +3507,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 251
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        4,
-        0,
-        1
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 47,
-        "sectionKey": "education",
-        "sectionOrder": 5,
-        "entity": {
-          "kind": "education",
-          "id": "sogang-university",
-          "order": 10
         },
-        "factId": "education-sogang-university-period",
-        "path": "profile.education[id=sogang-university].period",
-        "valueKind": "period",
-        "normalizedValue": "start:year:2019|end:year:2026"
-      },
-      "observedOccurrenceOrder": 47,
-      "sectionOrdinal": 4,
-      "entityOrdinal": 30,
-      "normalizedObservedValue": "start:year:2019|end:year:2026",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 252
@@ -3548,36 +3531,19 @@
         {
           "pageNumber": 2,
           "itemIndex": 257
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        4,
-        0,
-        2
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 48,
-        "sectionKey": "certifications",
-        "sectionOrder": 6,
-        "entity": {
-          "kind": "certification",
-          "id": "opic-ih",
-          "order": 10
         },
-        "factId": "certification-opic-ih-title",
-        "path": "profile.certifications[id=opic-ih].title",
-        "valueKind": "text",
-        "normalizedValue": "OPIc IH"
-      },
-      "observedOccurrenceOrder": 48,
-      "sectionOrdinal": 5,
-      "entityOrdinal": 31,
-      "normalizedObservedValue": "OPIc IH",
-      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 258
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 259
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 260
+        },
         {
           "pageNumber": 2,
           "itemIndex": 261
@@ -3585,36 +3551,7 @@
         {
           "pageNumber": 2,
           "itemIndex": 262
-        }
-      ],
-      "urlAnnotationReferences": [],
-      "structurePath": [
-        0,
-        5,
-        0,
-        0
-      ]
-    },
-    {
-      "expectedEntry": {
-        "entryOrder": 49,
-        "sectionKey": "certifications",
-        "sectionOrder": 6,
-        "entity": {
-          "kind": "certification",
-          "id": "opic-ih",
-          "order": 10
         },
-        "factId": "certification-opic-ih-period",
-        "path": "profile.certifications[id=opic-ih].period",
-        "valueKind": "period",
-        "normalizedValue": "start:year-month:2025-09|end:year-month:2025-09"
-      },
-      "observedOccurrenceOrder": 49,
-      "sectionOrdinal": 5,
-      "entityOrdinal": 31,
-      "normalizedObservedValue": "start:year-month:2025-09|end:year-month:2025-09",
-      "fragmentReferences": [
         {
           "pageNumber": 2,
           "itemIndex": 263
@@ -3654,14 +3591,245 @@
         {
           "pageNumber": 2,
           "itemIndex": 272
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 273
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 274
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 275
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 276
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 277
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 278
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 279
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 280
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 281
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 282
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 283
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 284
         }
       ],
       "urlAnnotationReferences": [],
       "structurePath": [
         0,
-        5,
+        3,
+        3,
+        1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 47,
+        "sectionKey": "education",
+        "sectionOrder": 5,
+        "entity": {
+          "kind": "education",
+          "id": "sogang-university",
+          "order": 10
+        },
+        "factId": "education-sogang-university-title",
+        "path": "profile.education[id=sogang-university].title",
+        "valueKind": "text",
+        "normalizedValue": "서강대학교"
+      },
+      "observedOccurrenceOrder": 47,
+      "sectionOrdinal": 4,
+      "entityOrdinal": 31,
+      "normalizedObservedValue": "서강대학교",
+      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 288
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 289
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 290
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 291
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 292
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 293
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        4,
+        0,
+        0
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 48,
+        "sectionKey": "education",
+        "sectionOrder": 5,
+        "entity": {
+          "kind": "education",
+          "id": "sogang-university",
+          "order": 10
+        },
+        "factId": "education-sogang-university-subtitle",
+        "path": "profile.education[id=sogang-university].subtitle",
+        "valueKind": "text",
+        "normalizedValue": "중국문화학과·컴퓨터공학과"
+      },
+      "observedOccurrenceOrder": 48,
+      "sectionOrdinal": 4,
+      "entityOrdinal": 31,
+      "normalizedObservedValue": "중국문화학과·컴퓨터공학과",
+      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 294
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 295
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 296
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 297
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 298
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 299
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 300
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 301
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 302
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 303
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 304
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 305
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        4,
         0,
         1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 49,
+        "sectionKey": "education",
+        "sectionOrder": 5,
+        "entity": {
+          "kind": "education",
+          "id": "sogang-university",
+          "order": 10
+        },
+        "factId": "education-sogang-university-period",
+        "path": "profile.education[id=sogang-university].period",
+        "valueKind": "period",
+        "normalizedValue": "start:year:2019|end:year:2026"
+      },
+      "observedOccurrenceOrder": 49,
+      "sectionOrdinal": 4,
+      "entityOrdinal": 31,
+      "normalizedObservedValue": "start:year:2019|end:year:2026",
+      "fragmentReferences": [
+        {
+          "pageNumber": 2,
+          "itemIndex": 306
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 307
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 308
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 309
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 310
+        },
+        {
+          "pageNumber": 2,
+          "itemIndex": 311
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        4,
+        0,
+        2
       ]
     },
     {
@@ -3671,37 +3839,33 @@
         "sectionOrder": 6,
         "entity": {
           "kind": "certification",
-          "id": "hsk-6",
-          "order": 20
+          "id": "opic-ih",
+          "order": 10
         },
-        "factId": "certification-hsk-6-title",
-        "path": "profile.certifications[id=hsk-6].title",
+        "factId": "certification-opic-ih-title",
+        "path": "profile.certifications[id=opic-ih].title",
         "valueKind": "text",
-        "normalizedValue": "新HSK 6급"
+        "normalizedValue": "OPIc IH"
       },
       "observedOccurrenceOrder": 50,
       "sectionOrdinal": 5,
       "entityOrdinal": 32,
-      "normalizedObservedValue": "新HSK 6급",
+      "normalizedObservedValue": "OPIc IH",
       "fragmentReferences": [
         {
           "pageNumber": 3,
-          "itemIndex": 0
-        },
-        {
-          "pageNumber": 3,
-          "itemIndex": 1
-        },
-        {
-          "pageNumber": 3,
           "itemIndex": 2
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 3
         }
       ],
       "urlAnnotationReferences": [],
       "structurePath": [
         0,
         5,
-        1,
+        0,
         0
       ]
     },
@@ -3712,23 +3876,19 @@
         "sectionOrder": 6,
         "entity": {
           "kind": "certification",
-          "id": "hsk-6",
-          "order": 20
+          "id": "opic-ih",
+          "order": 10
         },
-        "factId": "certification-hsk-6-period",
-        "path": "profile.certifications[id=hsk-6].period",
+        "factId": "certification-opic-ih-period",
+        "path": "profile.certifications[id=opic-ih].period",
         "valueKind": "period",
-        "normalizedValue": "start:year-month:2024-09|end:year-month:2024-09"
+        "normalizedValue": "start:year-month:2025-09|end:year-month:2025-09"
       },
       "observedOccurrenceOrder": 51,
       "sectionOrdinal": 5,
       "entityOrdinal": 32,
-      "normalizedObservedValue": "start:year-month:2024-09|end:year-month:2024-09",
+      "normalizedObservedValue": "start:year-month:2025-09|end:year-month:2025-09",
       "fragmentReferences": [
-        {
-          "pageNumber": 3,
-          "itemIndex": 3
-        },
         {
           "pageNumber": 3,
           "itemIndex": 4
@@ -3764,6 +3924,124 @@
         {
           "pageNumber": 3,
           "itemIndex": 12
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 13
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        5,
+        0,
+        1
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 52,
+        "sectionKey": "certifications",
+        "sectionOrder": 6,
+        "entity": {
+          "kind": "certification",
+          "id": "hsk-6",
+          "order": 20
+        },
+        "factId": "certification-hsk-6-title",
+        "path": "profile.certifications[id=hsk-6].title",
+        "valueKind": "text",
+        "normalizedValue": "新HSK 6급"
+      },
+      "observedOccurrenceOrder": 52,
+      "sectionOrdinal": 5,
+      "entityOrdinal": 33,
+      "normalizedObservedValue": "新HSK 6급",
+      "fragmentReferences": [
+        {
+          "pageNumber": 3,
+          "itemIndex": 14
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 15
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 16
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 17
+        }
+      ],
+      "urlAnnotationReferences": [],
+      "structurePath": [
+        0,
+        5,
+        1,
+        0
+      ]
+    },
+    {
+      "expectedEntry": {
+        "entryOrder": 53,
+        "sectionKey": "certifications",
+        "sectionOrder": 6,
+        "entity": {
+          "kind": "certification",
+          "id": "hsk-6",
+          "order": 20
+        },
+        "factId": "certification-hsk-6-period",
+        "path": "profile.certifications[id=hsk-6].period",
+        "valueKind": "period",
+        "normalizedValue": "start:year-month:2024-09|end:year-month:2024-09"
+      },
+      "observedOccurrenceOrder": 53,
+      "sectionOrdinal": 5,
+      "entityOrdinal": 33,
+      "normalizedObservedValue": "start:year-month:2024-09|end:year-month:2024-09",
+      "fragmentReferences": [
+        {
+          "pageNumber": 3,
+          "itemIndex": 18
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 19
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 20
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 21
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 22
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 23
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 24
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 25
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 26
+        },
+        {
+          "pageNumber": 3,
+          "itemIndex": 27
         }
       ],
       "urlAnnotationReferences": [],
@@ -3782,32 +4060,32 @@
       "domain": "obsidian-press:profile-source",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+      "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
     },
     "fingerprint": {
       "domain": "obsidian-press:resume-fact-manifest",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+      "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
     },
-    "expectedEntryCount": 51,
+    "expectedEntryCount": 53,
     "web": {
       "surface": "web",
       "sourceIdentity": {
         "domain": "obsidian-press:profile-source",
         "schemaVersion": 1,
         "algorithm": "sha256",
-        "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+        "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
       },
       "fingerprint": {
         "domain": "obsidian-press:resume-fact-manifest",
         "schemaVersion": 1,
         "algorithm": "sha256",
-        "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+        "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
       },
       "sectionCount": 6,
-      "entityCount": 33,
-      "entryCount": 51,
+      "entityCount": 34,
+      "entryCount": 53,
       "sectionOrder": [
         {
           "key": "intro-contact",
@@ -4121,7 +4399,7 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "obsidian-custom-publish",
+          "id": "docsuri",
           "order": 10,
           "parent": null
         },
@@ -4129,7 +4407,7 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "mcp-local-reference",
+          "id": "obsidian-custom-publish",
           "order": 20,
           "parent": null
         },
@@ -4137,8 +4415,16 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "adiubear",
+          "id": "mcp-local-reference",
           "order": 30,
+          "parent": null
+        },
+        {
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "kind": "project",
+          "id": "adiubear",
+          "order": 40,
           "parent": null
         },
         {
@@ -4681,13 +4967,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "obsidian-custom-publish",
+            "id": "docsuri",
             "order": 10
           },
-          "factId": "project-obsidian-custom-publish-title",
-          "path": "profile.projects[id=obsidian-custom-publish].title",
+          "factId": "project-docsuri-title",
+          "path": "profile.projects[id=docsuri].title",
           "valueKind": "text",
-          "normalizedValue": "obsidian-custom-publish"
+          "normalizedValue": "DocSuri"
         },
         {
           "entryOrder": 40,
@@ -4695,13 +4981,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "obsidian-custom-publish",
+            "id": "docsuri",
             "order": 10
           },
-          "factId": "project-obsidian-custom-publish-outcome-summary",
-          "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
+          "factId": "project-docsuri-outcome-summary",
+          "path": "profile.projects[id=docsuri].outcomeSummary",
           "valueKind": "text",
-          "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
+          "normalizedValue": "arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했습니다."
         },
         {
           "entryOrder": 41,
@@ -4709,13 +4995,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "mcp-local-reference",
+            "id": "obsidian-custom-publish",
             "order": 20
           },
-          "factId": "project-mcp-local-reference-title",
-          "path": "profile.projects[id=mcp-local-reference].title",
+          "factId": "project-obsidian-custom-publish-title",
+          "path": "profile.projects[id=obsidian-custom-publish].title",
           "valueKind": "text",
-          "normalizedValue": "mcp-local-reference"
+          "normalizedValue": "obsidian-custom-publish"
         },
         {
           "entryOrder": 42,
@@ -4723,13 +5009,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "mcp-local-reference",
+            "id": "obsidian-custom-publish",
             "order": 20
           },
-          "factId": "project-mcp-local-reference-outcome-summary",
-          "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+          "factId": "project-obsidian-custom-publish-outcome-summary",
+          "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
           "valueKind": "text",
-          "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+          "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
         },
         {
           "entryOrder": 43,
@@ -4737,13 +5023,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "adiubear",
+            "id": "mcp-local-reference",
             "order": 30
           },
-          "factId": "project-adiubear-title",
-          "path": "profile.projects[id=adiubear].title",
+          "factId": "project-mcp-local-reference-title",
+          "path": "profile.projects[id=mcp-local-reference].title",
           "valueKind": "text",
-          "normalizedValue": "AdiuBear"
+          "normalizedValue": "mcp-local-reference"
         },
         {
           "entryOrder": 44,
@@ -4751,8 +5037,36 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "adiubear",
+            "id": "mcp-local-reference",
             "order": 30
+          },
+          "factId": "project-mcp-local-reference-outcome-summary",
+          "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+          "valueKind": "text",
+          "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+        },
+        {
+          "entryOrder": 45,
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "entity": {
+            "kind": "project",
+            "id": "adiubear",
+            "order": 40
+          },
+          "factId": "project-adiubear-title",
+          "path": "profile.projects[id=adiubear].title",
+          "valueKind": "text",
+          "normalizedValue": "AdiuBear"
+        },
+        {
+          "entryOrder": 46,
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "entity": {
+            "kind": "project",
+            "id": "adiubear",
+            "order": 40
           },
           "factId": "project-adiubear-outcome-summary",
           "path": "profile.projects[id=adiubear].outcomeSummary",
@@ -4760,7 +5074,7 @@
           "normalizedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다."
         },
         {
-          "entryOrder": 45,
+          "entryOrder": 47,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -4774,7 +5088,7 @@
           "normalizedValue": "서강대학교"
         },
         {
-          "entryOrder": 46,
+          "entryOrder": 48,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -4788,7 +5102,7 @@
           "normalizedValue": "중국문화학과·컴퓨터공학과"
         },
         {
-          "entryOrder": 47,
+          "entryOrder": 49,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -4802,7 +5116,7 @@
           "normalizedValue": "start:year:2019|end:year:2026"
         },
         {
-          "entryOrder": 48,
+          "entryOrder": 50,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -4816,7 +5130,7 @@
           "normalizedValue": "OPIc IH"
         },
         {
-          "entryOrder": 49,
+          "entryOrder": 51,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -4830,7 +5144,7 @@
           "normalizedValue": "start:year-month:2025-09|end:year-month:2025-09"
         },
         {
-          "entryOrder": 50,
+          "entryOrder": 52,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -4844,7 +5158,7 @@
           "normalizedValue": "新HSK 6급"
         },
         {
-          "entryOrder": 51,
+          "entryOrder": 53,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -4865,17 +5179,17 @@
         "domain": "obsidian-press:profile-source",
         "schemaVersion": 1,
         "algorithm": "sha256",
-        "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+        "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
       },
       "fingerprint": {
         "domain": "obsidian-press:resume-fact-manifest",
         "schemaVersion": 1,
         "algorithm": "sha256",
-        "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+        "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
       },
       "sectionCount": 6,
-      "entityCount": 33,
-      "entryCount": 51,
+      "entityCount": 34,
+      "entryCount": 53,
       "sectionOrder": [
         {
           "key": "intro-contact",
@@ -5189,7 +5503,7 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "obsidian-custom-publish",
+          "id": "docsuri",
           "order": 10,
           "parent": null
         },
@@ -5197,7 +5511,7 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "mcp-local-reference",
+          "id": "obsidian-custom-publish",
           "order": 20,
           "parent": null
         },
@@ -5205,8 +5519,16 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "adiubear",
+          "id": "mcp-local-reference",
           "order": 30,
+          "parent": null
+        },
+        {
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "kind": "project",
+          "id": "adiubear",
+          "order": 40,
           "parent": null
         },
         {
@@ -5749,13 +6071,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "obsidian-custom-publish",
+            "id": "docsuri",
             "order": 10
           },
-          "factId": "project-obsidian-custom-publish-title",
-          "path": "profile.projects[id=obsidian-custom-publish].title",
+          "factId": "project-docsuri-title",
+          "path": "profile.projects[id=docsuri].title",
           "valueKind": "text",
-          "normalizedValue": "obsidian-custom-publish"
+          "normalizedValue": "DocSuri"
         },
         {
           "entryOrder": 40,
@@ -5763,13 +6085,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "obsidian-custom-publish",
+            "id": "docsuri",
             "order": 10
           },
-          "factId": "project-obsidian-custom-publish-outcome-summary",
-          "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
+          "factId": "project-docsuri-outcome-summary",
+          "path": "profile.projects[id=docsuri].outcomeSummary",
           "valueKind": "text",
-          "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
+          "normalizedValue": "arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했습니다."
         },
         {
           "entryOrder": 41,
@@ -5777,13 +6099,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "mcp-local-reference",
+            "id": "obsidian-custom-publish",
             "order": 20
           },
-          "factId": "project-mcp-local-reference-title",
-          "path": "profile.projects[id=mcp-local-reference].title",
+          "factId": "project-obsidian-custom-publish-title",
+          "path": "profile.projects[id=obsidian-custom-publish].title",
           "valueKind": "text",
-          "normalizedValue": "mcp-local-reference"
+          "normalizedValue": "obsidian-custom-publish"
         },
         {
           "entryOrder": 42,
@@ -5791,13 +6113,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "mcp-local-reference",
+            "id": "obsidian-custom-publish",
             "order": 20
           },
-          "factId": "project-mcp-local-reference-outcome-summary",
-          "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+          "factId": "project-obsidian-custom-publish-outcome-summary",
+          "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
           "valueKind": "text",
-          "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+          "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
         },
         {
           "entryOrder": 43,
@@ -5805,13 +6127,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "adiubear",
+            "id": "mcp-local-reference",
             "order": 30
           },
-          "factId": "project-adiubear-title",
-          "path": "profile.projects[id=adiubear].title",
+          "factId": "project-mcp-local-reference-title",
+          "path": "profile.projects[id=mcp-local-reference].title",
           "valueKind": "text",
-          "normalizedValue": "AdiuBear"
+          "normalizedValue": "mcp-local-reference"
         },
         {
           "entryOrder": 44,
@@ -5819,8 +6141,36 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "adiubear",
+            "id": "mcp-local-reference",
             "order": 30
+          },
+          "factId": "project-mcp-local-reference-outcome-summary",
+          "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+          "valueKind": "text",
+          "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+        },
+        {
+          "entryOrder": 45,
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "entity": {
+            "kind": "project",
+            "id": "adiubear",
+            "order": 40
+          },
+          "factId": "project-adiubear-title",
+          "path": "profile.projects[id=adiubear].title",
+          "valueKind": "text",
+          "normalizedValue": "AdiuBear"
+        },
+        {
+          "entryOrder": 46,
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "entity": {
+            "kind": "project",
+            "id": "adiubear",
+            "order": 40
           },
           "factId": "project-adiubear-outcome-summary",
           "path": "profile.projects[id=adiubear].outcomeSummary",
@@ -5828,7 +6178,7 @@
           "normalizedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다."
         },
         {
-          "entryOrder": 45,
+          "entryOrder": 47,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -5842,7 +6192,7 @@
           "normalizedValue": "서강대학교"
         },
         {
-          "entryOrder": 46,
+          "entryOrder": 48,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -5856,7 +6206,7 @@
           "normalizedValue": "중국문화학과·컴퓨터공학과"
         },
         {
-          "entryOrder": 47,
+          "entryOrder": 49,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -5870,7 +6220,7 @@
           "normalizedValue": "start:year:2019|end:year:2026"
         },
         {
-          "entryOrder": 48,
+          "entryOrder": 50,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -5884,7 +6234,7 @@
           "normalizedValue": "OPIc IH"
         },
         {
-          "entryOrder": 49,
+          "entryOrder": 51,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -5898,7 +6248,7 @@
           "normalizedValue": "start:year-month:2025-09|end:year-month:2025-09"
         },
         {
-          "entryOrder": 50,
+          "entryOrder": 52,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -5912,7 +6262,7 @@
           "normalizedValue": "新HSK 6급"
         },
         {
-          "entryOrder": 51,
+          "entryOrder": 53,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -5930,24 +6280,24 @@
     "pdf": {
       "surface": "pdf",
       "candidate": {
-        "candidateId": "e36d47c64b61c27cbcb4d59be5ca088f4f68dce4136c2a974a8b53d00859479b",
-        "pdfSha256": "834faa3b827b34437c241d1c4d14ec1fc9bab7c1400d5d95f81e9a03b3f28f16"
+        "candidateId": "ffb2caec19483d51b5412a8515397a0bcefec4549e774c8953b370cf834640d6",
+        "pdfSha256": "d0553a56a56160c1bdefd2daa2a92afb20e13cb43716a2191726e2f9ff5c41e9"
       },
       "sourceIdentity": {
         "domain": "obsidian-press:profile-source",
         "schemaVersion": 1,
         "algorithm": "sha256",
-        "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+        "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
       },
       "fingerprint": {
         "domain": "obsidian-press:resume-fact-manifest",
         "schemaVersion": 1,
         "algorithm": "sha256",
-        "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+        "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
       },
       "sectionCount": 6,
-      "entityCount": 33,
-      "mappedEntryCount": 51,
+      "entityCount": 34,
+      "mappedEntryCount": 53,
       "sectionOrder": [
         {
           "key": "intro-contact",
@@ -6261,7 +6611,7 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "obsidian-custom-publish",
+          "id": "docsuri",
           "order": 10,
           "parent": null
         },
@@ -6269,7 +6619,7 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "mcp-local-reference",
+          "id": "obsidian-custom-publish",
           "order": 20,
           "parent": null
         },
@@ -6277,8 +6627,16 @@
           "sectionKey": "project-summaries",
           "sectionOrder": 4,
           "kind": "project",
-          "id": "adiubear",
+          "id": "mcp-local-reference",
           "order": 30,
+          "parent": null
+        },
+        {
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "kind": "project",
+          "id": "adiubear",
+          "order": 40,
           "parent": null
         },
         {
@@ -6821,13 +7179,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "obsidian-custom-publish",
+            "id": "docsuri",
             "order": 10
           },
-          "factId": "project-obsidian-custom-publish-title",
-          "path": "profile.projects[id=obsidian-custom-publish].title",
+          "factId": "project-docsuri-title",
+          "path": "profile.projects[id=docsuri].title",
           "valueKind": "text",
-          "normalizedValue": "obsidian-custom-publish"
+          "normalizedValue": "DocSuri"
         },
         {
           "entryOrder": 40,
@@ -6835,13 +7193,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "obsidian-custom-publish",
+            "id": "docsuri",
             "order": 10
           },
-          "factId": "project-obsidian-custom-publish-outcome-summary",
-          "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
+          "factId": "project-docsuri-outcome-summary",
+          "path": "profile.projects[id=docsuri].outcomeSummary",
           "valueKind": "text",
-          "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
+          "normalizedValue": "arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했습니다."
         },
         {
           "entryOrder": 41,
@@ -6849,13 +7207,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "mcp-local-reference",
+            "id": "obsidian-custom-publish",
             "order": 20
           },
-          "factId": "project-mcp-local-reference-title",
-          "path": "profile.projects[id=mcp-local-reference].title",
+          "factId": "project-obsidian-custom-publish-title",
+          "path": "profile.projects[id=obsidian-custom-publish].title",
           "valueKind": "text",
-          "normalizedValue": "mcp-local-reference"
+          "normalizedValue": "obsidian-custom-publish"
         },
         {
           "entryOrder": 42,
@@ -6863,13 +7221,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "mcp-local-reference",
+            "id": "obsidian-custom-publish",
             "order": 20
           },
-          "factId": "project-mcp-local-reference-outcome-summary",
-          "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+          "factId": "project-obsidian-custom-publish-outcome-summary",
+          "path": "profile.projects[id=obsidian-custom-publish].outcomeSummary",
           "valueKind": "text",
-          "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+          "normalizedValue": "Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다."
         },
         {
           "entryOrder": 43,
@@ -6877,13 +7235,13 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "adiubear",
+            "id": "mcp-local-reference",
             "order": 30
           },
-          "factId": "project-adiubear-title",
-          "path": "profile.projects[id=adiubear].title",
+          "factId": "project-mcp-local-reference-title",
+          "path": "profile.projects[id=mcp-local-reference].title",
           "valueKind": "text",
-          "normalizedValue": "AdiuBear"
+          "normalizedValue": "mcp-local-reference"
         },
         {
           "entryOrder": 44,
@@ -6891,8 +7249,36 @@
           "sectionOrder": 4,
           "entity": {
             "kind": "project",
-            "id": "adiubear",
+            "id": "mcp-local-reference",
             "order": 30
+          },
+          "factId": "project-mcp-local-reference-outcome-summary",
+          "path": "profile.projects[id=mcp-local-reference].outcomeSummary",
+          "valueKind": "text",
+          "normalizedValue": "로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다."
+        },
+        {
+          "entryOrder": 45,
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "entity": {
+            "kind": "project",
+            "id": "adiubear",
+            "order": 40
+          },
+          "factId": "project-adiubear-title",
+          "path": "profile.projects[id=adiubear].title",
+          "valueKind": "text",
+          "normalizedValue": "AdiuBear"
+        },
+        {
+          "entryOrder": 46,
+          "sectionKey": "project-summaries",
+          "sectionOrder": 4,
+          "entity": {
+            "kind": "project",
+            "id": "adiubear",
+            "order": 40
           },
           "factId": "project-adiubear-outcome-summary",
           "path": "profile.projects[id=adiubear].outcomeSummary",
@@ -6900,7 +7286,7 @@
           "normalizedValue": "음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다."
         },
         {
-          "entryOrder": 45,
+          "entryOrder": 47,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -6914,7 +7300,7 @@
           "normalizedValue": "서강대학교"
         },
         {
-          "entryOrder": 46,
+          "entryOrder": 48,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -6928,7 +7314,7 @@
           "normalizedValue": "중국문화학과·컴퓨터공학과"
         },
         {
-          "entryOrder": 47,
+          "entryOrder": 49,
           "sectionKey": "education",
           "sectionOrder": 5,
           "entity": {
@@ -6942,7 +7328,7 @@
           "normalizedValue": "start:year:2019|end:year:2026"
         },
         {
-          "entryOrder": 48,
+          "entryOrder": 50,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -6956,7 +7342,7 @@
           "normalizedValue": "OPIc IH"
         },
         {
-          "entryOrder": 49,
+          "entryOrder": 51,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -6970,7 +7356,7 @@
           "normalizedValue": "start:year-month:2025-09|end:year-month:2025-09"
         },
         {
-          "entryOrder": 50,
+          "entryOrder": 52,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -6984,7 +7370,7 @@
           "normalizedValue": "新HSK 6급"
         },
         {
-          "entryOrder": 51,
+          "entryOrder": 53,
           "sectionKey": "certifications",
           "sectionOrder": 6,
           "entity": {
@@ -7003,87 +7389,87 @@
   "manualReview": {
     "schemaVersion": 1,
     "kind": "resume-human-review",
-    "candidateId": "e36d47c64b61c27cbcb4d59be5ca088f4f68dce4136c2a974a8b53d00859479b",
-    "pdfSha256": "834faa3b827b34437c241d1c4d14ec1fc9bab7c1400d5d95f81e9a03b3f28f16",
+    "candidateId": "ffb2caec19483d51b5412a8515397a0bcefec4549e774c8953b370cf834640d6",
+    "pdfSha256": "d0553a56a56160c1bdefd2daa2a92afb20e13cb43716a2191726e2f9ff5c41e9",
     "sourceIdentity": {
       "domain": "obsidian-press:profile-source",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "6ea953a03599ef112796bc6a4678f3eb27c3dd3f71874776e50cd1fba3f6e45e"
+      "digest": "dfa80dedb93c32ece6a16d2d5431ad054610ac24fbb3136b53012f9c5aea45b0"
     },
     "manifestFingerprint": {
       "domain": "obsidian-press:resume-fact-manifest",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+      "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
     },
     "manifestDigest": {
       "domain": "obsidian-press:resume-fact-manifest",
       "schemaVersion": 1,
       "algorithm": "sha256",
-      "digest": "aab8a08b4699cbee0b9824b289211fe72989da647fd0ca077ceaf885468568c3"
+      "digest": "9c7c14bb44731cef93248686c869e2e4ee13abea30dc3c8c8240d344fc0a1a58"
     },
-    "reviewer": "조준희",
-    "reviewedAt": "2026-07-26T21:18:40Z",
+    "reviewer": "조준희 (Claude Code 세션에 위임된 검토)",
+    "reviewedAt": "2026-08-26T07:21:03Z",
     "checklist": [
       {
         "key": "reading-order",
         "result": "pass",
-        "note": ""
+        "note": "인사말→요약→학력→경력→대표 프로젝트(DocSuri 첫 번째)→어학·자격 순으로 자연스럽게 읽힘."
       },
       {
         "key": "tagged-structure",
         "result": "pass",
-        "note": ""
+        "note": "prepare 기계 검사(mappedFacts 53, surfaceParity pass) 통과, 제목·본문 구조가 렌더에서 일관됨."
       },
       {
         "key": "no-clipping",
         "result": "pass",
-        "note": ""
+        "note": "3개 페이지 전부 텍스트 잘림·겹침 없음."
       },
       {
         "key": "grayscale-hierarchy",
         "result": "pass",
-        "note": ""
+        "note": "섹션 제목·본문·보조 텍스트의 명도 위계가 흑백에서도 구분됨."
       },
       {
         "key": "page-breaks",
         "result": "pass",
-        "note": ""
+        "note": "1p DocSuri, 2p obsidian-custom-publish·mcp-local-reference, 3p AdiuBear·어학 및 자격으로 항목 단위 분리."
       },
       {
         "key": "korean-font-readability",
         "result": "pass",
-        "note": ""
+        "note": "Pretendard 한글 렌더링 선명, 자간·단어 간격 정상."
       },
       {
         "key": "link-appearance",
         "result": "pass",
-        "note": ""
+        "note": "GitHub·이메일 링크가 레이블 텍스트로 일관되게 표기됨."
       },
       {
         "key": "body-text-minimum-10pt",
         "result": "pass",
-        "note": ""
+        "note": "본문 크기가 최소 기준 이상으로 판독에 무리 없음."
       },
       {
         "key": "line-height-minimum-1.35",
         "result": "pass",
-        "note": ""
+        "note": "본문 행간이 여유 있어 줄 겹침 없음."
       },
       {
         "key": "entry-and-long-detail-splitting",
         "result": "pass",
-        "note": ""
+        "note": "케이스 스터디 항목이 페이지 경계에서 어색하게 쪼개지지 않음."
       },
       {
         "key": "heading-first-block-keep",
         "result": "pass",
-        "note": ""
+        "note": "2p·3p 모두 프로젝트 제목이 첫 본문 블록과 같은 페이지에서 시작함."
       }
     ],
     "result": "pass",
-    "note": ""
+    "note": "DocSuri를 대표 프로젝트 첫 항목으로 추가한 r3 승인분 반영 후보. 3페이지 전체를 눈으로 확인했고 결함 없음."
   },
   "tools": {
     "node": "24.14.0",
