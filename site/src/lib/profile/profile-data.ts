@@ -33,7 +33,7 @@ const approvedProfileSource = {
     ),
     portfolioSummary: fact(
       'narrative-portfolio-summary',
-      '문제를 정의하고 구조를 설계한 뒤, 구현·검증·운영까지 연결한 프로젝트를 소개합니다.',
+      '팀 프로젝트 DocSuri를 중심으로, 문제 정의부터 구현·검증·운영까지 연결한 프로젝트를 소개합니다.',
     ),
   },
   contact: {
@@ -178,8 +178,79 @@ const approvedProfileSource = {
   achievements: [],
   projects: [
     {
-      id: 'obsidian-custom-publish',
+      id: 'docsuri',
       order: 10,
+      title: fact('project-docsuri-title', 'DocSuri'),
+      outcomeSummary: fact(
+        'project-docsuri-outcome-summary',
+        'arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했습니다.',
+      ),
+      problem: [
+        paragraph(
+          'project-docsuri-problem-0-text',
+          'AI/ML 논문의 증가 속도를 개인이 따라가기 어렵고, 기존 도구는 데스크톱·영어 중심이거나 근거 없는 LLM 요약에 의존해 연구에 신뢰하고 쓰기 어려웠습니다.',
+        ),
+      ],
+      role: [
+        paragraph(
+          'project-docsuri-role-0-text',
+          'AWS AI School 2기 A팀에서 백엔드·검색·요약 파이프라인 개발을 담당했습니다.',
+        ),
+      ],
+      keyDecisions: [
+        paragraph(
+          'project-docsuri-key-decisions-0-text',
+          'k-NN 벡터 검색과 BM25를 RRF로 결합한 하이브리드 검색을 채택하고, 모든 AI 응답이 원문에 근거하도록 강제하며 근거가 없으면 답하지 않는 원칙을 세웠습니다.',
+        ),
+      ],
+      architecture: [
+        paragraph(
+          'project-docsuri-architecture-0-text',
+          'Python 백엔드가 arXiv·Semantic Scholar·OpenAlex에서 Open Access 코퍼스를 수집·색인하고, Amazon Bedrock의 임베딩·요약 모델과 TypeScript 모바일 웹 프론트엔드를 연결합니다.',
+        ),
+      ],
+      outcomes: [
+        paragraph(
+          'project-docsuri-outcomes-0-text',
+          '검색·라이브러리·계정·요약·인용 그래프·연구 에이전트를 갖춘 서비스를 docsuri.org에 라이브로 운영하며, 정해진 예산 안에서 AWS 인프라를 유지했습니다.',
+        ),
+      ],
+      lessons: [
+        paragraph(
+          'project-docsuri-lessons-0-text',
+          'LLM 기능은 근거 강제와 검증 게이트를 함께 설계해야 신뢰할 수 있는 제품이 된다는 것을 배웠습니다.',
+        ),
+      ],
+      evidence: [
+        {
+          id: 'docsuri-team-repository',
+          order: 10,
+          label: fact(
+            'project-docsuri-evidence-team-label',
+            'DocSuri 팀 GitHub 저장소 보기',
+          ),
+          destination: fact('project-docsuri-evidence-team-destination', {
+            tag: 'external',
+            value: 'https://github.com/80-hours-a-week/DocSuri',
+          }),
+        },
+        {
+          id: 'docsuri-fork-repository',
+          order: 20,
+          label: fact(
+            'project-docsuri-evidence-fork-label',
+            'DocSuri 개인 fork 저장소 보기',
+          ),
+          destination: fact('project-docsuri-evidence-fork-destination', {
+            tag: 'external',
+            value: 'https://github.com/revenantonthemission/DocSuri',
+          }),
+        },
+      ],
+    },
+    {
+      id: 'obsidian-custom-publish',
+      order: 20,
       title: fact(
         'project-obsidian-custom-publish-title',
         'obsidian-custom-publish',
@@ -245,7 +316,7 @@ const approvedProfileSource = {
     },
     {
       id: 'mcp-local-reference',
-      order: 20,
+      order: 30,
       title: fact(
         'project-mcp-local-reference-title',
         'mcp-local-reference',
@@ -311,7 +382,7 @@ const approvedProfileSource = {
     },
     {
       id: 'adiubear',
-      order: 30,
+      order: 40,
       title: fact('project-adiubear-title', 'AdiuBear'),
       outcomeSummary: fact(
         'project-adiubear-outcome-summary',

@@ -20,7 +20,7 @@ import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/docume
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
-  '775177b9cd3dd6b662e25a3094d96ba56260084de06d9d527c531481b4c9e15e';
+  '3f9a26e5e8f789f0017d9804a2c199dfcd68d2eb562b6f4c0e407e8f230b3a24';
 const FORBIDDEN_PROFILE_KEYS = new Set([
   'approvedRecordsDigest',
   'decision',
@@ -48,7 +48,7 @@ afterEach(async () => {
 });
 
 describe('approved production profile boundary', () => {
-  test('materializes all 77 approved facts with a zero-diff identity', () => {
+  test('materializes all 89 approved facts with a zero-diff identity', () => {
     const evaluation = productionProfileTesting.evaluate(
       profileData,
       receiptDocument,
@@ -68,8 +68,8 @@ describe('approved production profile boundary', () => {
       requirement: record.requirement,
     }));
 
-    expect(evaluation.facts).toHaveLength(77);
-    expect(evaluation.records).toHaveLength(77);
+    expect(evaluation.facts).toHaveLength(89);
+    expect(evaluation.records).toHaveLength(89);
     expect(recordProjection).toEqual(factProjection);
     expect(evaluation.materializedProfileDigest).toBe(
       EXPECTED_MATERIALIZED_DIGEST,
@@ -151,7 +151,7 @@ describe('approved production profile boundary', () => {
       receipt.schemaVersion = 2;
     }],
     ['revision drift', (receipt: Record<string, unknown>) => {
-      receipt.inventoryRevision = 'profile-facts-r3';
+      receipt.inventoryRevision = 'profile-facts-r4';
     }],
     ['decision drift', (receipt: Record<string, unknown>) => {
       receipt.decision = 'Pending';
