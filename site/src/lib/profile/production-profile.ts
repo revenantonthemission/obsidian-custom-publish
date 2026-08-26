@@ -44,23 +44,24 @@ const RECEIPT_KEYS = [
 
 const EXPECTED_RECEIPT = Object.freeze({
   schemaVersion: 1,
-  receiptId: 'profile-fact-approval-2026-07-25-r1',
-  inventoryRevision: 'profile-facts-r2',
+  receiptId: 'profile-fact-approval-2026-08-26-r1',
+  inventoryRevision: 'profile-facts-r3',
   inventoryDigest:
-    '25357f9902858abeafe17a3b3016c43328852ea8dce29453e48cd83da31fa345',
-  productionDiffRevision: 'profile-production-diff-r2',
+    '265430d1dd584bbece7b912f4f2d79a7ce745d09e8a26bdec9da763a7f0e8b77',
+  productionDiffRevision: 'profile-production-diff-r3',
   productionDiffDigest:
-    'a4ebc55bd3e3d78ae8d3239abdc81e0a52921d19e1c0c0cb28ea49cbad53c6e1',
+    'ab822bad5d61204b39688126d679627e48658077cf4d5ed375a4d129294a8388',
   approvedRecordsDigest:
-    '356356f9dc5f8b2b93e4d7bf88a3f11a8181f55f1485ed82c8994ae994aa6474',
+    '973acc65bdddf7f7404af2ef507b5b92d4311ad2b195be0b4a18a6e26d2e7d16',
   materializedProfileDigest:
-    '775177b9cd3dd6b662e25a3094d96ba56260084de06d9d527c531481b4c9e15e',
+    '3f9a26e5e8f789f0017d9804a2c199dfcd68d2eb562b6f4c0e407e8f230b3a24',
   decision: 'Approved',
-  decisionAuditId: 'U1-CG-S14-FACT-APPROVAL-20260725T034431Z',
-  decisionRecordedAt: '2026-07-25T03:44:31Z',
+  decisionAuditId: 'U1-CG-S14-FACT-APPROVAL-20260826T064625Z',
+  decisionRecordedAt: '2026-08-26T06:46:25Z',
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';
+const DOCSURI_SOURCE_CHECKED_AT = '2026-08-26T06:46:25Z';
 const PROJECT_FACT_SUFFIXES = [
   'title',
   'outcome-summary',
@@ -74,7 +75,7 @@ const PROJECT_FACT_SUFFIXES = [
   'evidence-destination',
 ] as const;
 
-type EvidenceId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05';
+type EvidenceId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07';
 
 const EVIDENCE_SOURCES = deepFreeze({
   E01: {
@@ -112,6 +113,20 @@ const EVIDENCE_SOURCES = deepFreeze({
     expectedDestination: 'https://github.com/revenantonthemission/AdiuBear',
     verifier: 'Codex public-source collector',
     checkedAt: PUBLIC_SOURCE_CHECKED_AT,
+  },
+  E06: {
+    kind: 'public-source',
+    reference: 'https://github.com/80-hours-a-week/DocSuri',
+    expectedDestination: 'https://github.com/80-hours-a-week/DocSuri',
+    verifier: 'Claude public-source collector',
+    checkedAt: DOCSURI_SOURCE_CHECKED_AT,
+  },
+  E07: {
+    kind: 'public-source',
+    reference: 'https://github.com/revenantonthemission/DocSuri',
+    expectedDestination: 'https://github.com/revenantonthemission/DocSuri',
+    verifier: 'Claude public-source collector',
+    checkedAt: DOCSURI_SOURCE_CHECKED_AT,
   },
 } satisfies Record<EvidenceId, FactReviewEvidence>);
 
@@ -975,7 +990,6 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       'education-sogang-university-period',
     ],
     E03: [
-      'narrative-portfolio-summary',
       'skill-typescript-name',
       'skill-rust-name',
       'skill-astro-name',
@@ -983,6 +997,23 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
     ],
     E04: projectFactIds('mcp-local-reference'),
     E05: projectFactIds('adiubear'),
+    E06: [
+      'narrative-portfolio-summary',
+      'project-docsuri-title',
+      'project-docsuri-outcome-summary',
+      'project-docsuri-problem-0-text',
+      'project-docsuri-role-0-text',
+      'project-docsuri-key-decisions-0-text',
+      'project-docsuri-architecture-0-text',
+      'project-docsuri-outcomes-0-text',
+      'project-docsuri-lessons-0-text',
+      'project-docsuri-evidence-team-label',
+      'project-docsuri-evidence-team-destination',
+    ],
+    E07: [
+      'project-docsuri-evidence-fork-label',
+      'project-docsuri-evidence-fork-destination',
+    ],
   };
 
   for (const [evidenceId, factIds] of Object.entries(groups) as [
@@ -999,7 +1030,7 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       membership.set(factId, evidenceId);
     }
   }
-  if (membership.size !== 77) {
+  if (membership.size !== 89) {
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_EVIDENCE_INVALID',
       'profile.facts',
