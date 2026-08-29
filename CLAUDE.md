@@ -30,6 +30,8 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Logs: `~/Library/Logs/obsidian-blog-server.log`; restart: `launchctl kickstart -k gui/$UID/dev.rvnnt.blog`
 - Public: https://rvnnt.dev — Cloudflare Tunnel `obsidian-blog` (launchd `dev.rvnnt.tunnel`, config `~/.cloudflared/obsidian-blog.yml` — dedicated file, the shared `~/.cloudflared/config.yml` belongs to other tunnels on this machine; logs `~/Library/Logs/obsidian-blog-tunnel.log`); DNS CNAME managed by `cloudflared tunnel route dns`
 - Ports: blog 8080 (0.0.0.0), Jenkins 8081 (127.0.0.1 only, set in both `~/Library/LaunchAgents/homebrew.mxcl.jenkins.plist` and the brew template at `/opt/homebrew/opt/jenkins/` — re-apply after `brew upgrade jenkins` regenerates the template), astro dev 4321
+- NEVER start Jenkins via `brew services start jenkins` — it regenerates the LaunchAgent plist with port 8080, hijacking 127.0.0.1:8080 from the blog (rvnnt.dev serves Jenkins 403). Use `launchctl bootstrap gui/$UID ~/Library/LaunchAgents/homebrew.mxcl.jenkins.plist` after verifying the plist says 8081 (happened 2026-08-29)
+- Jenkins daily publish: job `obsidian-blog-develop` (cron `H 0 * * *` in Jenkinsfile, builds origin/develop) stamps published dates, builds, deploys to web root — this IS the daily auto-publish system
 
 ## Git Flow
 - Feature branches per phase off `develop`, `--no-ff` merges back
