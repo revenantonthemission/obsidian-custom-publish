@@ -46,6 +46,16 @@ describe('abbreviations', () => {
     expect(html).toContain('<abbr title="Translation Lookaside Buffer">TLB</abbr>');
     expect(html).toContain('<abbr title="Address Space Identifier">ASID</abbr>');
   });
+
+  test('definition titles leave no leftover text in the output', async () => {
+    const html = await renderMarkdown(
+      'TLB 설명.\n\n*[TLB]: Translation Lookaside Buffer\n*[ASID]: Address Space Identifier\n',
+    );
+    // Title text may appear only inside title attributes, never as body text.
+    const withoutAttributes = html.replace(/title="[^"]*"/g, '');
+    expect(withoutAttributes).not.toContain('Translation Lookaside Buffer');
+    expect(withoutAttributes).not.toContain('Address Space Identifier');
+  });
 });
 
 describe('CJK emphasis', () => {

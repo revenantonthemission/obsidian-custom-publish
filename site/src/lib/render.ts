@@ -117,7 +117,12 @@ const processor = unified()
   .use(remarkMath)
   .use(remarkRehype, {
     allowDangerousHtml: true,
-    handlers: { ...defListHastHandlers },
+    handlers: {
+      ...defListHastHandlers,
+      // Drop abbr definition nodes: without a handler remark-rehype falls
+      // back to rendering their title text as bare body text.
+      abbrDefinition: () => undefined,
+    },
   })
   .use(rehypeRaw) // Pass through raw HTML from preprocessor (callout divs, wikilink anchors)
   .use(rehypeShiki, {
