@@ -50,8 +50,14 @@ pipeline {
                 sh 'cargo test --release --manifest-path preprocessor/Cargo.toml'
                 // A fresh workspace has no content/ before Preprocess; the U1
                 // isolated build inside test:unit fails closed at HP001 without
-                // a homepage artifact. The fixture materializer writes only
-                // when absent, so real preprocessor output always wins.
+                // a homepage artifact, and the isolated Astro build reads
+                // search-index.json / nav-tree.json copied from site/public.
+                // Materialize them from the fixture vault first (no vault
+                // stamping); the real Preprocess stage overwrites them later.
+                sh './preprocessor/target/release/obsidian-press ./fixtures/vault ./content'
+                sh 'cp content/search-index.json content/graph.json content/previews.json content/nav-tree.json site/public/'
+                // The fixture materializer writes only when absent, so real
+                // preprocessor output always wins.
                 sh 'cd site && node scripts/crossunit/ensure-fixture-content.mjs && npm run test:unit && npm run test:pbt'
             }
             post {
