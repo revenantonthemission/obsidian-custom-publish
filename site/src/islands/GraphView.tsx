@@ -49,7 +49,8 @@ export default function GraphView({ data, width, height }: Props) {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const container = svgRef.current.parentElement;
+    // astro-island wrappers have display:contents (clientWidth 0) — measure the real container.
+    const container = svgRef.current.closest<HTMLElement>(".graph-container");
     const w = width || container?.clientWidth || 800;
     const h = height || container?.clientHeight || 600;
 
