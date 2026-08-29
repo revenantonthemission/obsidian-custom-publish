@@ -24,3 +24,6 @@ fixtures/vault/attachment/*.png
 
 # Session worktrees are nested checkouts of this repo — never commit them.
 .claude/worktrees/
+
+# Playwright MCP session artifacts (snapshots, screenshots).
+.playwright-mcp/
