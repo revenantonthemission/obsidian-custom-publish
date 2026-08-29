@@ -30,6 +30,37 @@ describe('tilde handling matches Obsidian', () => {
   });
 });
 
+describe('abbreviations', () => {
+  test('definition line disappears and occurrences become abbr with tooltip', async () => {
+    const html = await renderMarkdown(
+      'AMD는 CPU를 만든다.\n\n*[AMD]: Advanced Micro Devices\n',
+    );
+    expect(html).toContain('<abbr title="Advanced Micro Devices">AMD</abbr>');
+    expect(html).not.toContain('*[AMD]');
+  });
+
+  test('multiple definitions on consecutive lines all apply', async () => {
+    const html = await renderMarkdown(
+      'TLB와 ASID 설명.\n\n*[TLB]: Translation Lookaside Buffer\n*[ASID]: Address Space Identifier\n',
+    );
+    expect(html).toContain('<abbr title="Translation Lookaside Buffer">TLB</abbr>');
+    expect(html).toContain('<abbr title="Address Space Identifier">ASID</abbr>');
+  });
+});
+
+describe('CJK emphasis', () => {
+  test('bold closing directly before Korean text still parses', async () => {
+    const html = await renderMarkdown('**Tickless 커널(`NO_HZ`)**은 유휴 상태다.\n');
+    expect(html).toContain('<strong>');
+    expect(html).not.toContain('**');
+  });
+
+  test('italic adjacent to Korean particles parses', async () => {
+    const html = await renderMarkdown('*스케줄러*가 동작한다.\n');
+    expect(html).toContain('<em>스케줄러</em>');
+  });
+});
+
 describe('existing extended syntax keeps working', () => {
   test('footnotes render with backref', async () => {
     const html = await renderMarkdown('본문[^1]\n\n[^1]: 각주 내용\n');

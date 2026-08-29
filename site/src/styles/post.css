@@ -104,6 +104,13 @@
   background: rgba(255, 208, 0, 0.18);
 }
 
+/* ── Abbreviations (*[ABBR]: definition) ── */
+.post-content abbr[title] {
+  text-decoration: underline dotted var(--c-text-muted);
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
 /* ── Definition lists (term / : definition) ── */
 .post-content dl {
   margin: 1.25rem 0;
