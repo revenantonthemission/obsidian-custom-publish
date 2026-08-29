@@ -13,6 +13,8 @@ dist/
 credentials*
 site/public/search-index.json
 site/public/graph.json
+site/public/previews.json
+site/public/nav-tree.json
 site/public/assets/
 fixtures/vault/attachment/*.png
 !fixtures/vault/attachment/test-image.png
