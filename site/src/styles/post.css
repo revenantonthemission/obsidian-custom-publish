@@ -104,6 +104,23 @@
   background: rgba(255, 208, 0, 0.18);
 }
 
+/* ── Definition lists (term / : definition) ── */
+.post-content dl {
+  margin: 1.25rem 0;
+}
+
+.post-content dt {
+  font-weight: 700;
+  margin-top: 0.75rem;
+}
+
+.post-content dd {
+  margin: 0.25rem 0 0.25rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--c-border);
+  color: var(--c-text-muted);
+}
+
 /* ── Inline KaTeX size match ── */
 .post-content > p .katex,
 .post-content > li .katex {

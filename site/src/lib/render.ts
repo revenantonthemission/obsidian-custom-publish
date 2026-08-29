@@ -2,6 +2,7 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
+import { remarkDefinitionList, defListHastHandlers } from "remark-definition-list";
 import remarkRehype from "remark-rehype";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
@@ -101,9 +102,15 @@ function rehypeTableWrapper() {
 
 const processor = unified()
   .use(remarkParse)
-  .use(remarkGfm)
+  // singleTilde: false — Obsidian only treats ~~text~~ as strikethrough;
+  // the GFM default would corrupt literals like H~2~O.
+  .use(remarkGfm, { singleTilde: false })
+  .use(remarkDefinitionList)
   .use(remarkMath)
-  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(remarkRehype, {
+    allowDangerousHtml: true,
+    handlers: { ...defListHastHandlers },
+  })
   .use(rehypeRaw) // Pass through raw HTML from preprocessor (callout divs, wikilink anchors)
   .use(rehypeShiki, {
     themes: {
