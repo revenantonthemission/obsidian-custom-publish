@@ -4,6 +4,8 @@ import {
   forceManyBody,
   forceCenter,
   forceCollide,
+  forceX,
+  forceY,
   type Simulation,
 } from "d3-force";
 import type { GraphData } from "./types";
@@ -15,6 +17,8 @@ interface SimConfig {
   linkDistance?: number;
   chargeStrength?: number;
   collideRadius?: number;
+  /** Weak pull toward the center; keeps disconnected clusters together. 0/undefined disables. */
+  gravity?: number;
 }
 
 /** Prepare nodes and links from raw graph data for d3 simulation. */
@@ -31,7 +35,7 @@ export function createSimulation(
   links: GraphLink[],
   config: SimConfig,
 ): Simulation<GraphNode, GraphLink> {
-  return forceSimulation(nodes)
+  const sim = forceSimulation(nodes)
     .force(
       "link",
       forceLink<GraphNode, GraphLink>(links)
@@ -41,6 +45,14 @@ export function createSimulation(
     .force("charge", forceManyBody().strength(config.chargeStrength ?? -200))
     .force("center", forceCenter(config.width / 2, config.height / 2))
     .force("collide", forceCollide().radius(config.collideRadius ?? 20));
+
+  if (config.gravity) {
+    sim
+      .force("x", forceX(config.width / 2).strength(config.gravity))
+      .force("y", forceY(config.height / 2).strength(config.gravity));
+  }
+
+  return sim;
 }
 
 /** Create a MutationObserver that fires on data-theme changes. Returns cleanup function. */
