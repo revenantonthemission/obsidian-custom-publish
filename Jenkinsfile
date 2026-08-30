@@ -71,7 +71,18 @@ pipeline {
 
         stage('Preprocess') {
             steps {
-                sh './preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content'
+                // Prefer chrome-headless-shell over desktop Chrome: full Chrome
+                // occasionally takes >30s to expose its CDP endpoint under
+                // midnight load, which times out puppeteer inside mmdc (~134
+                // launches per build: 67 mermaid blocks x 2 themes). The glob
+                // survives browser version bumps; falls back to the env default
+                // (desktop Chrome) if the shell is not installed.
+                // Install/update: npx puppeteer browsers install chrome-headless-shell
+                sh '''
+                    CHS=$(ls -d "$HOME"/.cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-mac-arm64/chrome-headless-shell 2>/dev/null | sort -V | tail -1)
+                    export PUPPETEER_EXECUTABLE_PATH="${CHS:-$PUPPETEER_EXECUTABLE_PATH}"
+                    ./preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content
+                '''
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
                 sh 'cp content/previews.json site/public/previews.json'
