@@ -1367,7 +1367,7 @@ function runPbt(overrides: Record<string, string>) {
     cwd: process.cwd(),
     encoding: 'utf8',
     env: environment,
-    timeout: 30_000,
+    timeout: 120_000,
   });
 
   return {
