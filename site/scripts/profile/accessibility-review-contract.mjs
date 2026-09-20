@@ -48,18 +48,17 @@ function createRequiredManualMatrix() {
   const keys = [];
   for (const viewport of ['320x800', '1440x900']) {
     for (const theme of ['light', 'dark']) {
-      for (const details of ['closed', 'all-open']) {
-        keys.push(`/resume|chromium|${viewport}|${theme}|${details}`);
+      for (const route of ['/resume', '/portfolio']) {
+        for (const details of ['closed', 'all-open']) {
+          keys.push(`${route}|chromium|${viewport}|${theme}|${details}`);
+        }
       }
-      // `/portfolio` has no disclosures, so it contributes one state per
-      // viewport/theme rather than a closed/open pair.
-      keys.push(`/portfolio|chromium|${viewport}|${theme}|not-applicable`);
     }
   }
   return Object.freeze(keys.sort());
 }
 
-/** The exact twelve states a complete review must cover. */
+/** Both routes own native disclosures: a complete review covers sixteen states. */
 export const REQUIRED_MANUAL_MATRIX = createRequiredManualMatrix();
 
 /**

@@ -3199,9 +3199,7 @@ function isManualStateEvidence(value) {
       state.engine !== 'chromium' ||
       !['320x800', '1440x900'].includes(state.viewport) ||
       !['light', 'dark'].includes(state.theme) ||
-      !['closed', 'all-open', 'not-applicable'].includes(state.details) ||
-      (state.route === '/resume' && state.details === 'not-applicable') ||
-      (state.route === '/portfolio' && state.details !== 'not-applicable') ||
+      !['closed', 'all-open'].includes(state.details) ||
       !isPassMap(state.checks, REQUIRED_MANUAL_CHECKS)
     ) {
       return false;

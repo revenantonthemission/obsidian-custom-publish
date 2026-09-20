@@ -151,7 +151,7 @@ export interface ManualAccessibilityState {
   readonly engine: 'chromium';
   readonly viewport: '320x800' | '1440x900';
   readonly theme: 'light' | 'dark';
-  readonly details: 'closed' | 'all-open' | 'not-applicable';
+  readonly details: 'closed' | 'all-open';
   readonly checks: Readonly<Record<string, VerificationResult>>;
 }
 

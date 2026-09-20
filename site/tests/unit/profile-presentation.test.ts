@@ -250,6 +250,32 @@ describe('production Astro profile output', () => {
     );
   });
 
+  test('keeps portfolio jump links and native detail content in the static document', () => {
+    const navigation = elementByClass(
+      portfolioHtml,
+      'nav',
+      'portfolio-project-navigation',
+    );
+    const articleIds = openingTags(portfolioHtml, 'article')
+      .map((tag) => attribute(tag, 'id'))
+      .filter((id): id is string => id?.startsWith('project-') === true);
+    expect(anchorHrefs(navigation)).toEqual(articleIds.map((id) => `#${id}`));
+
+    const disclosures = openingTags(portfolioHtml, 'details').filter((tag) =>
+      /\bclass="case-study-details"/.test(tag),
+    );
+    expect(disclosures.length).toBeGreaterThan(0);
+    for (const disclosure of disclosures) {
+      expect(disclosure).not.toMatch(/\bopen(?:\s|=|>)/);
+      expect(isInsideAstroIsland(portfolioHtml, disclosure)).toBe(false);
+    }
+    expect(portfolioHtml).toContain('인덱스 전환');
+    expect(portfolioHtml).toContain('남은 품질 과제');
+    const factIds = [...portfolioHtml.matchAll(/data-profile-fact-id="([^"]+)"/g)]
+      .map((match) => match[1]);
+    expect(new Set(factIds).size).toBe(factIds.length);
+  });
+
   test('keeps profile routes out of copied search and knowledge navigation data', () => {
     expect(searchDocumentSlugs(searchIndex)).not.toContain('resume');
     expect(searchDocumentSlugs(searchIndex)).not.toContain('portfolio');

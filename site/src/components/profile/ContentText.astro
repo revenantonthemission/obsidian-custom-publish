@@ -1,0 +1,15 @@
+---
+interface Props {
+  text: string;
+  emphasizeLead?: boolean;
+}
+
+const { text, emphasizeLead = false } = Astro.props;
+// Preserve every character of the approved value; only emphasize its authored
+// topic label. Plain text stays escaped by Astro, including the remainder.
+const separator = emphasizeLead ? text.indexOf(" — ") : -1;
+---
+
+{separator > 0 ? (
+  <><strong>{text.slice(0, separator)}</strong>{text.slice(separator)}</>
+) : text}
