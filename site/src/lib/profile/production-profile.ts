@@ -44,20 +44,20 @@ const RECEIPT_KEYS = [
 
 const EXPECTED_RECEIPT = Object.freeze({
   schemaVersion: 1,
-  receiptId: 'profile-fact-approval-2026-09-20-r1',
-  inventoryRevision: 'profile-facts-r4',
+  receiptId: 'profile-fact-approval-2026-09-20-r2',
+  inventoryRevision: 'profile-facts-r5',
   inventoryDigest:
-    '6c2cabccd2c08665c0959d5c1ea050e227afce3134acbc3198c5fc81537774df',
-  productionDiffRevision: 'profile-production-diff-r4',
+    '9a547fee6461ed2334cad080ad558edd899e38e61f94b16bbcb37469a3425a28',
+  productionDiffRevision: 'profile-production-diff-r5',
   productionDiffDigest:
-    'a11bdc31249ec329b87f759901519181df1c77999e661454f929141479e6000a',
+    '1e4bfa50e4956891bcbcd3a7d50210f97c2a1485192de772c02c972a5237e60c',
   approvedRecordsDigest:
-    '0c2a8a5f00317f19f9a184aa9462f88c253a700cff54c887437f6cd0592bc394',
+    'a38977724005927088a2231406839070b5a8d1de5cf2d0ebd0a49ef2ce96c2cb',
   materializedProfileDigest:
-    '6c261396ae32e95a38c4a4bff2fa4d63138098092a91c561e3eca23f8717f1a4',
+    '4358e527292d20cd5db3d77add05c75e055ebef3b4393c470fbb6fd95f3c0fd8',
   decision: 'Approved',
-  decisionAuditId: 'PROFILE-PUBLICATION-20260920T093534Z',
-  decisionRecordedAt: '2026-09-20T09:35:34Z',
+  decisionAuditId: 'PROFILE-EDITORIAL-20260920T101816Z',
+  decisionRecordedAt: '2026-09-20T10:18:16Z',
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';

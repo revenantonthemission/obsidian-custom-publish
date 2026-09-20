@@ -1,5 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { buildPortfolioPresentation } from '../../src/components/profile/presentation.js';
+import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
 import {
   applyDetailsState,
   applyTheme,
@@ -27,6 +29,58 @@ const VIEWPORTS = [
 const THEMES = ['light', 'dark'] as const;
 
 test.describe('data-platform portfolio', () => {
+  test('shows the profile heading and separate topic headings without changing approved text', async ({
+    page,
+  }) => {
+    await gotoRoute(page, ROUTE);
+    await expect(page.locator('.portfolio-intro > h2')).toHaveText('프로필');
+    await applyDetailsState(page, 'all-open');
+
+    const presentation = buildPortfolioPresentation(
+      getProductionProfileAssembly().portfolio,
+    );
+    const projects = presentation.sections.find((section) => section.kind === 'projects');
+    if (projects?.kind !== 'projects') {
+      throw new Error('the approved portfolio has no project section');
+    }
+
+    let subtitleCount = 0;
+    for (const project of projects.projects) {
+      const article = page.locator(`#project-${project.id}`);
+      expect(await article.textContent()).not.toContain('—');
+      for (const dimension of project.dimensions) {
+        const facts = dimension.blocks.flatMap((block) =>
+          block.tag === 'paragraph' ? [block.text] : [...block.items],
+        );
+        for (const fact of facts) {
+          const rendered = article.locator(`[data-profile-fact-id="${fact.factId}"]`);
+          await expect(rendered).toHaveCount(1);
+          const actual = (await rendered.textContent()) ?? '';
+          expect(normalizeText(actual), `rendered fact ${fact.factId}`).toBe(
+            normalizeText(fact.value),
+          );
+
+          const separator = fact.value.indexOf('\n');
+          if (separator < 1) continue;
+          subtitleCount += 1;
+          const subtitle = rendered.locator(':scope > h5.profile-content-subtitle');
+          const paragraph = rendered.locator(':scope > p');
+          await expect(subtitle).toHaveCount(1);
+          await expect(subtitle).toBeVisible();
+          await expect(subtitle).toHaveText(fact.value.slice(0, separator));
+          await expect(paragraph).toHaveCount(1);
+          await expect(paragraph).toBeVisible();
+          await expect(paragraph).toHaveText(fact.value.slice(separator + 1));
+          expect(await rendered.evaluate((element) => element.tagName)).not.toBe('P');
+          expect(await subtitle.evaluate((element) => element.closest('p'))).toBeNull();
+        }
+      }
+    }
+    expect(subtitleCount).toBeGreaterThan(0);
+    await expect(page.locator('.portfolio-case-study h5.profile-content-subtitle'))
+      .toHaveCount(subtitleCount);
+  });
+
   test('keeps the DocSuri role, incident and bounded measurement in the document', async ({
     page,
   }) => {
@@ -68,7 +122,7 @@ test.describe('data-platform portfolio', () => {
     expect(documentText).toMatch(/664\.9\s*ms/);
     expect(documentText).toMatch(/전체\s*HTTP/);
     expect(documentText).toContain('0.01%');
-    expect(documentText).toMatch(/반복.*단일|단일.*반복/);
+    expect(documentText).toMatch(/(?:단일|하나의|같은).*질의.*반복|반복.*단일.*질의/);
     expect(documentText).toMatch(/현재|당시|과거/);
 
     const factIds = await article.locator('[data-profile-fact-id]').evaluateAll(
@@ -203,6 +257,10 @@ test.describe('data-platform portfolio', () => {
     }
   });
 });
+
+function normalizeText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
 
 async function expectVisibleFocus(locator: Locator): Promise<void> {
   const indicator = await locator.evaluate((element) => {

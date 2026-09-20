@@ -1,15 +1,18 @@
 ---
 interface Props {
   text: string;
-  emphasizeLead?: boolean;
+  withSubtitles?: boolean;
 }
 
-const { text, emphasizeLead = false } = Astro.props;
-// Preserve every character of the approved value; only emphasize its authored
-// topic label. Plain text stays escaped by Astro, including the remainder.
-const separator = emphasizeLead ? text.indexOf(" — ") : -1;
+const { text, withSubtitles = false } = Astro.props;
+// An authored first line is the subtitle; the remainder is its body. Keep the
+// body's leading newline so HTML minification cannot join the two text values.
+const separator = withSubtitles ? text.indexOf("\n") : -1;
 ---
 
 {separator > 0 ? (
-  <><strong>{text.slice(0, separator)}</strong>{text.slice(separator)}</>
+  <>
+    <h5 class="profile-content-subtitle">{text.slice(0, separator)}</h5>
+    <p class="profile-content-paragraph">{text.slice(separator)}</p>
+  </>
 ) : text}

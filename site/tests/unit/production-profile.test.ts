@@ -21,7 +21,7 @@ import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/docume
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
-  '6c261396ae32e95a38c4a4bff2fa4d63138098092a91c561e3eca23f8717f1a4';
+  '4358e527292d20cd5db3d77add05c75e055ebef3b4393c470fbb6fd95f3c0fd8';
 const FORBIDDEN_PROFILE_KEYS = new Set([
   'approvedRecordsDigest',
   'decision',
