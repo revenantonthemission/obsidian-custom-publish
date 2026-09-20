@@ -17,6 +17,7 @@ const { presentation } = Astro.props;
         class="profile-section portfolio-intro"
         data-profile-section="intro"
       >
+        <p class="portfolio-eyebrow" lang="en">Data engineering · Platform &amp; operations</p>
         <h2>{section.heading}</h2>
         <p
           class="portfolio-summary"
@@ -36,8 +37,23 @@ const { presentation } = Astro.props;
         data-profile-section="projects"
       >
         <h2>{section.heading}</h2>
-        {section.projects.map((project) => (
-          <CaseStudy project={project} />
+        <nav class="portfolio-project-navigation" aria-label="프로젝트 바로가기">
+          <ol>
+            {section.projects.map((project, index) => (
+              <li>
+                <a href={`#project-${project.id}`}>
+                  <span class="portfolio-project-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span>{project.title.value}</span>
+                  <span class="portfolio-project-arrow" aria-hidden="true">↘</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        {section.projects.map((project, index) => (
+          <CaseStudy project={project} position={index + 1} />
         ))}
       </section>
     )

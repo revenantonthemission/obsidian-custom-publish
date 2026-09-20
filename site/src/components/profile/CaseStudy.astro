@@ -5,9 +5,11 @@ import type { CaseStudyView } from "./presentation.js";
 
 interface Props {
   project: CaseStudyView;
+  position?: number;
 }
 
-const { project } = Astro.props;
+const { project, position } = Astro.props;
+const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]);
 ---
 
 <article
@@ -19,6 +21,11 @@ const { project } = Astro.props;
   data-testid={`case-study-article-${project.id}`}
 >
   <header class="portfolio-case-study-header">
+    {position !== undefined && (
+      <p class="portfolio-case-number" aria-hidden="true">
+        CASE STUDY / {String(position).padStart(2, "0")}
+      </p>
+    )}
     <h3
       data-profile-fact-id={project.title.factId}
       data-testid={`case-study-title-${project.id}`}
@@ -48,7 +55,19 @@ const { project } = Astro.props;
       data-testid={`case-study-dimension-${dimension.key}-${project.id}`}
     >
       <h4>{dimension.heading}</h4>
-      <ContentBlocks blocks={dimension.blocks} />
+      {expandableDimensions.has(dimension.key) && dimension.blocks.length > 1 ? (
+        <>
+          <ContentBlocks blocks={dimension.blocks.slice(0, 1)} emphasizeLead />
+          <details class="case-study-details">
+            <summary>{dimension.heading} 자세히 보기</summary>
+            <div class="case-study-details-content">
+              <ContentBlocks blocks={dimension.blocks.slice(1)} emphasizeLead />
+            </div>
+          </details>
+        </>
+      ) : (
+        <ContentBlocks blocks={dimension.blocks} emphasizeLead />
+      )}
     </section>
   ))}
 

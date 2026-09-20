@@ -1,11 +1,13 @@
 ---
 import type { TextBlockView } from "./presentation.js";
+import ContentText from "./ContentText.astro";
 
 interface Props {
   blocks: readonly TextBlockView[];
+  emphasizeLead?: boolean;
 }
 
-const { blocks } = Astro.props;
+const { blocks, emphasizeLead = false } = Astro.props;
 ---
 
 {blocks.map((block) => (
@@ -14,18 +16,22 @@ const { blocks } = Astro.props;
       class="profile-content-paragraph"
       data-profile-fact-id={block.text.factId}
     >
-      {block.text.value}
+      <ContentText text={block.text.value} emphasizeLead={emphasizeLead} />
     </p>
   ) : block.style === "ordered" ? (
     <ol class="profile-content-list profile-content-list-ordered">
       {block.items.map((item) => (
-        <li data-profile-fact-id={item.factId}>{item.value}</li>
+        <li data-profile-fact-id={item.factId}>
+          <ContentText text={item.value} emphasizeLead={emphasizeLead} />
+        </li>
       ))}
     </ol>
   ) : (
     <ul class="profile-content-list profile-content-list-unordered">
       {block.items.map((item) => (
-        <li data-profile-fact-id={item.factId}>{item.value}</li>
+        <li data-profile-fact-id={item.factId}>
+          <ContentText text={item.value} emphasizeLead={emphasizeLead} />
+        </li>
       ))}
     </ul>
   )
