@@ -199,7 +199,7 @@ describe('production Astro profile output', () => {
   test('renders the résumé shell, closed disclosures and static navigation', () => {
     assertProfileShell(resumeHtml, 'resume', 'Résumé');
     expect(headingTexts(resumeHtml, 2)).toEqual([
-      '소개·연락·PDF',
+      '프로필',
       '핵심 역량',
       '경력·대표 성과',
       '대표 프로젝트 요약',
@@ -233,7 +233,7 @@ describe('production Astro profile output', () => {
   test('renders portfolio articles, six dimensions and static navigation', () => {
     assertProfileShell(portfolioHtml, 'portfolio', 'Portfolio');
     expect(headingTexts(portfolioHtml, 2)).toEqual([
-      '소개와 연락',
+      '프로필',
       '대표 프로젝트',
     ]);
     assertLogicalHeadingOrder(portfolioHtml);
@@ -269,11 +269,36 @@ describe('production Astro profile output', () => {
       expect(disclosure).not.toMatch(/\bopen(?:\s|=|>)/);
       expect(isInsideAstroIsland(portfolioHtml, disclosure)).toBe(false);
     }
-    expect(portfolioHtml).toContain('인덱스 전환');
-    expect(portfolioHtml).toContain('남은 품질 과제');
+    const disclosureBodies = [...portfolioHtml.matchAll(
+      /<details\b(?=[^>]*class="case-study-details")[^>]*>([\s\S]*?)<\/details>/g,
+    )];
+    expect(disclosureBodies).toHaveLength(disclosures.length);
+    for (const [, body] of disclosureBodies) {
+      expect(body).toContain('data-profile-fact-id=');
+      expect(stripTags(body!.replace(/<summary\b[^>]*>[\s\S]*?<\/summary>/, '')))
+        .not.toBe('');
+    }
     const factIds = [...portfolioHtml.matchAll(/data-profile-fact-id="([^"]+)"/g)]
       .map((match) => match[1]);
     expect(new Set(factIds).size).toBe(factIds.length);
+  });
+
+  test('renders portfolio topic labels as subheadings rather than inline em-dash leads', () => {
+    const subtitles = [...portfolioHtml.matchAll(
+      /<h5\b[^>]*\bclass="[^"]*\bprofile-content-subtitle\b[^"]*"[^>]*>([\s\S]*?)<\/h5>/g,
+    )];
+    expect(subtitles.length).toBeGreaterThan(0);
+    for (const [heading, label] of subtitles) {
+      expect(stripTags(label!)).not.toBe('');
+      expect(heading).not.toContain('—');
+    }
+    for (const [article] of portfolioHtml.matchAll(
+      /<article\b(?=[^>]*data-testid="case-study-article-[a-z0-9-]+")[^>]*>[\s\S]*?<\/article>/g,
+    )) {
+      expect(stripTags(article)).not.toContain('—');
+    }
+    expect(portfolioHtml).not.toMatch(/<p\b[^>]*>[^<]*<h5\b/);
+    expect(resumeHtml).not.toContain('profile-content-subtitle');
   });
 
   test('keeps profile routes out of copied search and knowledge navigation data', () => {

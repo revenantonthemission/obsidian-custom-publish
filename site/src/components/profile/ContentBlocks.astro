@@ -4,25 +4,34 @@ import ContentText from "./ContentText.astro";
 
 interface Props {
   blocks: readonly TextBlockView[];
-  emphasizeLead?: boolean;
+  withSubtitles?: boolean;
 }
 
-const { blocks, emphasizeLead = false } = Astro.props;
+const { blocks, withSubtitles = false } = Astro.props;
 ---
 
 {blocks.map((block) => (
   block.tag === "paragraph" ? (
-    <p
-      class="profile-content-paragraph"
-      data-profile-fact-id={block.text.factId}
-    >
-      <ContentText text={block.text.value} emphasizeLead={emphasizeLead} />
-    </p>
+    withSubtitles && block.text.value.indexOf("\n") > 0 ? (
+      <div
+        class="profile-content-subsection"
+        data-profile-fact-id={block.text.factId}
+      >
+        <ContentText text={block.text.value} withSubtitles />
+      </div>
+    ) : (
+      <p
+        class="profile-content-paragraph"
+        data-profile-fact-id={block.text.factId}
+      >
+        {block.text.value}
+      </p>
+    )
   ) : block.style === "ordered" ? (
     <ol class="profile-content-list profile-content-list-ordered">
       {block.items.map((item) => (
         <li data-profile-fact-id={item.factId}>
-          <ContentText text={item.value} emphasizeLead={emphasizeLead} />
+          <ContentText text={item.value} withSubtitles={withSubtitles} />
         </li>
       ))}
     </ol>
@@ -30,7 +39,7 @@ const { blocks, emphasizeLead = false } = Astro.props;
     <ul class="profile-content-list profile-content-list-unordered">
       {block.items.map((item) => (
         <li data-profile-fact-id={item.factId}>
-          <ContentText text={item.value} emphasizeLead={emphasizeLead} />
+          <ContentText text={item.value} withSubtitles={withSubtitles} />
         </li>
       ))}
     </ul>

@@ -8,7 +8,7 @@
   color: var(--c-profile-accent-text);
   font-size: 0.75rem;
   font-weight: 650;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
 }
 
 .portfolio-eyebrow {
@@ -179,7 +179,25 @@
   word-break: keep-all;
 }
 
-.case-study-details-content .profile-content-list li + li {
+.portfolio-case-study .profile-content-subtitle {
+  margin: 0 0 0.45rem;
+  color: var(--c-text);
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.profile-content-subsection {
+  margin-bottom: 1.25rem;
+}
+
+.profile-content-subsection > .profile-content-paragraph,
+.portfolio-case-study .profile-content-list li > .profile-content-paragraph {
+  margin-bottom: 0;
+}
+
+.portfolio-case-study .profile-content-list li + li {
   margin-top: 1rem;
 }
 

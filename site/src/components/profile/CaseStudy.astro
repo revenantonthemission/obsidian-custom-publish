@@ -23,7 +23,7 @@ const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]
   <header class="portfolio-case-study-header">
     {position !== undefined && (
       <p class="portfolio-case-number" aria-hidden="true">
-        CASE STUDY / {String(position).padStart(2, "0")}
+        프로젝트 {String(position).padStart(2, "0")}
       </p>
     )}
     <h3
@@ -57,26 +57,26 @@ const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]
       <h4>{dimension.heading}</h4>
       {expandableDimensions.has(dimension.key) && dimension.blocks.length > 1 ? (
         <>
-          <ContentBlocks blocks={dimension.blocks.slice(0, 1)} emphasizeLead />
+          <ContentBlocks blocks={dimension.blocks.slice(0, 1)} withSubtitles />
           <details class="case-study-details">
             <summary>{dimension.heading} 자세히 보기</summary>
             <div class="case-study-details-content">
-              <ContentBlocks blocks={dimension.blocks.slice(1)} emphasizeLead />
+              <ContentBlocks blocks={dimension.blocks.slice(1)} withSubtitles />
             </div>
           </details>
         </>
       ) : (
-        <ContentBlocks blocks={dimension.blocks} emphasizeLead />
+        <ContentBlocks blocks={dimension.blocks} withSubtitles />
       )}
     </section>
   ))}
 
   {project.evidence.length > 0 && (
     <section class="case-study-evidence">
-      <h4>근거</h4>
+      <h4>관련 자료</h4>
       <ContactActions
         actions={project.evidence}
-        label={`${project.title.value} 근거`}
+        label={`${project.title.value} 관련 자료`}
         variant="evidence-actions"
       />
     </section>

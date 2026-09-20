@@ -168,7 +168,7 @@ export interface CertificationView {
 export type ResumeSectionView =
   | Readonly<{
       kind: 'intro';
-      heading: '소개·연락·PDF';
+      heading: '프로필';
       name: TextFactView;
       headline: TextFactView;
       summary: TextFactView;
@@ -239,7 +239,7 @@ export interface CaseStudyView {
 export type PortfolioSectionView =
   | Readonly<{
       kind: 'intro';
-      heading: '소개와 연락';
+      heading: '프로필';
       summary: TextFactView;
       actions: readonly ProfileActionView[];
     }>
@@ -299,7 +299,7 @@ export function buildResumePresentation(
   const sections: ResumeSectionView[] = [
     Object.freeze({
       kind: 'intro',
-      heading: '소개·연락·PDF',
+      heading: '프로필',
       name: textFact(profile.identity.name),
       headline: textFact(profile.identity.headline),
       summary: textFact(profile.resumeSummary),
@@ -365,7 +365,7 @@ export function buildPortfolioPresentation(
     sections: frozenArray([
       Object.freeze({
         kind: 'intro',
-        heading: '소개와 연락',
+        heading: '프로필',
         summary: textFact(profile.portfolioSummary),
         actions: contactActions(profile.contactActions),
       }),
