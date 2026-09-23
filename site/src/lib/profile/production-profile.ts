@@ -44,20 +44,20 @@ const RECEIPT_KEYS = [
 
 const EXPECTED_RECEIPT = Object.freeze({
   schemaVersion: 1,
-  receiptId: 'profile-fact-approval-2026-09-20-r2',
-  inventoryRevision: 'profile-facts-r5',
+  receiptId: 'profile-fact-approval-2026-09-23-r1',
+  inventoryRevision: 'profile-facts-r6',
   inventoryDigest:
-    '9a547fee6461ed2334cad080ad558edd899e38e61f94b16bbcb37469a3425a28',
-  productionDiffRevision: 'profile-production-diff-r5',
+    'f642668821ae1edb6d94ea40a56df5e090658e60b3fa6a923ebed12aef961130',
+  productionDiffRevision: 'profile-production-diff-r6',
   productionDiffDigest:
-    '1e4bfa50e4956891bcbcd3a7d50210f97c2a1485192de772c02c972a5237e60c',
+    '19f2773fe78bc63250b633b70dffc37bf356246a9d5e53b776100e754716c877',
   approvedRecordsDigest:
-    'a38977724005927088a2231406839070b5a8d1de5cf2d0ebd0a49ef2ce96c2cb',
+    '2d5d3ef49553348eb2b05ec1fde573bf87bead6c5448abc4d294c325cee6a19c',
   materializedProfileDigest:
-    '4358e527292d20cd5db3d77add05c75e055ebef3b4393c470fbb6fd95f3c0fd8',
+    '2a3c2ebe7abe12a1a88d5e563e18f5f42e93317c9c99d52d2f35b5c60820bd98',
   decision: 'Approved',
-  decisionAuditId: 'PROFILE-EDITORIAL-20260920T101816Z',
-  decisionRecordedAt: '2026-09-20T10:18:16Z',
+  decisionAuditId: 'PROFILE-DEAI-GENERALIZATION-20260923T031705Z',
+  decisionRecordedAt: '2026-09-23T03:17:05Z',
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';
@@ -78,7 +78,7 @@ const PROJECT_FACT_SUFFIXES = [
 
 type EvidenceId =
   | 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07'
-  | 'E08' | 'E09' | 'E10' | 'E11' | 'E12';
+  | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13';
 
 const EVIDENCE_SOURCES = deepFreeze({
   E01: {
@@ -165,6 +165,11 @@ const EVIDENCE_SOURCES = deepFreeze({
       'https://github.com/revenantonthemission/obsidian-custom-publish/commit/f82c9eb370f34470d0c930b9e89630f7fceb278e',
     verifier: 'Codex HTTP reachability collector (HTTP 200 only)',
     checkedAt: PUBLICATION_SOURCE_CHECKED_AT,
+  },
+  E13: {
+    kind: 'user-provided',
+    reference:
+      'User-directed publication of the general data-engineer/AI rescope (2026-09-23 request). The added skill facts mirror technologies evidenced by the linked DocSuri and mcp-local-reference repositories and the approved architecture facts. This is publication authorization, not a new human fact review.',
   },
 } satisfies Record<EvidenceId, FactReviewEvidence>);
 
@@ -1120,6 +1125,16 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       'project-obsidian-custom-publish-evidence-render-failure-label',
       'project-obsidian-custom-publish-evidence-render-failure-destination',
     ],
+    E13: [
+      'skill-group-ai-llm-title',
+      'skill-sql-name',
+      'skill-postgresql-name',
+      'skill-opensearch-name',
+      'skill-amazon-bedrock-name',
+      'skill-sentence-transformers-name',
+      'skill-chromadb-name',
+      'skill-ollama-name',
+    ],
   };
 
   for (const [evidenceId, factIds] of Object.entries(groups) as [
@@ -1136,7 +1151,7 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       membership.set(factId, evidenceId);
     }
   }
-  if (membership.size !== 125) {
+  if (membership.size !== 133) {
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_EVIDENCE_INVALID',
       'profile.facts',

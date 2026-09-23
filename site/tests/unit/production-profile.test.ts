@@ -21,7 +21,7 @@ import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/docume
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
-  '4358e527292d20cd5db3d77add05c75e055ebef3b4393c470fbb6fd95f3c0fd8';
+  '2a3c2ebe7abe12a1a88d5e563e18f5f42e93317c9c99d52d2f35b5c60820bd98';
 const FORBIDDEN_PROFILE_KEYS = new Set([
   'approvedRecordsDigest',
   'decision',
@@ -49,7 +49,7 @@ afterEach(async () => {
 });
 
 describe('approved production profile boundary', () => {
-  test('materializes all 125 publication-authorized facts with a zero-diff identity', () => {
+  test('materializes all 133 publication-authorized facts with a zero-diff identity', () => {
     const evaluation = productionProfileTesting.evaluate(
       profileData,
       receiptDocument,
@@ -69,8 +69,8 @@ describe('approved production profile boundary', () => {
       requirement: record.requirement,
     }));
 
-    expect(evaluation.facts).toHaveLength(125);
-    expect(evaluation.records).toHaveLength(125);
+    expect(evaluation.facts).toHaveLength(133);
+    expect(evaluation.records).toHaveLength(133);
     expect(recordProjection).toEqual(factProjection);
     expect(evaluation.materializedProfileDigest).toBe(
       EXPECTED_MATERIALIZED_DIGEST,
