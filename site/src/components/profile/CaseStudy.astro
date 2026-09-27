@@ -5,9 +5,12 @@ import type { CaseStudyView } from "./presentation.js";
 
 interface Props {
   project: CaseStudyView;
+  position?: number;
+  focus?: string;
 }
 
-const { project } = Astro.props;
+const { project, position, focus } = Astro.props;
+const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]);
 ---
 
 <article
@@ -19,6 +22,12 @@ const { project } = Astro.props;
   data-testid={`case-study-article-${project.id}`}
 >
   <header class="portfolio-case-study-header">
+    {position !== undefined && (
+      <p class="portfolio-case-number" aria-hidden="true">
+        프로젝트 {String(position).padStart(2, "0")}
+      </p>
+    )}
+    {focus && <p class="portfolio-project-focus">{focus}</p>}
     <h3
       data-profile-fact-id={project.title.factId}
       data-testid={`case-study-title-${project.id}`}
@@ -48,16 +57,28 @@ const { project } = Astro.props;
       data-testid={`case-study-dimension-${dimension.key}-${project.id}`}
     >
       <h4>{dimension.heading}</h4>
-      <ContentBlocks blocks={dimension.blocks} />
+      {expandableDimensions.has(dimension.key) && dimension.blocks.length > 1 ? (
+        <>
+          <ContentBlocks blocks={dimension.blocks.slice(0, 1)} withSubtitles />
+          <details class="case-study-details">
+            <summary>{dimension.heading} 자세히 보기</summary>
+            <div class="case-study-details-content">
+              <ContentBlocks blocks={dimension.blocks.slice(1)} withSubtitles />
+            </div>
+          </details>
+        </>
+      ) : (
+        <ContentBlocks blocks={dimension.blocks} withSubtitles />
+      )}
     </section>
   ))}
 
   {project.evidence.length > 0 && (
     <section class="case-study-evidence">
-      <h4>근거</h4>
+      <h4>관련 자료</h4>
       <ContactActions
         actions={project.evidence}
-        label={`${project.title.value} 근거`}
+        label={`${project.title.value} 관련 자료`}
         variant="evidence-actions"
       />
     </section>

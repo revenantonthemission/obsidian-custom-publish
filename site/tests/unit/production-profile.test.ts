@@ -12,6 +12,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import receiptDocument from '../../verification/profile/fact-approval.json';
 import { profileData } from '../../src/lib/profile/profile-data.js';
 import {
+  getApprovedExternalDestinations,
   getProductionProfileAssembly,
   productionProfileTesting,
 } from '../../src/lib/profile/production-profile.js';
@@ -20,7 +21,7 @@ import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/docume
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
-  '775177b9cd3dd6b662e25a3094d96ba56260084de06d9d527c531481b4c9e15e';
+  '2a3c2ebe7abe12a1a88d5e563e18f5f42e93317c9c99d52d2f35b5c60820bd98';
 const FORBIDDEN_PROFILE_KEYS = new Set([
   'approvedRecordsDigest',
   'decision',
@@ -48,7 +49,7 @@ afterEach(async () => {
 });
 
 describe('approved production profile boundary', () => {
-  test('materializes all 77 approved facts with a zero-diff identity', () => {
+  test('materializes all 133 publication-authorized facts with a zero-diff identity', () => {
     const evaluation = productionProfileTesting.evaluate(
       profileData,
       receiptDocument,
@@ -68,8 +69,8 @@ describe('approved production profile boundary', () => {
       requirement: record.requirement,
     }));
 
-    expect(evaluation.facts).toHaveLength(77);
-    expect(evaluation.records).toHaveLength(77);
+    expect(evaluation.facts).toHaveLength(133);
+    expect(evaluation.records).toHaveLength(133);
     expect(recordProjection).toEqual(factProjection);
     expect(evaluation.materializedProfileDigest).toBe(
       EXPECTED_MATERIALIZED_DIGEST,
@@ -104,6 +105,38 @@ describe('approved production profile boundary', () => {
       'utf8',
     );
     expect(barrel).not.toMatch(/profile-data|production-profile/);
+  });
+
+  test('keeps inherited source checks separate from the publication authorization', () => {
+    const evaluation = productionProfileTesting.evaluate(
+      profileData,
+      receiptDocument,
+    );
+    const byFactId = new Map(
+      evaluation.records.map((record) => [record.factId, record]),
+    );
+    expect(byFactId.get('project-docsuri-title')?.evidence).toMatchObject({
+      kind: 'public-source',
+      verifier: 'Claude public-source collector',
+      checkedAt: '2026-08-26T06:46:25Z',
+    });
+    expect(byFactId.get('project-obsidian-custom-publish-title')?.evidence).toMatchObject({
+      kind: 'public-source',
+      verifier: 'Codex public-source collector',
+      checkedAt: '2026-07-25T03:15:19Z',
+    });
+    expect(byFactId.get('project-docsuri-outcomes-mixed-load')?.evidence).toMatchObject({
+      kind: 'user-provided',
+      reference: expect.stringContaining('not a new human fact review'),
+    });
+    const newChecks = getApprovedExternalDestinations().filter(
+      (destination) => destination.checkedAt === '2026-09-20T09:30:23.000Z',
+    );
+    expect(newChecks).toHaveLength(4);
+    expect(newChecks.every(
+      (destination) => destination.verifier ===
+        'Codex HTTP reachability collector (HTTP 200 only)',
+    )).toBe(true);
   });
 
   test('keeps receipt and review metadata outside the public profile graph', () => {
@@ -151,7 +184,7 @@ describe('approved production profile boundary', () => {
       receipt.schemaVersion = 2;
     }],
     ['revision drift', (receipt: Record<string, unknown>) => {
-      receipt.inventoryRevision = 'profile-facts-r3';
+      receipt.inventoryRevision = `${receiptDocument.inventoryRevision}-unapproved`;
     }],
     ['decision drift', (receipt: Record<string, unknown>) => {
       receipt.decision = 'Pending';

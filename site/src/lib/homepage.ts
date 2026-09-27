@@ -132,9 +132,12 @@ export function buildHomepageChunks(
     }
     if (side === "before") chunks.push({ kind: "slot" });
   }
-  // Legacy semantics (BR-U2-041): when the heading never matches — the real
-  // Vault uses an h3, which the verbatim h2 rule ignores — the section was
-  // still always rendered, appended after the authored content.
-  if (!recentPlaced) chunks.push({ kind: "recent" });
+  // When the heading never matches — the real Vault uses an h3, which the
+  // verbatim h2 rule ignores — the section still always renders, placed
+  // directly after the profile slot.
+  if (!recentPlaced) {
+    const slotIndex = chunks.findIndex((c) => c.kind === "slot");
+    chunks.splice(slotIndex + 1, 0, { kind: "recent" });
+  }
   return chunks;
 }

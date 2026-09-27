@@ -9,5 +9,8 @@ export default getViteConfig({
     setupFiles: ['tests/pbt/u1/setup.ts'],
     fileParallelism: false,
     retry: 0,
+    // Property tests execute hundreds of async runs per case; slow seeds
+    // legitimately exceed the 5s default (Jenkins #14 timed out on one).
+    testTimeout: 60_000,
   },
 });

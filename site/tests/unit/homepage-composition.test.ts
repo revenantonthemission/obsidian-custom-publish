@@ -69,10 +69,10 @@ describe('composition plan (BR-U2-040/042, FE-P-U2-03)', () => {
     expect(kinds).toEqual(['html', 'slot', 'recent']);
   });
 
-  test('without a matching heading the recent section is appended (legacy)', () => {
+  test('without a matching heading the recent section follows the slot', () => {
     const html = `<p>인트로</p>\n${PROFILE_SLOT_TOKEN}\n<h3>이번주에 작성된 포스트.</h3><p>수동 목록</p>`;
     const kinds = buildHomepageChunks(html, 'x.md').map((c) => c.kind);
-    expect(kinds).toEqual(['html', 'slot', 'html', 'recent']);
+    expect(kinds).toEqual(['html', 'slot', 'recent', 'html']);
   });
 
   test('the token itself never reaches an html chunk', () => {

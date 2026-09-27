@@ -2,6 +2,9 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
+import { remarkDefinitionList, defListHastHandlers } from "remark-definition-list";
+import remarkAbbr from "@richardtowers/remark-abbr";
+import remarkCjkFriendly from "remark-cjk-friendly";
 import remarkRehype from "remark-rehype";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
@@ -101,9 +104,26 @@ function rehypeTableWrapper() {
 
 const processor = unified()
   .use(remarkParse)
-  .use(remarkGfm)
+  // singleTilde: false — Obsidian only treats ~~text~~ as strikethrough;
+  // the GFM default would corrupt literals like H~2~O.
+  .use(remarkGfm, { singleTilde: false })
+  // CommonMark flanking rules break **bold**은 when emphasis touches CJK
+  // text or particles; this extension relaxes them the way Obsidian does.
+  .use(remarkCjkFriendly)
+  .use(remarkDefinitionList)
+  // *[ABBR]: definition — hides the definition line and wraps occurrences
+  // in <abbr title="...">.
+  .use(remarkAbbr)
   .use(remarkMath)
-  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(remarkRehype, {
+    allowDangerousHtml: true,
+    handlers: {
+      ...defListHastHandlers,
+      // Drop abbr definition nodes: without a handler remark-rehype falls
+      // back to rendering their title text as bare body text.
+      abbrDefinition: () => undefined,
+    },
+  })
   .use(rehypeRaw) // Pass through raw HTML from preprocessor (callout divs, wikilink anchors)
   .use(rehypeShiki, {
     themes: {

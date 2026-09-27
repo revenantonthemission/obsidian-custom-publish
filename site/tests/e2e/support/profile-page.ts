@@ -65,9 +65,9 @@ export async function gotoRoute(page: Page, route: string): Promise<void> {
 }
 
 /**
- * Applies the `details` dimension to the profile content. `/portfolio` owns no
- * disclosure, so `all-open` is a no-op there and the cell still records that
- * the state was exercised.
+ * Applies the `details` dimension to every native disclosure owned by either
+ * profile route. Portfolio case-study details must be reviewed open as well
+ * as in their initially closed state.
  */
 export async function applyDetailsState(
   page: Page,

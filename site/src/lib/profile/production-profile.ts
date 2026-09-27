@@ -44,23 +44,25 @@ const RECEIPT_KEYS = [
 
 const EXPECTED_RECEIPT = Object.freeze({
   schemaVersion: 1,
-  receiptId: 'profile-fact-approval-2026-07-25-r1',
-  inventoryRevision: 'profile-facts-r2',
+  receiptId: 'profile-fact-approval-2026-09-23-r1',
+  inventoryRevision: 'profile-facts-r6',
   inventoryDigest:
-    '25357f9902858abeafe17a3b3016c43328852ea8dce29453e48cd83da31fa345',
-  productionDiffRevision: 'profile-production-diff-r2',
+    'f642668821ae1edb6d94ea40a56df5e090658e60b3fa6a923ebed12aef961130',
+  productionDiffRevision: 'profile-production-diff-r6',
   productionDiffDigest:
-    'a4ebc55bd3e3d78ae8d3239abdc81e0a52921d19e1c0c0cb28ea49cbad53c6e1',
+    '19f2773fe78bc63250b633b70dffc37bf356246a9d5e53b776100e754716c877',
   approvedRecordsDigest:
-    '356356f9dc5f8b2b93e4d7bf88a3f11a8181f55f1485ed82c8994ae994aa6474',
+    '2d5d3ef49553348eb2b05ec1fde573bf87bead6c5448abc4d294c325cee6a19c',
   materializedProfileDigest:
-    '775177b9cd3dd6b662e25a3094d96ba56260084de06d9d527c531481b4c9e15e',
+    '2a3c2ebe7abe12a1a88d5e563e18f5f42e93317c9c99d52d2f35b5c60820bd98',
   decision: 'Approved',
-  decisionAuditId: 'U1-CG-S14-FACT-APPROVAL-20260725T034431Z',
-  decisionRecordedAt: '2026-07-25T03:44:31Z',
+  decisionAuditId: 'PROFILE-DEAI-GENERALIZATION-20260923T031705Z',
+  decisionRecordedAt: '2026-09-23T03:17:05Z',
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';
+const DOCSURI_SOURCE_CHECKED_AT = '2026-08-26T06:46:25Z';
+const PUBLICATION_SOURCE_CHECKED_AT = '2026-09-20T09:30:23Z';
 const PROJECT_FACT_SUFFIXES = [
   'title',
   'outcome-summary',
@@ -74,7 +76,9 @@ const PROJECT_FACT_SUFFIXES = [
   'evidence-destination',
 ] as const;
 
-type EvidenceId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05';
+type EvidenceId =
+  | 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07'
+  | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13';
 
 const EVIDENCE_SOURCES = deepFreeze({
   E01: {
@@ -112,6 +116,60 @@ const EVIDENCE_SOURCES = deepFreeze({
     expectedDestination: 'https://github.com/revenantonthemission/AdiuBear',
     verifier: 'Codex public-source collector',
     checkedAt: PUBLIC_SOURCE_CHECKED_AT,
+  },
+  E06: {
+    kind: 'public-source',
+    reference: 'https://github.com/80-hours-a-week/DocSuri',
+    expectedDestination: 'https://github.com/80-hours-a-week/DocSuri',
+    verifier: 'Claude public-source collector',
+    checkedAt: DOCSURI_SOURCE_CHECKED_AT,
+  },
+  E07: {
+    kind: 'public-source',
+    reference: 'https://github.com/revenantonthemission/DocSuri',
+    expectedDestination: 'https://github.com/revenantonthemission/DocSuri',
+    verifier: 'Claude public-source collector',
+    checkedAt: DOCSURI_SOURCE_CHECKED_AT,
+  },
+  E08: {
+    kind: 'user-provided',
+    reference:
+      'User-directed publication of docs/portfolio/kakaopay-data-platform/portfolio.md and its evidence dossiers; scope and limitations: docs/portfolio/kakaopay-data-platform/publication-record.md. This is publication authorization, not a new human fact review.',
+  },
+  E09: {
+    kind: 'public-source',
+    reference: 'https://github.com/80-hours-a-week/DocSuri/commit/7edbcc51',
+    expectedDestination: 'https://github.com/80-hours-a-week/DocSuri/commit/7edbcc51',
+    verifier: 'Codex HTTP reachability collector (HTTP 200 only)',
+    checkedAt: PUBLICATION_SOURCE_CHECKED_AT,
+  },
+  E10: {
+    kind: 'public-source',
+    reference: 'https://github.com/80-hours-a-week/DocSuri/pull/323',
+    expectedDestination: 'https://github.com/80-hours-a-week/DocSuri/pull/323',
+    verifier: 'Codex HTTP reachability collector (HTTP 200 only)',
+    checkedAt: PUBLICATION_SOURCE_CHECKED_AT,
+  },
+  E11: {
+    kind: 'public-source',
+    reference: 'https://github.com/80-hours-a-week/DocSuri/pull/420',
+    expectedDestination: 'https://github.com/80-hours-a-week/DocSuri/pull/420',
+    verifier: 'Codex HTTP reachability collector (HTTP 200 only)',
+    checkedAt: PUBLICATION_SOURCE_CHECKED_AT,
+  },
+  E12: {
+    kind: 'public-source',
+    reference:
+      'https://github.com/revenantonthemission/obsidian-custom-publish/commit/f82c9eb370f34470d0c930b9e89630f7fceb278e',
+    expectedDestination:
+      'https://github.com/revenantonthemission/obsidian-custom-publish/commit/f82c9eb370f34470d0c930b9e89630f7fceb278e',
+    verifier: 'Codex HTTP reachability collector (HTTP 200 only)',
+    checkedAt: PUBLICATION_SOURCE_CHECKED_AT,
+  },
+  E13: {
+    kind: 'user-provided',
+    reference:
+      'User-directed publication of the general data-engineer/AI rescope (2026-09-23 request). The added skill facts mirror technologies evidenced by the linked DocSuri and mcp-local-reference repositories and the approved architecture facts. This is publication authorization, not a new human fact review.',
   },
 } satisfies Record<EvidenceId, FactReviewEvidence>);
 
@@ -173,7 +231,7 @@ export interface ApprovedExternalDestination {
 }
 
 /**
- * The human-verified public-source destinations behind the profile's external
+ * The recorded public-source destinations behind the profile's external
  * links. Browser verification reproduces these records rather than reaching the
  * network, so the only thing exposed here is what the pages already show: the
  * destination, who checked it and when. No approval identity is reachable.
@@ -975,14 +1033,108 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       'education-sogang-university-period',
     ],
     E03: [
-      'narrative-portfolio-summary',
       'skill-typescript-name',
       'skill-rust-name',
       'skill-astro-name',
-      ...projectFactIds('obsidian-custom-publish'),
+      'project-obsidian-custom-publish-title',
+      'project-obsidian-custom-publish-role-0-text',
+      'project-obsidian-custom-publish-architecture-0-text',
+      'project-obsidian-custom-publish-evidence-label',
+      'project-obsidian-custom-publish-evidence-destination',
     ],
-    E04: projectFactIds('mcp-local-reference'),
+    E04: [
+      'project-mcp-local-reference-title',
+      'project-mcp-local-reference-outcome-summary',
+      'project-mcp-local-reference-problem-0-text',
+      'project-mcp-local-reference-role-0-text',
+      'project-mcp-local-reference-architecture-0-text',
+      'project-mcp-local-reference-outcomes-0-text',
+      'project-mcp-local-reference-evidence-label',
+      'project-mcp-local-reference-evidence-destination',
+    ],
     E05: projectFactIds('adiubear'),
+    E06: [
+      'project-docsuri-title',
+      'project-docsuri-evidence-team-label',
+      'project-docsuri-evidence-team-destination',
+    ],
+    E07: [
+      'project-docsuri-evidence-fork-label',
+      'project-docsuri-evidence-fork-destination',
+    ],
+    // Explicitly reviewed publication delta; never derive this allowlist from
+    // the candidate profile. Unchanged facts retain their previous evidence.
+    E08: [
+      'narrative-portfolio-summary',
+      'project-docsuri-outcome-summary',
+      'project-docsuri-problem-0-text',
+      'project-docsuri-problem-backfill-contention',
+      'project-docsuri-role-0-text',
+      'project-docsuri-role-contract-collaboration',
+      'project-docsuri-key-decisions-0-text',
+      'project-docsuri-decision-canonical-records',
+      'project-docsuri-decision-retry-watermarks',
+      'project-docsuri-decision-reprocessing-modes',
+      'project-docsuri-decision-quota-resume',
+      'project-docsuri-decision-index-cutover',
+      'project-docsuri-decision-input-boundaries',
+      'project-docsuri-decision-cost-quotas',
+      'project-docsuri-architecture-0-text',
+      'project-docsuri-architecture-docmodel-contract',
+      'project-docsuri-architecture-vector-contract',
+      'project-docsuri-architecture-derived-assets',
+      'project-docsuri-architecture-user-pdf',
+      'project-docsuri-architecture-local-runtime',
+      'project-docsuri-architecture-deployment-boundaries',
+      'project-docsuri-architecture-consumer-scope',
+      'project-docsuri-consumers-events-degradation',
+      'project-docsuri-consumers-cache-personalization',
+      'project-docsuri-consumers-evaluation-citations',
+      'project-docsuri-outcomes-0-text',
+      'project-docsuri-outcomes-bounded-canary',
+      'project-docsuri-outcomes-mixed-load',
+      'project-docsuri-outcomes-runtime-diagnosis',
+      'project-docsuri-outcomes-recovery-checks',
+      'project-docsuri-lessons-0-text',
+      'project-docsuri-lessons-verification-limits',
+      'project-docsuri-lessons-current-quality',
+      'project-docsuri-lessons-platform-direction',
+      'project-obsidian-custom-publish-outcome-summary',
+      'project-obsidian-custom-publish-problem-0-text',
+      'project-obsidian-custom-publish-problem-renderer-exit',
+      'project-obsidian-custom-publish-key-decisions-0-text',
+      'project-obsidian-custom-publish-outcomes-0-text',
+      'project-obsidian-custom-publish-outcomes-artifact-validation',
+      'project-obsidian-custom-publish-lessons-0-text',
+      'project-mcp-local-reference-key-decisions-0-text',
+      'project-mcp-local-reference-lessons-0-text',
+    ],
+    E09: [
+      'project-docsuri-evidence-search-recovery-label',
+      'project-docsuri-evidence-search-recovery-destination',
+    ],
+    E10: [
+      'project-docsuri-evidence-worker-isolation-label',
+      'project-docsuri-evidence-worker-isolation-destination',
+    ],
+    E11: [
+      'project-docsuri-evidence-request-limits-label',
+      'project-docsuri-evidence-request-limits-destination',
+    ],
+    E12: [
+      'project-obsidian-custom-publish-evidence-render-failure-label',
+      'project-obsidian-custom-publish-evidence-render-failure-destination',
+    ],
+    E13: [
+      'skill-group-ai-llm-title',
+      'skill-sql-name',
+      'skill-postgresql-name',
+      'skill-opensearch-name',
+      'skill-amazon-bedrock-name',
+      'skill-sentence-transformers-name',
+      'skill-chromadb-name',
+      'skill-ollama-name',
+    ],
   };
 
   for (const [evidenceId, factIds] of Object.entries(groups) as [
@@ -999,7 +1151,7 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       membership.set(factId, evidenceId);
     }
   }
-  if (membership.size !== 77) {
+  if (membership.size !== 133) {
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_EVIDENCE_INVALID',
       'profile.facts',

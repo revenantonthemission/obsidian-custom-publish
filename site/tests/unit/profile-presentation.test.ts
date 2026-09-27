@@ -19,6 +19,8 @@ import { cloneProfileFixture } from '../fixtures/profile-fixtures.js';
 const ROOT = process.cwd();
 const ASTRO_CLI = resolve(ROOT, 'node_modules/astro/bin/astro.mjs');
 const PRIMARY_NAVIGATION = ['/tags', '/graph', '/resume', '/portfolio'];
+const PRODUCT_ENGINEER_PATH = '/portfolio/product-engineer';
+const PRODUCT_ENGINEER_PROJECTS = ['docsuri'] as const;
 const CASE_STUDY_DIMENSIONS = [
   'problem',
   'role',
@@ -150,6 +152,7 @@ describe('production Astro profile output', () => {
   let outputRoot = '';
   let resumeHtml = '';
   let portfolioHtml = '';
+  let productEngineerHtml = '';
   let searchIndex: unknown;
   let navTree: unknown;
 
@@ -178,16 +181,18 @@ describe('production Astro profile output', () => {
       );
     }
 
-    const [searchIndexText, navTreeText, resume, portfolio] = await Promise.all([
+    const [searchIndexText, navTreeText, resume, portfolio, productEngineer] = await Promise.all([
       readFile(join(outputRoot, 'search-index.json'), 'utf8'),
       readFile(join(outputRoot, 'nav-tree.json'), 'utf8'),
       readFile(join(outputRoot, 'resume', 'index.html'), 'utf8'),
       readFile(join(outputRoot, 'portfolio', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'portfolio', 'product-engineer', 'index.html'), 'utf8'),
     ]);
     searchIndex = JSON.parse(searchIndexText);
     navTree = JSON.parse(navTreeText);
     resumeHtml = resume;
     portfolioHtml = portfolio;
+    productEngineerHtml = productEngineer;
   }, 75_000);
 
   afterAll(async () => {
@@ -199,7 +204,7 @@ describe('production Astro profile output', () => {
   test('renders the résumé shell, closed disclosures and static navigation', () => {
     assertProfileShell(resumeHtml, 'resume', 'Résumé');
     expect(headingTexts(resumeHtml, 2)).toEqual([
-      '소개·연락·PDF',
+      '프로필',
       '핵심 역량',
       '경력·대표 성과',
       '대표 프로젝트 요약',
@@ -233,7 +238,7 @@ describe('production Astro profile output', () => {
   test('renders portfolio articles, six dimensions and static navigation', () => {
     assertProfileShell(portfolioHtml, 'portfolio', 'Portfolio');
     expect(headingTexts(portfolioHtml, 2)).toEqual([
-      '소개와 연락',
+      '프로필',
       '대표 프로젝트',
     ]);
     assertLogicalHeadingOrder(portfolioHtml);
@@ -250,13 +255,142 @@ describe('production Astro profile output', () => {
     );
   });
 
+  test('renders the product engineer portfolio with its own metadata and only DocSuri', () => {
+    assertProfileShell(productEngineerHtml, 'portfolio', 'Product Engineer Portfolio');
+    expect(headingTexts(productEngineerHtml, 2)).toEqual(['프로필', '대표 프로젝트']);
+    assertLogicalHeadingOrder(productEngineerHtml);
+    assertNavigation(productEngineerHtml, '/portfolio');
+    assertCaseStudies(productEngineerHtml, 1);
+    assertProfileMetadata(
+      productEngineerHtml,
+      PRODUCT_ENGINEER_PATH,
+      'portfolio-summary',
+      ['CollectionPage', 'ItemList'],
+    );
+    expect(stripTags(elementByClass(productEngineerHtml, 'p', 'portfolio-eyebrow')))
+      .toBe('프로덕트 엔지니어링 · 사용자 경험 · 구현과 운영');
+    expect(elementByClass(productEngineerHtml, 'p', 'portfolio-summary'))
+      .not.toContain('data-profile-fact-id');
+
+    const articles = openingTags(productEngineerHtml, 'article')
+      .filter((tag) => attribute(tag, 'data-testid')?.startsWith('case-study-article-'));
+    const articleIds = articles.map((tag) => attribute(tag, 'id'));
+    expect(articleIds).toEqual(PRODUCT_ENGINEER_PROJECTS.map((id) => `project-${id}`));
+    expect(anchorHrefs(elementByClass(productEngineerHtml, 'nav', 'portfolio-project-navigation')))
+      .toEqual(articleIds.map((id) => `#${id}`));
+    const focusLabels = openingTags(productEngineerHtml, 'p')
+      .filter((tag) => attribute(tag, 'class')?.split(/\s+/).includes('portfolio-project-focus'));
+    expect(focusLabels).toHaveLength(PRODUCT_ENGINEER_PROJECTS.length);
+    for (const article of articles) {
+      expect(isInsideAstroIsland(productEngineerHtml, article)).toBe(false);
+    }
+
+    const factIds = [...productEngineerHtml.matchAll(/data-profile-fact-id="([^"]+)"/g)]
+      .map((match) => match[1]);
+    expect(factIds.length).toBeGreaterThan(0);
+    expect(new Set(factIds).size).toBe(factIds.length);
+
+    const canonical = `https://rvnnt.dev${PRODUCT_ENGINEER_PATH}`;
+    expect(attribute(metaTags(productEngineerHtml, 'property', 'og:url')[0]!, 'content'))
+      .toBe(canonical);
+    expect(stripTags(/<title\b[^>]*>([\s\S]*?)<\/title>/.exec(productEngineerHtml)?.[1] ?? ''))
+      .toContain('Product Engineer');
+    const documents = jsonLdDocuments(productEngineerHtml);
+    expect(documents[0]).toMatchObject({
+      '@id': `${canonical}#collection-page`,
+      url: canonical,
+      mainEntity: { '@id': `${canonical}#projects` },
+    });
+    const itemList = documents[1] as {
+      '@id': string;
+      numberOfItems: number;
+      itemListElement: Array<{ position: number; url: string; item: { '@id': string; url: string } }>;
+    };
+    expect(itemList['@id']).toBe(`${canonical}#projects`);
+    expect(itemList.numberOfItems).toBe(PRODUCT_ENGINEER_PROJECTS.length);
+    expect(itemList.itemListElement.map(({ position, url, item }) => [position, url, item['@id'], item.url]))
+      .toEqual(PRODUCT_ENGINEER_PROJECTS.map((id, index) => {
+        const url = `${canonical}#project-${id}`;
+        return [index + 1, url, url, url];
+      }));
+  });
+
+  test('links both portfolio roles with exactly one current role on each page', () => {
+    for (const [html, pathname] of [
+      [portfolioHtml, '/portfolio'],
+      [productEngineerHtml, PRODUCT_ENGINEER_PATH],
+    ] as const) {
+      const navigation = elementByClass(html, 'nav', 'portfolio-role-navigation');
+      expect(attribute(openingTags(navigation, 'nav')[0]!, 'aria-label'))
+        .toBe('직무별 포트폴리오');
+      expect(anchorHrefs(navigation)).toEqual(['/portfolio', PRODUCT_ENGINEER_PATH]);
+      expect(currentAnchorHrefs(navigation)).toEqual([pathname]);
+      expect(stripTags(navigation)).toContain('Data Engineer / AI');
+      expect(stripTags(navigation)).toContain('Product Engineer');
+      expect(isInsideAstroIsland(html, openingTags(navigation, 'nav')[0]!)).toBe(false);
+    }
+  });
+
+  test('keeps portfolio jump links and native detail content in the static document', () => {
+    const navigation = elementByClass(
+      portfolioHtml,
+      'nav',
+      'portfolio-project-navigation',
+    );
+    const articleIds = openingTags(portfolioHtml, 'article')
+      .map((tag) => attribute(tag, 'id'))
+      .filter((id): id is string => id?.startsWith('project-') === true);
+    expect(anchorHrefs(navigation)).toEqual(articleIds.map((id) => `#${id}`));
+
+    const disclosures = openingTags(portfolioHtml, 'details').filter((tag) =>
+      /\bclass="case-study-details"/.test(tag),
+    );
+    expect(disclosures.length).toBeGreaterThan(0);
+    for (const disclosure of disclosures) {
+      expect(disclosure).not.toMatch(/\bopen(?:\s|=|>)/);
+      expect(isInsideAstroIsland(portfolioHtml, disclosure)).toBe(false);
+    }
+    const disclosureBodies = [...portfolioHtml.matchAll(
+      /<details\b(?=[^>]*class="case-study-details")[^>]*>([\s\S]*?)<\/details>/g,
+    )];
+    expect(disclosureBodies).toHaveLength(disclosures.length);
+    for (const [, body] of disclosureBodies) {
+      expect(body).toContain('data-profile-fact-id=');
+      expect(stripTags(body!.replace(/<summary\b[^>]*>[\s\S]*?<\/summary>/, '')))
+        .not.toBe('');
+    }
+    const factIds = [...portfolioHtml.matchAll(/data-profile-fact-id="([^"]+)"/g)]
+      .map((match) => match[1]);
+    expect(new Set(factIds).size).toBe(factIds.length);
+  });
+
+  test('renders portfolio topic labels as subheadings rather than inline em-dash leads', () => {
+    const subtitles = [...portfolioHtml.matchAll(
+      /<h5\b[^>]*\bclass="[^"]*\bprofile-content-subtitle\b[^"]*"[^>]*>([\s\S]*?)<\/h5>/g,
+    )];
+    expect(subtitles.length).toBeGreaterThan(0);
+    for (const [heading, label] of subtitles) {
+      expect(stripTags(label!)).not.toBe('');
+      expect(heading).not.toContain('—');
+    }
+    for (const [article] of portfolioHtml.matchAll(
+      /<article\b(?=[^>]*data-testid="case-study-article-[a-z0-9-]+")[^>]*>[\s\S]*?<\/article>/g,
+    )) {
+      expect(stripTags(article)).not.toContain('—');
+    }
+    expect(portfolioHtml).not.toMatch(/<p\b[^>]*>[^<]*<h5\b/);
+    expect(resumeHtml).not.toContain('profile-content-subtitle');
+  });
+
   test('keeps profile routes out of copied search and knowledge navigation data', () => {
     expect(searchDocumentSlugs(searchIndex)).not.toContain('resume');
     expect(searchDocumentSlugs(searchIndex)).not.toContain('portfolio');
     expect(navTreeSlugs(navTree)).not.toContain('resume');
     expect(navTreeSlugs(navTree)).not.toContain('portfolio');
+    expect(searchDocumentSlugs(searchIndex)).not.toContain('portfolio/product-engineer');
+    expect(navTreeSlugs(navTree)).not.toContain('portfolio/product-engineer');
 
-    for (const html of [resumeHtml, portfolioHtml]) {
+    for (const html of [resumeHtml, portfolioHtml, productEngineerHtml]) {
       expect(anchorHrefs(elementByClass(html, 'nav', 'desktop-nav'))).toEqual(
         PRIMARY_NAVIGATION,
       );
@@ -351,13 +485,17 @@ function assertClosedResumeDetails(html: string): void {
   }
 }
 
-function assertCaseStudies(html: string): void {
+function assertCaseStudies(html: string, expectedCount?: number): void {
   const articles = [...html.matchAll(
     /<article\b(?=[^>]*data-testid="case-study-article-[a-z0-9-]+")[^>]*>[\s\S]*?<\/article>/g,
   )].map(([article]) => article);
 
-  expect(articles.length).toBeGreaterThanOrEqual(3);
-  expect(articles.length).toBeLessThanOrEqual(6);
+  if (expectedCount === undefined) {
+    expect(articles.length).toBeGreaterThanOrEqual(3);
+    expect(articles.length).toBeLessThanOrEqual(6);
+  } else {
+    expect(articles).toHaveLength(expectedCount);
+  }
   for (const article of articles) {
     expect(article).toMatch(
       /data-testid="case-study-title-[a-z0-9-]+"/,
@@ -376,7 +514,7 @@ function assertCaseStudies(html: string): void {
 
 function assertProfileMetadata(
   html: string,
-  pathname: '/resume' | '/portfolio',
+  pathname: '/resume' | '/portfolio' | '/portfolio/product-engineer',
   visibleSummaryClass: 'resume-summary' | 'portfolio-summary',
   expectedTypes: readonly string[],
 ): void {
@@ -402,15 +540,19 @@ function assertProfileMetadata(
     stripTags(elementByClass(html, 'p', visibleSummaryClass)),
   );
 
-  const documents = [...html.matchAll(
-    /<script\b([^>]*)>([\s\S]*?)<\/script>/g,
-  )]
-    .filter((match) => attribute(match[1]!, 'type') === 'application/ld+json')
-    .map((match) => JSON.parse(match[2]!));
+  const documents = jsonLdDocuments(html);
   expect(documents).toHaveLength(expectedTypes.length);
   expect(documents.map((document) => document['@type'])).toEqual(
     expectedTypes,
   );
+}
+
+function jsonLdDocuments(html: string): Record<string, unknown>[] {
+  return [...html.matchAll(
+    /<script\b([^>]*)>([\s\S]*?)<\/script>/g,
+  )]
+    .filter((match) => attribute(match[1]!, 'type') === 'application/ld+json')
+    .map((match) => JSON.parse(match[2]!) as Record<string, unknown>);
 }
 
 function headingTexts(html: string, level: number): string[] {

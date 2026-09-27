@@ -2,6 +2,12 @@
 
 ## 문서 상태
 
+2026-09-20 후속 상태: 아래 완료·수치·digest는 7월 Step 24 당시의 기록이다.
+포트폴리오에 native details를 추가하면서 현재 수동 접근성 계약은 두 route 모두
+closed/all-open을 포함하는 **16개 상태**로 확장되었다. 이전 12개 상태의 수동
+검토 기록은 현행 UI를 승인하지 않으며 새 사람 검토는 **대기 중**이다.
+이번 구현에서는 수동 receipt의 서명·판정·digest를 갱신하지 않았다.
+
 - **단계**: CONSTRUCTION — U1 Code Generation, Part 2 Generation, Step 24
 - **상태**: 완료 — browser/manual/PDF 증거, receipt currentness, negative gate 기록
 - **완료 시각**: 2026-07-26T15:52:31Z

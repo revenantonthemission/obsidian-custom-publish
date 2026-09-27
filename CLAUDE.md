@@ -1,13 +1,12 @@
 # obsidian-blog (obsidian-press)
 
 Obsidian Publish replacement: Rust preprocessor + Astro static site.
-Live at https://rvnnt.dev
+Self-hosted on this machine: https://rvnnt.dev via Cloudflare Tunnel → launchd service `dev.rvnnt.blog` on 127.0.0.1:8080 (AWS decommissioned)
 
 ## Architecture
 - `preprocessor/` — Rust CLI, 5-pass pipeline (scan → link → transform → search → output). Shared regexes in `syntax.rs`, preview generation in `preview.rs`, nav tree in `nav_tree.rs`
 - `site/` — Astro 6 + Preact islands, consumes `content/` from preprocessor
 - `site/src/lib/render.ts` — custom unified pipeline (remark/rehype/Shiki/KaTeX). This is the actual rendering path, NOT `astro.config.mjs` markdown settings
-- `infra/` — Terraform for S3 + CloudFront
 - `content/` — generated, gitignored
 
 ## Build Commands
@@ -23,10 +22,16 @@ Note: iCloud path uses tildes (`iCloud~md~obsidian`), not dots.
 Only `Areas/Notes/` is published. Set `VAULT_PATH` to the `Areas/Notes` subdirectory when running locally.
 Image attachments live in `Areas/Notes/attachment/`.
 
-## AWS
-- Profile: `mfa` (use `AWS_PROFILE=mfa` for all aws/terraform commands)
-- S3: `obsidian-custom-s3`, CloudFront: `E35HZFVGD0OJ04`
-- ACM cert in us-east-1, domain DNS on Cloudflare
+## Local Serving (AWS fully decommissioned 2026-08-17)
+- All AWS resources (S3 buckets, CloudFront, ACM cert, tfstate bucket) destroyed; `infra/` removed
+- Web root: `~/Sites/obsidian-blog` — `just deploy` rsyncs `site/dist/` there
+- Server: `site/scripts/local-server.mjs` (dependency-free Node, clean-URL rewrite + 404.html, port 8080, HOST=0.0.0.0 — reachable from LAN)
+- launchd service: `dev.rvnnt.blog` (`~/Library/LaunchAgents/dev.rvnnt.blog.plist`, KeepAlive; node path is the absolute nvm binary — update plist when node version changes)
+- Logs: `~/Library/Logs/obsidian-blog-server.log`; restart: `launchctl kickstart -k gui/$UID/dev.rvnnt.blog`
+- Public: https://rvnnt.dev — Cloudflare Tunnel `obsidian-blog` (launchd `dev.rvnnt.tunnel`, config `~/.cloudflared/obsidian-blog.yml` — dedicated file, the shared `~/.cloudflared/config.yml` belongs to other tunnels on this machine; logs `~/Library/Logs/obsidian-blog-tunnel.log`); DNS CNAME managed by `cloudflared tunnel route dns`
+- Ports: blog 8080 (0.0.0.0), Jenkins 8081 (127.0.0.1 only, set in both `~/Library/LaunchAgents/homebrew.mxcl.jenkins.plist` and the brew template at `/opt/homebrew/opt/jenkins/` — re-apply after `brew upgrade jenkins` regenerates the template), astro dev 4321
+- NEVER start Jenkins via `brew services start jenkins` — it regenerates the LaunchAgent plist with port 8080, hijacking 127.0.0.1:8080 from the blog (rvnnt.dev serves Jenkins 403). Use `launchctl bootstrap gui/$UID ~/Library/LaunchAgents/homebrew.mxcl.jenkins.plist` after verifying the plist says 8081 (happened 2026-08-29)
+- Jenkins daily publish: job `obsidian-blog-develop` (cron `H 0 * * *` in Jenkinsfile, builds origin/develop) stamps published dates, builds, deploys to web root — this IS the daily auto-publish system
 
 ## Git Flow
 - Feature branches per phase off `develop`, `--no-ff` merges back

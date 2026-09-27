@@ -40,6 +40,63 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     );
   });
 
+  test('requires sixteen manual states with closed and open disclosures on both routes', () => {
+    expect(verificationEvidenceSchema.manualMatrix).toHaveLength(16);
+    for (const route of ['/resume', '/portfolio']) {
+      for (const viewport of ['320x800', '1440x900']) {
+        for (const theme of ['light', 'dark']) {
+          for (const details of ['closed', 'all-open']) {
+            expect(verificationEvidenceSchema.manualMatrix).toContain(
+              `${route}|chromium|${viewport}|${theme}|${details}`,
+            );
+          }
+        }
+      }
+    }
+    expect(
+      verificationEvidenceSchema.manualMatrix.some((key) =>
+        key.endsWith('|not-applicable'),
+      ),
+    ).toBe(false);
+  });
+
+  test('rejects the historical twelve-state review even with the current subject digest', () => {
+    const fixture = createCompleteEvidenceFixture();
+    fixture.manualWebAccessibilityRecord.states =
+      fixture.manualWebAccessibilityRecord.states
+        .filter((state: { route: string; details: string }) =>
+          state.route !== '/portfolio' || state.details === 'closed',
+        )
+        .map((state: { route: string; details: string }) => ({
+          ...state,
+          details: state.route === '/portfolio' ? 'not-applicable' : state.details,
+        }));
+
+    expect(fixture.manualWebAccessibilityRecord.states).toHaveLength(12);
+    expect(() => composeVerificationEvidence(fixture)).toThrow(
+      expect.objectContaining({
+        code: 'MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE',
+      }),
+    );
+  });
+
+  test('rejects a duplicated closed state in place of a portfolio open-state review', () => {
+    const fixture = createCompleteEvidenceFixture();
+    const opened = fixture.manualWebAccessibilityRecord.states.find(
+      (state: { route: string; details: string }) =>
+        state.route === '/portfolio' && state.details === 'all-open',
+    );
+    expect(opened).toBeDefined();
+    opened.details = 'closed';
+
+    expect(fixture.manualWebAccessibilityRecord.states).toHaveLength(16);
+    expect(() => composeVerificationEvidence(fixture)).toThrow(
+      expect.objectContaining({
+        code: 'MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE',
+      }),
+    );
+  });
+
   test('rejects a claimed browser pass that omits specs, matrix, tools, and no-skip counts', () => {
     const fixture = createCompleteEvidenceFixture();
     fixture.browserEvidence = {
@@ -172,7 +229,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     const afterStyleChange = await computeAccessibilityReviewSubject(fixture);
 
     // A file outside it must not. `playwright.config.ts` configures the
-    // automated run; the twelve reviewed states come from
+    // automated run; the sixteen reviewed states come from
     // REQUIRED_MANUAL_MATRIX, not from the runner. Keeping it in the subject
     // twice invalidated completed reviews for edits that could not change a
     // single rendered pixel.

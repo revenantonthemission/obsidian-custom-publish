@@ -14,10 +14,7 @@ pipeline {
     }
 
     environment {
-        AWS_REGION    = 'ap-northeast-2'
-        AWS_PROFILE   = 'mfa'
-        S3_BUCKET     = 'obsidian-custom-s3'
-        CF_DIST_ID    = 'E35HZFVGD0OJ04'
+        WEB_ROOT      = "${env.BLOG_WEB_ROOT ?: '/Users/revenantonthemission/Sites/obsidian-blog'}"
         VAULT_PATH    = "${env.OBSIDIAN_VAULT_PATH ?: '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'}"
         // mmdc renders Mermaid through puppeteer, which needs a browser. The
         // local checkout supplies one via `.puppeteer-config.json`, but that
@@ -53,8 +50,14 @@ pipeline {
                 sh 'cargo test --release --manifest-path preprocessor/Cargo.toml'
                 // A fresh workspace has no content/ before Preprocess; the U1
                 // isolated build inside test:unit fails closed at HP001 without
-                // a homepage artifact. The fixture materializer writes only
-                // when absent, so real preprocessor output always wins.
+                // a homepage artifact, and the isolated Astro build reads
+                // search-index.json / nav-tree.json copied from site/public.
+                // Materialize them from the fixture vault first (no vault
+                // stamping); the real Preprocess stage overwrites them later.
+                sh './preprocessor/target/release/obsidian-press ./fixtures/vault ./content'
+                sh 'cp content/search-index.json content/graph.json content/previews.json content/nav-tree.json site/public/'
+                // The fixture materializer writes only when absent, so real
+                // preprocessor output always wins.
                 sh 'cd site && node scripts/crossunit/ensure-fixture-content.mjs && npm run test:unit && npm run test:pbt'
             }
             post {
@@ -68,7 +71,18 @@ pipeline {
 
         stage('Preprocess') {
             steps {
-                sh './preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content'
+                // Prefer chrome-headless-shell over desktop Chrome: full Chrome
+                // occasionally takes >30s to expose its CDP endpoint under
+                // midnight load, which times out puppeteer inside mmdc (~134
+                // launches per build: 67 mermaid blocks x 2 themes). The glob
+                // survives browser version bumps; falls back to the env default
+                // (desktop Chrome) if the shell is not installed.
+                // Install/update: npx puppeteer browsers install chrome-headless-shell
+                sh '''
+                    CHS=$(ls -d "$HOME"/.cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-mac-arm64/chrome-headless-shell 2>/dev/null | sort -V | tail -1)
+                    export PUPPETEER_EXECUTABLE_PATH="${CHS:-$PUPPETEER_EXECUTABLE_PATH}"
+                    ./preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content
+                '''
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
                 sh 'cp content/previews.json site/public/previews.json'
@@ -89,9 +103,10 @@ pipeline {
                 expression { params.RUN_DEPLOY }
             }
             steps {
-                sh 'aws sts get-caller-identity > /dev/null 2>&1 || (echo "ERROR: AWS credentials expired or invalid" && exit 1)'
-                sh "aws s3 sync site/dist/ s3://${S3_BUCKET} --delete"
-                sh "aws cloudfront create-invalidation --distribution-id ${CF_DIST_ID} --paths '/*'"
+                // Local publish: the launchd service (dev.rvnnt.blog) serves WEB_ROOT,
+                // so a synced tree is live immediately — no invalidation step.
+                sh 'mkdir -p "${WEB_ROOT}"'
+                sh 'rsync -a --delete site/dist/ "${WEB_ROOT}/"'
             }
         }
     }

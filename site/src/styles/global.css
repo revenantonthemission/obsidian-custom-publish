@@ -10,7 +10,7 @@
   --c-code-bg: #f5f5f4;
 
   --radius: 6px;
-  --max-width: 720px;
+  --max-width: 820px;
   --sidebar-width: 260px;
   --font-body: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -246,6 +246,11 @@ img {
 
 .site-main:has(.post-layout) {
   max-width: calc(var(--max-width) + var(--sidebar-width) + 2rem);
+}
+
+/* Visualization pages use the full viewport width. */
+.site-main:has(.graph-container) {
+  max-width: min(1700px, 100%);
 }
 
 .site-footer {

@@ -64,7 +64,7 @@ test.prop([validProfileProjectionsArbitrary])(
     ]);
 
     const intro = resumeSection(presentation, 'intro');
-    expect(intro.heading).toBe('소개·연락·PDF');
+    expect(intro.heading).toBe('프로필');
     expect(intro.name).toEqual(textFact(resume.identity.name));
     expect(intro.headline).toEqual(textFact(resume.identity.headline));
     expect(intro.summary).toEqual(textFact(resume.resumeSummary));
@@ -166,7 +166,7 @@ test.prop([validProfileProjectionsArbitrary])(
     ]);
 
     const intro = portfolioSection(presentation, 'intro');
-    expect(intro.heading).toBe('소개와 연락');
+    expect(intro.heading).toBe('프로필');
     expect(intro.summary).toEqual(textFact(portfolio.portfolioSummary));
     assertContactActions(intro.actions, portfolio.contactActions, false);
 

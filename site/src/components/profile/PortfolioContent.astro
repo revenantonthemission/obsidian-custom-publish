@@ -1,28 +1,35 @@
 ---
 import CaseStudy from "./CaseStudy.astro";
 import ContactActions from "./ContactActions.astro";
+import PortfolioRoleNavigation from "./PortfolioRoleNavigation.astro";
+import { getPortfolioRole } from "../../lib/profile/portfolio-roles.js";
+import type { PortfolioRoleId } from "../../lib/profile/portfolio-roles.js";
 import type { PortfolioPresentation } from "./presentation.js";
 
 interface Props {
   presentation: PortfolioPresentation;
+  roleId?: PortfolioRoleId;
 }
 
-const { presentation } = Astro.props;
+const { presentation, roleId = 'data-engineer-ai' } = Astro.props;
+const role = getPortfolioRole(roleId);
 ---
 
 <div class="portfolio-content" data-testid="portfolio-content">
+  <PortfolioRoleNavigation current={roleId} />
   {presentation.sections.map((section) => (
     section.kind === "intro" ? (
       <section
         class="profile-section portfolio-intro"
         data-profile-section="intro"
       >
+        <p class="portfolio-eyebrow">{role.eyebrow}</p>
         <h2>{section.heading}</h2>
         <p
           class="portfolio-summary"
-          data-profile-fact-id={section.summary.factId}
+          data-profile-fact-id={role.introduction === undefined ? section.summary.factId : undefined}
         >
-          {section.summary.value}
+          {role.introduction ?? section.summary.value}
         </p>
         <ContactActions
           actions={section.actions}
@@ -36,8 +43,23 @@ const { presentation } = Astro.props;
         data-profile-section="projects"
       >
         <h2>{section.heading}</h2>
-        {section.projects.map((project) => (
-          <CaseStudy project={project} />
+        <nav class="portfolio-project-navigation" aria-label="프로젝트 바로가기">
+          <ol>
+            {section.projects.map((project, index) => (
+              <li>
+                <a href={`#project-${project.id}`}>
+                  <span class="portfolio-project-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span>{project.title.value}</span>
+                  <span class="portfolio-project-arrow" aria-hidden="true">↘</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        {section.projects.map((project, index) => (
+          <CaseStudy project={project} position={index + 1} focus={role.projectFocus[project.id]} />
         ))}
       </section>
     )
