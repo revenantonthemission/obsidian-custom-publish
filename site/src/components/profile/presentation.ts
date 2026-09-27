@@ -1,4 +1,6 @@
 import { getProfileLocalNavigationState } from '../../lib/navigation.js';
+import { getPortfolioRole, selectPortfolioForRole } from '../../lib/profile/portfolio-roles.js';
+import type { PortfolioRoleId } from '../../lib/profile/portfolio-roles.js';
 import type { NavigationState } from '../../lib/navigation.js';
 import type { ResumeDocumentLink } from '../../lib/profile/document-boundary.js';
 import type {
@@ -27,8 +29,8 @@ export type ProfileRouteIdentity =
     }>
   | Readonly<{
       route: 'portfolio';
-      pathname: '/portfolio';
-      label: 'Portfolio';
+      pathname: '/portfolio' | '/portfolio/product-engineer';
+      label: 'Portfolio' | 'Product Engineer Portfolio';
     }>;
 
 export type ProfileLocalNavigationId =
@@ -359,20 +361,27 @@ export function buildResumePresentation(
  */
 export function buildPortfolioPresentation(
   profile: PortfolioProfile,
+  roleId: PortfolioRoleId = 'data-engineer-ai',
 ): PortfolioPresentation {
+  const role = getPortfolioRole(roleId);
+  const selected = selectPortfolioForRole(profile, roleId);
   return Object.freeze({
-    shell: profileShell('portfolio'),
+    shell: profileShell('portfolio', Object.freeze({
+      route: 'portfolio',
+      pathname: role.pathname,
+      label: role.title,
+    })),
     sections: frozenArray([
       Object.freeze({
         kind: 'intro',
         heading: '프로필',
-        summary: textFact(profile.portfolioSummary),
-        actions: contactActions(profile.contactActions),
+        summary: textFact(selected.portfolioSummary),
+        actions: contactActions(selected.contactActions),
       }),
       Object.freeze({
         kind: 'projects',
         heading: '대표 프로젝트',
-        projects: frozenArray(profile.projects.map(caseStudy)),
+        projects: frozenArray(selected.projects.map(caseStudy)),
       }),
     ]),
   });
@@ -380,8 +389,8 @@ export function buildPortfolioPresentation(
 
 function profileShell(
   route: ProfileRouteIdentity['route'],
+  identity: ProfileRouteIdentity = PROFILE_ROUTE_IDENTITIES[route],
 ): ProfileShellView {
-  const identity = PROFILE_ROUTE_IDENTITIES[route];
   const navigation = getProfileLocalNavigationState(identity.pathname);
 
   if (!navigation.ok) {

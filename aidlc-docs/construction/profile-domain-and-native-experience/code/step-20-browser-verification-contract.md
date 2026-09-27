@@ -112,10 +112,16 @@ suite must read them from its environment and record them verbatim rather than d
 `REQUIRED_MANUAL_CHECKS`: `colorIndependentMeaning`, `focusAppearance`, `focusObscuration`,
 `readingOrder`.
 
-`createRequiredManualMatrix()` — 12 keys:
+`createRequiredManualMatrix()` — 16 keys (updated 2026-09-20 for portfolio disclosures):
 
 - `/resume|chromium|{320x800,1440x900}|{light,dark}|{closed,all-open}` — 8
-- `/portfolio|chromium|{320x800,1440x900}|{light,dark}|not-applicable` — 4
+- `/portfolio|chromium|{320x800,1440x900}|{light,dark}|{closed,all-open}` — 8
+
+The earlier twelve-state record treated portfolio disclosures as not applicable.
+Portfolio now owns native case-study disclosures, so that record does not satisfy
+the current matrix. A new sixteen-state human review is pending; the implementation
+change neither signs nor updates `manual-web-accessibility.json`. Automated browser
+success alone must not be reported as completion of this manual gate.
 
 The reviewer's verdict, identity, timestamp and the exact review-subject digest are recorded in
 `site/verification/profile/manual-web-accessibility.json`. A failing, missing or stale manual review

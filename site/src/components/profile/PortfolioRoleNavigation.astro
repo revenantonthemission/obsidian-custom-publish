@@ -1,0 +1,23 @@
+---
+import { PORTFOLIO_ROLES } from '../../lib/profile/portfolio-roles.js';
+import type { PortfolioRoleId } from '../../lib/profile/portfolio-roles.js';
+
+interface Props {
+  current: PortfolioRoleId;
+}
+
+const { current } = Astro.props;
+---
+
+<nav class="portfolio-role-navigation" aria-label="직무별 포트폴리오">
+  <p>직무별 포트폴리오</p>
+  <ul>
+    {PORTFOLIO_ROLES.map((role) => (
+      <li>
+        <a href={role.pathname} aria-current={role.id === current ? 'page' : undefined}>
+          {role.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PortfolioContent from '../../components/profile/PortfolioContent.astro';
+import ProfileShell from '../../components/profile/ProfileShell.astro';
+import { buildPortfolioPresentation } from '../../components/profile/presentation.js';
+import { buildApprovedPortfolioMetadata } from '../../lib/profile/metadata.js';
+import { getProductionProfileAssembly } from '../../lib/profile/production-profile.js';
+import { PORTFOLIO_ROLES } from '../../lib/profile/portfolio-roles.js';
+import type { PortfolioRoleId } from '../../lib/profile/portfolio-roles.js';
+import '../../styles/profile/font.css';
+import '../../styles/profile/foundation.css';
+import '../../styles/profile/portfolio.css';
+
+export function getStaticPaths() {
+  return PORTFOLIO_ROLES.filter((role) => role.pathname !== '/portfolio').map((role) => ({
+    params: { role: role.id },
+    props: { roleId: role.id },
+  }));
+}
+
+interface Props {
+  roleId: PortfolioRoleId;
+}
+
+const { roleId } = Astro.props;
+const origin = Astro.site?.origin;
+if (origin === undefined) throw new TypeError('Profile metadata requires Astro.site.');
+
+const assembly = getProductionProfileAssembly();
+const metadataResult = buildApprovedPortfolioMetadata({ origin }, assembly.source, roleId);
+if (!metadataResult.ok) throw new TypeError('Invalid approved portfolio metadata.');
+const presentation = buildPortfolioPresentation(assembly.portfolio, roleId);
+---
+
+<BaseLayout metadata={metadataResult.value}>
+  <ProfileShell shell={presentation.shell}>
+    <PortfolioContent presentation={presentation} roleId={roleId} />
+  </ProfileShell>
+</BaseLayout>

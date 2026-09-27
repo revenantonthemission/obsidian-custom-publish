@@ -1,0 +1,73 @@
+Résumé
+소개·연락·PDF
+조준희
+안녕하세요. IT 서비스를 만드는 조준희입니다.
+의료기술 제조사 인턴십에서 소프트웨어 개발을 경험했고, 백엔드와 인프라를 중심으로 프로젝트를 이어가고 있습니다.
+의료기술 제조사 소프트웨어 개발 인턴십으로 프로젝트 경험을 시작했습니다. 현재는 백엔드 프로그래밍과 인프라 엔지니어링을 공부하
+며, 문제 정의부터 구현·검증·운영까지 이어지는 작업을 쌓고 있습니다.
+ 이메일 보내기 GitHub 프로필 보기
+
+핵심 역량
+ 프로그래밍 언어
+   C
+   C++
+   Python
+   JavaScript
+   TypeScript
+   Dart
+   Rust
+
+ 백엔드·데이터
+   FastAPI
+   Uvicorn
+   SQLAlchemy
+   Redis
+   Apache Kafka
+   MySQL/MariaDB
+
+ 인프라
+   Docker
+   Kubernetes
+   NGINX
+   AWS
+   GitHub Actions
+
+ 도구·클라이언트
+   Flutter
+   Git
+   Astro
+   SvelteKit
+경력·대표 성과
+경력
+소프트웨어 개발 인턴                                                           2023-07 – 2023-08
+한소노
+Flutter와 FFI를 활용한 의료기기 프로토타입 개발을 경험했습니다.
+Windows 환경에서 초음파 진단기를 인식하는 Flutter 프로토타입 개발에 참여했습니다.
+2023년 10월 29일부터 11월 6일까지 독일에서 한소노 소속으로 의료기술 제조사 eZono와 FFI 기반 프로토타입을 개발했습니다.
+
+대표 프로젝트 요약
+ DocSuri
+ arXiv AI/ML 논문을 모바일에서 탐색하고 근거 기반 한국어 요약을 제공하는 웹 서비스를 팀으로 개발해 docsuri.org에서 운영했
+ 습니다.
+
+ obsidian-custom-publish
+ Obsidian Vault를 Rust 전처리기와 Astro 정적 사이트로 변환해 rvnnt.dev에 게시하는 시스템을 구축했습니다.
+
+ mcp-local-reference
+ 로컬 Zotero 라이브러리를 검색하고 PDF 텍스트·도판과 Harvard 인용을 제공하는 MCP 서버를 만들었습니다.
+
+ AdiuBear
+ 음성·이미지·텍스트 입력을 처리하는 Flutter 앱과 Gemini 연동용 Cloud Run 미들웨어를 구현했습니다.
+
+
+교육
+ 서강대학교
+ 중국문화학과·컴퓨터공학과
+ 2019 – 2026
+자격
+OPIc IH
+2025-09 – 2025-09
+
+新HSK 6급
+2024-09 – 2024-09
+

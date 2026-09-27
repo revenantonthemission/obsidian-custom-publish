@@ -1,29 +1,35 @@
 ---
 import CaseStudy from "./CaseStudy.astro";
 import ContactActions from "./ContactActions.astro";
+import PortfolioRoleNavigation from "./PortfolioRoleNavigation.astro";
+import { getPortfolioRole } from "../../lib/profile/portfolio-roles.js";
+import type { PortfolioRoleId } from "../../lib/profile/portfolio-roles.js";
 import type { PortfolioPresentation } from "./presentation.js";
 
 interface Props {
   presentation: PortfolioPresentation;
+  roleId?: PortfolioRoleId;
 }
 
-const { presentation } = Astro.props;
+const { presentation, roleId = 'data-engineer-ai' } = Astro.props;
+const role = getPortfolioRole(roleId);
 ---
 
 <div class="portfolio-content" data-testid="portfolio-content">
+  <PortfolioRoleNavigation current={roleId} />
   {presentation.sections.map((section) => (
     section.kind === "intro" ? (
       <section
         class="profile-section portfolio-intro"
         data-profile-section="intro"
       >
-        <p class="portfolio-eyebrow">데이터 엔지니어링 · 플랫폼 운영</p>
+        <p class="portfolio-eyebrow">{role.eyebrow}</p>
         <h2>{section.heading}</h2>
         <p
           class="portfolio-summary"
-          data-profile-fact-id={section.summary.factId}
+          data-profile-fact-id={role.introduction === undefined ? section.summary.factId : undefined}
         >
-          {section.summary.value}
+          {role.introduction ?? section.summary.value}
         </p>
         <ContactActions
           actions={section.actions}
@@ -53,7 +59,7 @@ const { presentation } = Astro.props;
           </ol>
         </nav>
         {section.projects.map((project, index) => (
-          <CaseStudy project={project} position={index + 1} />
+          <CaseStudy project={project} position={index + 1} focus={role.projectFocus[project.id]} />
         ))}
       </section>
     )

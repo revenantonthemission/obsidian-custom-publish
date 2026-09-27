@@ -4,6 +4,12 @@ import {
 } from './issues.js';
 import { hasVerifiedFactApprovalCapability } from './fact-approval.js';
 import {
+  getPortfolioRole,
+  PORTFOLIO_ROLES,
+  selectPortfolioForRole,
+} from './portfolio-roles.js';
+import type { PortfolioRoleId } from './portfolio-roles.js';
+import {
   selectHomepageProfile,
   selectPortfolioProfile,
   selectResumeProfile,
@@ -55,7 +61,9 @@ export interface SiteIdentity {
 }
 
 export type ProfileRoute = 'resume' | 'portfolio';
-export type ProfilePathname = '/resume' | '/portfolio';
+export type ProfilePathname =
+  | '/resume'
+  | ReturnType<typeof getPortfolioRole>['pathname'];
 
 export interface SocialMetadata {
   readonly title: string;
@@ -81,6 +89,7 @@ export type MetadataProjectionSource =
     }>
   | Readonly<{
       route: 'portfolio';
+      roleId?: PortfolioRoleId;
       name: PublicFact<SingleLineText>;
       profile: PortfolioProfile;
     }>;
@@ -140,6 +149,7 @@ export function buildApprovedResumeMetadata(
 export function buildApprovedPortfolioMetadata(
   site: SiteIdentity,
   source: FactApprovedProfile,
+  roleId: PortfolioRoleId = 'data-engineer-ai',
 ): ValidationResult<ProfilePageMetadata> {
   const inspected = inspectApprovedSource(source);
   if (!inspected.ok) {
@@ -151,7 +161,8 @@ export function buildApprovedPortfolioMetadata(
     return buildPortfolioMetadataForTest(
       site,
       homepage.name,
-      selectPortfolioProfile(inspected.profile),
+      selectPortfolioForRole(selectPortfolioProfile(inspected.profile), roleId),
+      roleId,
     );
   } catch {
     return invalidApprovedSource();
@@ -194,10 +205,12 @@ export function buildPortfolioMetadataForTest(
   site: SiteIdentity,
   name: PublicFact<SingleLineText>,
   profile: PortfolioProfile,
+  roleId: PortfolioRoleId = 'data-engineer-ai',
 ): ValidationResult<ProfilePageMetadata> {
   try {
     const source: MetadataProjectionSource = Object.freeze({
       route: 'portfolio',
+      roleId,
       name,
       profile,
     });
@@ -248,15 +261,38 @@ export function validateMetadataConsistency(
       );
     }
 
+    const snapshot = snapshotOwnedData(candidate, 'metadata');
+    if (!snapshot.ok) {
+      return invalidCandidateSnapshot(route, snapshot.path);
+    }
+    const candidatePathname = isObject(snapshot.value)
+      ? snapshot.value.pathname
+      : undefined;
+    const role = PORTFOLIO_ROLES.find(
+      ({ pathname }) => pathname === candidatePathname,
+    );
+    if (role === undefined) {
+      return failure([
+        createValidationIssue(
+          'metadata.route.invalid',
+          'profile.metadata.portfolio.canonical',
+        ),
+      ]);
+    }
+
     const homepage = selectHomepageProfile(inspected.profile);
     return validateMetadataConsistencyForTest(
       site,
       Object.freeze({
         route: 'portfolio',
+        roleId: role.id,
         name: homepage.name,
-        profile: selectPortfolioProfile(inspected.profile),
+        profile: selectPortfolioForRole(
+          selectPortfolioProfile(inspected.profile),
+          role.id,
+        ),
       }),
-      candidate,
+      snapshot.value,
     );
   } catch {
     return invalidApprovedSource();
@@ -316,7 +352,10 @@ function buildExpectedMetadata(
   site: SiteIdentity,
   source: MetadataProjectionSource,
 ): ValidationResult<ProfilePageMetadata> {
-  const pathname = routePathname(source.route);
+  const role = source.route === 'portfolio'
+    ? getPortfolioRole(source.roleId ?? 'data-engineer-ai')
+    : undefined;
+  const pathname: ProfilePathname = role?.pathname ?? '/resume';
   const siteOrigin = validatedSiteOrigin(site);
   if (siteOrigin === undefined) {
     return failure([
@@ -335,11 +374,11 @@ function buildExpectedMetadata(
   const title =
     source.route === 'resume'
       ? `${name} — Résumé`
-      : `${name} — Portfolio`;
+      : `${name} — ${role!.title}`;
   const description =
     source.route === 'resume'
       ? source.profile.resumeSummary.value
-      : source.profile.portfolioSummary.value;
+      : role!.introduction ?? source.profile.portfolioSummary.value;
   const social = (): SocialMetadata =>
     Object.freeze({
       title,
@@ -362,6 +401,7 @@ function buildExpectedMetadata(
             siteOrigin,
             canonical,
             title,
+            description,
             source.profile,
           ),
   };
@@ -412,6 +452,7 @@ function buildPortfolioJsonLd(
   siteOrigin: string,
   canonical: string,
   title: string,
+  description: string,
   profile: PortfolioProfile,
 ): readonly JsonLdDocument[] {
   const itemListId = `${canonical}#projects`;
@@ -425,7 +466,7 @@ function buildPortfolioJsonLd(
         '@id': `${canonical}#collection-page`,
         url: canonical,
         name: title,
-        description: profile.portfolioSummary.value,
+        description,
         mainEntity: {
           '@id': itemListId,
         },
@@ -817,10 +858,6 @@ function isStructuralCollectionPath(path: string): boolean {
     /^jsonLd\[\d+\]$/.test(path) ||
     /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]$/.test(path)
   );
-}
-
-function routePathname(route: ProfileRoute): ProfilePathname {
-  return route === 'resume' ? '/resume' : '/portfolio';
 }
 
 function validatedSiteOrigin(value: unknown): string | undefined {

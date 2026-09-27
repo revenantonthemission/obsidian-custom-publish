@@ -254,7 +254,8 @@
 }
 
 @media print {
-  .portfolio-project-navigation {
+  .portfolio-project-navigation,
+  .portfolio-role-navigation {
     display: none;
   }
 
@@ -274,4 +275,54 @@
   .case-study-details > summary {
     display: none;
   }
+}
+.portfolio-role-navigation {
+  margin-bottom: 2rem;
+}
+
+.portfolio-role-navigation > p {
+  margin-bottom: 0.6rem;
+  color: var(--c-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.portfolio-role-navigation ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portfolio-role-navigation a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+  color: var(--c-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.portfolio-role-navigation a:hover,
+.portfolio-role-navigation a[aria-current='page'] {
+  border-color: var(--c-profile-accent-text);
+  background: var(--c-surface);
+  color: var(--c-profile-accent-text);
+  text-decoration: none;
+}
+
+.portfolio-role-navigation a[aria-current='page'] {
+  box-shadow: inset 0 -2px 0 var(--c-profile-accent-text);
+}
+
+.portfolio-project-focus {
+  margin: 0 0 0.5rem;
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
 }

@@ -1,4 +1,5 @@
 import { createValidationIssue } from '../profile/issues.js';
+import { PORTFOLIO_ROLES } from '../profile/portfolio-roles.js';
 import type {
   NonEmptyReadonlyArray,
   ValidationIssue,
@@ -95,7 +96,8 @@ export function resolveRouteResourcePolicy(
       ? pathname.slice(0, -1)
       : pathname;
   return success(
-    normalized === '/resume' || normalized === '/portfolio'
+    normalized === '/resume' ||
+      PORTFOLIO_ROLES.some(({ pathname }) => pathname === normalized)
       ? PROFILE_ROUTE_RESOURCE_POLICY
       : LEGACY_ROUTE_RESOURCE_POLICY,
   );

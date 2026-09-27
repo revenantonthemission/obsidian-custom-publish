@@ -6,9 +6,10 @@ import type { CaseStudyView } from "./presentation.js";
 interface Props {
   project: CaseStudyView;
   position?: number;
+  focus?: string;
 }
 
-const { project, position } = Astro.props;
+const { project, position, focus } = Astro.props;
 const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]);
 ---
 
@@ -26,6 +27,7 @@ const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]
         프로젝트 {String(position).padStart(2, "0")}
       </p>
     )}
+    {focus && <p class="portfolio-project-focus">{focus}</p>}
     <h3
       data-profile-fact-id={project.title.factId}
       data-testid={`case-study-title-${project.id}`}
