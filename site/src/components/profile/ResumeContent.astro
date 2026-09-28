@@ -40,7 +40,7 @@ const { presentation } = Astro.props;
         <ContentBlocks blocks={section.details} />
         <ContactActions
           actions={section.actions}
-          label="연락처와 PDF 이력서"
+          label="연락처"
           variant="contact-actions"
         />
       </section>
@@ -123,12 +123,18 @@ const { presentation } = Astro.props;
             <p data-profile-fact-id={project.outcomeSummary.factId}>
               {project.outcomeSummary.value}
             </p>
+            {project.details.length > 0 && (
+              <div class="resume-project-details">
+                <ContentBlocks blocks={project.details} />
+              </div>
+            )}
             {project.portfolioHref !== undefined && (
               <a
-                href={project.portfolioHref}
+                class="resume-project-link"
+                href={new URL(project.portfolioHref, Astro.site).href}
                 data-testid={`resume-content-project-link-${project.id}`}
               >
-                Portfolio에서 자세히 보기
+                프로젝트 상세 보기
               </a>
             )}
           </article>

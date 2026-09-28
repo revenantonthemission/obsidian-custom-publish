@@ -8,6 +8,7 @@ import type {
   DeepReadonly,
   Education,
   EmailAddress,
+  EntityId,
   EvidenceLink,
   Experience,
   ExternalEvidenceUrl,
@@ -39,6 +40,15 @@ export function isKebabIdentifier(value: unknown): value is string {
 }
 
 export function normalizeProfile(input: ProfileData): NormalizedProfile {
+  const resumeSelection = Object.getOwnPropertyDescriptor(input, 'resumeProjectIds');
+  if (
+    (resumeSelection === undefined && 'resumeProjectIds' in input) ||
+    (resumeSelection !== undefined &&
+      (!Object.prototype.hasOwnProperty.call(resumeSelection, 'value') ||
+        resumeSelection.enumerable !== true))
+  ) {
+    throw new TypeError('Résumé project selection must be an owned data property.');
+  }
   const normalized: ProfileData = {
     identity: {
       name: normalizeSingleLineFact(input.identity.name),
@@ -62,11 +72,39 @@ export function normalizeProfile(input: ProfileData): NormalizedProfile {
     experiences: input.experiences.map(normalizeExperience),
     achievements: input.achievements.map(normalizeAchievement),
     projects: input.projects.map(normalizeProject),
+    ...(resumeSelection === undefined
+      ? {}
+      : { resumeProjectIds: copyResumeProjectIds(resumeSelection.value) }),
     education: input.education.map(normalizeEducation),
     certifications: input.certifications.map(normalizeCertification),
   };
 
   return deepFreeze(normalized) as NormalizedProfile;
+}
+
+function copyResumeProjectIds(input: unknown): readonly EntityId<'project'>[] {
+  if (!Array.isArray(input) || Object.getPrototypeOf(input) !== Array.prototype) {
+    throw new TypeError('Résumé project selection must be an array.');
+  }
+  const length = Object.getOwnPropertyDescriptor(input, 'length')?.value;
+  if (
+    !Number.isSafeInteger(length) || length < 1 || length > 6 ||
+    Reflect.ownKeys(input).length !== length + 1
+  ) {
+    throw new TypeError('Résumé project selection must contain one to six owned values.');
+  }
+  const ids: EntityId<'project'>[] = [];
+  for (let index = 0; index < length; index += 1) {
+    const item = Object.getOwnPropertyDescriptor(input, String(index));
+    if (
+      item === undefined || !Object.prototype.hasOwnProperty.call(item, 'value') ||
+      item.enumerable !== true || typeof item.value !== 'string'
+    ) {
+      throw new TypeError('Résumé project IDs must be owned string values.');
+    }
+    ids.push(item.value as EntityId<'project'>);
+  }
+  return ids;
 }
 
 function normalizeContact(contact: ContactProfile): ContactProfile {
@@ -126,12 +164,24 @@ function normalizeAchievement(achievement: Achievement): Achievement {
 }
 
 function normalizeProject(project: Project): Project {
+  const resumeDetails = Object.getOwnPropertyDescriptor(project, 'resumeDetails');
+  if (
+    (resumeDetails === undefined && 'resumeDetails' in project) ||
+    (resumeDetails !== undefined &&
+      (!Object.prototype.hasOwnProperty.call(resumeDetails, 'value') ||
+        resumeDetails.enumerable !== true))
+  ) {
+    throw new TypeError('Résumé details must be an owned data property.');
+  }
   return {
     id: project.id,
     order: project.order,
     title: normalizeSingleLineFact(project.title),
     ...normalizeOptionalPeriod(project),
     outcomeSummary: normalizeKoreanSingleLineFact(project.outcomeSummary),
+    ...(resumeDetails === undefined
+      ? {}
+      : { resumeDetails: normalizeRequiredBlocks(resumeDetails.value) }),
     problem: normalizeRequiredBlocks(project.problem),
     role: normalizeRequiredBlocks(project.role),
     keyDecisions: normalizeRequiredBlocks(project.keyDecisions),

@@ -43,21 +43,17 @@ const RECEIPT_KEYS = [
 ] as const;
 
 const EXPECTED_RECEIPT = Object.freeze({
-  schemaVersion: 1,
-  receiptId: 'profile-fact-approval-2026-09-23-r1',
-  inventoryRevision: 'profile-facts-r6',
-  inventoryDigest:
-    'f642668821ae1edb6d94ea40a56df5e090658e60b3fa6a923ebed12aef961130',
-  productionDiffRevision: 'profile-production-diff-r6',
-  productionDiffDigest:
-    '19f2773fe78bc63250b633b70dffc37bf356246a9d5e53b776100e754716c877',
-  approvedRecordsDigest:
-    '2d5d3ef49553348eb2b05ec1fde573bf87bead6c5448abc4d294c325cee6a19c',
-  materializedProfileDigest:
-    '2a3c2ebe7abe12a1a88d5e563e18f5f42e93317c9c99d52d2f35b5c60820bd98',
-  decision: 'Approved',
-  decisionAuditId: 'PROFILE-DEAI-GENERALIZATION-20260923T031705Z',
-  decisionRecordedAt: '2026-09-23T03:17:05Z',
+  "schemaVersion": 1,
+  "receiptId": "profile-fact-approval-2026-09-27-r2",
+  "inventoryRevision": "profile-facts-r8",
+  "inventoryDigest": "5bcfa4743718a00b5c802e6ee842da27e22671409909ea6adacaa0872c8200c1",
+  "productionDiffRevision": "profile-production-diff-r8",
+  "productionDiffDigest": "e6aa8ea7935abbccdf4de1c1bc22c8eb38c2d3e2b63874a3c9e36ffc005f3e4b",
+  "approvedRecordsDigest": "2161243cca522ef5c0e9178a747741906bab771459e69fb01c48e91efab5c313",
+  "materializedProfileDigest": "2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c",
+  "decision": "Approved",
+  "decisionAuditId": "PROFILE-RESUME-TRUTHFUL-20260927T140225005Z",
+  "decisionRecordedAt": "2026-09-27T14:02:25.005Z"
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';
@@ -78,7 +74,7 @@ const PROJECT_FACT_SUFFIXES = [
 
 type EvidenceId =
   | 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07'
-  | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13';
+  | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13' | 'E14' | 'E15';
 
 const EVIDENCE_SOURCES = deepFreeze({
   E01: {
@@ -170,6 +166,16 @@ const EVIDENCE_SOURCES = deepFreeze({
     kind: 'user-provided',
     reference:
       'User-directed publication of the general data-engineer/AI rescope (2026-09-23 request). The added skill facts mirror technologies evidenced by the linked DocSuri and mcp-local-reference repositories and the approved architecture facts. This is publication authorization, not a new human fact review.',
+  },
+  E14: {
+    kind: 'user-provided',
+    reference:
+      'User-directed truthful resume update and template-informed completion (2026-09-27). Target role follows the product engineer request. Resume role, technologies and contribution bullets summarize existing DocSuri role, architecture, search-recovery, producer-consumer contract, retry and reprocessing evidence from docs/portfolio/kakaopay-data-platform/evidence/. Editorial publication authorization, not a new independent human review of technical claims.',
+  },
+  E15: {
+    kind: 'user-provided',
+    reference:
+      'User explicitly confirmed graduation from Sogang University in February 2026, a July-August 2023 Hansono internship, and a separate eZono collaboration in Germany on October 29-November 6, 2023 (2026-09-27 conversation).',
   },
 } satisfies Record<EvidenceId, FactReviewEvidence>);
 
@@ -599,6 +605,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         'title',
         'period',
         'outcomeSummary',
+        'resumeDetails',
         'problem',
         'role',
         'keyDecisions',
@@ -612,6 +619,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         inspectFact(project.title);
         inspectFact(project.period, inspectPeriod);
         inspectFact(project.outcomeSummary);
+        inspectContentBlocks(project.resumeDetails);
         inspectContentBlocks(project.problem);
         inspectContentBlocks(project.role);
         inspectContentBlocks(project.keyDecisions);
@@ -683,6 +691,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         'experiences',
         'achievements',
         'projects',
+        'resumeProjectIds',
         'education',
         'certifications',
       ],
@@ -719,6 +728,11 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         inspectArray(profile.experiences, inspectExperience);
         inspectArray(profile.achievements, inspectAchievement);
         inspectArray(profile.projects, inspectProject);
+        if (profile.resumeProjectIds !== undefined) {
+          inspectArray(profile.resumeProjectIds, (id) => {
+            if (typeof id !== 'string') sourceShapeFailure();
+          });
+        }
         inspectArray(profile.education, inspectEducation);
         inspectArray(profile.certifications, inspectCertification);
       },
@@ -799,6 +813,9 @@ function deriveStructuralDecisions(
   const source = validated as unknown as ProfileData;
 
   return {
+    ...(source.resumeProjectIds === undefined
+      ? {}
+      : { resumeProjectIds: [...source.resumeProjectIds] }),
     identityAndNarrative: {
       detailedIntroBlocks: source.narrative.detailedIntro.map(
         describeIdentifiedBlock,
@@ -832,6 +849,9 @@ function deriveStructuralDecisions(
       id: project.id,
       order: project.order,
       period: project.period === undefined ? 'absent' : 'present',
+      ...(project.resumeDetails === undefined
+        ? {}
+        : { resumeDetailBlocks: project.resumeDetails.map(describeIdentifiedBlock) }),
       dimensions: [
         ['problem', project.problem],
         ['role', project.role],
@@ -985,32 +1005,36 @@ function canonicalize(value: unknown): unknown {
 function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
   const membership = new Map<string, EvidenceId>();
   const groups: Readonly<Record<EvidenceId, readonly string[]>> = {
+    E14: [
+      'narrative-detailed-intro-0-text',
+      'narrative-resume-summary',
+      'project-docsuri-resume-role',
+      'project-docsuri-resume-technologies',
+      'project-docsuri-resume-search-recovery',
+      'project-docsuri-resume-data-contracts',
+      'project-docsuri-resume-reprocessing',
+    ],
+    E15: [
+      'education-sogang-university-subtitle',
+      'education-sogang-university-period',
+      'experience-hansono-details-1-text',
+      'experience-hansono-period',
+    ],
     E01: [
       'identity-name',
       'identity-headline',
       'narrative-short-intro',
-      'narrative-detailed-intro-0-text',
-      'narrative-resume-summary',
       'skill-group-languages-title',
-      'skill-dart-name',
       'skill-group-backend-data-title',
-      'skill-uvicorn-name',
-      'skill-sqlalchemy-name',
       'skill-redis-name',
-      'skill-apache-kafka-name',
-      'skill-mysql-mariadb-name',
       'skill-group-infrastructure-title',
-      'skill-kubernetes-name',
       'skill-group-tooling-client-title',
       'skill-flutter-name',
       'skill-git-name',
-      'skill-sveltekit-name',
       'experience-hansono-organization',
       'experience-hansono-role',
-      'experience-hansono-period',
       'experience-hansono-summary',
       'experience-hansono-details-0-text',
-      'experience-hansono-details-1-text',
       'certification-opic-ih-title',
       'certification-opic-ih-period',
       'certification-hsk-6-title',
@@ -1019,23 +1043,12 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
     E02: [
       'contact-email',
       'contact-github',
-      'skill-c-name',
-      'skill-cpp-name',
       'skill-python-name',
-      'skill-javascript-name',
-      'skill-fastapi-name',
       'skill-docker-name',
-      'skill-nginx-name',
       'skill-aws-name',
-      'skill-github-actions-name',
       'education-sogang-university-title',
-      'education-sogang-university-subtitle',
-      'education-sogang-university-period',
     ],
     E03: [
-      'skill-typescript-name',
-      'skill-rust-name',
-      'skill-astro-name',
       'project-obsidian-custom-publish-title',
       'project-obsidian-custom-publish-role-0-text',
       'project-obsidian-custom-publish-architecture-0-text',
@@ -1131,8 +1144,6 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       'skill-postgresql-name',
       'skill-opensearch-name',
       'skill-amazon-bedrock-name',
-      'skill-sentence-transformers-name',
-      'skill-chromadb-name',
       'skill-ollama-name',
     ],
   };
@@ -1151,7 +1162,7 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       membership.set(factId, evidenceId);
     }
   }
-  if (membership.size !== 133) {
+  if (membership.size !== 120) {
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_EVIDENCE_INVALID',
       'profile.facts',

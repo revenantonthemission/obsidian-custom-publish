@@ -24,12 +24,12 @@ const approvedProfileSource = {
     detailedIntro: [
       paragraph(
         'narrative-detailed-intro-0-text',
-        '의료기술 제조사 소프트웨어 인턴십으로 개발 경험을 시작했고, AI/ML 논문 코퍼스 팀 프로젝트에서 데이터 엔지니어로 수집·색인 파이프라인과 인프라 운영을 맡았습니다. 데이터 정제, 장애 복구, 의미 기반 검색, LLM 연동을 경험했고, 지금은 데이터 엔지니어링과 AI 서비스 개발을 중심으로 작업을 쌓고 있습니다.',
+        '지원 직무: 프로덕트 엔지니어',
       ),
     ],
     resumeSummary: fact(
       'narrative-resume-summary',
-      'AI/ML 논문 코퍼스의 수집·색인 파이프라인을 구축하고 운영했으며, 의료기술 제조사 인턴십에서 소프트웨어 개발을 경험했습니다. 데이터 정제부터 검색·요약 서비스 연결까지 담당했습니다.',
+      'AI/ML 논문 서비스 DocSuri의 데이터 파이프라인과 운영을 맡았습니다. 사용자 검색·열람을 위한 작업 분리와 데이터 계약 변경을 다뤘으며, 한소노에서는 Flutter 의료기기 프로토타입 개발에 참여했습니다.',
     ),
     portfolioSummary: fact(
       'narrative-portfolio-summary',
@@ -50,25 +50,7 @@ const approvedProfileSource = {
       order: 10,
       title: fact('skill-group-languages-title', '프로그래밍 언어'),
       skills: [
-        {
-          id: 'python',
-          order: 10,
-          name: fact('skill-python-name', 'Python'),
-        },
-        { id: 'rust', order: 20, name: fact('skill-rust-name', 'Rust') },
-        {
-          id: 'typescript',
-          order: 30,
-          name: fact('skill-typescript-name', 'TypeScript'),
-        },
-        {
-          id: 'javascript',
-          order: 40,
-          name: fact('skill-javascript-name', 'JavaScript'),
-        },
-        { id: 'cpp', order: 50, name: fact('skill-cpp-name', 'C++') },
-        { id: 'c', order: 60, name: fact('skill-c-name', 'C') },
-        { id: 'dart', order: 70, name: fact('skill-dart-name', 'Dart') },
+        { id: 'python', order: 10, name: fact('skill-python-name', 'Python') },
       ],
     },
     {
@@ -77,42 +59,9 @@ const approvedProfileSource = {
       title: fact('skill-group-backend-data-title', '데이터·백엔드'),
       skills: [
         { id: 'sql', order: 10, name: fact('skill-sql-name', 'SQL') },
-        {
-          id: 'postgresql',
-          order: 20,
-          name: fact('skill-postgresql-name', 'PostgreSQL'),
-        },
-        {
-          id: 'apache-kafka',
-          order: 30,
-          name: fact('skill-apache-kafka-name', 'Apache Kafka'),
-        },
+        { id: 'postgresql', order: 20, name: fact('skill-postgresql-name', 'PostgreSQL') },
         { id: 'redis', order: 40, name: fact('skill-redis-name', 'Redis') },
-        {
-          id: 'opensearch',
-          order: 50,
-          name: fact('skill-opensearch-name', 'OpenSearch'),
-        },
-        {
-          id: 'mysql-mariadb',
-          order: 60,
-          name: fact('skill-mysql-mariadb-name', 'MySQL/MariaDB'),
-        },
-        {
-          id: 'sqlalchemy',
-          order: 70,
-          name: fact('skill-sqlalchemy-name', 'SQLAlchemy'),
-        },
-        {
-          id: 'fastapi',
-          order: 80,
-          name: fact('skill-fastapi-name', 'FastAPI'),
-        },
-        {
-          id: 'uvicorn',
-          order: 90,
-          name: fact('skill-uvicorn-name', 'Uvicorn'),
-        },
+        { id: 'opensearch', order: 50, name: fact('skill-opensearch-name', 'OpenSearch') },
       ],
     },
     {
@@ -120,24 +69,7 @@ const approvedProfileSource = {
       order: 25,
       title: fact('skill-group-ai-llm-title', 'AI·검색'),
       skills: [
-        {
-          id: 'amazon-bedrock',
-          order: 10,
-          name: fact('skill-amazon-bedrock-name', 'Amazon Bedrock'),
-        },
-        {
-          id: 'sentence-transformers',
-          order: 20,
-          name: fact(
-            'skill-sentence-transformers-name',
-            'Sentence Transformers',
-          ),
-        },
-        {
-          id: 'chromadb',
-          order: 30,
-          name: fact('skill-chromadb-name', 'ChromaDB'),
-        },
+        { id: 'amazon-bedrock', order: 10, name: fact('skill-amazon-bedrock-name', 'Amazon Bedrock') },
         { id: 'ollama', order: 40, name: fact('skill-ollama-name', 'Ollama') },
       ],
     },
@@ -146,23 +78,8 @@ const approvedProfileSource = {
       order: 30,
       title: fact('skill-group-infrastructure-title', '인프라·배포'),
       skills: [
-        {
-          id: 'docker',
-          order: 10,
-          name: fact('skill-docker-name', 'Docker'),
-        },
-        {
-          id: 'kubernetes',
-          order: 20,
-          name: fact('skill-kubernetes-name', 'Kubernetes'),
-        },
+        { id: 'docker', order: 10, name: fact('skill-docker-name', 'Docker') },
         { id: 'aws', order: 30, name: fact('skill-aws-name', 'AWS') },
-        { id: 'nginx', order: 40, name: fact('skill-nginx-name', 'NGINX') },
-        {
-          id: 'github-actions',
-          order: 50,
-          name: fact('skill-github-actions-name', 'GitHub Actions'),
-        },
       ],
     },
     {
@@ -170,18 +87,8 @@ const approvedProfileSource = {
       order: 40,
       title: fact('skill-group-tooling-client-title', '도구·클라이언트'),
       skills: [
-        {
-          id: 'flutter',
-          order: 10,
-          name: fact('skill-flutter-name', 'Flutter'),
-        },
+        { id: 'flutter', order: 10, name: fact('skill-flutter-name', 'Flutter') },
         { id: 'git', order: 20, name: fact('skill-git-name', 'Git') },
-        { id: 'astro', order: 30, name: fact('skill-astro-name', 'Astro') },
-        {
-          id: 'sveltekit',
-          order: 40,
-          name: fact('skill-sveltekit-name', 'SvelteKit'),
-        },
       ],
     },
   ],
@@ -197,7 +104,7 @@ const approvedProfileSource = {
       }),
       summary: fact(
         'experience-hansono-summary',
-        'Flutter와 FFI를 활용한 의료기기 프로토타입 개발을 경험했습니다.',
+        'Flutter 기반 의료기기 프로토타입 개발에 참여했습니다.',
       ),
       details: [
         paragraph(
@@ -206,13 +113,14 @@ const approvedProfileSource = {
         ),
         paragraph(
           'experience-hansono-details-1-text',
-          '2023년 10월 29일부터 11월 6일까지 독일에서 한소노 소속으로 의료기술 제조사 eZono와 FFI 기반 프로토타입을 개발했습니다.',
+          '인턴십 이후 별도 협업으로, 2023년 10월 29일부터 11월 6일까지 독일에서 한소노 소속으로 의료기술 제조사 eZono와 FFI 기반 프로토타입 개발에 참여했습니다.',
         ),
       ],
       evidence: [],
     },
   ],
   achievements: [],
+  resumeProjectIds: ['docsuri'],
   projects: [
     {
       id: 'docsuri',
@@ -222,6 +130,34 @@ const approvedProfileSource = {
         'project-docsuri-outcome-summary',
         'AI/ML 논문을 수집·구조화·임베딩·색인하는 파이프라인을 만들고 운영했습니다. 대량 백필로 발생한 검색 503 장애를 복구하고, 사용자 열람용 문서를 생성하는 큐와 워커를 분리했습니다.',
       ),
+      resumeDetails: [
+        paragraph(
+          'project-docsuri-resume-role',
+          '역할: AWS AI School 2기 4인 팀의 데이터 엔지니어. 수집·임베딩·색인·인프라를 맡았습니다. 검색·요약·에이전트의 초기 구현과 GROBID TEI 구조 파서는 팀원이 담당했습니다.',
+        ),
+        paragraph(
+          'project-docsuri-resume-technologies',
+          '사용 기술: Python, PostgreSQL, OpenSearch, Docker, AWS SQS·ECS/Fargate·S3·Bedrock',
+        ),
+        {
+          tag: 'list',
+          style: 'unordered',
+          items: [
+            fact(
+              'project-docsuri-resume-search-recovery',
+              '검색 장애 복구: 2026년 7월 대량 백필 중 발생한 503 장애에 대응해 수집 워커를 3개에서 1개로 조정하고 재현 질의의 정상 응답을 확인했습니다. 사용자 열람용 문서 생성은 전용 큐·워커로 분리했습니다.',
+            ),
+            fact(
+              'project-docsuri-resume-data-contracts',
+              '데이터 계약과 협업: 공용 JSON Schema·Python DTO 변경을 요약 기능·프런트엔드에 함께 반영하고, 데이터를 만드는 쪽과 사용하는 쪽의 작업·검토 책임을 정리했습니다.',
+            ),
+            fact(
+              'project-docsuri-resume-reprocessing',
+              '재처리와 검증: 복사·재임베딩·재파싱의 시작점을 나누고 중복 메시지·일부 색인 실패를 테스트했습니다. 실패 항목을 완료로 기록하지 않으며 재시도·DLQ에 출처와 실패 단계를 남겼습니다.',
+            ),
+          ],
+        },
+      ],
       problem: [
         paragraph(
           'project-docsuri-problem-0-text',
@@ -648,7 +584,7 @@ const approvedProfileSource = {
       title: fact('education-sogang-university-title', '서강대학교'),
       subtitle: fact(
         'education-sogang-university-subtitle',
-        '중국문화학과·컴퓨터공학과',
+        '중국문화학과·컴퓨터공학과 · 2026년 2월 졸업',
       ),
       period: fact('education-sogang-university-period', {
         start: { tag: 'year', value: '2019' },

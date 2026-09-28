@@ -69,7 +69,10 @@ test.prop([validProfileProjectionsArbitrary])(
     expect(intro.headline).toEqual(textFact(resume.identity.headline));
     expect(intro.summary).toEqual(textFact(resume.resumeSummary));
     assertTextBlocks(intro.details, resume.detailedIntro);
-    assertContactActions(intro.actions, resume.contactActions, true);
+    assertContactActions(intro.actions, resume.contactActions, true, [
+      resume.contactActions.email.value,
+      resume.contactActions.github.value,
+    ]);
 
     const skills = resumeSection(presentation, 'skills');
     expect(itemVector(skills.groups)).toEqual(itemVector(resume.skillGroups));
@@ -142,7 +145,8 @@ test.prop([validProfileProjectionsArbitrary])(
       expect(project.title).toEqual(textFact(source.title));
       assertPeriod(project.period, source.period);
       expect(project.outcomeSummary).toEqual(textFact(source.outcomeSummary));
-      expect(Object.hasOwn(project, 'portfolioHref')).toBe(false);
+      assertTextBlocks(project.details, source.details ?? []);
+      expect(project.portfolioHref).toBe(`/portfolio#project-${source.id}`);
     }
 
     assertOptionalResumeSections(presentation, resume);
@@ -168,7 +172,10 @@ test.prop([validProfileProjectionsArbitrary])(
     const intro = portfolioSection(presentation, 'intro');
     expect(intro.heading).toBe('프로필');
     expect(intro.summary).toEqual(textFact(portfolio.portfolioSummary));
-    assertContactActions(intro.actions, portfolio.contactActions, false);
+    assertContactActions(intro.actions, portfolio.contactActions, false, [
+      '이메일 보내기',
+      'GitHub 프로필 보기',
+    ]);
 
     const projects = portfolioSection(presentation, 'projects');
     expect(itemVector(projects.projects)).toEqual(
@@ -312,6 +319,7 @@ function assertContactActions(
     readonly additionalLinks: readonly EvidenceLink[];
   },
   includeDocument: boolean,
+  labels: readonly [string, string],
 ): void {
   const documentLink = getResumeDocumentLink();
   const documentAction = actual.find(({ kind }) => kind === 'document');
@@ -322,7 +330,7 @@ function assertContactActions(
       kind: 'email',
       target: 'email',
       href: `mailto:${contact.email.value}`,
-      label: '이메일 보내기',
+      label: labels[0],
       destinationFactId: contact.email.factId,
     },
     {
@@ -330,7 +338,7 @@ function assertContactActions(
       kind: 'github',
       target: 'external',
       href: contact.github.value,
-      label: 'GitHub 프로필 보기',
+      label: labels[1],
       destinationFactId: contact.github.factId,
     },
   ]);

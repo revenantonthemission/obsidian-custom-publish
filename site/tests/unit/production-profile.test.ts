@@ -21,7 +21,7 @@ import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/docume
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
-  '2a3c2ebe7abe12a1a88d5e563e18f5f42e93317c9c99d52d2f35b5c60820bd98';
+  '2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c';
 const FORBIDDEN_PROFILE_KEYS = new Set([
   'approvedRecordsDigest',
   'decision',
@@ -49,7 +49,7 @@ afterEach(async () => {
 });
 
 describe('approved production profile boundary', () => {
-  test('materializes all 133 publication-authorized facts with a zero-diff identity', () => {
+  test('materializes all 120 publication-authorized facts with a zero-diff identity', () => {
     const evaluation = productionProfileTesting.evaluate(
       profileData,
       receiptDocument,
@@ -69,8 +69,8 @@ describe('approved production profile boundary', () => {
       requirement: record.requirement,
     }));
 
-    expect(evaluation.facts).toHaveLength(133);
-    expect(evaluation.records).toHaveLength(133);
+    expect(evaluation.facts).toHaveLength(120);
+    expect(evaluation.records).toHaveLength(120);
     expect(recordProjection).toEqual(factProjection);
     expect(evaluation.materializedProfileDigest).toBe(
       EXPECTED_MATERIALIZED_DIGEST,
@@ -153,6 +153,7 @@ describe('approved production profile boundary', () => {
       'skillGroups',
       'experiences',
       'achievements',
+      'resumeProjectIds',
       'projects',
       'education',
       'certifications',

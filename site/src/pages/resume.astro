@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import ProfileShell from "../components/profile/ProfileShell.astro";
 import ResumeContent from "../components/profile/ResumeContent.astro";
 import { buildResumePresentation } from "../components/profile/presentation.js";
-import { getResumeDocumentLink } from "../lib/profile/document-boundary.js";
+import { getCurrentResumeDocumentLink } from "../lib/profile/current-resume-document.js";
 import { buildApprovedResumeMetadata } from "../lib/profile/metadata.js";
 import { getProductionProfileAssembly } from "../lib/profile/production-profile.js";
 import "../styles/profile/font.css";
@@ -28,7 +28,7 @@ if (!metadataResult.ok) {
 const metadata = metadataResult.value;
 const presentation = buildResumePresentation(
   assembly.resume,
-  getResumeDocumentLink(),
+  await getCurrentResumeDocumentLink(assembly.source),
 );
 ---
 

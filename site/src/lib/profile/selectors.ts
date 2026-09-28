@@ -37,6 +37,9 @@ export function selectResumeProfile(
   const certifications = frozenArray(
     numericOrder(source.certifications).map(copyCertification),
   );
+  const resumeProjectIds = source.resumeProjectIds === undefined
+    ? undefined
+    : new Set(source.resumeProjectIds);
 
   const projection: ResumeProfile = {
     identity: Object.freeze({
@@ -56,7 +59,9 @@ export function selectResumeProfile(
       numericOrder(source.achievements).map(copyAchievement),
     ),
     projectSummaries: frozenArray(
-      numericOrder(source.projects).map(copyProjectSummary),
+      numericOrder(source.projects)
+        .filter((project) => resumeProjectIds === undefined || resumeProjectIds.has(project.id))
+        .map(copyProjectSummary),
     ),
     ...(education.length === 0
       ? {}
@@ -163,6 +168,9 @@ function copyProjectSummary(project: Project): ResumeProjectSummary {
     title: project.title,
     ...(project.period === undefined ? {} : { period: project.period }),
     outcomeSummary: project.outcomeSummary,
+    ...(project.resumeDetails === undefined
+      ? {}
+      : { details: copyRequiredBlocks(project.resumeDetails) }),
   });
 }
 

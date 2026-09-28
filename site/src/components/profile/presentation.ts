@@ -144,6 +144,7 @@ export interface ResumeProjectSummaryView {
   readonly title: TextFactView;
   readonly period?: PeriodView;
   readonly outcomeSummary: TextFactView;
+  readonly details: readonly TextBlockView[];
   readonly portfolioHref?: string;
 }
 
@@ -189,17 +190,17 @@ export type ResumeSectionView =
     }>
   | Readonly<{
       kind: 'projects';
-      heading: '대표 프로젝트 요약';
+      heading: '프로젝트';
       projects: readonly ResumeProjectSummaryView[];
     }>
   | Readonly<{
       kind: 'education';
-      heading: '교육';
+      heading: '학력';
       entries: readonly EducationView[];
     }>
   | Readonly<{
       kind: 'certifications';
-      heading: '자격';
+      heading: '어학 자격';
       entries: readonly CertificationView[];
     }>;
 
@@ -296,7 +297,7 @@ const DIMENSION_HEADINGS = Object.freeze({
  */
 export function buildResumePresentation(
   profile: ResumeProfile,
-  documentLink: ResumeDocumentLink,
+  documentLink?: ResumeDocumentLink,
 ): ResumePresentation {
   const sections: ResumeSectionView[] = [
     Object.freeze({
@@ -306,7 +307,7 @@ export function buildResumePresentation(
       headline: textFact(profile.identity.headline),
       summary: textFact(profile.resumeSummary),
       details: contentBlocks(profile.detailedIntro),
-      actions: contactActions(profile.contactActions, documentLink),
+      actions: contactActions(profile.contactActions, documentLink, 'destination'),
     }),
     Object.freeze({
       kind: 'skills',
@@ -320,7 +321,7 @@ export function buildResumePresentation(
     }),
     Object.freeze({
       kind: 'projects',
-      heading: '대표 프로젝트 요약',
+      heading: '프로젝트',
       projects: frozenArray(
         profile.projectSummaries.map(resumeProjectSummary),
       ),
@@ -331,7 +332,7 @@ export function buildResumePresentation(
     sections.push(
       Object.freeze({
         kind: 'education',
-        heading: '교육',
+        heading: '학력',
         entries: frozenArray(profile.education.map(educationView)),
       }),
     );
@@ -341,7 +342,7 @@ export function buildResumePresentation(
     sections.push(
       Object.freeze({
         kind: 'certifications',
-        heading: '자격',
+        heading: '어학 자격',
         entries: frozenArray(
           profile.certifications.map(certificationView),
         ),
@@ -431,6 +432,7 @@ function profileNavigationItem(
 function contactActions(
   contact: ContactActions,
   documentLink?: ResumeDocumentLink,
+  labelStyle: 'action' | 'destination' = 'action',
 ): readonly ProfileActionView[] {
   const actions: ProfileActionView[] = [
     Object.freeze({
@@ -438,7 +440,7 @@ function contactActions(
       kind: 'email',
       target: 'email',
       href: `mailto:${contact.email.value}`,
-      label: '이메일 보내기',
+      label: labelStyle === 'destination' ? contact.email.value : '이메일 보내기',
       destinationFactId: contact.email.factId,
     }),
     Object.freeze({
@@ -446,7 +448,7 @@ function contactActions(
       kind: 'github',
       target: 'external',
       href: contact.github.value,
-      label: 'GitHub 프로필 보기',
+      label: labelStyle === 'destination' ? contact.github.value : 'GitHub 프로필 보기',
       destinationFactId: contact.github.factId,
     }),
     ...contact.additionalLinks.map((link) =>
@@ -582,6 +584,8 @@ function resumeProjectSummary(
       ? {}
       : { period: periodView(project.period) }),
     outcomeSummary: textFact(project.outcomeSummary),
+    details: contentBlocks(project.details ?? []),
+    portfolioHref: `/portfolio#project-${project.id}`,
   });
 }
 

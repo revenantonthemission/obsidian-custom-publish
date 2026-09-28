@@ -487,6 +487,16 @@ export function collectMaterializedFacts(
       RESUME_PORTFOLIO_METADATA_PDF,
       'required',
     );
+    if (project.resumeDetails !== undefined) {
+      collectContentBlocks(
+        facts,
+        project.resumeDetails,
+        `${canonicalBase}.resumeDetails`,
+        `${sourceBase}.resumeDetails`,
+        RESUME_PDF,
+        'optional',
+      );
+    }
     collectContentBlocks(
       facts,
       project.problem,

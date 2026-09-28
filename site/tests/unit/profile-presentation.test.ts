@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { getResumeDocumentLink } from '../../src/lib/profile/document-boundary.js';
+import { getCurrentResumeDocumentLink } from '../../src/lib/profile/current-resume-document.js';
+import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
 import {
   buildPortfolioPresentation,
   buildResumePresentation,
@@ -74,11 +76,13 @@ describe('renderer-neutral profile presentation', () => {
         id: 'email',
         kind: 'email',
         href: 'mailto:tester@example.com',
+        label: 'tester@example.com',
       }),
       expect.objectContaining({
         id: 'github',
         kind: 'github',
         href: 'https://github.com/example-user',
+        label: 'https://github.com/example-user',
       }),
       expect.objectContaining({
         id: 'resume-document',
@@ -103,6 +107,38 @@ describe('renderer-neutral profile presentation', () => {
         },
       ],
     });
+  });
+
+  test('keeps project contribution facts in the project and preserves portfolio action labels', () => {
+    const fixture = cloneProfileFixture();
+    const source = validSource({
+      ...fixture,
+      projects: fixture.projects.map((project) => ({
+        ...project,
+        ...(project.id === 'project-alpha' ? {
+          resumeDetails: [{
+            tag: 'list',
+            style: 'unordered',
+            items: [{ factId: 'project-alpha-resume-contribution', value: '입력 검증을 구현해 잘못된 출력을 방지했습니다.' }],
+          }],
+        } : {}),
+      })),
+    } as ProfileData);
+    const resume = buildResumePresentation(selectResumeProfile(source));
+    const projects = resume.sections.find((section) => section.kind === 'projects');
+    if (projects?.kind !== 'projects') throw new Error('Expected project section.');
+    expect(projects.projects.find(({ id }) => id === 'project-alpha')).toMatchObject({
+      portfolioHref: '/portfolio#project-project-alpha',
+      details: [{
+        tag: 'list',
+        style: 'unordered',
+        items: [{ factId: 'project-alpha-resume-contribution', value: '입력 검증을 구현해 잘못된 출력을 방지했습니다.' }],
+      }],
+    });
+    const portfolio = buildPortfolioPresentation(selectPortfolioProfile(source));
+    const intro = portfolio.sections[0];
+    if (intro?.kind !== 'intro') throw new Error('Expected portfolio intro.');
+    expect(intro.actions.map(({ label }) => label)).toEqual(['이메일 보내기', 'GitHub 프로필 보기']);
   });
 
   test('omits absent optionals and preserves all portfolio dimensions without markup or client state fields', () => {
@@ -201,15 +237,15 @@ describe('production Astro profile output', () => {
     }
   });
 
-  test('renders the résumé shell, closed disclosures and static navigation', () => {
+  test('renders the résumé shell, closed disclosures and static navigation', async () => {
     assertProfileShell(resumeHtml, 'resume', 'Résumé');
     expect(headingTexts(resumeHtml, 2)).toEqual([
       '프로필',
       '핵심 역량',
       '경력·대표 성과',
-      '대표 프로젝트 요약',
-      '교육',
-      '자격',
+      '프로젝트',
+      '학력',
+      '어학 자격',
     ]);
     assertLogicalHeadingOrder(resumeHtml);
     assertNavigation(resumeHtml, '/resume');
@@ -218,9 +254,28 @@ describe('production Astro profile output', () => {
       expect.arrayContaining([
         'contact-actions-link-email',
         'contact-actions-link-github',
-        'contact-actions-link-resume-document',
       ]),
     );
+    const documentLink = await getCurrentResumeDocumentLink(
+      getProductionProfileAssembly().source,
+    );
+    expect(testIds(resumeHtml).includes('contact-actions-link-resume-document'))
+      .toBe(documentLink !== undefined);
+    const resume = getProductionProfileAssembly().resume;
+    expect(resumeHtml).toMatch(new RegExp(
+      `data-testid="contact-actions-link-email"[^>]*>\\s*${escapeRegExp(resume.contactActions.email.value)}`,
+    ));
+    expect(resumeHtml).toMatch(new RegExp(
+      `data-testid="contact-actions-link-github"[^>]*>\\s*${escapeRegExp(resume.contactActions.github.value)}`,
+    ));
+    const project = elementByClass(resumeHtml, 'article', 'resume-project-summary');
+    expect(anchorHrefs(project)).toContain('https://rvnnt.dev/portfolio#project-docsuri');
+    for (const block of resume.projectSummaries[0]?.details ?? []) {
+      const facts = block.tag === 'paragraph' ? [block.text] : block.items;
+      for (const fact of facts) {
+        expect(project).toContain(`data-profile-fact-id="${fact.factId}"`);
+      }
+    }
     expect(testIds(resumeHtml)).toContainEqual(
       expect.stringMatching(/^resume-entry-details-[a-z0-9-]+$/),
     );
