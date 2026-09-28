@@ -209,6 +209,7 @@ export interface Project {
   readonly title: PublicFact<SingleLineText>;
   readonly period?: PublicFact<Period>;
   readonly outcomeSummary: PublicFact<KoreanSingleLineText>;
+  readonly resumeDetails?: ContentBlocks;
   readonly problem: ContentBlocks;
   readonly role: ContentBlocks;
   readonly keyDecisions: ContentBlocks;
@@ -247,6 +248,8 @@ export interface ProfileData {
   readonly experiences: readonly Experience[];
   readonly achievements: readonly Achievement[];
   readonly projects: readonly Project[];
+  /** Optional résumé subset; source project order remains authoritative. */
+  readonly resumeProjectIds?: readonly EntityId<'project'>[];
   readonly education: readonly Education[];
   readonly certifications: readonly Certification[];
 }
@@ -294,6 +297,7 @@ export interface ResumeProjectSummary {
   readonly title: PublicFact<SingleLineText>;
   readonly period?: PublicFact<Period>;
   readonly outcomeSummary: PublicFact<KoreanSingleLineText>;
+  readonly details?: ContentBlocks;
 }
 
 export type ProjectDimensionKey =

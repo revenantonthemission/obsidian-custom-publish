@@ -579,6 +579,9 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
       `${base}.outcomeSummary`,
       'text',
     );
+    if (project.details !== undefined) {
+      addContentBlocks(state, projects, entity, project.details, `${base}.resumeDetails`, true);
+    }
   }
 
   if (profile.education !== undefined) {
@@ -1083,7 +1086,7 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
 
   assertStrictOrder(profile.projectSummaries);
   if (
-    profile.projectSummaries.length < 3 ||
+    profile.projectSummaries.length < 1 ||
     profile.projectSummaries.length > 6
   ) {
     throw new TypeError('Résumé project summary count is invalid.');
@@ -1092,8 +1095,11 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
     assertOptionalEntityKeys(
       project,
       ['id', 'order', 'title', 'outcomeSummary'],
-      ['period'],
+      ['period', 'details'],
     );
+    if (hasOwn(project, 'details') && project.details === undefined) {
+      throw new TypeError('Résumé project details cannot be explicitly undefined.');
+    }
   }
 
   if (hasOwn(profile, 'education')) {

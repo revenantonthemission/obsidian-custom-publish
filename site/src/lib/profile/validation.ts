@@ -288,10 +288,55 @@ function inspectShape(input: unknown): ShapeContext {
   }
 
   inspectProjects(input, context);
+  inspectResumeProjectSelection(input, context);
   inspectEducation(input, context);
   inspectCertifications(input, context);
 
   return context;
+}
+
+function inspectResumeProjectSelection(
+  input: UnknownRecord,
+  context: ShapeContext,
+): void {
+  const path = 'profile.resumeProjectIds';
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(input, 'resumeProjectIds');
+    if (descriptor === undefined) {
+      if ('resumeProjectIds' in input) {
+        throw new TypeError('Inherited résumé project selection.');
+      }
+      return;
+    }
+    if (!hasOwn(descriptor, 'value') || descriptor.enumerable !== true) {
+      throw new TypeError('Résumé project selection must be an owned data property.');
+    }
+    const selection: unknown = descriptor.value;
+    if (!Array.isArray(selection) || Object.getPrototypeOf(selection) !== Array.prototype) {
+      throw new TypeError('Résumé project selection must be an array.');
+    }
+    const length = Object.getOwnPropertyDescriptor(selection, 'length')?.value;
+    if (!Number.isSafeInteger(length) || length < 1 || length > 6) {
+      context.issues.push(createValidationIssue('collection.range', path, { min: 1, max: 6 }));
+      context.normalizable = false;
+      return;
+    }
+    if (Reflect.ownKeys(selection).length !== length + 1) {
+      throw new TypeError('Résumé project selection must be a dense array.');
+    }
+    for (let index = 0; index < length; index += 1) {
+      const item = Object.getOwnPropertyDescriptor(selection, String(index));
+      if (
+        item === undefined || !hasOwn(item, 'value') ||
+        item.enumerable !== true || typeof item.value !== 'string'
+      ) {
+        throw new TypeError('Résumé project IDs must be owned string values.');
+      }
+    }
+  } catch {
+    addShapeIssue(context, 'field.type', path);
+    context.normalizable = false;
+  }
 }
 
 function inspectExperiences(
@@ -425,6 +470,7 @@ function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
       `${path}.outcomeSummary`,
       context,
     );
+    inspectOptionalResumeDetails(project, `${path}.resumeDetails`, context);
     for (const dimension of [
       'problem',
       'role',
@@ -444,6 +490,59 @@ function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
     inspectEvidenceCollection(project, 'evidence', `${path}.evidence`, context);
     inspectOptionalReference(project, `${path}.relatedProfileEntity`, context);
   });
+}
+
+function inspectOptionalResumeDetails(
+  project: UnknownRecord,
+  path: string,
+  context: ShapeContext,
+): void {
+  const descriptor = Object.getOwnPropertyDescriptor(project, 'resumeDetails');
+  if (descriptor === undefined && !('resumeDetails' in project)) return;
+  if (
+    descriptor === undefined || !hasOwn(descriptor, 'value') ||
+    descriptor.enumerable !== true || !isOwnedContentData(descriptor.value)
+  ) {
+    addShapeIssue(context, 'field.type', path);
+    context.normalizable = false;
+    return;
+  }
+  inspectContentCollection({ resumeDetails: descriptor.value }, 'resumeDetails', path, true, context);
+}
+
+function isOwnedContentData(value: unknown, ancestors = new Set<object>()): boolean {
+  if (value === null || typeof value !== 'object') {
+    return value === null || ['undefined', 'string', 'number', 'boolean'].includes(typeof value);
+  }
+  if (ancestors.has(value)) return false;
+  const array = Array.isArray(value);
+  const prototype = Object.getPrototypeOf(value);
+  if (array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null) {
+    return false;
+  }
+  const keys = Reflect.ownKeys(value);
+  if (keys.some((key) => typeof key !== 'string')) return false;
+  if (array) {
+    const length = Object.getOwnPropertyDescriptor(value, 'length')?.value;
+    if (!Number.isSafeInteger(length) || keys.length !== length + 1) return false;
+    for (let index = 0; index < length; index += 1) {
+      if (!hasOwn(value, String(index))) return false;
+    }
+  }
+  ancestors.add(value);
+  for (const key of keys) {
+    if (array && key === 'length') continue;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (
+      descriptor === undefined || !hasOwn(descriptor, 'value') ||
+      descriptor.enumerable !== true || !isOwnedContentData(descriptor.value, ancestors)
+    ) {
+      ancestors.delete(value);
+      return false;
+    }
+  }
+  ancestors.delete(value);
+  return true;
 }
 
 function inspectEducation(root: UnknownRecord, context: ShapeContext): void {
@@ -1053,6 +1152,10 @@ function validateDiscoverableUnsafeBranches(
         'single-line',
         context,
       );
+      const resumeDetails = Object.getOwnPropertyDescriptor(project, 'resumeDetails');
+      if (resumeDetails !== undefined && hasOwn(resumeDetails, 'value') && isOwnedContentData(resumeDetails.value)) {
+        validateUnsafeContentBlocks(resumeDetails.value, `${path}.resumeDetails`, context);
+      }
       for (const dimension of [
         'problem',
         'role',
@@ -1554,6 +1657,7 @@ function validateNormalizedProfile(
     );
   }
   validateProjectReferences(profile, context);
+  validateResumeProjectSelection(profile, context);
 
   return context.issues;
 }
@@ -1646,6 +1750,9 @@ function validateProject(
     true,
     context,
   );
+  if (project.resumeDetails !== undefined) {
+    validateContentBlocks(project.resumeDetails, `${path}.resumeDetails`, true, context);
+  }
   for (const dimension of [
     'problem',
     'role',
@@ -2054,6 +2161,25 @@ function validateFactId(
     );
   }
   addOccurrence(context.factIds, factId, factIdPath);
+}
+
+function validateResumeProjectSelection(
+  profile: ProfileData,
+  context: ValidationContext,
+): void {
+  if (profile.resumeProjectIds === undefined) return;
+  const sourceIds = new Set(profile.projects.map(({ id }) => id));
+  const selectedIds = new Map<string, string[]>();
+  profile.resumeProjectIds.forEach((id, index) => {
+    const path = `profile.resumeProjectIds[${index}]`;
+    if (!isKebabIdentifier(id)) {
+      context.issues.push(createValidationIssue('identifier.format', path));
+    } else if (!sourceIds.has(id)) {
+      context.issues.push(createValidationIssue('reference.missing', path));
+    }
+    addOccurrence(selectedIds, id, path);
+  });
+  addDuplicateIssues(selectedIds, 'identifier.duplicate', context.issues);
 }
 
 function validateProjectReferences(
