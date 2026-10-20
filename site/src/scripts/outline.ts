@@ -13,35 +13,12 @@
  *   the panel takes over.
  */
 
+import { trapTab } from "../lib/focus-trap";
 import { selectedTab } from "./tabs";
 
 const PANEL_QUERY = "(min-width: 1100px)";
 
-const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]";
-
 type CloseReason = "dismiss" | "link" | "resize";
-
-function focusableIn(root: HTMLElement): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-    (element) => element.tabIndex >= 0 && element.getClientRects().length > 0,
-  );
-}
-
-/** The next stop in a ring of `count` stops; from outside the ring, the first or last. */
-function nextStop(current: number, count: number, backwards: boolean): number {
-  if (current === -1) return backwards ? count - 1 : 0;
-  return (current + (backwards ? count - 1 : 1)) % count;
-}
-
-/** Keeps Tab and Shift+Tab inside the open sheet, wrapping at either end. */
-function trapTab(dialog: HTMLDialogElement, event: KeyboardEvent): void {
-  if (event.key !== "Tab") return;
-  const focusables = focusableIn(dialog);
-  if (focusables.length === 0) return;
-  event.preventDefault();
-  const current = focusables.indexOf(document.activeElement as HTMLElement);
-  focusables[nextStop(current, focusables.length, event.shiftKey)]?.focus();
-}
 
 function isOutside(dialog: HTMLDialogElement, event: MouseEvent): boolean {
   const box = dialog.getBoundingClientRect();

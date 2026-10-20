@@ -59,9 +59,11 @@ const primaryNavigation = navigationResult.value;
 </header>
 
 <script>
+  // Any [data-search-open] control opens the search dialog (islands/Search.tsx),
+  // which returns focus to that control when it closes.
   document.querySelectorAll("[data-search-open]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("open-search"));
+      window.dispatchEvent(new CustomEvent("open-search", { detail: { trigger: btn } }));
     });
   });
 </script>
