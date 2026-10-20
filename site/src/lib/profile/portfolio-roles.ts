@@ -1,12 +1,12 @@
 import type { PortfolioProfile, PortfolioProject, ProjectDimension, ProjectDimensionKey } from './types.js';
 
-export type PortfolioRoleId = 'data-engineer-ai' | 'product-engineer';
+export type PortfolioRoleId = 'data-engineer-ai' | 'product-engineer' | 'infra-engineer';
 
 export interface PortfolioRole {
   readonly id: PortfolioRoleId;
-  readonly pathname: '/portfolio' | '/portfolio/product-engineer';
+  readonly pathname: '/portfolio' | '/portfolio/product-engineer' | '/portfolio/infra-engineer';
   readonly label: string;
-  readonly title: 'Portfolio' | 'Product Engineer Portfolio';
+  readonly title: 'Portfolio' | 'Product Engineer Portfolio' | 'Infra Engineer Portfolio';
   readonly eyebrow: string;
   readonly introduction?: string;
   readonly projectFocus: Readonly<Record<string, string>>;
@@ -34,6 +34,19 @@ export const PORTFOLIO_ROLES: readonly PortfolioRole[] = Object.freeze([
       docsuri: '검색과 열람을 지키는 운영과 협업',
     }),
   }),
+  Object.freeze({
+    id: 'infra-engineer',
+    pathname: '/portfolio/infra-engineer',
+    label: 'Infra Engineer',
+    title: 'Infra Engineer Portfolio',
+    eyebrow: '클라우드 인프라 · 배포 자동화 · 장애 대응',
+    introduction:
+      '수집 부하로 멈춘 검색을 복구하고, 배포 설정과 실제 리소스의 차이를 추적했습니다. DocSuri의 AWS 운영과 로컬 서버 이전, 정적 사이트의 CI/CD 개선 경험을 바탕으로 부하 격리, 배포 검증, 관측과 복구를 다룹니다.',
+    projectFocus: Object.freeze({
+      docsuri: '부하 격리 · 설정 드리프트 · 백업과 복구',
+      'obsidian-custom-publish': '산출물 검증 · CI/CD 실패 전파',
+    }),
+  }),
 ]);
 
 export function getPortfolioRole(roleId: PortfolioRoleId): PortfolioRole {
@@ -42,13 +55,11 @@ export function getPortfolioRole(roleId: PortfolioRoleId): PortfolioRole {
   return role;
 }
 
-const PRODUCT_PROJECTS = [
-  'docsuri',
-] as const;
+type DimensionSelection = Readonly<Record<ProjectDimensionKey, readonly string[]>>;
 
 // Keep the incident, personal/team scope and measurement limits together.
 // The data-engineering page retains the full case study.
-const DOCSURI_SELECTION = {
+const PRODUCT_DOCSURI_SELECTION = {
   problem: [
     'project-docsuri-problem-0-text',
     'project-docsuri-problem-backfill-contention',
@@ -73,7 +84,56 @@ const DOCSURI_SELECTION = {
     'project-docsuri-lessons-0-text',
     'project-docsuri-lessons-current-quality',
   ],
-} as const;
+} as const satisfies DimensionSelection;
+
+// Keep historical AWS incidents, the later single-host runtime and the scope
+// of recovery checks together. Each paragraph retains its approved fact ID.
+const INFRA_DOCSURI_SELECTION = {
+  problem: [
+    'project-docsuri-problem-0-text',
+    'project-docsuri-problem-backfill-contention',
+  ],
+  role: [
+    'project-docsuri-role-0-text',
+  ],
+  keyDecisions: [
+    'project-docsuri-key-decisions-0-text',
+    'project-docsuri-decision-index-cutover',
+    'project-docsuri-decision-retry-watermarks',
+    'project-docsuri-decision-cost-quotas',
+  ],
+  architecture: [
+    'project-docsuri-architecture-0-text',
+    'project-docsuri-architecture-deployment-boundaries',
+    'project-docsuri-architecture-local-runtime',
+  ],
+  outcomes: [
+    'project-docsuri-outcomes-0-text',
+    'project-docsuri-outcomes-runtime-diagnosis',
+    'project-docsuri-outcomes-recovery-checks',
+  ],
+  lessons: [
+    'project-docsuri-lessons-0-text',
+    'project-docsuri-lessons-verification-limits',
+    'project-docsuri-lessons-current-quality',
+  ],
+} as const satisfies DimensionSelection;
+
+interface CuratedProject {
+  readonly id: string;
+  readonly dimensions?: DimensionSelection;
+}
+
+const CURATED_PROJECTS: Readonly<Record<
+  Exclude<PortfolioRoleId, 'data-engineer-ai'>,
+  readonly CuratedProject[]
+>> = {
+  'product-engineer': [{ id: 'docsuri', dimensions: PRODUCT_DOCSURI_SELECTION }],
+  'infra-engineer': [
+    { id: 'docsuri', dimensions: INFRA_DOCSURI_SELECTION },
+    { id: 'obsidian-custom-publish' },
+  ],
+};
 
 /** Select and order existing facts; never rewrite or mint approved facts. */
 export function selectPortfolioForRole(
@@ -83,22 +143,22 @@ export function selectPortfolioForRole(
   getPortfolioRole(roleId);
   if (roleId === 'data-engineer-ai') return profile;
 
-  const projects = PRODUCT_PROJECTS.map((id, index) => {
+  const projects = CURATED_PROJECTS[roleId].map(({ id, dimensions }, index) => {
     const source = profile.projects.find((project) => project.id === id);
     if (source === undefined) {
       throw new TypeError(`Missing portfolio project: ${id}.`);
     }
-    const project = id === 'docsuri' ? selectDocsuri(source) : source;
+    const project = dimensions === undefined ? source : selectDimensions(source, dimensions);
     return Object.freeze({ ...project, order: profile.projects[index].order });
   });
 
   return Object.freeze({ ...profile, projects: Object.freeze(projects) });
 }
 
-function selectDocsuri(project: PortfolioProject): PortfolioProject {
+function selectDimensions(project: PortfolioProject, selection: DimensionSelection): PortfolioProject {
   function dimension<Key extends ProjectDimensionKey>(key: Key): ProjectDimension<Key> {
     const source = project.dimensions.find((candidate) => candidate.key === key);
-    const blocks = DOCSURI_SELECTION[key].map((factId) => {
+    const blocks = selection[key].map((factId) => {
       const block = source?.blocks.find((candidate) =>
         candidate.tag === 'paragraph' && candidate.text.factId === factId,
       );
