@@ -33,12 +33,13 @@ const INHERITED_INLINE_STYLE_BASELINES = Object.freeze([
 // [data-search-open] dispatcher (FR5.2: it passes its control so focus can
 // return to it) and the reading progress and back-to-top script (FR5.10:
 // scaleX once per frame, no smooth scroll under reduced motion). The other
-// three are Astro's island loaders, unchanged.
+// three are Astro's island loaders, unchanged. Prettier (FR7.1) then
+// reformatted the bootstrap and the scroll script: same statements, new bytes.
 const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   Object.freeze({
     type: null,
-    rawBytes: 1_470,
-    sha256: '4545842ec6cdc2e3b13c4658517d11406dace2b12ba30c12a869b0f738985600',
+    rawBytes: 1_598,
+    sha256: '4c9847f074d7804afcbfe273936ed4cddab1a776c519673937a96ae462e3d92b',
   }),
   Object.freeze({
     type: null,
@@ -62,8 +63,8 @@ const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   }),
   Object.freeze({
     type: null,
-    rawBytes: 1_428,
-    sha256: '2f24e41fb21ad23fcabbded0d4e419bf1a16e30e3ec6915ee68e1839b31581c5',
+    rawBytes: 1_440,
+    sha256: '420432ac656d10a032c7766602da2a9200dbefed9ec2007a137069fd5d7b5ff6',
   }),
 ]);
 
