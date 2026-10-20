@@ -6,7 +6,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { gotoSettled, seedStorage, viewportFor } from './support/hig';
 
 const LEGACY_KEYS = ['theme', 'theme-manual', 'solar', 'geo', 'geo-denied'];
-const LIGHT_BG = 'rgb(255, 255, 255)';
+// Every check runs on `/`, which sits on --c-bg-grouped (mockups W5).
+const LIGHT_BG = 'rgb(242, 242, 247)';
 const DARK_BG = 'rgb(0, 0, 0)';
 const APPEARANCE_BUTTON = /^화면 모드: /;
 

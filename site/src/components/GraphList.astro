@@ -1,0 +1,54 @@
+---
+import type { GraphData, GraphNode } from "../lib/types";
+import { CATEGORY_SHAPES, LEGEND_ITEMS, legendKey, shapePath } from "../lib/graphUtils";
+
+interface Props {
+  data: GraphData;
+}
+
+// The graph's list view (FR5.6; interaction-spec.md "Graph View and Local
+// Graph"): every note, with its category and the notes it links to, as plain
+// links. It is the complete keyboard path through the graph, and it is built
+// with the page, so it works without JavaScript and when graph.json fails.
+const { data } = Astro.props;
+const bySlug = new Map(data.nodes.map((node) => [node.slug, node]));
+const outgoing = new Map<string, GraphNode[]>();
+for (const { source, target } of data.edges) {
+  const node = bySlug.get(target);
+  if (node) outgoing.set(source, [...(outgoing.get(source) ?? []), node]);
+}
+const notes = [...data.nodes].sort((a, b) => a.title.localeCompare(b.title, "ko"));
+const labels = new Map(LEGEND_ITEMS.map((item) => [item.key, item.label]));
+const hrefOf = (node: GraphNode): string => (node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`);
+---
+
+{notes.length > 0 ? (
+  <ul class="graph-list grouped-list">
+    {notes.map((note) => {
+      const category = legendKey(note);
+      const links = outgoing.get(note.slug) ?? [];
+      return (
+        <li class="graph-list-note">
+          <div class="graph-list-head">
+            <a href={hrefOf(note)} class="graph-list-title">{note.title}</a>
+            <span class="graph-list-category" data-category={category}>
+              <svg class="graph-legend-shape" data-shape={CATEGORY_SHAPES[category]} width="12" height="12" viewBox="-6 -6 12 12" aria-hidden="true" focusable="false">
+                <path d={shapePath(CATEGORY_SHAPES[category], 4.5)} />
+              </svg>
+              {labels.get(category)}
+            </span>
+          </div>
+          {links.length > 0 && (
+            <ul class="graph-list-links" aria-label={`${note.title}에서 이어지는 글`}>
+              {links.map((target) => (
+                <li><a href={hrefOf(target)}>{target.title}</a></li>
+              ))}
+            </ul>
+          )}
+        </li>
+      );
+    })}
+  </ul>
+) : (
+  <p class="grouped-empty">표시할 노트가 없습니다</p>
+)}

@@ -2,9 +2,7 @@
  * The post outline (FR4.2, FR5.3; interaction-spec.md "Outline Panel and
  * Outline Sheet"; mockups W3 and W4).
  *
- * - Tabs: the WAI-ARIA tabs pattern with automatic activation. Left and Right
- *   move between the tabs and select them; Home and End jump to the first or
- *   last tab. Only the selected tab is in the Tab order.
+ * - Tabs: scripts/tabs.ts runs the 목차 | 탐색 tabs in the panel and the sheet.
  * - Sheet: below 1100 px the "목차 열기" button opens the outline as a native
  *   modal <dialog>, so the page behind it is inert. Focus moves to the
  *   selected tab, Tab and Shift+Tab stay inside the sheet (a modal dialog
@@ -15,71 +13,13 @@
  *   the panel takes over.
  */
 
+import { selectedTab } from "./tabs";
+
 const PANEL_QUERY = "(min-width: 1100px)";
 
 const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]";
 
 type CloseReason = "dismiss" | "link" | "resize";
-
-// ── Tabs ──
-
-function tabsOf(tablist: Element): HTMLElement[] {
-  return [...tablist.querySelectorAll<HTMLElement>('[role="tab"]')];
-}
-
-function selectTab(tab: HTMLElement): void {
-  const tablist = tab.closest('[role="tablist"]');
-  if (!tablist) return;
-  for (const candidate of tabsOf(tablist)) {
-    const selected = candidate === tab;
-    candidate.setAttribute("aria-selected", String(selected));
-    candidate.tabIndex = selected ? 0 : -1;
-    const panelId = candidate.getAttribute("aria-controls");
-    const panel = panelId === null ? null : document.getElementById(panelId);
-    if (panel) panel.hidden = !selected;
-  }
-}
-
-/** The index the key moves to, or null when the key is not a tab key. */
-function targetIndex(key: string, index: number, count: number): number | null {
-  const last = count - 1;
-  switch (key) {
-    case "ArrowRight":
-      return index === last ? 0 : index + 1;
-    case "ArrowLeft":
-      return index === 0 ? last : index - 1;
-    case "Home":
-      return 0;
-    case "End":
-      return last;
-    default:
-      return null;
-  }
-}
-
-function onTabKeydown(event: KeyboardEvent): void {
-  const tab = (event.target as Element).closest<HTMLElement>('[role="tab"]');
-  const tablist = tab?.closest('[role="tablist"]');
-  if (!tab || !tablist) return;
-  const tabs = tabsOf(tablist);
-  const next = targetIndex(event.key, tabs.indexOf(tab), tabs.length);
-  const target = next === null ? undefined : tabs[next];
-  if (!target) return;
-  event.preventDefault();
-  selectTab(target);
-  target.focus();
-}
-
-function onTabClick(event: MouseEvent): void {
-  const tab = (event.target as Element).closest<HTMLElement>('[role="tab"]');
-  if (tab) selectTab(tab);
-}
-
-function selectedTab(root: ParentNode): HTMLElement | null {
-  return root.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
-}
-
-// ── Sheet ──
 
 function focusableIn(root: HTMLElement): HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
@@ -168,8 +108,4 @@ function setUpSheet(): void {
   });
 }
 
-for (const tablist of document.querySelectorAll<HTMLElement>(".outline-tabs")) {
-  tablist.addEventListener("keydown", onTabKeydown);
-  tablist.addEventListener("click", onTabClick);
-}
 setUpSheet();

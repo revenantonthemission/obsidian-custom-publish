@@ -1,0 +1,62 @@
+/* The homepage (mockups W5; FR4.3; review finding R-04). The note's H2
+ * sections arrive wrapped in section.home-card (lib/home-sections.ts); they,
+ * the profile slot and "오늘 발행된 글" are the same grouped card. These
+ * rules replace the page's former is:global overrides, so links in the note
+ * keep the token tint and the underline from base.css. */
+.home-title {
+  margin-block: var(--space-2) var(--space-4);
+}
+
+.home-content > p {
+  color: var(--c-text);
+}
+
+.home-card,
+.home-profile,
+.recent-posts {
+  margin-block: 0 var(--space-5);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.home-card > h2:first-child,
+.home-profile > h2,
+.recent-posts > h2 {
+  margin-block: 0 var(--space-3);
+}
+
+.home-card > :last-child,
+.home-profile > :last-child {
+  margin-block-end: 0;
+}
+
+.home-profile-intro {
+  color: var(--c-text-secondary);
+}
+
+.home-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The list sits inside its card: no second surface, rows run to the card's edges. */
+.recent-posts .grouped-list {
+  margin: 0 calc(var(--space-5) * -1) calc(var(--space-4) * -1);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: transparent;
+}
+
+body[data-surface="grouped"] .recent-posts .grouped-list {
+  background: transparent;
+}
+
+.recent-posts .grouped-row,
+.recent-posts .grouped-empty {
+  padding-inline-start: var(--space-5);
+}
+
+.recent-posts .grouped-list > li + li::before {
+  inset-inline-start: var(--space-5);
+}

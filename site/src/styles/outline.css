@@ -5,61 +5,9 @@
  * 44 px tall at every width (FR5.8, review finding R-03). Motion uses
  * transform and opacity only. */
 
-/* ── Tabs: a segmented control whose raised selection slides by transform ── */
+/* ── Tabs: the shared segmented control (segmented.css) ── */
 .outline-tabs {
-  --segments: 2;
-
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-auto-columns: 1fr;
-  grid-auto-flow: column;
   margin-block-end: var(--space-2);
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  background: var(--c-fill);
-}
-
-.outline-tabs:has(> .outline-tab:only-child) {
-  --segments: 1;
-}
-
-.outline-tabs::before {
-  content: "";
-  position: absolute;
-  inset-block: 2px;
-  inset-inline-start: 2px;
-  z-index: -1;
-  inline-size: calc((100% - 4px) / var(--segments));
-  border-radius: calc(var(--radius-sm) - 2px);
-  background: var(--c-surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
-  transition: transform var(--dur-normal) var(--ease-spring);
-}
-
-.outline-tabs:has(> .outline-tab:nth-child(2)[aria-selected="true"])::before {
-  transform: translateX(100%);
-}
-
-.outline-tab {
-  min-block-size: var(--target);
-  padding-inline: var(--space-3);
-  border: 0;
-  border-radius: calc(var(--radius-sm) - 2px);
-  background: transparent;
-  color: var(--c-text);
-  font: inherit;
-  font-size: var(--text-subheadline);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.outline-tab[aria-selected="true"] {
-  font-weight: 600;
-}
-
-.outline-tab:focus-visible {
-  outline-offset: -2px;
 }
 
 /* ── Table of contents rows ── */
@@ -135,22 +83,6 @@
 
 .outline-status p {
   margin: 0;
-}
-
-.retry-button {
-  min-block-size: var(--target);
-  padding-inline: var(--space-4);
-  border: 0;
-  border-radius: var(--radius-capsule);
-  background: var(--c-tint-fill);
-  color: var(--c-on-tint);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.retry-button:hover {
-  background: var(--c-tint-hover);
 }
 
 /* ── The floating "목차 열기" button (below 1100 px) ── */

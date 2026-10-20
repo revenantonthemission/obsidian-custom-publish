@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import { getAllPostMeta, getHomepage, getPreviewSummary } from "../lib/data";
-import { renderMarkdown } from "../lib/render";
+import { renderMarkdown, wrapHomeSections } from "../lib/render";
 import {
   assertExactlyOneSlot,
   buildHomepageChunks,
@@ -12,14 +12,25 @@ import {
 import { getProductionProfileAssembly } from "../lib/profile/production-profile.js";
 import "../styles/callouts.css";
 import "../styles/diagrams.css";
+import "../styles/grouped.css";
+import "../styles/home.css";
 
+// The homepage (mockups W5; FR4.3, FR4.5; review finding R-04): a Large
+// Title, the note's intro, then each H2 section of the note as a grouped card
+// on the grouped background. The profile slot and "오늘 발행된 글" get the
+// same card. The cards are wrapped per chunk, after the slot and recent-posts
+// splits, so no split cuts through a section; the vault note never changes.
 const HOMEPAGE_SOURCE = "content/homepage/index.md";
 
 const { title, body } = getHomepage();
 assertExactlyOneSlot(body, HOMEPAGE_SOURCE);
 
 const htmlContent = await renderMarkdown(body);
-const chunks = buildHomepageChunks(htmlContent, HOMEPAGE_SOURCE);
+const chunks = await Promise.all(
+  buildHomepageChunks(htmlContent, HOMEPAGE_SOURCE).map(async (chunk) =>
+    chunk.kind === "html" ? { ...chunk, html: await wrapHomeSections(chunk.html) } : chunk,
+  ),
+);
 
 const today = resolveBuildDate(process.env);
 const recentPosts = filterTodayPosts(getAllPostMeta(), today);
@@ -27,21 +38,22 @@ const recentPosts = filterTodayPosts(getAllPostMeta(), today);
 const homepageProfile = getProductionProfileAssembly().homepage;
 ---
 
-<BaseLayout title={title}>
+<BaseLayout title={title} surface="grouped">
+  <h1 class="home-title">obsidian-press</h1>
   {
     chunks.map((chunk) =>
       chunk.kind === "html" ? (
         <div class="home-content post-content" set:html={chunk.html} />
       ) : chunk.kind === "recent" ? (
-        <section class="recent-posts">
-          <h2>오늘 발행된 글</h2>
-          {recentPosts.length > 0 ? (
-            recentPosts.map((post) => (
-              <PostCard post={post} summary={getPreviewSummary(post.slug)} />
-            ))
-          ) : (
-            <p class="no-posts">오늘 발행된 글이 없습니다.</p>
-          )}
+        <section class="recent-posts" aria-labelledby="recent-posts-heading">
+          <h2 id="recent-posts-heading">오늘 발행된 글</h2>
+          <ul class="grouped-list">
+            {recentPosts.length > 0 ? (
+              recentPosts.map((post) => <PostCard post={post} summary={getPreviewSummary(post.slug)} />)
+            ) : (
+              <li class="grouped-empty">오늘 발행된 글이 없습니다.</li>
+            )}
+          </ul>
         </section>
       ) : (
         <section class="home-profile" aria-labelledby="home-profile-heading">
@@ -50,59 +62,11 @@ const homepageProfile = getProductionProfileAssembly().homepage;
           </h2>
           <p class="home-profile-intro">{homepageProfile.shortIntro.value}</p>
           <nav class="home-profile-actions" aria-label="프로필 바로가기">
-            <a href={homepageProfile.routes.resume}>Résumé</a>
-            <a href={homepageProfile.routes.portfolio}>Portfolio</a>
+            <a href={homepageProfile.routes.resume} class="capsule capsule-filled">Résumé</a>
+            <a href={homepageProfile.routes.portfolio} class="capsule">Portfolio</a>
           </nav>
         </section>
       ),
     )
   }
 </BaseLayout>
-
-<style>
-  .home-content {
-    margin-bottom: 2rem;
-  }
-  .recent-posts {
-    margin-bottom: 2rem;
-  }
-  .no-posts {
-    color: var(--c-text-muted);
-    font-size: 0.9rem;
-  }
-  .home-profile {
-    margin-bottom: 2rem;
-    padding: 1.25rem 1.5rem;
-    border: 1px solid var(--c-border);
-    border-radius: 8px;
-    background: var(--c-surface);
-  }
-  .home-profile h2 {
-    margin: 0 0 0.5rem;
-    font-size: 1.15rem;
-  }
-  .home-profile-intro {
-    margin: 0 0 0.75rem;
-    color: var(--c-text-muted);
-  }
-  .home-profile-actions {
-    display: flex;
-    gap: 1rem;
-  }
-  .home-profile-actions a {
-    font-weight: 600;
-  }
-</style>
-
-<style is:global>
-  /* Page-scoped accessibility fix (NFR-U2-007/PD-U2-09): `/` links must pass
-     AA contrast and be distinguishable without color. Scoped styles cannot
-     reach set:html content, so this targets the page's own containers via
-     is:global — global.css itself is U1 review-subject and stays untouched. */
-  .home-content a,
-  .recent-posts a,
-  .home-profile a {
-    color: var(--c-accent-hover);
-    text-decoration: underline;
-  }
-</style>

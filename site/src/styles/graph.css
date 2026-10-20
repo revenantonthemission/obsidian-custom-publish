@@ -1,0 +1,306 @@
+/* The graph page (mockups W8; FR4.3, FR4.5, FR5.6; interaction-spec.md
+ * "Graph View and Local Graph"). The 그래프 | 목록 segmented control switches
+ * between the force-directed graph and its list view. Every category has a
+ * shape and a color token (--c-graph-*), and nodes and legend chips take both
+ * from data-category, so they follow the appearance with no repaint. */
+
+/* ── Category paint, shared by nodes, legend chips and the list ── */
+[data-category="os"] {
+  --node-color: var(--c-graph-os);
+}
+
+[data-category="web"] {
+  --node-color: var(--c-graph-web);
+}
+
+[data-category="db"] {
+  --node-color: var(--c-graph-db);
+}
+
+[data-category="network"] {
+  --node-color: var(--c-graph-network);
+}
+
+[data-category="hub"] {
+  --node-color: var(--c-graph-hub);
+}
+
+[data-category="etc"] {
+  --node-color: var(--c-graph-etc);
+}
+
+.graph-node-shape,
+.graph-legend-shape path {
+  fill: var(--node-color);
+  stroke: none;
+}
+
+.graph-node-shape[data-shape="ring"],
+.graph-legend-shape[data-shape="ring"] path {
+  fill: none;
+  stroke: var(--node-color);
+  stroke-width: 2px;
+}
+
+.graph-legend-shape {
+  flex: none;
+}
+
+/* ── Page header and the segmented control ── */
+.graph-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.graph-header h1 {
+  margin: 0;
+}
+
+.graph-tabs {
+  inline-size: min(100%, 14rem);
+}
+
+.graph-hint {
+  margin-block: 0 var(--space-3);
+  color: var(--c-text-secondary);
+  font-size: var(--text-footnote);
+}
+
+/* Without JavaScript the list is the whole page: no tabs, no empty canvas. */
+:root:not([data-appearance]) .graph-tabs,
+:root:not([data-appearance]) #graph-panel-graph {
+  display: none;
+}
+
+:root:not([data-appearance]) #graph-panel-list[hidden] {
+  display: block;
+}
+
+/* ── The canvas area ── */
+.graph-container {
+  position: relative;
+  inline-size: 100%;
+  block-size: calc(100dvh - 18rem);
+  min-block-size: 420px;
+  border: 1px solid var(--c-separator);
+  border-radius: var(--radius-lg);
+  background: var(--c-bg);
+  overflow: hidden;
+}
+
+.graph-svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  cursor: grab;
+}
+
+.graph-link {
+  stroke: var(--c-separator);
+  stroke-width: 1px;
+}
+
+.graph-node {
+  cursor: pointer;
+}
+
+.graph-node-hit {
+  fill: transparent;
+}
+
+.graph-label {
+  fill: var(--c-text);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* ── Loading, error and empty states (FR4.5) ── */
+.graph-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-6);
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+  text-align: center;
+}
+
+.graph-state p {
+  margin: 0;
+}
+
+.graph-spinner {
+  inline-size: 24px;
+  block-size: 24px;
+  border: 2px solid var(--c-fill);
+  border-block-start-color: var(--c-tint);
+  border-radius: 50%;
+  animation: graph-spin 0.9s linear infinite;
+}
+
+@keyframes graph-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Controls floating over the graph: regular glass, primary text only ── */
+.graph-ui {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline: var(--space-3);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.graph-ui > * {
+  pointer-events: auto;
+}
+
+.graph-search {
+  inline-size: min(14rem, 100%);
+  min-block-size: var(--target);
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--text-subheadline);
+}
+
+/* Regular glass carries primary text only, the placeholder included. */
+.graph-search::placeholder {
+  color: var(--c-text);
+  opacity: 1;
+}
+
+.graph-match-count {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  font-size: var(--text-footnote);
+}
+
+.graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+}
+
+.graph-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--target);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--text-footnote);
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.graph-legend-chip:active {
+  transform: scale(0.96);
+}
+
+/* The pressed filter: weight and a --c-text ring, never tinted text on glass (R-02). */
+.graph-legend-chip[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--c-text);
+  font-weight: 700;
+}
+
+.graph-ui :focus-visible {
+  outline-color: var(--c-bar-focus-ring);
+}
+
+@media (width < 768px) {
+  .graph-legend {
+    margin-inline-start: 0;
+  }
+}
+
+/* ── The list view ── */
+.graph-list-note {
+  padding-block: var(--space-1);
+}
+
+.graph-list-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-4);
+}
+
+.graph-list-title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-inline-size: var(--target);
+  min-block-size: var(--target);
+  padding-inline: var(--space-4) var(--space-2);
+  color: var(--c-text);
+  font-size: var(--text-headline);
+  font-weight: 600;
+  text-decoration: none;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.graph-list-category {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--c-text-secondary);
+  font-size: var(--text-footnote);
+}
+
+.graph-list-links {
+  margin: 0 0 var(--space-1);
+  padding: 0 0 0 var(--space-8);
+  list-style: none;
+}
+
+.graph-list-links a {
+  display: flex;
+  align-items: center;
+  min-inline-size: var(--target);
+  min-block-size: var(--target);
+  padding-inline: var(--space-2);
+  color: var(--c-tint);
+  font-size: var(--text-subheadline);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.graph-list a:hover {
+  background: var(--c-fill);
+  text-decoration: none;
+}
+
+.graph-list a:focus-visible {
+  outline-offset: -2px;
+}

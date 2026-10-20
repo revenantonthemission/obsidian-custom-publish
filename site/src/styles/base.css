@@ -260,6 +260,19 @@ img {
   }
 }
 
+/* ── "다시 시도" after a failed load (FR4.5): the tree, the graph and search ── */
+.retry-button {
+  min-block-size: var(--target);
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-capsule);
+  background: var(--c-tint-fill);
+  color: var(--c-on-tint);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* ── Loading placeholder ── */
 @keyframes shimmer {
   from {

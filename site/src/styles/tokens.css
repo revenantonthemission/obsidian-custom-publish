@@ -43,6 +43,15 @@
   --c-gray-text: #6c6c70;
   --c-callout-mix: 12%;
 
+  /* Graph categories (design-system-mapping.md "Data Visualization"): the
+     text variant in light mode, the base color in dark mode. */
+  --c-graph-os: var(--c-blue-text);
+  --c-graph-web: var(--c-green-text);
+  --c-graph-db: var(--c-orange-text);
+  --c-graph-network: var(--c-purple-text);
+  --c-graph-hub: var(--c-red-text);
+  --c-graph-etc: var(--c-gray-text);
+
   /* Liquid Glass materials (FR2.4). Regular glass carries primary text only;
      on it the focus ring and the current-item mark use --c-text (R-02). */
   --c-glass-regular: rgba(255, 255, 255, 0.72);
@@ -146,6 +155,12 @@
     --c-gray: #8e8e93;
     --c-gray-text: #aeaeb2;
     --c-callout-mix: 18%;
+    --c-graph-os: var(--c-blue);
+    --c-graph-web: var(--c-green);
+    --c-graph-db: var(--c-orange);
+    --c-graph-network: var(--c-purple);
+    --c-graph-hub: var(--c-red);
+    --c-graph-etc: var(--c-gray);
     --c-glass-regular: rgba(28, 28, 30, 0.72);
     --c-glass-thick: rgba(28, 28, 30, 0.9);
     --c-glass-edge: inset 0 0.5px 0 rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(255, 255, 255, 0.06);
@@ -184,6 +199,12 @@
   --c-gray: #8e8e93;
   --c-gray-text: #aeaeb2;
   --c-callout-mix: 18%;
+  --c-graph-os: var(--c-blue);
+  --c-graph-web: var(--c-green);
+  --c-graph-db: var(--c-orange);
+  --c-graph-network: var(--c-purple);
+  --c-graph-hub: var(--c-red);
+  --c-graph-etc: var(--c-gray);
   --c-glass-regular: rgba(28, 28, 30, 0.72);
   --c-glass-thick: rgba(28, 28, 30, 0.9);
   --c-glass-edge: inset 0 0.5px 0 rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(255, 255, 255, 0.06);

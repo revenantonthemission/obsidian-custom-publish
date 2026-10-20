@@ -210,6 +210,29 @@ describe('HIG token layer (tokens.css)', () => {
     expect(failures(pairs)).toEqual([]);
   });
 
+  test('graph category tokens are the text variant in light and the base color in dark, at 3:1 on the page', () => {
+    const categories = { os: 'blue', web: 'green', db: 'orange', network: 'purple', hub: 'red', etc: 'gray' } as const;
+    const pairs = SCHEMES.flatMap((scheme) => {
+      const map = byScheme[scheme];
+      return Object.entries(categories).map(([category, hue]) => {
+        const token = `--c-graph-${category}`;
+        const expected = scheme === 'light' ? `--c-${hue}-text` : `--c-${hue}`;
+        expect(resolveValue(map, token), `${scheme} ${token}`).toBe(resolveValue(map, expected));
+        if (scheme === 'dark') {
+          expect(resolveValue(tokens.darkByAttribute, token), `${token} differs between the two dark blocks`).toBe(
+            resolveValue(tokens.dark, token),
+          );
+        }
+        return {
+          label: `${scheme} ${token} on --c-bg`,
+          ratio: contrast(color(map, token), color(map, '--c-bg')),
+          minimum: NON_TEXT_MIN,
+        };
+      });
+    });
+    expect(failures(pairs)).toEqual([]);
+  });
+
   test('regular glass carries primary text at 4.5:1 over the worst-case backdrop (C-03)', () => {
     const pairs = SCHEMES.map((scheme) => {
       const map = byScheme[scheme];

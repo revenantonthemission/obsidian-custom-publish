@@ -1,6 +1,7 @@
 ---
 import TableOfContents from "./TableOfContents.astro";
 import NavTreeIsland from "../islands/NavTree.tsx";
+import "../styles/segmented.css";
 
 interface Props {
   /** Keeps ids unique: the outline panel and the outline sheet each render one copy. */
@@ -11,7 +12,7 @@ interface Props {
 }
 
 // The outline's two tabs, 목차 and 탐색, in the WAI-ARIA tabs pattern
-// (interaction-spec.md "Outline Panel and Outline Sheet"); scripts/outline.ts
+// (interaction-spec.md "Outline Panel and Outline Sheet"); scripts/tabs.ts
 // switches them. A post without h2 to h4 has no 목차 tab and opens on 탐색.
 //
 // The panel and the sheet each get their own copy instead of sharing one that
@@ -24,9 +25,9 @@ const navTab = `${idPrefix}-tab-nav`;
 const navPanel = `${idPrefix}-panel-nav`;
 ---
 
-<div class="outline-tabs" role="tablist" aria-label="목차와 탐색">
+<div class="outline-tabs segmented" role="tablist" aria-label="목차와 탐색" data-tabs>
   {hasToc && (
-    <button type="button" role="tab" id={tocTab} class="outline-tab" aria-controls={tocPanel} aria-selected="true">
+    <button type="button" role="tab" id={tocTab} aria-controls={tocPanel} aria-selected="true">
       목차
     </button>
   )}
@@ -34,7 +35,6 @@ const navPanel = `${idPrefix}-panel-nav`;
     type="button"
     role="tab"
     id={navTab}
-    class="outline-tab"
     aria-controls={navPanel}
     aria-selected={hasToc ? "false" : "true"}
     tabindex={hasToc ? "-1" : undefined}

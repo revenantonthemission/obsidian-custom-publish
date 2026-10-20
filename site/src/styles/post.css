@@ -415,14 +415,67 @@ a[data-footnote-backref] {
   font-size: var(--text-title-3);
 }
 
-.backlinks ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.post-after .grouped-list {
+  margin-block-end: 0;
 }
 
-.backlinks li {
-  margin-block-end: var(--space-2);
+/* ── Local graph (islands/LocalGraph.tsx): canvas or list, Caption labels ── */
+.local-graph-tabs {
+  inline-size: min(100%, 14rem);
+  margin-block-end: var(--space-3);
+}
+
+.local-graph-canvas canvas {
+  display: block;
+  inline-size: 240px;
+  block-size: 240px;
+  cursor: pointer;
+  font: 500 var(--text-caption) var(--font-body);
+}
+
+.local-graph-canvas canvas[hidden] {
+  display: none;
+}
+
+.local-graph-skeleton {
+  inline-size: 240px;
+  block-size: 240px;
+}
+
+.local-graph-list {
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface-2);
+  list-style: none;
+  overflow: hidden;
+}
+
+.local-graph-list a {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding-inline: var(--space-4);
+  color: var(--c-text);
+  text-decoration: none;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.local-graph-list li + li a {
+  box-shadow: inset 0 1px 0 var(--c-separator);
+}
+
+.local-graph-list a:hover {
+  background: var(--c-fill);
+}
+
+.local-graph-list a:focus-visible {
+  outline-offset: -2px;
+}
+
+.local-graph-empty {
+  color: var(--c-text-secondary);
 }
 
 /* Hub page child post dates, appended by the preprocessor. */
