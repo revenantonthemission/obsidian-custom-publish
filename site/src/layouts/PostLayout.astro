@@ -13,6 +13,7 @@ import type { PostMeta } from "../lib/types";
 import "../styles/callouts.css";
 import "../styles/diagrams.css";
 import "../styles/segmented.css";
+import "../styles/grouped.css";
 import "../styles/post.css";
 import "../styles/outline.css";
 import "../styles/link-preview.css";
@@ -70,9 +71,11 @@ if (meta.hub_parent) {
           <span>{meta.reading_time_min}분 읽기</span>
         </p>
         {meta.tags.length > 0 && (
-          <ul class="post-tags" aria-label="태그">
+          <ul class="tag-chips" aria-label="태그">
             {meta.tags.map((tag) => (
-              <li><a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a></li>
+              <li>
+                <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip"><span class="tag-chip-mark" aria-hidden="true">#</span>{tag}</a>
+              </li>
             ))}
           </ul>
         )}
