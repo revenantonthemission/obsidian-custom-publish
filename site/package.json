@@ -10,6 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test:unit": "node scripts/profile/cli.mjs test:unit",
     "test:pbt": "node scripts/profile/cli.mjs test:pbt",
     "test:e2e": "node scripts/profile/cli.mjs test:e2e",
@@ -59,6 +61,8 @@
     "@types/hast": "^3.0.4",
     "fast-check": "^4.9.0",
     "pdfjs-dist": "5.4.624",
+    "prettier": "3.9.9",
+    "prettier-plugin-astro": "1.1.0",
     "typescript": "^5.9.3",
     "vite": "7.3.2",
     "vitest": "^4.1.10"

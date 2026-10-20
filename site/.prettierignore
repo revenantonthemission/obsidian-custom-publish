@@ -1,0 +1,12 @@
+# Generated or copied output
+dist/
+.astro/
+.generated/
+.artifacts/
+node_modules/
+public/*.json
+public/assets/
+
+# Approved records and the lockfile are never rewritten by a formatter (FR6.3)
+verification/
+package-lock.json
