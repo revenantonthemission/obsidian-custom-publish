@@ -23,8 +23,7 @@ export interface SyntheticFactApprovalCase {
   readonly review: FactApprovalReview;
 }
 
-export interface InvalidSyntheticFactApprovalCase
-  extends SyntheticFactApprovalCase {
+export interface InvalidSyntheticFactApprovalCase extends SyntheticFactApprovalCase {
   readonly label: 'pending' | 'excluded' | 'missing' | 'value-mismatch';
   readonly expected: Readonly<{
     code: ProfileIssueCode;
@@ -32,8 +31,9 @@ export interface InvalidSyntheticFactApprovalCase
   }>;
 }
 
-export const syntheticFactApprovalArbitrary =
-  validatedProfileArbitrary.map(buildSyntheticFactApproval);
+export const syntheticFactApprovalArbitrary = validatedProfileArbitrary.map(
+  buildSyntheticFactApproval
+);
 
 export const invalidSyntheticFactApprovalArbitrary = fc
   .tuple(
@@ -42,21 +42,17 @@ export const invalidSyntheticFactApprovalArbitrary = fc
       'pending',
       'excluded',
       'missing',
-      'value-mismatch',
-    ),
+      'value-mismatch'
+    )
   )
-  .map(([approvalCase, label]) =>
-    mutateSyntheticFactApproval(approvalCase, label),
-  );
+  .map(([approvalCase, label]) => mutateSyntheticFactApproval(approvalCase, label));
 
 /**
  * This fixture proves structural record-to-materialized-fact correspondence
  * only. Its generated values and decision metadata are synthetic and do not
  * assert human truth, evidence sufficiency or publication approval.
  */
-function buildSyntheticFactApproval(
-  profile: ValidatedProfile,
-): SyntheticFactApprovalCase {
+function buildSyntheticFactApproval(profile: ValidatedProfile): SyntheticFactApprovalCase {
   const facts = collectMaterializedFacts(profile);
   const records = facts.map((fact) =>
     Object.freeze({
@@ -72,7 +68,7 @@ function buildSyntheticFactApproval(
         auditInteractionId: 'synthetic-structural-pbt',
         recordedAt: SYNTHETIC_TIMESTAMP,
       }),
-    }),
+    })
   );
 
   return Object.freeze({
@@ -84,19 +80,17 @@ function buildSyntheticFactApproval(
 
 function mutateSyntheticFactApproval(
   source: SyntheticFactApprovalCase,
-  label: InvalidSyntheticFactApprovalCase['label'],
+  label: InvalidSyntheticFactApprovalCase['label']
 ): InvalidSyntheticFactApprovalCase {
   const review = structuredClone(source.review) as unknown as {
     inventory: {
       records: Array<{
         status: 'Approved' | 'Excluded' | 'Pending';
-        decisionRecord:
-          | {
-              decision: 'Approved' | 'Excluded';
-              auditInteractionId: string;
-              recordedAt: string;
-            }
-          | null;
+        decisionRecord: {
+          decision: 'Approved' | 'Excluded';
+          auditInteractionId: string;
+          recordedAt: string;
+        } | null;
         normalizedValue: {
           kind: string;
           value: unknown;
@@ -140,13 +134,8 @@ function mutateSyntheticFactApproval(
   });
 }
 
-function syntheticEvidence(
-  fact: MaterializedFact,
-): FactReviewEvidence {
-  if (
-    fact.normalizedValue.kind === 'github-url' ||
-    fact.normalizedValue.kind === 'external-url'
-  ) {
+function syntheticEvidence(fact: MaterializedFact): FactReviewEvidence {
+  if (fact.normalizedValue.kind === 'github-url' || fact.normalizedValue.kind === 'external-url') {
     return Object.freeze({
       kind: 'public-source',
       reference: 'synthetic-structural-source',
@@ -162,9 +151,7 @@ function syntheticEvidence(
   });
 }
 
-function createReview(
-  records: readonly FactReviewRecord[],
-): FactApprovalReview {
+function createReview(records: readonly FactReviewRecord[]): FactApprovalReview {
   return Object.freeze({
     inventory: Object.freeze({
       schemaVersion: FACT_APPROVAL_SCHEMA_VERSION,

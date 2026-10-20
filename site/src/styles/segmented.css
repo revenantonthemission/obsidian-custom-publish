@@ -15,16 +15,16 @@
   background: var(--c-fill);
 }
 
-.segmented:has(> [role="tab"]:only-child) {
+.segmented:has(> [role='tab']:only-child) {
   --segments: 1;
 }
 
-.segmented:has(> [role="tab"]:nth-child(3)) {
+.segmented:has(> [role='tab']:nth-child(3)) {
   --segments: 3;
 }
 
 .segmented::before {
-  content: "";
+  content: '';
   position: absolute;
   inset-block: 2px;
   inset-inline-start: 2px;
@@ -32,19 +32,21 @@
   inline-size: calc((100% - 4px) / var(--segments));
   border-radius: calc(var(--radius-sm) - 2px);
   background: var(--c-surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
   transition: transform var(--dur-normal) var(--ease-spring);
 }
 
-.segmented:has(> [role="tab"]:nth-child(2)[aria-selected="true"])::before {
+.segmented:has(> [role='tab']:nth-child(2)[aria-selected='true'])::before {
   transform: translateX(100%);
 }
 
-.segmented:has(> [role="tab"]:nth-child(3)[aria-selected="true"])::before {
+.segmented:has(> [role='tab']:nth-child(3)[aria-selected='true'])::before {
   transform: translateX(200%);
 }
 
-.segmented > [role="tab"] {
+.segmented > [role='tab'] {
   min-block-size: var(--target);
   padding-inline: var(--space-3);
   border: 0;
@@ -57,11 +59,11 @@
   cursor: pointer;
 }
 
-.segmented > [role="tab"][aria-selected="true"] {
+.segmented > [role='tab'][aria-selected='true'] {
   font-weight: 600;
 }
 
-.segmented > [role="tab"]:focus-visible {
+.segmented > [role='tab']:focus-visible {
   outline-offset: -2px;
 }
 

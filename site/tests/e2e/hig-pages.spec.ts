@@ -3,7 +3,13 @@
 // Local Graph", "Segmented Control"). Colors are the light tokens of
 // tokens.css unless a test emulates dark.
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { gotoSettled, horizontalOverflow, measureTargets, undersized, viewportFor } from './support/hig';
+import {
+  gotoSettled,
+  horizontalOverflow,
+  measureTargets,
+  undersized,
+  viewportFor,
+} from './support/hig';
 
 const TARGET = { width: 44, height: 44 };
 const ROW_MIN_HEIGHT = 60;
@@ -41,7 +47,7 @@ async function expectGroupedRows(list: Locator, count: number): Promise<void> {
         height: link?.height ?? 0,
         fills: link !== undefined && link.width >= row.width - 1,
       };
-    }),
+    })
   );
   for (const shape of shapes) {
     expect(shape.links, shape.text).toBe(1);
@@ -59,23 +65,29 @@ async function graphNodeCount(page: Page): Promise<number> {
 test.describe('homepage (W5)', () => {
   test.use({ viewport: viewportFor(1024) });
 
-  test('a Large Title, then the note sections and the profile as cards on the grouped background', async ({ page }) => {
+  test('a Large Title, then the note sections and the profile as cards on the grouped background', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     await expect(page.getByRole('heading', { level: 1, name: 'obsidian-press' })).toBeVisible();
     expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
     await expect(page.locator('.home-card')).toHaveCount(2);
-    const looks = await page.locator('.home-card, .home-profile, .recent-posts').evaluateAll((elements) =>
-      elements.map((element) => {
-        const style = getComputedStyle(element);
-        return { background: style.backgroundColor, radius: style.borderTopLeftRadius };
-      }),
-    );
+    const looks = await page
+      .locator('.home-card, .home-profile, .recent-posts')
+      .evaluateAll((elements) =>
+        elements.map((element) => {
+          const style = getComputedStyle(element);
+          return { background: style.backgroundColor, radius: style.borderTopLeftRadius };
+        })
+      );
     expect(looks).toHaveLength(4);
     for (const look of looks) expect(look).toEqual(looks[0]);
     expect(looks[0]!.background).toBe(LIGHT.surface);
   });
 
-  test('오늘 발행된 글 keeps its empty message as secondary text inside the card (FR4.5)', async ({ page }) => {
+  test('오늘 발행된 글 keeps its empty message as secondary text inside the card (FR4.5)', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     const section = page.locator('.recent-posts');
     await expect(section.getByRole('heading', { name: '오늘 발행된 글' })).toBeVisible();
@@ -84,7 +96,9 @@ test.describe('homepage (W5)', () => {
     await expect(empty).toHaveCSS('color', LIGHT.textSecondary);
   });
 
-  test('the profile actions are 44 px capsules and note links keep the token tint', async ({ page }) => {
+  test('the profile actions are 44 px capsules and note links keep the token tint', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     await expect(page.locator('.home-profile-actions a')).toHaveCount(2);
     expect(undersized(await measureTargets(page, '.home-profile-actions a'), TARGET)).toEqual([]);
@@ -104,7 +118,9 @@ test.describe('hub and tag pages (W6, W7)', () => {
     await expectGroupedRows(page.locator('main .grouped-list'), 3);
   });
 
-  test('a hub without posts says so in one secondary row of its group (FR4.5)', async ({ page }) => {
+  test('a hub without posts says so in one secondary row of its group (FR4.5)', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/hubs/empty-hub');
     const list = page.locator('main .grouped-list');
     const empty = list.getByText('이 허브에 연결된 글이 아직 없습니다.');
@@ -117,7 +133,10 @@ test.describe('hub and tag pages (W6, W7)', () => {
     await gotoSettled(page, '/tags');
     expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
     await expect(page.getByRole('heading', { level: 1, name: '태그' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'test, 글 11개' })).toHaveAttribute('href', '/tags/test');
+    await expect(page.getByRole('link', { name: 'test, 글 11개' })).toHaveAttribute(
+      'href',
+      '/tags/test'
+    );
     const chips = await measureTargets(page, '.tag-chip');
     expect(chips.length).toBeGreaterThan(5);
     expect(undersized(chips, TARGET)).toEqual([]);
@@ -135,15 +154,21 @@ test.describe('hub and tag pages (W6, W7)', () => {
 test.describe('not found (W11)', () => {
   test.use({ viewport: viewportFor(1024) });
 
-  test('names the problem, offers search and home as 44 px capsules, and lists recent posts', async ({ page }) => {
+  test('names the problem, offers search and home as 44 px capsules, and lists recent posts', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/404');
     expect(await pageBackground(page)).toBe(LIGHT.bg);
-    await expect(page.getByRole('heading', { level: 1, name: '페이지를 찾을 수 없습니다' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: '페이지를 찾을 수 없습니다' })
+    ).toBeVisible();
     await expect(page.getByText('주소가 바뀌었을 수 있습니다.')).toBeVisible();
     const search = page.getByRole('button', { name: '사이트 검색' });
     await expect(search).toHaveCSS('background-color', LIGHT.tintFill);
     await expect(page.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
-    expect(undersized(await measureTargets(page, '.not-found-actions :is(a, button)'), TARGET)).toEqual([]);
+    expect(
+      undersized(await measureTargets(page, '.not-found-actions :is(a, button)'), TARGET)
+    ).toEqual([]);
     await expect(page.getByRole('heading', { level: 2, name: '최근 글' })).toBeVisible();
     await expectGroupedRows(page.locator('main .grouped-list'), 5);
     await search.click();
@@ -154,7 +179,10 @@ test.describe('not found (W11)', () => {
 test.describe('graph page (W8; FR5.6)', () => {
   test.use({ viewport: viewportFor(1024) });
 
-  test('the 그래프 | 목록 control switches to a keyboard list of every note and its links', async ({ page, browserName }) => {
+  test('the 그래프 | 목록 control switches to a keyboard list of every note and its links', async ({
+    page,
+    browserName,
+  }) => {
     await gotoSettled(page, '/graph');
     await expect(page.getByRole('heading', { level: 1, name: '그래프' })).toBeVisible();
     const graphTab = page.getByRole('tab', { name: '그래프' });
@@ -168,19 +196,25 @@ test.describe('graph page (W8; FR5.6)', () => {
     const panel = page.getByRole('tabpanel', { name: '목록' });
     await expect(panel).toBeVisible();
     await expect(panel.locator('.graph-list-note')).toHaveCount(await graphNodeCount(page));
-    const hubRow = panel.locator('.graph-list-note', { has: page.getByRole('link', { name: 'Hub Page', exact: true }) });
+    const hubRow = panel.locator('.graph-list-note', {
+      has: page.getByRole('link', { name: 'Hub Page', exact: true }),
+    });
     await expect(hubRow.getByRole('link', { name: 'Simple Post', exact: true })).toBeVisible();
     expect(undersized(await measureTargets(page, '.graph-list a'), TARGET)).toEqual([]);
     await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
     const href = await page.evaluate(() =>
-      document.activeElement?.closest('[role="tabpanel"]') ? document.activeElement.getAttribute('href') : null,
+      document.activeElement?.closest('[role="tabpanel"]')
+        ? document.activeElement.getAttribute('href')
+        : null
     );
     expect(href).toMatch(/^\/(posts|hubs)\//);
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(new RegExp(`${href}/?$`));
   });
 
-  test('legend chips pair a shape and a color with a Korean label, and filter with aria-pressed', async ({ page }) => {
+  test('legend chips pair a shape and a color with a Korean label, and filter with aria-pressed', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/graph');
     const legend = page.getByRole('group', { name: '그래프 범례 및 필터' });
     const expected = [
@@ -203,7 +237,9 @@ test.describe('graph page (W8; FR5.6)', () => {
   });
 
   for (const scheme of ['light', 'dark'] as const) {
-    test(`nodes take their category's shape and token color, with 24 px hit areas, ${scheme}`, async ({ page }) => {
+    test(`nodes take their category's shape and token color, with 24 px hit areas, ${scheme}`, async ({
+      page,
+    }) => {
       await page.emulateMedia({ colorScheme: scheme });
       await gotoSettled(page, '/graph');
       const nodes = page.locator('svg .graph-node');
@@ -219,15 +255,25 @@ test.describe('graph page (W8; FR5.6)', () => {
             paint: style === null ? null : kind === 'ring' ? style.stroke : style.fill,
             hitRadius: element.querySelector('.graph-node-hit')?.getAttribute('r') ?? null,
           };
-        }),
+        })
       );
       const colors = scheme === 'light' ? LIGHT : DARK;
       const hub = facts.find(({ category }) => category === 'hub');
-      expect(hub).toEqual({ category: 'hub', shape: 'star', paint: colors.graphHub, hitRadius: '12' });
+      expect(hub).toEqual({
+        category: 'hub',
+        shape: 'star',
+        paint: colors.graphHub,
+        hitRadius: '12',
+      });
       const others = facts.filter(({ category }) => category === 'etc');
       expect(others.length).toBeGreaterThan(0);
       for (const fact of others) {
-        expect(fact).toEqual({ category: 'etc', shape: 'ring', paint: colors.graphEtc, hitRadius: '12' });
+        expect(fact).toEqual({
+          category: 'etc',
+          shape: 'ring',
+          paint: colors.graphEtc,
+          hitRadius: '12',
+        });
       }
     });
   }
@@ -285,7 +331,10 @@ test.describe('related lists and the local graph below a post (W3; FR5.6)', () =
     const section = page.locator('section.post-local-graph');
     await section.scrollIntoViewIfNeeded();
     const listTab = section.getByRole('tab', { name: '목록' });
-    await expect(section.getByRole('tab', { name: '그래프' })).toHaveAttribute('aria-selected', 'true');
+    await expect(section.getByRole('tab', { name: '그래프' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
     await listTab.click();
     await expect(listTab).toHaveAttribute('aria-selected', 'true');
     const panel = section.getByRole('tabpanel', { name: '목록' });
@@ -294,15 +343,27 @@ test.describe('related lists and the local graph below a post (W3; FR5.6)', () =
       await expect(panel.getByRole('link', { name, exact: true }), name).toBeVisible();
     }
     await expect(panel.getByRole('link', { name: 'Simple Post', exact: true })).toHaveCount(0);
-    expect(undersized(await measureTargets(page, '.post-local-graph [role="tabpanel"] a'), TARGET)).toEqual([]);
-    expect(undersized(await measureTargets(page, '.post-local-graph [role="tab"]'), TARGET)).toEqual([]);
+    expect(
+      undersized(await measureTargets(page, '.post-local-graph [role="tabpanel"] a'), TARGET)
+    ).toEqual([]);
+    expect(
+      undersized(await measureTargets(page, '.post-local-graph [role="tab"]'), TARGET)
+    ).toEqual([]);
   });
 });
 
 test.describe('narrow widths', () => {
   test.use({ viewport: viewportFor(320) });
 
-  for (const path of ['/', '/hubs/hub-page', '/hubs/empty-hub', '/tags', '/tags/test', '/404', '/graph']) {
+  for (const path of [
+    '/',
+    '/hubs/hub-page',
+    '/hubs/empty-hub',
+    '/tags',
+    '/tags/test',
+    '/404',
+    '/graph',
+  ]) {
     test(`${path} never scrolls sideways at 320 px`, async ({ page }) => {
       await gotoSettled(page, path);
       const report = await horizontalOverflow(page);

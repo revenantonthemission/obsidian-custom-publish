@@ -12,7 +12,10 @@ import { join, resolve } from 'node:path';
 
 const ROOT = process.cwd();
 const ASTRO_CLI = resolve(ROOT, 'node_modules/astro/bin/astro.mjs');
-const LOCK = join(tmpdir(), `astro-build-${createHash('sha256').update(ROOT).digest('hex').slice(0, 12)}.lock`);
+const LOCK = join(
+  tmpdir(),
+  `astro-build-${createHash('sha256').update(ROOT).digest('hex').slice(0, 12)}.lock`
+);
 /** A lock older than this belongs to a run that died; a build takes seconds. */
 const STALE_LOCK_MS = 180_000;
 const POLL_MS = 200;
@@ -35,7 +38,10 @@ async function acquireLock(): Promise<void> {
 }
 
 /** Builds the site into `outDir`, one build at a time per checkout. */
-export async function buildSiteInto(outDir: string, timeoutMs = 60_000): Promise<SpawnSyncReturns<string>> {
+export async function buildSiteInto(
+  outDir: string,
+  timeoutMs = 60_000
+): Promise<SpawnSyncReturns<string>> {
   await acquireLock();
   try {
     return spawnSync(process.execPath, [ASTRO_CLI, 'build', '--outDir', outDir], {

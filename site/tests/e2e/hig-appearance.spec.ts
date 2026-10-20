@@ -26,7 +26,7 @@ async function pageState(page: Page) {
     let stored: Record<string, string | null> = {};
     try {
       stored = Object.fromEntries(
-        ['appearance', ...legacyKeys].map((key) => [key, window.localStorage.getItem(key)]),
+        ['appearance', ...legacyKeys].map((key) => [key, window.localStorage.getItem(key)])
       );
     } catch {
       stored = { blocked: 'true' };
@@ -66,13 +66,15 @@ test.describe('appearance model', () => {
     await gotoSettled(page, '/');
     await waitForIslands(page);
     const calls = await page.evaluate(
-      () => (window as unknown as { __geolocationCalls: string[] }).__geolocationCalls,
+      () => (window as unknown as { __geolocationCalls: string[] }).__geolocationCalls
     );
     expect(calls).toEqual([]);
     expect(sunriseRequests).toEqual([]);
   });
 
-  test('stale legacy theme state renders Automatic and every legacy key is removed', async ({ page }) => {
+  test('stale legacy theme state renders Automatic and every legacy key is removed', async ({
+    page,
+  }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await seedStorage(page, {
       theme: 'dark',
@@ -101,7 +103,9 @@ test.describe('appearance model', () => {
     expect(state.background).toBe(DARK_BG);
   });
 
-  test('a stored light choice renders light before any island hydrates, with the system dark', async ({ page }) => {
+  test('a stored light choice renders light before any island hydrates, with the system dark', async ({
+    page,
+  }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await seedStorage(page, { appearance: 'light' });
     await blockIslands(page);
@@ -112,7 +116,9 @@ test.describe('appearance model', () => {
     expect(state.background).toBe(LIGHT_BG);
   });
 
-  test('blocked storage renders Automatic and the button still works for the page', async ({ page }) => {
+  test('blocked storage renders Automatic and the button still works for the page', async ({
+    page,
+  }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.addInitScript(() => {
       Object.defineProperty(window, 'localStorage', {
@@ -131,7 +137,10 @@ test.describe('appearance model', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
 
-  test('without JavaScript the page follows the system appearance', async ({ browser, baseURL }) => {
+  test('without JavaScript the page follows the system appearance', async ({
+    browser,
+    baseURL,
+  }) => {
     for (const [colorScheme, background] of [
       ['dark', DARK_BG],
       ['light', LIGHT_BG],
@@ -154,7 +163,9 @@ test.describe('appearance model', () => {
     await seedStorage(page, { appearance: 'dark' });
     await blockIslands(page);
     await gotoSettled(page, '/');
-    await expect(page.getByRole('button', { name: APPEARANCE_BUTTON })).toHaveAccessibleName('화면 모드: 다크');
+    await expect(page.getByRole('button', { name: APPEARANCE_BUTTON })).toHaveAccessibleName(
+      '화면 모드: 다크'
+    );
     expect((await pageState(page)).background).toBe(DARK_BG);
   });
 });
@@ -163,7 +174,9 @@ for (const width of [320, 1024] as const) {
   test.describe(`appearance button at ${width} px`, () => {
     test.use({ viewport: viewportFor(width) });
 
-    test('cycles 자동, 라이트, 다크 and back, announcing and storing each mode', async ({ page }) => {
+    test('cycles 자동, 라이트, 다크 and back, announcing and storing each mode', async ({
+      page,
+    }) => {
       await page.emulateMedia({ colorScheme: 'light' });
       await gotoSettled(page, '/');
       await waitForIslands(page);
@@ -173,9 +186,27 @@ for (const width of [320, 1024] as const) {
       await expect(button).toHaveAccessibleName('화면 모드: 자동');
 
       const steps = [
-        { name: '화면 모드: 라이트', announced: '화면 모드: 라이트', theme: 'light', stored: 'light', background: LIGHT_BG },
-        { name: '화면 모드: 다크', announced: '화면 모드: 다크', theme: 'dark', stored: 'dark', background: DARK_BG },
-        { name: '화면 모드: 자동', announced: '화면 모드: 자동 (시스템 설정을 따름)', theme: '', stored: 'auto', background: LIGHT_BG },
+        {
+          name: '화면 모드: 라이트',
+          announced: '화면 모드: 라이트',
+          theme: 'light',
+          stored: 'light',
+          background: LIGHT_BG,
+        },
+        {
+          name: '화면 모드: 다크',
+          announced: '화면 모드: 다크',
+          theme: 'dark',
+          stored: 'dark',
+          background: DARK_BG,
+        },
+        {
+          name: '화면 모드: 자동',
+          announced: '화면 모드: 자동 (시스템 설정을 따름)',
+          theme: '',
+          stored: 'auto',
+          background: LIGHT_BG,
+        },
       ];
       for (const step of steps) {
         await button.click();

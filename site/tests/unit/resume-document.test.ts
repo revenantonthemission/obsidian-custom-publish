@@ -22,15 +22,9 @@ import {
   buildResumeManifestForTest,
   compareResumeFactManifests,
 } from '../../src/lib/profile/resume-manifest.js';
-import type {
-  ResumeFactManifest,
-} from '../../src/lib/profile/resume-manifest.js';
+import type { ResumeFactManifest } from '../../src/lib/profile/resume-manifest.js';
 import { selectResumeProfile } from '../../src/lib/profile/selectors.js';
-import type {
-  ProfileData,
-  ResumeProfile,
-  ValidatedProfile,
-} from '../../src/lib/profile/types.js';
+import type { ProfileData, ResumeProfile, ValidatedProfile } from '../../src/lib/profile/types.js';
 import { validateProfile } from '../../src/lib/profile/validation.js';
 import { cloneProfileFixture } from '../fixtures/profile-fixtures.js';
 
@@ -45,45 +39,31 @@ describe('résumé fact manifest', () => {
       'highlights',
       'project-summaries',
     ]);
-    expect(
-      first.entityOrder
-        .filter(({ kind }) => kind === 'project')
-        .map(({ id }) => id),
-    ).toEqual(['project-beta', 'project-gamma', 'project-alpha']);
+    expect(first.entityOrder.filter(({ kind }) => kind === 'project').map(({ id }) => id)).toEqual([
+      'project-beta',
+      'project-gamma',
+      'project-alpha',
+    ]);
     expect(
       first.entries.map(
         ({ factId, path, valueKind, normalizedValue }) =>
-          [factId, path, valueKind, normalizedValue] as const,
-      ),
+          [factId, path, valueKind, normalizedValue] as const
+      )
     ).toEqual(EXPECTED_RESUME_FACTS);
     expect(first.entries.map(({ entryOrder }) => entryOrder)).toEqual(
-      Array.from(
-        { length: first.entries.length },
-        (_, index) => index + 1,
-      ),
+      Array.from({ length: first.entries.length }, (_, index) => index + 1)
     );
-    expect(new Set(first.entries.map(({ factId }) => factId)).size).toBe(
-      first.entries.length,
-    );
-    expect(first.sourceIdentity.digest).toBe(
-      second.sourceIdentity.digest,
-    );
+    expect(new Set(first.entries.map(({ factId }) => factId)).size).toBe(first.entries.length);
+    expect(first.sourceIdentity.digest).toBe(second.sourceIdentity.digest);
     expect(first.fingerprint.digest).toBe(second.fingerprint.digest);
     expect(Object.isFrozen(first.entries)).toBe(true);
   });
 
   test('requires exact ordered structural parity, not set or subset equality', async () => {
     const expected = await manifestFixture();
-    expect(
-      compareResumeFactManifests(
-        expected,
-        structuredClone(expected),
-      ).ok,
-    ).toBe(true);
+    expect(compareResumeFactManifests(expected, structuredClone(expected)).ok).toBe(true);
 
-    const mutations: Array<
-      readonly [string, (candidate: MutableManifest) => void]
-    > = [
+    const mutations: Array<readonly [string, (candidate: MutableManifest) => void]> = [
       [
         'changed fact',
         (candidate) => {
@@ -136,21 +116,12 @@ describe('résumé fact manifest', () => {
     const changedCandidate = cloneProfileFixture() as unknown as {
       narrative: { resumeSummary: { value: string } };
     };
-    changedCandidate.narrative.resumeSummary.value =
-      '단 하나의 합성 이력서 사실을 변경했습니다.';
-    const changed = selectResumeProfile(
-      validSource(changedCandidate as unknown as ProfileData),
-    );
+    changedCandidate.narrative.resumeSummary.value = '단 하나의 합성 이력서 사실을 변경했습니다.';
+    const changed = selectResumeProfile(validSource(changedCandidate as unknown as ProfileData));
 
-    const originalDigest = expectSuccess(
-      await digestProfileSource(original),
-    );
-    const identicalDigest = expectSuccess(
-      await digestProfileSource(identical),
-    );
-    const changedDigest = expectSuccess(
-      await digestProfileSource(changed),
-    );
+    const originalDigest = expectSuccess(await digestProfileSource(original));
+    const identicalDigest = expectSuccess(await digestProfileSource(identical));
+    const changedDigest = expectSuccess(await digestProfileSource(changed));
 
     expect(identicalDigest.digest).toBe(originalDigest.digest);
     expect(changedDigest.digest).not.toBe(originalDigest.digest);
@@ -158,14 +129,13 @@ describe('résumé fact manifest', () => {
 
   test('rejects an incomplete projection instead of creating a partial manifest', async () => {
     const source = validSource();
-    const resume = structuredClone(
-      selectResumeProfile(source),
-    ) as unknown as Record<string, unknown>;
+    const resume = structuredClone(selectResumeProfile(source)) as unknown as Record<
+      string,
+      unknown
+    >;
     delete resume.identity;
 
-    const result = await buildResumeManifestForTest(
-      resume as unknown as ResumeProfile,
-    );
+    const result = await buildResumeManifestForTest(resume as unknown as ResumeProfile);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected invalid résumé projection');
     expect(result.issues[0]).toMatchObject({
@@ -184,9 +154,7 @@ describe('résumé document source and link boundary', () => {
       label: 'PDF 이력서 다운로드',
     });
     expect(Object.isFrozen(link)).toBe(true);
-    expect(validateResumeDocumentLink(structuredClone(link)).ok).toBe(
-      true,
-    );
+    expect(validateResumeDocumentLink(structuredClone(link)).ok).toBe(true);
 
     for (const candidate of [
       { ...link, href: '/other.pdf' },
@@ -226,17 +194,11 @@ describe('résumé document source and link boundary', () => {
   test('validates digest domains and rejects a source digest used as a manifest digest', async () => {
     const manifest = await manifestFixture();
 
+    expect(validateCanonicalDigest(manifest.sourceIdentity, PROFILE_SOURCE_DIGEST_DOMAIN).ok).toBe(
+      true
+    );
     expect(
-      validateCanonicalDigest(
-        manifest.sourceIdentity,
-        PROFILE_SOURCE_DIGEST_DOMAIN,
-      ).ok,
-    ).toBe(true);
-    expect(
-      validateCanonicalDigest(
-        manifest.sourceIdentity,
-        RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-      ).ok,
+      validateCanonicalDigest(manifest.sourceIdentity, RESUME_FACT_MANIFEST_DIGEST_DOMAIN).ok
     ).toBe(false);
   });
 });
@@ -245,64 +207,45 @@ describe('rendered résumé parity', () => {
   test('accepts complete web and print observations from the same manifest', async () => {
     const manifest = await manifestFixture();
 
-    expect(
-      compareRenderedManifest(
-        manifest,
-        renderedObservation(manifest, 'web'),
-      ).ok,
-    ).toBe(true);
-    expect(
-      compareRenderedManifest(
-        manifest,
-        renderedObservation(manifest, 'print'),
-      ).ok,
-    ).toBe(true);
+    expect(compareRenderedManifest(manifest, renderedObservation(manifest, 'web')).ok).toBe(true);
+    expect(compareRenderedManifest(manifest, renderedObservation(manifest, 'print')).ok).toBe(true);
   });
 
   test('rejects stale, changed, ambiguous and print-hidden observations', async () => {
     const manifest = await manifestFixture();
 
     const stale = renderedObservation(manifest, 'web');
-    (
-      stale.fingerprint as unknown as { digest: string }
-    ).digest = '0'.repeat(64);
-    expect(failureCodes(compareRenderedManifest(manifest, stale))).toContain(
-      'document.stale',
-    );
+    (stale.fingerprint as unknown as { digest: string }).digest = '0'.repeat(64);
+    expect(failureCodes(compareRenderedManifest(manifest, stale))).toContain('document.stale');
 
     const changed = renderedObservation(manifest, 'web');
     changed.entries[0]!.normalizedValue += '-changed';
-    expect(
-      failureCodes(compareRenderedManifest(manifest, changed)),
-    ).toContain('document.parity');
+    expect(failureCodes(compareRenderedManifest(manifest, changed))).toContain('document.parity');
 
     const ambiguous = renderedObservation(manifest, 'web');
-    ambiguous.entries[1]!.annotationOccurrence =
-      ambiguous.entries[0]!.annotationOccurrence;
-    expect(
-      failureCodes(compareRenderedManifest(manifest, ambiguous)),
-    ).toContain('document.parity');
+    ambiguous.entries[1]!.annotationOccurrence = ambiguous.entries[0]!.annotationOccurrence;
+    expect(failureCodes(compareRenderedManifest(manifest, ambiguous))).toContain('document.parity');
 
     const hiddenInPrint = renderedObservation(manifest, 'print');
     hiddenInPrint.entries[0]!.rendered = false;
-    expect(
-      failureCodes(
-        compareRenderedManifest(manifest, hiddenInPrint),
-      ),
-    ).toContain('document.parity');
+    expect(failureCodes(compareRenderedManifest(manifest, hiddenInPrint))).toContain(
+      'document.parity'
+    );
   });
 });
 
 type MutableManifest = {
   -readonly [Key in keyof ResumeFactManifest]: Key extends 'entries'
     ? Array<{
-        -readonly [EntryKey in keyof ResumeFactManifest['entries'][number]]:
-          ResumeFactManifest['entries'][number][EntryKey];
+        -readonly [
+          EntryKey in keyof ResumeFactManifest['entries'][number]
+        ]: ResumeFactManifest['entries'][number][EntryKey];
       }>
     : Key extends 'sourceIdentity'
       ? {
-          -readonly [DigestKey in keyof ResumeFactManifest['sourceIdentity']]:
-            ResumeFactManifest['sourceIdentity'][DigestKey];
+          -readonly [
+            DigestKey in keyof ResumeFactManifest['sourceIdentity']
+          ]: ResumeFactManifest['sourceIdentity'][DigestKey];
         }
       : ResumeFactManifest[Key];
 };
@@ -310,12 +253,7 @@ type MutableManifest = {
 type MutableRenderedObservation = ReturnType<typeof renderedObservation>;
 
 const EXPECTED_RESUME_FACTS = [
-  [
-    'identity-name',
-    'profile.identity.name',
-    'text',
-    '테스트 사용자',
-  ],
+  ['identity-name', 'profile.identity.name', 'text', '테스트 사용자'],
   [
     'identity-headline',
     'profile.identity.headline',
@@ -334,18 +272,8 @@ const EXPECTED_RESUME_FACTS = [
     'text',
     '한국어·Unicode·긴 기술 이름을 자르지 않고 전달하는 테스트 전용 소개입니다.',
   ],
-  [
-    'contact-email',
-    'profile.contact.email',
-    'email',
-    'tester@example.com',
-  ],
-  [
-    'contact-github',
-    'profile.contact.github',
-    'github-url',
-    'https://github.com/example-user',
-  ],
+  ['contact-email', 'profile.contact.email', 'email', 'tester@example.com'],
+  ['contact-github', 'profile.contact.github', 'github-url', 'https://github.com/example-user'],
   [
     'skill-group-title',
     'profile.skillGroups[id=software-engineering].title',
@@ -394,36 +322,21 @@ const EXPECTED_RESUME_FACTS = [
     'text',
     '명시적 계약과 자동 검증을 함께 설계했습니다.',
   ],
-  [
-    'project-beta-title',
-    'profile.projects[id=project-beta].title',
-    'text',
-    '프로젝트 베타',
-  ],
+  ['project-beta-title', 'profile.projects[id=project-beta].title', 'text', '프로젝트 베타'],
   [
     'project-beta-summary',
     'profile.projects[id=project-beta].outcomeSummary',
     'text',
     '베타 프로젝트의 검증 가능한 결과를 설명합니다.',
   ],
-  [
-    'project-gamma-title',
-    'profile.projects[id=project-gamma].title',
-    'text',
-    '프로젝트 감마',
-  ],
+  ['project-gamma-title', 'profile.projects[id=project-gamma].title', 'text', '프로젝트 감마'],
   [
     'project-gamma-summary',
     'profile.projects[id=project-gamma].outcomeSummary',
     'text',
     '감마 프로젝트의 검증 가능한 결과를 설명합니다.',
   ],
-  [
-    'project-alpha-title',
-    'profile.projects[id=project-alpha].title',
-    'text',
-    '프로젝트 알파',
-  ],
+  ['project-alpha-title', 'profile.projects[id=project-alpha].title', 'text', '프로젝트 알파'],
   [
     'project-alpha-summary',
     'profile.projects[id=project-alpha].outcomeSummary',
@@ -433,29 +346,20 @@ const EXPECTED_RESUME_FACTS = [
 ] as const;
 
 async function manifestFixture(): Promise<ResumeFactManifest> {
-  const result = await buildResumeManifestForTest(
-    selectResumeProfile(validSource()),
-  );
+  const result = await buildResumeManifestForTest(selectResumeProfile(validSource()));
   if (!result.ok) {
-    throw new Error(
-      result.issues.map(({ code, path }) => `${code}@${path}`).join(', '),
-    );
+    throw new Error(result.issues.map(({ code, path }) => `${code}@${path}`).join(', '));
   }
   return result.value;
 }
 
-function validSource(
-  input: ProfileData = cloneProfileFixture(),
-): ValidatedProfile {
+function validSource(input: ProfileData = cloneProfileFixture()): ValidatedProfile {
   const result = validateProfile(input);
   if (!result.ok) throw new Error('expected valid synthetic profile');
   return result.value;
 }
 
-function renderedObservation(
-  manifest: ResumeFactManifest,
-  surface: 'web' | 'print',
-) {
+function renderedObservation(manifest: ResumeFactManifest, surface: 'web' | 'print') {
   return {
     schemaVersion: RESUME_EVIDENCE_SCHEMA_VERSION,
     surface,
@@ -474,9 +378,11 @@ function renderedObservation(
 }
 
 function expectSuccess<Value>(
-  result: { readonly ok: true; readonly value: Value } | {
-    readonly ok: false;
-  },
+  result:
+    | { readonly ok: true; readonly value: Value }
+    | {
+        readonly ok: false;
+      }
 ): Value {
   expect(result.ok).toBe(true);
   if (!result.ok) throw new Error('expected success');
@@ -489,7 +395,7 @@ function failureCodes(
     | {
         readonly ok: false;
         readonly issues: readonly { readonly code: string }[];
-      },
+      }
 ): string[] {
   expect(result.ok).toBe(false);
   if (result.ok) throw new Error('expected failure');
@@ -501,28 +407,20 @@ describe('pdf period observation', () => {
 
   test('inverts the rendered period into the approved manifest token', () => {
     expect(parsePeriodDisplayText('2023-07 – 2023-08')).toBe(
-      'start:year-month:2023-07|end:year-month:2023-08',
+      'start:year-month:2023-07|end:year-month:2023-08'
     );
-    expect(parsePeriodDisplayText('2019 – 2026')).toBe(
-      'start:year:2019|end:year:2026',
-    );
+    expect(parsePeriodDisplayText('2019 – 2026')).toBe('start:year:2019|end:year:2026');
   });
 
   test('reads an open-ended period as the present point', () => {
-    expect(parsePeriodDisplayText('2023-07 – 현재')).toBe(
-      'start:year-month:2023-07|end:present',
-    );
+    expect(parsePeriodDisplayText('2023-07 – 현재')).toBe('start:year-month:2023-07|end:present');
   });
 
   test('tolerates the layout whitespace PDF extraction produces', () => {
     // Text items arrive as glyph runs, so the spaces around the en dash are
     // layout rather than content and may be absent or doubled.
-    expect(parsePeriodDisplayText('2019–2026')).toBe(
-      'start:year:2019|end:year:2026',
-    );
-    expect(parsePeriodDisplayText('2019  –  2026')).toBe(
-      'start:year:2019|end:year:2026',
-    );
+    expect(parsePeriodDisplayText('2019–2026')).toBe('start:year:2019|end:year:2026');
+    expect(parsePeriodDisplayText('2019  –  2026')).toBe('start:year:2019|end:year:2026');
   });
 
   test('refuses a period it cannot read rather than passing it through', () => {

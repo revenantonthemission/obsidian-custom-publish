@@ -1,6 +1,6 @@
 ---
-import type { GraphData, GraphNode } from "../lib/types";
-import { CATEGORY_SHAPES, LEGEND_ITEMS, legendKey, shapePath } from "../lib/graphUtils";
+import type { GraphData, GraphNode } from '../lib/types';
+import { CATEGORY_SHAPES, LEGEND_ITEMS, legendKey, shapePath } from '../lib/graphUtils';
 
 interface Props {
   data: GraphData;
@@ -17,9 +17,10 @@ for (const { source, target } of data.edges) {
   const node = bySlug.get(target);
   if (node) outgoing.set(source, [...(outgoing.get(source) ?? []), node]);
 }
-const notes = [...data.nodes].sort((a, b) => a.title.localeCompare(b.title, "ko"));
+const notes = [...data.nodes].sort((a, b) => a.title.localeCompare(b.title, 'ko'));
 const labels = new Map(LEGEND_ITEMS.map((item) => [item.key, item.label]));
-const hrefOf = (node: GraphNode): string => (node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`);
+const hrefOf = (node: GraphNode): string =>
+  node.is_hub ? `/hubs/${node.slug}` : `/posts/${node.slug}`;
 ---
 
 {notes.length > 0 ? (
@@ -30,9 +31,19 @@ const hrefOf = (node: GraphNode): string => (node.is_hub ? `/hubs/${node.slug}` 
       return (
         <li class="graph-list-note">
           <div class="graph-list-head">
-            <a href={hrefOf(note)} class="graph-list-title">{note.title}</a>
+            <a href={hrefOf(note)} class="graph-list-title">
+              {note.title}
+            </a>
             <span class="graph-list-category" data-category={category}>
-              <svg class="graph-legend-shape" data-shape={CATEGORY_SHAPES[category]} width="12" height="12" viewBox="-6 -6 12 12" aria-hidden="true" focusable="false">
+              <svg
+                class="graph-legend-shape"
+                data-shape={CATEGORY_SHAPES[category]}
+                width="12"
+                height="12"
+                viewBox="-6 -6 12 12"
+                aria-hidden="true"
+                focusable="false"
+              >
                 <path d={shapePath(CATEGORY_SHAPES[category], 4.5)} />
               </svg>
               {labels.get(category)}
@@ -41,7 +52,9 @@ const hrefOf = (node: GraphNode): string => (node.is_hub ? `/hubs/${node.slug}` 
           {links.length > 0 && (
             <ul class="graph-list-links" aria-label={`${note.title}에서 이어지는 글`}>
               {links.map((target) => (
-                <li><a href={hrefOf(target)}>{target.title}</a></li>
+                <li>
+                  <a href={hrefOf(target)}>{target.title}</a>
+                </li>
               ))}
             </ul>
           )}

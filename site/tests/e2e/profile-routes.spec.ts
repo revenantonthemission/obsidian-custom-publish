@@ -5,17 +5,10 @@ import {
   getProductionProfileAssembly,
 } from '../../src/lib/profile/production-profile.js';
 import { computeAccessibilityReviewSubject } from '../../scripts/profile/verification-provider.mjs';
-import {
-  profileEnvironment,
-  readBuildManifest,
-} from './support/environment.js';
+import { profileEnvironment, readBuildManifest } from './support/environment.js';
 import { recordEvidenceFragment, writeJsonFile } from './support/evidence.js';
 import { PROFILE_ROUTES, type ProfileRoute } from './support/matrix.js';
-import {
-  PROFILE_SHELL,
-  playwrightVersion,
-  settle,
-} from './support/profile-page.js';
+import { PROFILE_SHELL, playwrightVersion, settle } from './support/profile-page.js';
 
 const SPEC_FILE = 'profile-routes.spec.ts';
 const CANONICAL_ORIGIN = 'https://rvnnt.dev';
@@ -25,9 +18,7 @@ const CANONICAL_ORIGIN = 'https://rvnnt.dev';
  * separately gated step. Naming it here — rather than allowing any unresolved
  * link — is what keeps route closure honest while the PDF is still deferred.
  */
-const DEFERRED_INTERNAL_DOCUMENTS: readonly string[] = Object.freeze([
-  '/resume.pdf',
-]);
+const DEFERRED_INTERNAL_DOCUMENTS: readonly string[] = Object.freeze(['/resume.pdf']);
 
 interface RouteObservation {
   readonly route: ProfileRoute;
@@ -57,18 +48,13 @@ const held = {
   routeClosure: false,
 };
 
-async function observeRoute(
-  page: Page,
-  route: ProfileRoute,
-): Promise<RouteObservation> {
+async function observeRoute(page: Page, route: ProfileRoute): Promise<RouteObservation> {
   const response = await page.goto(route, { waitUntil: 'load' });
   expect(response, `${route} must produce a response`).not.toBeNull();
   await settle(page);
 
   const status = response?.status() ?? 0;
-  const contentType = (response?.headers()['content-type'] ?? '')
-    .split(';')[0]
-    .trim();
+  const contentType = (response?.headers()['content-type'] ?? '').split(';')[0].trim();
   const body = response === null ? undefined : await response.body();
   const bodyBytes = body?.byteLength ?? 0;
 
@@ -82,25 +68,23 @@ async function observeRoute(
       description: attribute('meta[name="description"]', 'content'),
       visibleText: (shell?.textContent ?? '').replace(/\s+/g, ' ').trim(),
       hrefs: [...document.querySelectorAll('a[href]')].map(
-        (anchor) => anchor.getAttribute('href') ?? '',
+        (anchor) => anchor.getAttribute('href') ?? ''
       ),
-      jsonLd: [
-        ...document.querySelectorAll('script[type="application/ld+json"]'),
-      ].map((node) => JSON.parse(node.textContent ?? 'null') as unknown),
+      jsonLd: [...document.querySelectorAll('script[type="application/ld+json"]')].map(
+        (node) => JSON.parse(node.textContent ?? 'null') as unknown
+      ),
       factIds: [
         ...document.querySelectorAll(
-          '[data-profile-fact-id],[data-profile-label-fact-id],[data-profile-destination-fact-id]',
+          '[data-profile-fact-id],[data-profile-label-fact-id],[data-profile-destination-fact-id]'
         ),
       ].flatMap((element) =>
         [
           element.getAttribute('data-profile-fact-id'),
           element.getAttribute('data-profile-label-fact-id'),
           element.getAttribute('data-profile-destination-fact-id'),
-        ].filter((value): value is string => value !== null),
+        ].filter((value): value is string => value !== null)
       ),
-      elementIds: [...document.querySelectorAll('[id]')].map(
-        (element) => element.id,
-      ),
+      elementIds: [...document.querySelectorAll('[id]')].map((element) => element.id),
     };
   }, PROFILE_SHELL);
 
@@ -116,10 +100,7 @@ async function observeRoute(
 }
 
 /** Collects every string leaf a JSON-LD graph asserts, ignoring its own vocabulary. */
-function jsonLdFactStrings(
-  value: unknown,
-  key: string | null = null,
-): string[] {
+function jsonLdFactStrings(value: unknown, key: string | null = null): string[] {
   if (typeof value === 'string') {
     // `@`-keys and schema.org vocabulary terms name the language the graph is
     // written in. Only what the graph says *with* that language is a claim the
@@ -135,7 +116,7 @@ function jsonLdFactStrings(
   }
   if (value !== null && typeof value === 'object') {
     return Object.entries(value).flatMap(([childKey, childValue]) =>
-      jsonLdFactStrings(childValue, childKey),
+      jsonLdFactStrings(childValue, childKey)
     );
   }
   return [];
@@ -143,9 +124,7 @@ function jsonLdFactStrings(
 
 test.describe('profile route readiness', () => {
   for (const route of PROFILE_ROUTES) {
-    test(`${route} serves a complete, self-describing document`, async ({
-      page,
-    }) => {
+    test(`${route} serves a complete, self-describing document`, async ({ page }) => {
       const consoleErrors: string[] = [];
       page.on('console', (message) => {
         if (message.type() === 'error') consoleErrors.push(message.text());
@@ -166,17 +145,12 @@ test.describe('profile route readiness', () => {
       await expect(page.locator('main#main-content')).toBeVisible();
       await expect(page.locator(PROFILE_SHELL)).toBeVisible();
       expect(observation.visibleText.length).toBeGreaterThan(0);
-      expect(
-        consoleErrors,
-        `${route} must render without console errors`,
-      ).toEqual([]);
+      expect(consoleErrors, `${route} must render without console errors`).toEqual([]);
       held.routeReadiness.add(route);
     });
   }
 
-  test('metadata and JSON-LD assert only facts the page shows', async ({
-    page,
-  }) => {
+  test('metadata and JSON-LD assert only facts the page shows', async ({ page }) => {
     for (const route of PROFILE_ROUTES) {
       if (!observations.has(route)) await observeRoute(page, route);
     }
@@ -197,7 +171,7 @@ test.describe('profile route readiness', () => {
       const summary = observation.description.replace(/\s+/g, ' ').trim();
       expect(
         observation.visibleText,
-        `${observation.route} must show its own meta description`,
+        `${observation.route} must show its own meta description`
       ).toContain(summary);
 
       const hrefSet = new Set(observation.hrefs);
@@ -217,22 +191,18 @@ test.describe('profile route readiness', () => {
             // A self-identifier only counts if the anchor it names is really
             // on the page; a dangling @id would be an unresolvable claim.
             observation.elementIds.some(
-              (id) =>
-                fact === `${CANONICAL_ORIGIN}${observation.route}#${id}`,
+              (id) => fact === `${CANONICAL_ORIGIN}${observation.route}#${id}`
             );
-          expect(
-            shown,
-            `${observation.route} JSON-LD asserts "${fact}" without showing it`,
-          ).toBe(true);
+          expect(shown, `${observation.route} JSON-LD asserts "${fact}" without showing it`).toBe(
+            true
+          );
         }
       }
     }
     held.metadataParity = true;
   });
 
-  test('every rendered fact traces to the approved résumé manifest', async ({
-    page,
-  }) => {
+  test('every rendered fact traces to the approved résumé manifest', async ({ page }) => {
     if (!observations.has('/resume')) await observeRoute(page, '/resume');
     const observation = observations.get('/resume');
     expect(observation).toBeDefined();
@@ -242,9 +212,7 @@ test.describe('profile route readiness', () => {
     // module-local WeakSet, which does not survive the test loader's module
     // graph. `buildResumeManifestForTest` is the pure seam the manifest module
     // publishes for exactly this: same projection, no capability check.
-    const manifestResult = await buildResumeManifestForTest(
-      getProductionProfileAssembly().resume,
-    );
+    const manifestResult = await buildResumeManifestForTest(getProductionProfileAssembly().resume);
     expect(manifestResult.ok, 'the approved manifest must build').toBe(true);
     if (!manifestResult.ok) return;
 
@@ -254,7 +222,7 @@ test.describe('profile route readiness', () => {
     for (const entry of manifestResult.value.entries) {
       expect(
         rendered.has(entry.factId),
-        `fact ${entry.factId} is in the manifest but not rendered`,
+        `fact ${entry.factId} is in the manifest but not rendered`
       ).toBe(true);
 
       // Period values are composite range tokens, so only their presence is
@@ -265,10 +233,7 @@ test.describe('profile route readiness', () => {
         observation.visibleText.includes(value) ||
         hrefSet.has(value) ||
         hrefSet.has(`mailto:${value}`);
-      expect(
-        shown,
-        `fact ${entry.factId} value "${value}" is not shown on /resume`,
-      ).toBe(true);
+      expect(shown, `fact ${entry.factId} value "${value}" is not shown on /resume`).toBe(true);
     }
     held.manifestParity = true;
   });
@@ -288,14 +253,10 @@ test.describe('profile route readiness', () => {
         const candidates =
           path === '/'
             ? ['index.html']
-            : [
-                path.slice(1),
-                `${path.slice(1)}/index.html`,
-                `${path.slice(1)}.html`,
-              ];
+            : [path.slice(1), `${path.slice(1)}/index.html`, `${path.slice(1)}.html`];
         expect(
           candidates.some((candidate) => emitted.has(candidate)),
-          `${observation.route} links to "${href}", which the build never emitted`,
+          `${observation.route} links to "${href}", which the build never emitted`
         ).toBe(true);
       }
     }
@@ -317,9 +278,10 @@ test.describe('profile route readiness', () => {
 
     // Approved external destinations are human-verified records carried by the
     // profile source; this suite reproduces them and never reaches the network.
-    const destinations = getApprovedExternalDestinations().map(
-      (destination) => ({ ...destination, result: 'approved' as const }),
-    );
+    const destinations = getApprovedExternalDestinations().map((destination) => ({
+      ...destination,
+      result: 'approved' as const,
+    }));
 
     await writeJsonFile(environment.linkMetadataEvidencePath, {
       schemaVersion: 1,

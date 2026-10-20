@@ -1,14 +1,14 @@
 // U2 homepage composition (LC-U2-10): pure functions only — no I/O, no dates.
 // index.astro composes these with getHomepage() and the U1 profile fragment.
 
-export const PROFILE_SLOT_TOKEN = "<!-- profile:slot -->";
+export const PROFILE_SLOT_TOKEN = '<!-- profile:slot -->';
 
 /** Fence-aware count of standalone slot-token lines (BR-U2-036~037). */
 export function countSlotTokens(markdown: string): number {
   let inFence = false;
   let count = 0;
-  for (const line of markdown.split("\n")) {
-    if (line.startsWith("```")) {
+  for (const line of markdown.split('\n')) {
+    if (line.startsWith('```')) {
       inFence = !inFence;
       continue;
     }
@@ -44,9 +44,7 @@ export function splitRenderedAtSlot(html: string, sourcePath: string): SlotSplit
     throw new Error(`HP003 ${sourcePath}: rendered output lost the profile slot token`);
   }
   if (parts.length > 2) {
-    throw new Error(
-      `HP004 ${sourcePath}: ${parts.length - 1} slot tokens in rendered output`,
-    );
+    throw new Error(`HP004 ${sourcePath}: ${parts.length - 1} slot tokens in rendered output`);
   }
   return { before: parts[0], after: parts[1] };
 }
@@ -63,7 +61,7 @@ export interface RecentSplit {
 export function splitAtRecentHeading(html: string): RecentSplit {
   const match = RECENT_HEADING_RE.exec(html);
   if (match === null) {
-    return { before: html, after: "", found: false };
+    return { before: html, after: '', found: false };
   }
   return {
     before: html.slice(0, match.index),
@@ -78,10 +76,7 @@ export interface TodayPostLike {
 }
 
 /** Today filter with the date as a parameter (PD-U2-04, NFR-U2-006). */
-export function filterTodayPosts<T extends TodayPostLike>(
-  posts: readonly T[],
-  today: string,
-): T[] {
+export function filterTodayPosts<T extends TodayPostLike>(posts: readonly T[], today: string): T[] {
   return posts.filter((p) => !p.is_hub && p.published === today);
 }
 
@@ -91,7 +86,7 @@ export function filterTodayPosts<T extends TodayPostLike>(
  */
 export function resolveBuildDate(
   env: Readonly<Record<string, string | undefined>>,
-  now: () => Date = () => new Date(),
+  now: () => Date = () => new Date()
 ): string {
   const override = env.HOMEPAGE_TODAY_OVERRIDE;
   if (override !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(override)) {
@@ -101,43 +96,40 @@ export function resolveBuildDate(
 }
 
 export type HomepageChunk =
-  | { readonly kind: "html"; readonly html: string }
-  | { readonly kind: "recent" }
-  | { readonly kind: "slot" };
+  | { readonly kind: 'html'; readonly html: string }
+  | { readonly kind: 'recent' }
+  | { readonly kind: 'slot' };
 
 /**
  * Ordered render plan: authored order with the slot and recent-posts
  * substitutions applied independently (BR-U2-042). Empty html chunks are
  * dropped; the slot chunk always renders.
  */
-export function buildHomepageChunks(
-  renderedHtml: string,
-  sourcePath: string,
-): HomepageChunk[] {
+export function buildHomepageChunks(renderedHtml: string, sourcePath: string): HomepageChunk[] {
   const slot = splitRenderedAtSlot(renderedHtml, sourcePath);
   const chunks: HomepageChunk[] = [];
   let recentPlaced = false;
   for (const [part, side] of [
-    [slot.before, "before"],
-    [slot.after, "after"],
+    [slot.before, 'before'],
+    [slot.after, 'after'],
   ] as const) {
     const recent = splitAtRecentHeading(part);
-    if (recent.before.trim() !== "") chunks.push({ kind: "html", html: recent.before });
+    if (recent.before.trim() !== '') chunks.push({ kind: 'html', html: recent.before });
     if (recent.found) {
-      chunks.push({ kind: "recent" });
+      chunks.push({ kind: 'recent' });
       recentPlaced = true;
     }
-    if (recent.found && recent.after.trim() !== "") {
-      chunks.push({ kind: "html", html: recent.after });
+    if (recent.found && recent.after.trim() !== '') {
+      chunks.push({ kind: 'html', html: recent.after });
     }
-    if (side === "before") chunks.push({ kind: "slot" });
+    if (side === 'before') chunks.push({ kind: 'slot' });
   }
   // When the heading never matches — the real Vault uses an h3, which the
   // verbatim h2 rule ignores — the section still always renders, placed
   // directly after the profile slot.
   if (!recentPlaced) {
-    const slotIndex = chunks.findIndex((c) => c.kind === "slot");
-    chunks.splice(slotIndex + 1, 0, { kind: "recent" });
+    const slotIndex = chunks.findIndex((c) => c.kind === 'slot');
+    chunks.splice(slotIndex + 1, 0, { kind: 'recent' });
   }
   return chunks;
 }

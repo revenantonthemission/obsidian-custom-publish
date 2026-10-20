@@ -54,13 +54,13 @@
 }
 
 /* The section being read: weight and an inset tint bar, never color alone. */
-.toc-item a[aria-current="location"] {
+.toc-item a[aria-current='location'] {
   color: var(--c-text);
   font-weight: 600;
 }
 
-.toc-item a[aria-current="location"]::before {
-  content: "";
+.toc-item a[aria-current='location']::before {
+  content: '';
   position: absolute;
   inset-block: var(--space-2);
   inset-inline-start: 0;
@@ -130,7 +130,9 @@ body:has(.outline-sheet[open]) .outline-open {
 
 /* Back to top sits above the outline button, never on it (W4). */
 body:has(.outline-open) .back-to-top {
-  inset-block-end: calc(max(var(--space-4), env(safe-area-inset-bottom)) + var(--target) + var(--space-2));
+  inset-block-end: calc(
+    max(var(--space-4), env(safe-area-inset-bottom)) + var(--target) + var(--space-2)
+  );
 }
 
 /* ── The outline sheet: a modal bottom sheet in thick glass ── */

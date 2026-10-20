@@ -10,12 +10,12 @@
  *   element itself, at a point outside its box.
  */
 const FOCUSABLE =
-  "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]";
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]';
 
 /** The controls in the root that Tab can reach, in document order. */
 export function focusableIn(root: HTMLElement): HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-    (element) => element.tabIndex >= 0 && element.getClientRects().length > 0,
+    (element) => element.tabIndex >= 0 && element.getClientRects().length > 0
   );
 }
 
@@ -27,7 +27,7 @@ export function nextStop(current: number, count: number, backwards: boolean): nu
 
 /** Handles a keydown inside the root: a Tab moves to the next control in the root. */
 export function trapTab(root: HTMLElement, event: KeyboardEvent): void {
-  if (event.key !== "Tab") return;
+  if (event.key !== 'Tab') return;
   const focusables = focusableIn(root);
   if (focusables.length === 0) return;
   event.preventDefault();
@@ -39,5 +39,10 @@ export function trapTab(root: HTMLElement, event: KeyboardEvent): void {
 export function isBackdropClick(dialog: HTMLDialogElement, event: MouseEvent): boolean {
   if (event.target !== dialog) return false;
   const box = dialog.getBoundingClientRect();
-  return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+  return (
+    event.clientX < box.left ||
+    event.clientX > box.right ||
+    event.clientY < box.top ||
+    event.clientY > box.bottom
+  );
 }

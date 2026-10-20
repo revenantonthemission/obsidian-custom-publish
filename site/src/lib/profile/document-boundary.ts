@@ -5,26 +5,15 @@ import {
   validateCanonicalDigest,
 } from './canonical-digest.js';
 import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
-import {
-  buildApprovedResumeManifest,
-  compareResumeFactManifests,
-} from './resume-manifest.js';
+import { buildApprovedResumeManifest, compareResumeFactManifests } from './resume-manifest.js';
 import { snapshotResumeDocumentData } from './resume-evidence.js';
 import type { ResumeFactManifest } from './resume-manifest.js';
-import type {
-  FactApprovedProfileAssembly,
-  ValidationIssue,
-  ValidationResult,
-} from './types.js';
-import type {
-  ProfileSourceDigest,
-  ResumeFactManifestDigest,
-} from './canonical-digest.js';
+import type { FactApprovedProfileAssembly, ValidationIssue, ValidationResult } from './types.js';
+import type { ProfileSourceDigest, ResumeFactManifestDigest } from './canonical-digest.js';
 
 export const RESUME_DOCUMENT_SOURCE_ROUTE = '/resume' as const;
 export const RESUME_DOCUMENT_PUBLIC_HREF = '/resume.pdf' as const;
-export const RESUME_DOCUMENT_REPOSITORY_PATH =
-  'site/public/resume.pdf' as const;
+export const RESUME_DOCUMENT_REPOSITORY_PATH = 'site/public/resume.pdf' as const;
 export const RESUME_DOCUMENT_VISIBLE_LABEL = 'PDF 이력서 다운로드' as const;
 
 export interface ResumeDocumentLink {
@@ -56,7 +45,7 @@ export function getResumeDocumentLink(): ResumeDocumentLink {
 }
 
 export function validateResumeDocumentLink(
-  candidate: unknown,
+  candidate: unknown
 ): ValidationResult<ResumeDocumentLink> {
   const snapshot = snapshotResumeDocumentData(candidate);
   if (
@@ -74,7 +63,7 @@ export function validateResumeDocumentLink(
 
 /** Creates a request from one already-validated expected manifest. */
 export function createResumeDocumentRequest(
-  expectedManifest: ResumeFactManifest,
+  expectedManifest: ResumeFactManifest
 ): ResumeDocumentRequest {
   return Object.freeze({
     schemaVersion: CANONICAL_DIGEST_SCHEMA_VERSION,
@@ -93,7 +82,7 @@ export function createResumeDocumentRequest(
  * from a merely validated or hand-authored profile.
  */
 export async function buildApprovedResumeDocumentRequest(
-  assembly: FactApprovedProfileAssembly,
+  assembly: FactApprovedProfileAssembly
 ): Promise<ValidationResult<ResumeDocumentRequest>> {
   try {
     const source = readOwnedDataProperty(assembly, 'source');
@@ -101,7 +90,7 @@ export async function buildApprovedResumeDocumentRequest(
       return failure('document.source.invalid', 'profile.document.request');
     }
     const manifestResult = await buildApprovedResumeManifest(
-      source as FactApprovedProfileAssembly['source'],
+      source as FactApprovedProfileAssembly['source']
     );
     if (!manifestResult.ok) return manifestResult;
     return Object.freeze({
@@ -119,7 +108,7 @@ export async function buildApprovedResumeDocumentRequest(
  */
 export async function validateCurrentResumeDocumentRequest(
   candidate: unknown,
-  assembly: FactApprovedProfileAssembly,
+  assembly: FactApprovedProfileAssembly
 ): Promise<ValidationResult<ResumeDocumentRequest>> {
   try {
     const shape = validateRequestShape(candidate);
@@ -133,37 +122,28 @@ export async function validateCurrentResumeDocumentRequest(
 
     if (request.sourceIdentity.digest !== current.sourceIdentity.digest) {
       issues.push(
-        createValidationIssue(
-          'document.source.invalid',
-          'profile.document.request.sourceIdentity',
-        ),
+        createValidationIssue('document.source.invalid', 'profile.document.request.sourceIdentity')
       );
     }
     if (request.manifestFingerprint.digest !== current.fingerprint.digest) {
       issues.push(
         createValidationIssue(
           'document.source.invalid',
-          'profile.document.request.manifestFingerprint',
-        ),
+          'profile.document.request.manifestFingerprint'
+        )
       );
     }
     const parity = compareResumeFactManifests(current, request.expectedManifest);
     if (!parity.ok) {
       issues.push(
-        createValidationIssue(
-          'document.source.invalid',
-          'profile.document.expectedManifest',
-        ),
+        createValidationIssue('document.source.invalid', 'profile.document.expectedManifest')
       );
     } else if (
       parity.value.sourceIdentity.digest !== request.sourceIdentity.digest ||
       parity.value.fingerprint.digest !== request.manifestFingerprint.digest
     ) {
       issues.push(
-        createValidationIssue(
-          'document.source.invalid',
-          'profile.document.expectedManifest',
-        ),
+        createValidationIssue('document.source.invalid', 'profile.document.expectedManifest')
       );
     }
 
@@ -174,15 +154,9 @@ export async function validateCurrentResumeDocumentRequest(
   }
 }
 
-function validateRequestShape(
-  candidate: unknown,
-): ValidationResult<ResumeDocumentRequest> {
+function validateRequestShape(candidate: unknown): ValidationResult<ResumeDocumentRequest> {
   const snapshot = snapshotResumeDocumentData(candidate);
-  if (
-    !snapshot.ok ||
-    !isRecord(snapshot.value) ||
-    !hasExactKeys(snapshot.value, REQUEST_KEYS)
-  ) {
+  if (!snapshot.ok || !isRecord(snapshot.value) || !hasExactKeys(snapshot.value, REQUEST_KEYS)) {
     return failure('document.source.invalid', 'profile.document.request');
   }
   const request = snapshot.value;
@@ -199,22 +173,16 @@ function validateRequestShape(
     return failure('document.link.invalid', 'profile.document.publicHref');
   }
 
-  const source = validateCanonicalDigest(
-    request.sourceIdentity,
-    PROFILE_SOURCE_DIGEST_DOMAIN,
-  );
+  const source = validateCanonicalDigest(request.sourceIdentity, PROFILE_SOURCE_DIGEST_DOMAIN);
   if (!source.ok) {
     return failure('document.source.invalid', 'profile.document.request.sourceIdentity');
   }
   const fingerprint = validateCanonicalDigest(
     request.manifestFingerprint,
-    RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
+    RESUME_FACT_MANIFEST_DIGEST_DOMAIN
   );
   if (!fingerprint.ok) {
-    return failure(
-      'document.source.invalid',
-      'profile.document.request.manifestFingerprint',
-    );
+    return failure('document.source.invalid', 'profile.document.request.manifestFingerprint');
   }
   if (!isRecord(request.expectedManifest)) {
     return failure('document.source.invalid', 'profile.document.expectedManifest');
@@ -236,7 +204,7 @@ function validateRequestShape(
 
 function failure(
   code: 'document.link.invalid' | 'document.source.invalid',
-  path: string,
+  path: string
 ): ValidationResult<never> {
   return failures([createValidationIssue(code, path)]);
 }
@@ -253,25 +221,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function hasExactKeys(
-  value: Record<string, unknown>,
-  keys: readonly string[],
-): boolean {
+function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   const actual = Object.keys(value).sort();
   const expected = [...keys].sort();
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 
-function readOwnedDataProperty(
-  candidate: unknown,
-  key: string,
-): unknown | null {
+function readOwnedDataProperty(candidate: unknown, key: string): unknown | null {
   try {
-    if (
-      typeof candidate !== 'object' ||
-      candidate === null ||
-      Array.isArray(candidate)
-    ) {
+    if (typeof candidate !== 'object' || candidate === null || Array.isArray(candidate)) {
       return null;
     }
     const descriptor = Object.getOwnPropertyDescriptor(candidate, key);

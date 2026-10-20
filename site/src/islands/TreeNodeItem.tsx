@@ -1,6 +1,6 @@
-import { useState } from "preact/hooks";
-import { ChevronRight } from "lucide-preact";
-import type { NavTreeNode } from "../lib/types";
+import { useState } from 'preact/hooks';
+import { ChevronRight } from 'lucide-preact';
+import type { NavTreeNode } from '../lib/types';
 
 /** Check if a node or any descendant has the target slug. */
 export function isAncestor(node: NavTreeNode, slug: string): boolean {
@@ -29,21 +29,26 @@ export function TreeNodeItem({
 
   return (
     <li class="nav-tree-item">
-      <div class={`nav-tree-label${isCurrent ? " current" : ""}`}>
+      <div class={`nav-tree-label${isCurrent ? ' current' : ''}`}>
         {hasChildren ? (
           <button
             type="button"
             class="nav-tree-toggle"
-            aria-expanded={expanded ? "true" : "false"}
-            aria-label={`‘${node.title}’ ${expanded ? "접기" : "펼치기"}`}
+            aria-expanded={expanded ? 'true' : 'false'}
+            aria-label={`‘${node.title}’ ${expanded ? '접기' : '펼치기'}`}
             onClick={() => setExpanded(!expanded)}
           >
-            <ChevronRight class="nav-tree-chevron" size={16} strokeWidth={1.75} aria-hidden="true" />
+            <ChevronRight
+              class="nav-tree-chevron"
+              size={16}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
           </button>
         ) : (
           <span class="nav-tree-spacer" aria-hidden="true" />
         )}
-        <a href={href} aria-current={isCurrent ? "page" : undefined}>
+        <a href={href} aria-current={isCurrent ? 'page' : undefined}>
           {node.title}
         </a>
       </div>

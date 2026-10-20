@@ -4,7 +4,7 @@ const baseUrlValue = process.env.PROFILE_BASE_URL;
 
 if (!baseUrlValue) {
   throw new Error(
-    'PROFILE_BASE_URL is required; start the owned loopback preview through the U1 command router.',
+    'PROFILE_BASE_URL is required; start the owned loopback preview through the U1 command router.'
   );
 }
 

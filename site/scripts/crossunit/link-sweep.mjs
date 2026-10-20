@@ -62,7 +62,9 @@ if (failures.length > 0) {
   for (const { page, target } of failures) {
     console.error(`link-sweep: ${page} -> ${target} has no emitted target`);
   }
-  console.error(`link-sweep: ${failures.length} broken internal link(s) across ${pages.length} pages`);
+  console.error(
+    `link-sweep: ${failures.length} broken internal link(s) across ${pages.length} pages`
+  );
   process.exit(1);
 }
 

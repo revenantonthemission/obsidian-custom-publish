@@ -36,9 +36,7 @@ test.describe('data-platform portfolio', () => {
     await expect(page.locator('.portfolio-intro > h2')).toHaveText('프로필');
     await applyDetailsState(page, 'all-open');
 
-    const presentation = buildPortfolioPresentation(
-      getProductionProfileAssembly().portfolio,
-    );
+    const presentation = buildPortfolioPresentation(getProductionProfileAssembly().portfolio);
     const projects = presentation.sections.find((section) => section.kind === 'projects');
     if (projects?.kind !== 'projects') {
       throw new Error('the approved portfolio has no project section');
@@ -50,14 +48,14 @@ test.describe('data-platform portfolio', () => {
       expect(await article.textContent()).not.toContain('—');
       for (const dimension of project.dimensions) {
         const facts = dimension.blocks.flatMap((block) =>
-          block.tag === 'paragraph' ? [block.text] : [...block.items],
+          block.tag === 'paragraph' ? [block.text] : [...block.items]
         );
         for (const fact of facts) {
           const rendered = article.locator(`[data-profile-fact-id="${fact.factId}"]`);
           await expect(rendered).toHaveCount(1);
           const actual = (await rendered.textContent()) ?? '';
           expect(normalizeText(actual), `rendered fact ${fact.factId}`).toBe(
-            normalizeText(fact.value),
+            normalizeText(fact.value)
           );
 
           const separator = fact.value.indexOf('\n');
@@ -77,8 +75,9 @@ test.describe('data-platform portfolio', () => {
       }
     }
     expect(subtitleCount).toBeGreaterThan(0);
-    await expect(page.locator('.portfolio-case-study h5.profile-content-subtitle'))
-      .toHaveCount(subtitleCount);
+    await expect(page.locator('.portfolio-case-study h5.profile-content-subtitle')).toHaveCount(
+      subtitleCount
+    );
   });
 
   test('keeps the DocSuri role, incident and bounded measurement in the document', async ({
@@ -89,14 +88,16 @@ test.describe('data-platform portfolio', () => {
     await expect(article).toBeVisible();
     await expect(page.locator('.portfolio-case-study').first()).toHaveAttribute(
       'id',
-      'project-docsuri',
+      'project-docsuri'
     );
     await expect(article.locator('h3')).toHaveText('DocSuri');
 
     expect(
-      await article.locator('[data-profile-dimension]').evaluateAll((elements) =>
-        elements.map((element) => element.getAttribute('data-profile-dimension')),
-      ),
+      await article
+        .locator('[data-profile-dimension]')
+        .evaluateAll((elements) =>
+          elements.map((element) => element.getAttribute('data-profile-dimension'))
+        )
     ).toEqual(DIMENSIONS);
 
     // These dimensions are the immediately readable case study, not hidden
@@ -125,9 +126,11 @@ test.describe('data-platform portfolio', () => {
     expect(documentText).toMatch(/(?:단일|하나의|같은).*질의.*반복|반복.*단일.*질의/);
     expect(documentText).toMatch(/현재|당시|과거/);
 
-    const factIds = await article.locator('[data-profile-fact-id]').evaluateAll(
-      (elements) => elements.map((element) => element.getAttribute('data-profile-fact-id')),
-    );
+    const factIds = await article
+      .locator('[data-profile-fact-id]')
+      .evaluateAll((elements) =>
+        elements.map((element) => element.getAttribute('data-profile-fact-id'))
+      );
     expect(factIds.length).toBeGreaterThan(0);
     expect(new Set(factIds).size).toBe(factIds.length);
   });
@@ -139,9 +142,9 @@ test.describe('data-platform portfolio', () => {
     const text = (await page.locator('.profile-shell').textContent()) ?? '';
     expect(text).not.toMatch(/\/Users\/|\/private\/tmp\/|file:\/\//);
     expect(text).not.toContain('docsuri.org');
-    const hrefs = await page.locator('.profile-shell a[href]').evaluateAll(
-      (anchors) => anchors.map((anchor) => anchor.getAttribute('href') ?? ''),
-    );
+    const hrefs = await page
+      .locator('.profile-shell a[href]')
+      .evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute('href') ?? ''));
     for (const href of hrefs) {
       expect(href).not.toMatch(/^(?:file:|\/Users\/|\/private\/tmp\/)/);
       expect(href).not.toMatch(/^(?:\.?\.?\/)*(?:aidlc-docs|docs\/portfolio|evidence)\//);
@@ -149,9 +152,7 @@ test.describe('data-platform portfolio', () => {
     }
   });
 
-  test('project jump navigation resolves to the existing case-study anchors', async ({
-    page,
-  }) => {
+  test('project jump navigation resolves to the existing case-study anchors', async ({ page }) => {
     await gotoRoute(page, ROUTE);
     const navigation = page.locator('.portfolio-project-navigation');
     await expect(navigation).toBeVisible();
@@ -187,7 +188,7 @@ test.describe('data-platform portfolio', () => {
         for (const details of await disclosures.all()) {
           await expect(details).not.toHaveAttribute('open', '');
           const dimension = await details.evaluate((element) =>
-            element.closest('[data-profile-dimension]')?.getAttribute('data-profile-dimension'),
+            element.closest('[data-profile-dimension]')?.getAttribute('data-profile-dimension')
           );
           expect(['keyDecisions', 'architecture', 'lessons']).toContain(dimension);
           const summary = details.locator(':scope > summary');
@@ -265,8 +266,10 @@ function normalizeText(text: string): string {
 async function expectVisibleFocus(locator: Locator): Promise<void> {
   const indicator = await locator.evaluate((element) => {
     const style = window.getComputedStyle(element);
-    return (style.outlineStyle !== 'none' && Number.parseFloat(style.outlineWidth) > 0)
-      || style.boxShadow !== 'none';
+    return (
+      (style.outlineStyle !== 'none' && Number.parseFloat(style.outlineWidth) > 0) ||
+      style.boxShadow !== 'none'
+    );
   });
   expect(indicator, 'the focused summary must have a visible focus indicator').toBe(true);
 }
@@ -282,6 +285,6 @@ async function expectNoAxeViolations(page: Page): Promise<void> {
       id,
       impact,
       targets: nodes.map(({ target }) => target),
-    })),
+    }))
   ).toEqual([]);
 }

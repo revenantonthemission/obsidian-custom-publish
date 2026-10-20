@@ -1,11 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  lstat,
-  mkdir,
-  rename,
-  unlink,
-  writeFile,
-} from 'node:fs/promises';
+import { lstat, mkdir, rename, unlink, writeFile } from 'node:fs/promises';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { dirname } from 'node:path';
 import { PROFILE_PATHS } from './profile-paths.mjs';
@@ -16,10 +10,7 @@ const ENGINES = Object.freeze([
   Object.freeze({ name: 'webkit', browserType: webkit }),
 ]);
 
-const buildId = requiredSha256(
-  process.env.PROFILE_BUILD_ID,
-  'PROFILE_BUILD_ID',
-);
+const buildId = requiredSha256(process.env.PROFILE_BUILD_ID, 'PROFILE_BUILD_ID');
 const attempt = requiredAttempt(process.env.PROFILE_STARTUP_ATTEMPT);
 const invocationId = randomUUID();
 let currentEngine = 'unknown';
@@ -57,28 +48,32 @@ try {
     }
   }
 
-  process.stdout.write(`${JSON.stringify({
-    schemaVersion: 1,
-    stage: 'startup.browser.launch',
-    result: 'pass',
-    attempt,
-    buildId,
-    invocationId,
-    engines,
-  })}\n`);
-} catch (error) {
-  if (currentPhase === 'cleanup') {
-    process.stderr.write(`${JSON.stringify({
+  process.stdout.write(
+    `${JSON.stringify({
       schemaVersion: 1,
-      stage: 'cleanup.browser',
-      result: 'fail',
+      stage: 'startup.browser.launch',
+      result: 'pass',
       attempt,
       buildId,
       invocationId,
-      errorCode: 'BROWSER_PREFLIGHT_CLEANUP_FAILED',
-      engine: currentEngine,
-      error: serializeError(error),
-    })}\n`);
+      engines,
+    })}\n`
+  );
+} catch (error) {
+  if (currentPhase === 'cleanup') {
+    process.stderr.write(
+      `${JSON.stringify({
+        schemaVersion: 1,
+        stage: 'cleanup.browser',
+        result: 'fail',
+        attempt,
+        buildId,
+        invocationId,
+        errorCode: 'BROWSER_PREFLIGHT_CLEANUP_FAILED',
+        engine: currentEngine,
+        error: serializeError(error),
+      })}\n`
+    );
     process.exitCode = 2;
   } else {
     const evidence = Object.freeze({
@@ -93,10 +88,7 @@ try {
       createdContextIds,
       error: serializeError(error),
     });
-    await writePrivateJson(
-      PROFILE_PATHS.browserStartupFailurePath,
-      evidence,
-    );
+    await writePrivateJson(PROFILE_PATHS.browserStartupFailurePath, evidence);
     process.stderr.write(`${JSON.stringify(evidence)}\n`);
     process.exitCode = 1;
   }
@@ -107,11 +99,11 @@ async function writePrivateJson(path, value) {
   await requireAbsentOrRegularFile(path);
   const temporaryPath = `${path}.${process.pid}.${randomUUID()}.tmp`;
   try {
-    await writeFile(
-      temporaryPath,
-      `${JSON.stringify(value, null, 2)}\n`,
-      { encoding: 'utf8', flag: 'wx', mode: 0o600 },
-    );
+    await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, {
+      encoding: 'utf8',
+      flag: 'wx',
+      mode: 0o600,
+    });
     await rename(temporaryPath, path);
   } finally {
     await unlink(temporaryPath).catch((error) => {
@@ -124,9 +116,7 @@ async function requireAbsentOrRegularFile(path) {
   try {
     const target = await lstat(path);
     if (target.isSymbolicLink() || !target.isFile()) {
-      throw new TypeError(
-        'The browser startup evidence target must be absent or a regular file.',
-      );
+      throw new TypeError('The browser startup evidence target must be absent or a regular file.');
     }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw error;

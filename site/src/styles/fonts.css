@@ -7,7 +7,7 @@
  * replaces the CDN stylesheet the blog routes used and the separate import the
  * profile routes used. BaseLayout preloads the two most-used subsets.
  */
-@import "../../.generated/profile-font/pretendard-profile.css";
+@import '../../.generated/profile-font/pretendard-profile.css';
 
 /* Metric-matched fallback (mockups review finding R-10; NFR2 CLS < 0.1).
  * While the subsets load, text renders in a local face scaled to Pretendard's
@@ -17,8 +17,10 @@
  * Arial for Latin; Hangul advances already match (0.864 em against 0.865 em).
  */
 @font-face {
-  font-family: "RVNNT Fallback";
-  src: local("Apple SD Gothic Neo"), local("AppleSDGothicNeo-Regular"), local("Malgun Gothic"), local("Noto Sans KR");
+  font-family: 'RVNNT Fallback';
+  src:
+    local('Apple SD Gothic Neo'), local('AppleSDGothicNeo-Regular'), local('Malgun Gothic'),
+    local('Noto Sans KR');
   unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7AF, U+D7B0-D7FF;
   size-adjust: 99.91%;
   ascent-override: 95.3%;
@@ -27,9 +29,11 @@
 }
 
 @font-face {
-  font-family: "RVNNT Fallback";
-  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-family: 'RVNNT Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Helvetica');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
   size-adjust: 102.04%;
   ascent-override: 93.32%;
   descent-override: 23.64%;

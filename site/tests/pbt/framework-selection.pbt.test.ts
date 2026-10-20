@@ -10,12 +10,10 @@ const profileSummaryArbitrary = fc.record({
     .map((characters) => characters.join('').normalize('NFC')),
   projects: fc.array(
     fc.record({
-      id: fc
-        .integer({ min: 1, max: 999 })
-        .map((value) => `project-${value}`),
+      id: fc.integer({ min: 1, max: 999 }).map((value) => `project-${value}`),
       order: fc.integer({ min: 1, max: 1_000 }),
     }),
-    { minLength: 3, maxLength: 6 },
+    { minLength: 3, maxLength: 6 }
   ),
 });
 
@@ -25,14 +23,11 @@ test.prop([profileSummaryArbitrary])(
     expect(profile.title).toBe(profile.title.normalize('NFC'));
     expect(profile.projects.length).toBeGreaterThanOrEqual(3);
     expect(profile.projects.length).toBeLessThanOrEqual(6);
-  },
+  }
 );
 
 test('shrinks a counterexample and replays it from seed and path', () => {
-  const property = fc.property(
-    fc.integer({ min: 0, max: 1_000 }),
-    (value) => value < 10,
-  );
+  const property = fc.property(fc.integer({ min: 0, max: 1_000 }), (value) => value < 10);
   const firstRun = fc.check(property, {
     numRuns: 1,
     seed: 4_242,

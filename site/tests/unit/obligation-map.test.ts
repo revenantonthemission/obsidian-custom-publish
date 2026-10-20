@@ -70,7 +70,7 @@ describe('U1 obligation map', () => {
 
     for (const obligation of obligationMap.obligations) {
       expect(canonicalIds, `unknown canonical test ${obligation.canonicalTestId}`).toContain(
-        obligation.canonicalTestId,
+        obligation.canonicalTestId
       );
     }
   });
@@ -79,13 +79,13 @@ describe('U1 obligation map', () => {
     const canonicalTests = obligationMap.canonicalTests as CanonicalTest[];
     for (const canonicalTest of canonicalTests) {
       expect(canonicalTest.path).toMatch(
-        /^tests\/(?:unit\/[^/]+\.test\.ts|pbt\/u1\/[^/]+\.pbt\.test\.ts|e2e\/[^/]+\.spec\.ts)$/,
+        /^tests\/(?:unit\/[^/]+\.test\.ts|pbt\/u1\/[^/]+\.pbt\.test\.ts|e2e\/[^/]+\.spec\.ts)$/
       );
 
       if (process.env.U1_VERIFY_OBLIGATION_PATHS === '1') {
         expect(
           existsSync(resolve(process.cwd(), canonicalTest.path)),
-          `missing canonical test path ${canonicalTest.path}`,
+          `missing canonical test path ${canonicalTest.path}`
         ).toBe(true);
       }
     }
@@ -102,11 +102,9 @@ describe('U1 obligation map', () => {
 
   test('keeps only later-step refinement coverage explicitly deferred', () => {
     const canonicalIds = new Set(
-      (obligationMap.canonicalTests as CanonicalTest[]).map(({ id }) => id),
+      (obligationMap.canonicalTests as CanonicalTest[]).map(({ id }) => id)
     );
-    const obligationIds = new Set(
-      obligationMap.obligations.map(({ id }) => id),
-    );
+    const obligationIds = new Set(obligationMap.obligations.map(({ id }) => id));
     const deferred = obligationMap.deferredCoverage as DeferredCoverage[];
     const deferredIds = deferred.flatMap(({ ids }) => ids);
 
@@ -114,15 +112,12 @@ describe('U1 obligation map', () => {
     for (const item of deferred) {
       expect(
         canonicalIds.has(item.canonicalTestId),
-        `unknown deferred canonical test ${item.canonicalTestId}`,
+        `unknown deferred canonical test ${item.canonicalTestId}`
       ).toBe(true);
       expect(item.remainingStep).toBeGreaterThan(9);
       expect(item.rationale.trim().length).toBeGreaterThan(40);
       for (const id of item.ids) {
-        expect(
-          obligationIds.has(id),
-          `unknown deferred obligation ${id}`,
-        ).toBe(true);
+        expect(obligationIds.has(id), `unknown deferred obligation ${id}`).toBe(true);
       }
     }
 
@@ -138,21 +133,16 @@ describe('U1 obligation map', () => {
         canonicalTestId,
         remainingStep,
         ids,
-      })),
+      }))
     ).toEqual([]);
   });
 
   test('closes frontend aliases in their canonical suites and preserves later owners', () => {
     const canonicalByObligation = new Map(
-      obligationMap.obligations.map(({ id, canonicalTestId }) => [
-        id,
-        canonicalTestId,
-      ]),
+      obligationMap.obligations.map(({ id, canonicalTestId }) => [id, canonicalTestId])
     );
     const deferredIds = new Set(
-      (obligationMap.deferredCoverage as DeferredCoverage[]).flatMap(
-        ({ ids }) => ids,
-      ),
+      (obligationMap.deferredCoverage as DeferredCoverage[]).flatMap(({ ids }) => ids)
     );
 
     const presentationAliases = [
@@ -164,13 +154,7 @@ describe('U1 obligation map', () => {
       'FD-P-C02-02',
       'FD-P-C02-03',
     ];
-    const metadataAliases = [
-      'U1-P09',
-      'P-C04-01',
-      'P-C04-02',
-      'FD-P-C04-01',
-      'FD-P-C04-02',
-    ];
+    const metadataAliases = ['U1-P09', 'P-C04-01', 'P-C04-02', 'FD-P-C04-01', 'FD-P-C04-02'];
     const navigationAliases = [
       'U1-P10',
       'P-C05-01',
@@ -181,23 +165,15 @@ describe('U1 obligation map', () => {
     ];
 
     for (const id of presentationAliases) {
-      expect(canonicalByObligation.get(id)).toBe(
-        'PBT-U1-PRESENTATION',
-      );
+      expect(canonicalByObligation.get(id)).toBe('PBT-U1-PRESENTATION');
       expect(deferredIds.has(id)).toBe(false);
     }
     for (const id of [...metadataAliases, ...navigationAliases]) {
-      expect(canonicalByObligation.get(id)).toBe(
-        'PBT-U1-METADATA-NAVIGATION',
-      );
+      expect(canonicalByObligation.get(id)).toBe('PBT-U1-METADATA-NAVIGATION');
       expect(deferredIds.has(id)).toBe(false);
     }
-    expect(canonicalByObligation.get('DE-P13')).toBe(
-      'PBT-U1-METADATA-NAVIGATION',
-    );
-    expect(canonicalByObligation.get('DE-P15')).toBe(
-      'PBT-U1-DOCUMENT',
-    );
+    expect(canonicalByObligation.get('DE-P13')).toBe('PBT-U1-METADATA-NAVIGATION');
+    expect(canonicalByObligation.get('DE-P15')).toBe('PBT-U1-DOCUMENT');
     // FD-P-C11-01 is the four-surface mapping obligation. It pointed at
     // PBT-U1-DOCUMENT while that suite only compares manifest against
     // manifest — it never calls compareRenderedManifest, mapPdfEvidence or
@@ -211,35 +187,28 @@ describe('U1 obligation map', () => {
   test('keeps test fixtures out of production modules', () => {
     const sourceRoot = resolve(process.cwd(), 'src');
     const productionFiles = collectFiles(sourceRoot).filter((path) =>
-      /\.(?:astro|js|mjs|ts|tsx)$/.test(path),
+      /\.(?:astro|js|mjs|ts|tsx)$/.test(path)
     );
 
     for (const path of productionFiles) {
       const source = readFileSync(path, 'utf8');
       expect(source, `${path} imports test fixtures`).not.toMatch(
-        /(?:tests\/fixtures|profile-fixtures)/,
+        /(?:tests\/fixtures|profile-fixtures)/
       );
     }
 
     const fixtureSource = readFileSync(
       resolve(process.cwd(), 'tests/fixtures/profile-fixtures.ts'),
-      'utf8',
+      'utf8'
     );
-    expect(fixtureSource).not.toMatch(
-      /(?:profile-data|production-profile|verification\/profile)/,
-    );
+    expect(fixtureSource).not.toMatch(/(?:profile-data|production-profile|verification\/profile)/);
   });
 });
 
-function rangeIds(
-  prefix: string,
-  start: number,
-  end: number,
-  width = 2,
-): string[] {
+function rangeIds(prefix: string, start: number, end: number, width = 2): string[] {
   return Array.from(
     { length: end - start + 1 },
-    (_, index) => `${prefix}${String(start + index).padStart(width, '0')}`,
+    (_, index) => `${prefix}${String(start + index).padStart(width, '0')}`
   );
 }
 

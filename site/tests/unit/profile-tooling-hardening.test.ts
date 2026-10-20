@@ -1,11 +1,7 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, test } from 'vitest';
-import {
-  assetBudgetTesting,
-} from '../../scripts/profile/asset-budget.mjs';
-import {
-  installRequestLedger,
-} from '../../scripts/profile/request-ledger.mjs';
+import { assetBudgetTesting } from '../../scripts/profile/asset-budget.mjs';
+import { installRequestLedger } from '../../scripts/profile/request-ledger.mjs';
 
 describe('profile resource evidence hardening', () => {
   test('binds inline CSS to its exact final HTML occurrence', () => {
@@ -13,28 +9,23 @@ describe('profile resource evidence hardening', () => {
     const documentBytes = Buffer.from(
       '<!doctype html><style>astro-island{display:contents}</style>' +
         `<style>${profileCss.toString('utf8')}</style>`,
-      'utf8',
+      'utf8'
     );
     const documentIdentity = {
       bytes: documentBytes.byteLength,
       sha256: digest(documentBytes),
     };
-    const routeDocument =
-      assetBudgetTesting.resolveProfileRouteDocument({
-        route: '/portfolio',
-        routeOutputs: [
-          {
-            route: '/portfolio',
-            outputs: ['portfolio/index.html'],
-          },
-        ],
-        outputFiles: new Map([
-          ['portfolio/index.html', documentIdentity],
-        ]),
-        emittedBytes: new Map([
-          ['portfolio/index.html', documentBytes],
-        ]),
-      });
+    const routeDocument = assetBudgetTesting.resolveProfileRouteDocument({
+      route: '/portfolio',
+      routeOutputs: [
+        {
+          route: '/portfolio',
+          outputs: ['portfolio/index.html'],
+        },
+      ],
+      outputFiles: new Map([['portfolio/index.html', documentIdentity]]),
+      emittedBytes: new Map([['portfolio/index.html', documentBytes]]),
+    });
 
     expect(routeDocument.claimInlineStyle(profileCss)).toMatchObject({
       documentPath: 'portfolio/index.html',
@@ -114,21 +105,20 @@ describe('browser request ledger lifecycle hardening', () => {
         },
       ],
     });
-    const request = fakeRequest(
-      'http://127.0.0.1:43117/resume',
-      'document',
-    );
+    const request = fakeRequest('http://127.0.0.1:43117/resume', 'document');
 
     const routeOperation = context.dispatchRoute(request);
     await Promise.resolve();
     let finalized = false;
-    const finalization = ledger.finalize({
-      requireProfileRoutes: false,
-      timeoutMs: 1_000,
-    }).then((evidence) => {
-      finalized = true;
-      return evidence;
-    });
+    const finalization = ledger
+      .finalize({
+        requireProfileRoutes: false,
+        timeoutMs: 1_000,
+      })
+      .then((evidence) => {
+        finalized = true;
+        return evidence;
+      });
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(finalized).toBe(false);
@@ -190,10 +180,7 @@ function createBarrierContext() {
         continue: async () => continueBarrier,
       });
     },
-    dispatchResponse(
-      request: ReturnType<typeof fakeRequest>,
-      status: number,
-    ) {
+    dispatchResponse(request: ReturnType<typeof fakeRequest>, status: number) {
       for (const handler of listeners.get('response') ?? []) {
         handler({
           request: () => request,
@@ -206,8 +193,7 @@ function createBarrierContext() {
       releaseContinue?.();
     },
     listenerCount() {
-      return [...listeners.values()]
-        .reduce((total, handlers) => total + handlers.size, 0);
+      return [...listeners.values()].reduce((total, handlers) => total + handlers.size, 0);
     },
   };
 }

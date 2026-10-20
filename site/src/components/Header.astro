@@ -1,18 +1,18 @@
 ---
-import ThemeToggle from "../islands/ThemeToggle.tsx";
-import MobileNav from "../islands/MobileNav.tsx";
-import { Search, Split } from "lucide-static";
-import { decorativeIcon } from "../lib/icons";
-import { getPrimaryNavigationState } from "../lib/navigation.js";
+import ThemeToggle from '../islands/ThemeToggle.tsx';
+import MobileNav from '../islands/MobileNav.tsx';
+import { Search, Split } from 'lucide-static';
+import { decorativeIcon } from '../lib/icons';
+import { getPrimaryNavigationState } from '../lib/navigation.js';
 
 interface Props {
   pathname?: string;
 }
 
-const { pathname = "/" } = Astro.props;
+const { pathname = '/' } = Astro.props;
 const navigationResult = getPrimaryNavigationState(pathname);
 if (!navigationResult.ok) {
-  throw new TypeError("Invalid primary navigation state.");
+  throw new TypeError('Invalid primary navigation state.');
 }
 const primaryNavigation = navigationResult.value;
 
@@ -28,7 +28,7 @@ const primaryNavigation = navigationResult.value;
 <header class="site-header">
   <div class="site-bar">
     <span class="site-bar-material" data-material="regular" aria-hidden="true"></span>
-    <a href="/" class="site-title" aria-current={pathname === "/" ? "page" : undefined}>
+    <a href="/" class="site-title" aria-current={pathname === '/' ? 'page' : undefined}>
       <span class="site-mark" set:html={decorativeIcon(Split, 20)} />
       <span class="site-title-text">obsidian-press</span>
     </a>
@@ -37,7 +37,7 @@ const primaryNavigation = navigationResult.value;
         <a
           href={item.href}
           class="site-nav-link"
-          aria-current={item.current ? "page" : undefined}
+          aria-current={item.current ? 'page' : undefined}
           data-testid={`primary-navigation-link-${item.href.slice(1)}`}
         >
           {item.label}
@@ -47,9 +47,10 @@ const primaryNavigation = navigationResult.value;
     <div class="site-actions">
       <button type="button" class="search-trigger" aria-label="검색 열기" data-search-open>
         <span class="search-icon" set:html={decorativeIcon(Search, 20)} />
-        <kbd class="search-shortcut" aria-hidden="true"
-          ><span data-platform-only="apple">⌘K</span><span data-platform-only="other">Ctrl K</span></kbd
-        >
+        <kbd class="search-shortcut" aria-hidden="true">
+          <span data-platform-only="apple">⌘K</span>
+          <span data-platform-only="other">Ctrl K</span>
+        </kbd>
       </button>
       <ThemeToggle client:load />
       <MobileNav items={primaryNavigation} />
@@ -61,9 +62,9 @@ const primaryNavigation = navigationResult.value;
 <script>
   // Any [data-search-open] control opens the search dialog (islands/Search.tsx),
   // which returns focus to that control when it closes.
-  document.querySelectorAll("[data-search-open]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("open-search", { detail: { trigger: btn } }));
+  document.querySelectorAll('[data-search-open]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-search', { detail: { trigger: btn } }));
     });
   });
 </script>

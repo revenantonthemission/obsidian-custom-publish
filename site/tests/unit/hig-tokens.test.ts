@@ -22,26 +22,69 @@ const HUES = ['blue', 'green', 'orange', 'red', 'purple', 'gray'] as const;
 
 /** Every color token design-system-mapping.md defines, plus the review fixes. */
 const COLOR_TOKENS = [
-  '--c-bg', '--c-bg-grouped', '--c-surface', '--c-surface-2', '--c-code-bg',
-  '--c-text', '--c-text-secondary', '--c-text-tertiary', '--c-separator',
-  '--c-control-border', '--c-fill', '--c-tint', '--c-tint-hover', '--c-tint-fill',
-  '--c-on-tint', '--c-scrim', '--c-glass-regular', '--c-glass-thick',
-  '--c-bar-focus-ring', '--c-bar-indicator',
+  '--c-bg',
+  '--c-bg-grouped',
+  '--c-surface',
+  '--c-surface-2',
+  '--c-code-bg',
+  '--c-text',
+  '--c-text-secondary',
+  '--c-text-tertiary',
+  '--c-separator',
+  '--c-control-border',
+  '--c-fill',
+  '--c-tint',
+  '--c-tint-hover',
+  '--c-tint-fill',
+  '--c-on-tint',
+  '--c-scrim',
+  '--c-glass-regular',
+  '--c-glass-thick',
+  '--c-bar-focus-ring',
+  '--c-bar-indicator',
   ...HUES.flatMap((hue) => [`--c-${hue}`, `--c-${hue}-text`]),
 ] as const;
 
 /** Non-color tokens: type, spacing, radius, elevation, layout and motion. */
 const SCALE_TOKENS = [
-  '--glass-blur', '--c-glass-edge', '--shadow-float', '--c-callout-mix',
-  '--font-body', '--font-code',
-  '--text-large-title', '--text-title-1', '--text-title-2', '--text-title-3',
-  '--text-headline', '--text-body', '--text-callout', '--text-subheadline',
-  '--text-footnote', '--text-caption',
-  '--space-1', '--space-2', '--space-3', '--space-4', '--space-5',
-  '--space-6', '--space-8', '--space-10', '--space-12', '--space-16',
-  '--radius-xs', '--radius-sm', '--radius-md', '--radius-lg', '--radius-capsule',
-  '--max-reading', '--outline-width',
-  '--dur-fast', '--dur-normal', '--dur-slow', '--ease-standard', '--ease-spring',
+  '--glass-blur',
+  '--c-glass-edge',
+  '--shadow-float',
+  '--c-callout-mix',
+  '--font-body',
+  '--font-code',
+  '--text-large-title',
+  '--text-title-1',
+  '--text-title-2',
+  '--text-title-3',
+  '--text-headline',
+  '--text-body',
+  '--text-callout',
+  '--text-subheadline',
+  '--text-footnote',
+  '--text-caption',
+  '--space-1',
+  '--space-2',
+  '--space-3',
+  '--space-4',
+  '--space-5',
+  '--space-6',
+  '--space-8',
+  '--space-10',
+  '--space-12',
+  '--space-16',
+  '--radius-xs',
+  '--radius-sm',
+  '--radius-md',
+  '--radius-lg',
+  '--radius-capsule',
+  '--max-reading',
+  '--outline-width',
+  '--dur-fast',
+  '--dur-normal',
+  '--dur-slow',
+  '--ease-standard',
+  '--ease-spring',
 ] as const;
 
 // A formatter may print an attribute selector with either quote, so a `"` in
@@ -74,7 +117,11 @@ function declarations(block: string): Map<string, string> {
   return map;
 }
 
-function loadTokens(): { light: Map<string, string>; dark: Map<string, string>; darkByAttribute: Map<string, string> } {
+function loadTokens(): {
+  light: Map<string, string>;
+  dark: Map<string, string>;
+  darkByAttribute: Map<string, string>;
+} {
   const css = readFileSync(TOKENS_PATH, 'utf8');
   const light = declarations(readBlock(css, ':root {'));
   const mediaBlock = readBlock(css, '@media (prefers-color-scheme: dark)');
@@ -100,11 +147,18 @@ function parseColor(value: string): Rgba {
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value);
   if (hex !== null) {
     const digits = hex[1]!.length === 3 ? [...hex[1]!].map((d) => d + d).join('') : hex[1]!;
-    return [0, 2, 4].map((offset) => parseInt(digits.slice(offset, offset + 2), 16)).concat(1) as unknown as Rgba;
+    return [0, 2, 4]
+      .map((offset) => parseInt(digits.slice(offset, offset + 2), 16))
+      .concat(1) as unknown as Rgba;
   }
   const rgba = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/.exec(value);
   if (rgba !== null) {
-    return [Number(rgba[1]), Number(rgba[2]), Number(rgba[3]), rgba[4] === undefined ? 1 : Number(rgba[4])];
+    return [
+      Number(rgba[1]),
+      Number(rgba[2]),
+      Number(rgba[3]),
+      rgba[4] === undefined ? 1 : Number(rgba[4]),
+    ];
   }
   throw new Error(`"${value}" is not a hex or rgba() color`);
 }
@@ -116,7 +170,9 @@ function color(tokens: Map<string, string>, name: string): Rgba {
 /** Source-over compositing in sRGB, the method the design's evidence used. */
 function composite(top: Rgba, backdrop: Rgba): Rgba {
   const alpha = top[3];
-  return [0, 1, 2].map((channel) => top[channel]! * alpha + backdrop[channel]! * (1 - alpha)).concat(1) as unknown as Rgba;
+  return [0, 1, 2]
+    .map((channel) => top[channel]! * alpha + backdrop[channel]! * (1 - alpha))
+    .concat(1) as unknown as Rgba;
 }
 
 function luminance([r, g, b]: Rgba): number {
@@ -154,9 +210,10 @@ describe('HIG token layer (tokens.css)', () => {
     expect(missing).toEqual([]);
     for (const name of COLOR_TOKENS) {
       expect(() => color(tokens.dark, name), name).not.toThrow();
-      expect(resolveValue(tokens.darkByAttribute, name), `${name} differs between the two dark blocks`).toBe(
-        resolveValue(tokens.dark, name),
-      );
+      expect(
+        resolveValue(tokens.darkByAttribute, name),
+        `${name} differs between the two dark blocks`
+      ).toBe(resolveValue(tokens.dark, name));
     }
   });
 
@@ -171,7 +228,7 @@ describe('HIG token layer (tokens.css)', () => {
             label: `${scheme} ${text} on ${ground}`,
             ratio: contrast(color(map, text), color(map, ground)),
             minimum: TEXT_MIN,
-          })),
+          }))
         ),
         {
           label: `${scheme} --c-on-tint on --c-tint-fill`,
@@ -191,7 +248,7 @@ describe('HIG token layer (tokens.css)', () => {
           label: `${scheme} ${token} against ${ground}`,
           ratio: contrast(color(map, token), color(map, ground)),
           minimum: NON_TEXT_MIN,
-        })),
+        }))
       );
     });
     expect(failures(pairs)).toEqual([]);
@@ -209,8 +266,16 @@ describe('HIG token layer (tokens.css)', () => {
         // Light graph nodes use the text variant, dark ones the base (design-system-mapping.md).
         const node = scheme === 'light' ? text : base;
         return [
-          { label: `${scheme} ${hue} callout title on fill`, ratio: contrast(text, fill), minimum: TEXT_MIN },
-          { label: `${scheme} ${hue} graph node on page`, ratio: contrast(node, page), minimum: NON_TEXT_MIN },
+          {
+            label: `${scheme} ${hue} callout title on fill`,
+            ratio: contrast(text, fill),
+            minimum: TEXT_MIN,
+          },
+          {
+            label: `${scheme} ${hue} graph node on page`,
+            ratio: contrast(node, page),
+            minimum: NON_TEXT_MIN,
+          },
         ];
       });
     });
@@ -218,7 +283,14 @@ describe('HIG token layer (tokens.css)', () => {
   });
 
   test('graph category tokens are the text variant in light and the base color in dark, at 3:1 on the page', () => {
-    const categories = { os: 'blue', web: 'green', db: 'orange', network: 'purple', hub: 'red', etc: 'gray' } as const;
+    const categories = {
+      os: 'blue',
+      web: 'green',
+      db: 'orange',
+      network: 'purple',
+      hub: 'red',
+      etc: 'gray',
+    } as const;
     const pairs = SCHEMES.flatMap((scheme) => {
       const map = byScheme[scheme];
       return Object.entries(categories).map(([category, hue]) => {
@@ -226,9 +298,10 @@ describe('HIG token layer (tokens.css)', () => {
         const expected = scheme === 'light' ? `--c-${hue}-text` : `--c-${hue}`;
         expect(resolveValue(map, token), `${scheme} ${token}`).toBe(resolveValue(map, expected));
         if (scheme === 'dark') {
-          expect(resolveValue(tokens.darkByAttribute, token), `${token} differs between the two dark blocks`).toBe(
-            resolveValue(tokens.dark, token),
-          );
+          expect(
+            resolveValue(tokens.darkByAttribute, token),
+            `${token} differs between the two dark blocks`
+          ).toBe(resolveValue(tokens.dark, token));
         }
         return {
           label: `${scheme} ${token} on --c-bg`,
@@ -294,7 +367,7 @@ describe('HIG token layer (tokens.css)', () => {
         ...theme.tokenColors.flatMap((rule) =>
           rule.settings.foreground === undefined
             ? []
-            : [{ label: String(rule.scope), value: rule.settings.foreground }],
+            : [{ label: String(rule.scope), value: rule.settings.foreground }]
         ),
       ];
       expect(foregrounds.length).toBeGreaterThan(10);

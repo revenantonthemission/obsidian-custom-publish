@@ -1,5 +1,5 @@
-import { useState } from "preact/hooks";
-import { Moon, Sun, SunMoon } from "lucide-preact";
+import { useState } from 'preact/hooks';
+import { Moon, Sun, SunMoon } from 'lucide-preact';
 import {
   APPEARANCES,
   appearanceAnnouncement,
@@ -10,7 +10,7 @@ import {
   themeAttribute,
   writeStoredAppearance,
   type Appearance,
-} from "../lib/appearance";
+} from '../lib/appearance';
 
 const ICONS = { auto: SunMoon, light: Sun, dark: Moon } as const;
 
@@ -24,15 +24,15 @@ const ICONS = { auto: SunMoon, light: Sun, dark: Moon } as const;
  * and hydration changes nothing on screen.
  */
 export default function ThemeToggle() {
-  const [announcement, setAnnouncement] = useState("");
+  const [announcement, setAnnouncement] = useState('');
 
   const cycle = (): void => {
     const root = document.documentElement;
-    const next: Appearance = nextAppearance(parseAppearance(root.getAttribute("data-appearance")));
+    const next: Appearance = nextAppearance(parseAppearance(root.getAttribute('data-appearance')));
     const theme = themeAttribute(next);
-    if (theme === null) root.removeAttribute("data-theme");
-    else root.setAttribute("data-theme", theme);
-    root.setAttribute("data-appearance", next);
+    if (theme === null) root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', theme);
+    root.setAttribute('data-appearance', next);
     // Blocked storage keeps the choice for this page only (AC3.3).
     writeStoredAppearance(browserStorage(), next);
     setAnnouncement(appearanceAnnouncement(next));
@@ -51,7 +51,12 @@ export default function ThemeToggle() {
           );
         })}
       </button>
-      <span class="visually-hidden" role="status" aria-live="polite" data-testid="appearance-status">
+      <span
+        class="visually-hidden"
+        role="status"
+        aria-live="polite"
+        data-testid="appearance-status"
+      >
         {announcement}
       </span>
     </>

@@ -17,7 +17,9 @@ import {
   type AppearanceStorage,
 } from '../../src/lib/appearance';
 
-function memoryStorage(initial: Record<string, string> = {}): AppearanceStorage & { snapshot(): Record<string, string> } {
+function memoryStorage(
+  initial: Record<string, string> = {}
+): AppearanceStorage & { snapshot(): Record<string, string> } {
   const values = new Map(Object.entries(initial));
   return {
     getItem: (key) => values.get(key) ?? null,

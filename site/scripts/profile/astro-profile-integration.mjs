@@ -1,13 +1,5 @@
 import { createHash } from 'node:crypto';
-import {
-  lstat,
-  mkdir,
-  readFile,
-  readdir,
-  rename,
-  unlink,
-  writeFile,
-} from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { materializeProfileFont } from './font-materializer.mjs';
@@ -32,7 +24,7 @@ export default function profileBuildIntegration() {
         const result = await materializeProfileFont();
         logger.info(
           `${result.status} Pretendard ${result.packageVersion} ` +
-            `(${result.outputCount} verified outputs)`,
+            `(${result.outputCount} verified outputs)`
         );
       },
       'astro:build:setup': ({ pages, target, updateConfig }) => {
@@ -160,9 +152,7 @@ function createProvenancePlugin(state, { name, order, collection }) {
           .map((id) => {
             const info = this.getModuleInfo(id);
             if (info === null) {
-              throw new TypeError(
-                'Vite returned a missing module during provenance capture',
-              );
+              throw new TypeError('Vite returned a missing module during provenance capture');
             }
 
             return {
@@ -170,12 +160,8 @@ function createProvenancePlugin(state, { name, order, collection }) {
               isEntry: info.isEntry,
               importers: info.importers.map(normalizeModuleId).sort(),
               importedIds: info.importedIds.map(normalizeModuleId).sort(),
-              dynamicImporters: info.dynamicImporters
-                .map(normalizeModuleId)
-                .sort(),
-              dynamicallyImportedIds: info.dynamicallyImportedIds
-                .map(normalizeModuleId)
-                .sort(),
+              dynamicImporters: info.dynamicImporters.map(normalizeModuleId).sort(),
+              dynamicallyImportedIds: info.dynamicallyImportedIds.map(normalizeModuleId).sort(),
             };
           })
           .sort((left, right) => left.id.localeCompare(right.id));
@@ -193,12 +179,8 @@ function createProvenancePlugin(state, { name, order, collection }) {
                 isEntry: output.isEntry,
                 isDynamicEntry: output.isDynamicEntry,
                 imports: [...output.imports].map(normalizeAssetPath).sort(),
-                dynamicImports: [...output.dynamicImports]
-                  .map(normalizeAssetPath)
-                  .sort(),
-                modules: Object.keys(output.modules)
-                  .map(normalizeModuleId)
-                  .sort(),
+                dynamicImports: [...output.dynamicImports].map(normalizeAssetPath).sort(),
+                modules: Object.keys(output.modules).map(normalizeModuleId).sort(),
                 importedCss: [...(output.viteMetadata?.importedCss ?? [])]
                   .map(normalizeAssetPath)
                   .sort(),
@@ -214,14 +196,10 @@ function createProvenancePlugin(state, { name, order, collection }) {
               type: 'asset',
               file,
               names: [...output.names].sort(),
-              originalFileNames: [...output.originalFileNames]
-                .map(normalizeModuleId)
-                .sort(),
+              originalFileNames: [...output.originalFileNames].map(normalizeModuleId).sort(),
               bytes: sourceBytes.byteLength,
               sha256: sha256(sourceBytes),
-              ...(file.endsWith('.css')
-                ? { contentBase64: sourceBytes.toString('base64') }
-                : {}),
+              ...(file.endsWith('.css') ? { contentBase64: sourceBytes.toString('base64') } : {}),
             };
           })
           .sort((left, right) => left.file.localeCompare(right.file));
@@ -261,7 +239,7 @@ async function writePrivateBuildManifest({ state, dir, pages, assets }) {
 
   const pageGraph = selectPageGraph(state.pageGraphs);
   const profilePages = pageGraph.pages.filter(({ route }) =>
-    PROFILE_ROUTES.has(route.pathname ?? route.route),
+    PROFILE_ROUTES.has(route.pathname ?? route.route)
   );
   if (
     profilePages.length !== PROFILE_ROUTES.size ||
@@ -283,16 +261,10 @@ async function writePrivateBuildManifest({ state, dir, pages, assets }) {
   const routeOutputs = [...assets.entries()]
     .map(([route, urls]) => ({
       route,
-      outputs: urls
-        .map((url) =>
-          normalizeAssetPath(relative(distRoot, fileURLToPath(url))),
-        )
-        .sort(),
+      outputs: urls.map((url) => normalizeAssetPath(relative(distRoot, fileURLToPath(url)))).sort(),
     }))
     .sort((left, right) => left.route.localeCompare(right.route));
-  const initialRollupGraphs = orderEnvironmentGraphs(
-    state.initialRollupGraphs,
-  );
+  const initialRollupGraphs = orderEnvironmentGraphs(state.initialRollupGraphs);
   const rollupGraphs = orderEnvironmentGraphs(state.rollupGraphs);
 
   const sourceGraphSha256 = sha256(
@@ -303,8 +275,8 @@ async function writePrivateBuildManifest({ state, dir, pages, assets }) {
         initialRollupGraphs,
         rollupGraphs,
         viteManifest,
-      }),
-    ),
+      })
+    )
   );
   const outputSha256 = sha256(Buffer.from(JSON.stringify(outputFiles)));
   const buildId = sha256(
@@ -313,8 +285,8 @@ async function writePrivateBuildManifest({ state, dir, pages, assets }) {
         sourceGraphSha256,
         outputSha256,
         builtRoutes,
-      }),
-    ),
+      })
+    )
   );
   const manifest = {
     schemaVersion: 1,
@@ -349,10 +321,7 @@ function selectPageGraph(graphs) {
       target,
       pages: serializePageGraph(pages),
     }))
-    .sort(
-      (left, right) =>
-        countExternalStyles(right.pages) - countExternalStyles(left.pages),
-    );
+    .sort((left, right) => countExternalStyles(right.pages) - countExternalStyles(left.pages));
   if (candidates.length === 0) {
     throw new TypeError('PROFILE_BUILD_PAGE_GRAPH_MISSING@astro.build');
   }
@@ -361,10 +330,8 @@ function selectPageGraph(graphs) {
 
 function countExternalStyles(pages) {
   return pages.reduce(
-    (count, page) =>
-      count +
-      page.styles.filter(({ sheet }) => sheet.type === 'external').length,
-    0,
+    (count, page) => count + page.styles.filter(({ sheet }) => sheet.type === 'external').length,
+    0
   );
 }
 
@@ -372,26 +339,18 @@ function orderEnvironmentGraphs(graphs) {
   return Object.fromEntries(
     Object.keys(graphs)
       .sort()
-      .map((environment) => [environment, graphs[environment]]),
+      .map((environment) => [environment, graphs[environment]])
   );
 }
 
 async function readPackageVersion(packageName) {
   const packageDocument = JSON.parse(
     await readFile(
-      resolve(
-        PROFILE_PATHS.siteRoot,
-        'node_modules',
-        packageName,
-        'package.json',
-      ),
-      'utf8',
-    ),
+      resolve(PROFILE_PATHS.siteRoot, 'node_modules', packageName, 'package.json'),
+      'utf8'
+    )
   );
-  if (
-    typeof packageDocument.version !== 'string' ||
-    packageDocument.version.length === 0
-  ) {
+  if (typeof packageDocument.version !== 'string' || packageDocument.version.length === 0) {
     throw new TypeError(`PROFILE_BUILD_TOOL_VERSION_MISSING@${packageName}`);
   }
   return packageDocument.version;
@@ -410,9 +369,7 @@ async function collectOutputFiles(root) {
         continue;
       }
       const relativePath =
-        relativeDirectory.length === 0
-          ? entry.name
-          : `${relativeDirectory}/${entry.name}`;
+        relativeDirectory.length === 0 ? entry.name : `${relativeDirectory}/${entry.name}`;
       const absolutePath = resolve(directory, entry.name);
       if (entry.isSymbolicLink()) {
         throw new TypeError(`PROFILE_BUILD_OUTPUT_SYMLINK@${relativePath}`);
@@ -442,10 +399,7 @@ async function writeJsonAtomically(path, value) {
     }
     throw error;
   });
-  if (
-    existing !== undefined &&
-    (existing.isSymbolicLink() || !existing.isFile())
-  ) {
+  if (existing !== undefined && (existing.isSymbolicLink() || !existing.isFile())) {
     throw new TypeError('PROFILE_BUILD_MANIFEST_TARGET_INVALID@private');
   }
 
@@ -468,17 +422,12 @@ function normalizeModuleId(value) {
   }
   const withoutNull = value.replaceAll('\0', 'virtual:');
   const queryIndex = withoutNull.indexOf('?');
-  const pathPart =
-    queryIndex === -1 ? withoutNull : withoutNull.slice(0, queryIndex);
+  const pathPart = queryIndex === -1 ? withoutNull : withoutNull.slice(0, queryIndex);
   const suffix = queryIndex === -1 ? '' : withoutNull.slice(queryIndex);
 
   if (isAbsolute(pathPart)) {
     const fromSite = relative(PROFILE_PATHS.siteRoot, pathPart);
-    if (
-      fromSite !== '..' &&
-      !fromSite.startsWith(`..${sep}`) &&
-      !isAbsolute(fromSite)
-    ) {
+    if (fromSite !== '..' && !fromSite.startsWith(`..${sep}`) && !isAbsolute(fromSite)) {
       return `${normalizeAssetPath(fromSite)}${suffix}`;
     }
 
@@ -486,7 +435,7 @@ function normalizeModuleId(value) {
     const markerIndex = pathPart.lastIndexOf(nodeModulesMarker);
     if (markerIndex !== -1) {
       return `node_modules/${normalizeAssetPath(
-        pathPart.slice(markerIndex + nodeModulesMarker.length),
+        pathPart.slice(markerIndex + nodeModulesMarker.length)
       )}${suffix}`;
     }
     return `external:${sha256(Buffer.from(pathPart)).slice(0, 16)}${suffix}`;

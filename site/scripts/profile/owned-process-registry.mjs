@@ -15,8 +15,7 @@ let observationSupportPromise;
 // proven ours. Deliberately distinct from PROFILE_OWNED_BOOTSTRAP_TOKEN, which
 // authenticates the bootstrap IPC handshake and is stripped before exec.
 const OWNERSHIP_TOKEN_ENV = 'PROFILE_OWNED_PROCESS_OWNERSHIP_TOKEN';
-const OWNERSHIP_TOKEN_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
+const OWNERSHIP_TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 const MAX_OWNERSHIP_PROBES_PER_SWEEP = 256;
 const OWNERSHIP_REAP_ITERATIONS = 8;
 const OWNERSHIP_REAP_SETTLE_MS = 25;
@@ -25,7 +24,7 @@ const OWNERSHIP_PROBE_TIMEOUT_MS = 2_000;
 export function assertOwnedProcessTreeSupport() {
   if (process.platform === 'win32') {
     throw new Error(
-      'Owned process-tree verification requires POSIX process groups; win32 is unsupported.',
+      'Owned process-tree verification requires POSIX process groups; win32 is unsupported.'
     );
   }
 }
@@ -74,11 +73,7 @@ export function prepareOwnedSpawn(label) {
       if (settled) return;
       settled = true;
       pendingSpawns.delete(token);
-      if (
-        pendingSpawns.size === 0 &&
-        ownedGroups.size === 0 &&
-        !signalShutdownStarted
-      ) {
+      if (pendingSpawns.size === 0 && ownedGroups.size === 0 && !signalShutdownStarted) {
         removeLifecycleHooks();
       }
     },
@@ -112,7 +107,7 @@ export function registerOwnedProcessGroup(processGroupId, label) {
   if (signalShutdownStarted) {
     signalOwnedGroup(processGroupId, 'SIGKILL');
     throw new Error(
-      `cannot register process group ${processGroupId} while shutdown is in progress`,
+      `cannot register process group ${processGroupId} while shutdown is in progress`
     );
   }
   let released = false;
@@ -138,9 +133,7 @@ export async function snapshotDescendantProcessTree(rootProcessIds) {
   if (
     !Array.isArray(rootProcessIds) ||
     rootProcessIds.length === 0 ||
-    rootProcessIds.some(
-      (pid) => !Number.isSafeInteger(pid) || pid < 1,
-    )
+    rootProcessIds.some((pid) => !Number.isSafeInteger(pid) || pid < 1)
   ) {
     throw new TypeError('rootProcessIds must contain positive integers');
   }
@@ -148,22 +141,14 @@ export async function snapshotDescendantProcessTree(rootProcessIds) {
   const roots = new Set(rootProcessIds);
   const processes = collectDescendantProcesses(rows, roots);
   const processIds = new Set(processes.map(({ pid }) => pid));
-  const processGroupIds = new Set(
-    processes.map(({ pgid }) => pgid),
-  );
+  const processGroupIds = new Set(processes.map(({ pgid }) => pgid));
   for (const root of roots) processGroupIds.delete(root);
   return Object.freeze({
     processIds: Object.freeze([...processIds].sort((a, b) => a - b)),
     processGroupIds: Object.freeze(
-      [...processGroupIds]
-        .filter((pgid) => pgid > 0)
-        .sort((a, b) => a - b),
+      [...processGroupIds].filter((pgid) => pgid > 0).sort((a, b) => a - b)
     ),
-    processes: Object.freeze(
-      processes
-        .slice()
-        .sort((left, right) => left.pid - right.pid),
-    ),
+    processes: Object.freeze(processes.slice().sort((left, right) => left.pid - right.pid)),
     processTable: Object.freeze(rows),
   });
 }
@@ -191,15 +176,11 @@ function collectDescendantProcesses(rows, roots) {
 }
 
 async function readProcessTable() {
-  const { stdout } = await execFileAsync(
-    'ps',
-    ['-axo', 'pid=,ppid=,pgid=,sess=,lstart='],
-    {
-      encoding: 'utf8',
-      maxBuffer: 4 * 1024 * 1024,
-      timeout: 2_000,
-    },
-  );
+  const { stdout } = await execFileAsync('ps', ['-axo', 'pid=,ppid=,pgid=,sess=,lstart='], {
+    encoding: 'utf8',
+    maxBuffer: 4 * 1024 * 1024,
+    timeout: 2_000,
+  });
   return Object.freeze(parseProcessTable(stdout));
 }
 
@@ -219,10 +200,7 @@ export function monitorOwnedDescendants({
   if (!Number.isSafeInteger(intervalMs) || intervalMs < 5) {
     throw new TypeError('intervalMs must be an integer of at least 5');
   }
-  if (
-    isRootHandleCurrent !== undefined &&
-    typeof isRootHandleCurrent !== 'function'
-  ) {
+  if (isRootHandleCurrent !== undefined && typeof isRootHandleCurrent !== 'function') {
     throw new TypeError('isRootHandleCurrent must be a function');
   }
 
@@ -242,46 +220,39 @@ export function monitorOwnedDescendants({
     try {
       const snapshot = await snapshotDescendantProcessTree([rootPid]);
       lastProcessTable = snapshot.processTable;
-      const currentRootIdentity = snapshot.processTable.find(
-        ({ pid }) => pid === rootPid,
-      );
+      const currentRootIdentity = snapshot.processTable.find(({ pid }) => pid === rootPid);
       let rootIdentityIsCurrent = false;
       if (currentRootIdentity !== undefined) {
         const rootHandleIsCurrent =
-          isRootHandleCurrent === undefined ||
-          isRootHandleCurrent() === true;
+          isRootHandleCurrent === undefined || isRootHandleCurrent() === true;
         if (!rootHandleIsCurrent) {
           if (
             rootProcessIdentity === null ||
-            processIdentityKey(rootProcessIdentity) !==
-              processIdentityKey(currentRootIdentity)
+            processIdentityKey(rootProcessIdentity) !== processIdentityKey(currentRootIdentity)
           ) {
             failures.push(
               Object.freeze({
                 name: 'RootProcessHandleMismatch',
-                message:
-                  `root process ${rootPid} was reused after its child handle exited`,
-              }),
+                message: `root process ${rootPid} was reused after its child handle exited`,
+              })
             );
           }
         } else if (currentRootIdentity.pgid !== rootPid) {
           failures.push(
             Object.freeze({
               name: 'RootProcessGroupMismatch',
-              message:
-                `root process ${rootPid} is not its detached process-group leader`,
-            }),
+              message: `root process ${rootPid} is not its detached process-group leader`,
+            })
           );
         } else if (
           rootProcessIdentity !== null &&
-          processIdentityKey(rootProcessIdentity) !==
-            processIdentityKey(currentRootIdentity)
+          processIdentityKey(rootProcessIdentity) !== processIdentityKey(currentRootIdentity)
         ) {
           failures.push(
             Object.freeze({
               name: 'RootProcessIdentityMismatch',
               message: `root process ${rootPid} was reused during observation`,
-            }),
+            })
           );
         } else {
           rootProcessIdentity = currentRootIdentity;
@@ -289,54 +260,38 @@ export function monitorOwnedDescendants({
         }
       }
       sampleCount += 1;
-      const currentGroups = rootIdentityIsCurrent
-        ? new Set(snapshot.processGroupIds)
-        : new Set();
+      const currentGroups = rootIdentityIsCurrent ? new Set(snapshot.processGroupIds) : new Set();
       if (rootIdentityIsCurrent) {
         for (const pid of snapshot.processIds) observedProcessIds.add(pid);
         const currentProcessesByGroup = new Map();
         for (const processIdentity of snapshot.processes) {
           if (processIdentity.pgid === rootPid) {
-            rootGroupMemberIdentities.add(
-              processIdentityKey(processIdentity),
-            );
+            rootGroupMemberIdentities.add(processIdentityKey(processIdentity));
             continue;
           }
-          const identities =
-            currentProcessesByGroup.get(processIdentity.pgid) ?? [];
+          const identities = currentProcessesByGroup.get(processIdentity.pgid) ?? [];
           identities.push(processIdentity);
           currentProcessesByGroup.set(processIdentity.pgid, identities);
         }
         for (const pgid of snapshot.processGroupIds) {
           observedProcessGroupIds.add(pgid);
           if (!groupLeases.has(pgid)) {
-            groupLeases.set(
-              pgid,
-              {
-              lease: registerOwnedProcessGroup(
-                pgid,
-                `${label}:descendant-${pgid}`,
-              ),
+            groupLeases.set(pgid, {
+              lease: registerOwnedProcessGroup(pgid, `${label}:descendant-${pgid}`),
               memberIdentities: new Set(),
               quarantined: false,
-            },
-          );
+            });
           }
           const ownership = groupLeases.get(pgid);
-          for (
-            const processIdentity of
-              currentProcessesByGroup.get(pgid) ?? []
-          ) {
-            ownership.memberIdentities.add(
-              processIdentityKey(processIdentity),
-            );
+          for (const processIdentity of currentProcessesByGroup.get(pgid) ?? []) {
+            ownership.memberIdentities.add(processIdentityKey(processIdentity));
           }
         }
       }
       for (const [pgid, ownership] of groupLeases) {
         if (currentGroups.has(pgid)) continue;
         const currentMembers = snapshot.processTable.filter(
-          (processIdentity) => processIdentity.pgid === pgid,
+          (processIdentity) => processIdentity.pgid === pgid
         );
         const stillOwned = currentMembers.some((processIdentity) =>
           ownership.memberIdentities.has(processIdentityKey(processIdentity))
@@ -351,9 +306,8 @@ export function monitorOwnedDescendants({
           failures.push(
             Object.freeze({
               name: 'ProcessGroupIdentityMismatch',
-              message:
-                `process group ${pgid} lost every observed descendant identity and remains quarantined for cleanup`,
-            }),
+              message: `process group ${pgid} lost every observed descendant identity and remains quarantined for cleanup`,
+            })
           );
         }
       }
@@ -362,7 +316,7 @@ export function monitorOwnedDescendants({
         Object.freeze({
           name: typeof error?.name === 'string' ? error.name : typeof error,
           message: error instanceof Error ? error.message : String(error),
-        }),
+        })
       );
     }
   };
@@ -385,9 +339,7 @@ export function monitorOwnedDescendants({
         rootProcessIdentity.pgid !== rootPid ||
         failures.length > 0
       ) {
-        throw new Error(
-          'the owned root process identity could not be observed',
-        );
+        throw new Error('the owned root process identity could not be observed');
       }
       return evidence();
     },
@@ -410,10 +362,7 @@ export function monitorOwnedDescendants({
           for (const pgid of after) {
             signalOwnedGroup(pgid, 'SIGSTOP');
           }
-          if (
-            after.size === before.size &&
-            [...after].every((pgid) => before.has(pgid))
-          ) {
+          if (after.size === before.size && [...after].every((pgid) => before.has(pgid))) {
             reachedFixedPoint = true;
             break;
           }
@@ -422,9 +371,8 @@ export function monitorOwnedDescendants({
           failures.push(
             Object.freeze({
               name: 'ProcessTreeFixedPointFailure',
-              message:
-                'descendant process-group observation did not reach a frozen fixed point',
-            }),
+              message: 'descendant process-group observation did not reach a frozen fixed point',
+            })
           );
         }
       }
@@ -434,7 +382,7 @@ export function monitorOwnedDescendants({
       const snapshot = evidence();
       if (snapshot.activeProcessGroupIds.some(isOwnedGroupAlive)) {
         throw new Error(
-          'descendant process ownership cannot be released without zero-residual proof',
+          'descendant process ownership cannot be released without zero-residual proof'
         );
       }
       for (const ownership of groupLeases.values()) {
@@ -448,16 +396,10 @@ export function monitorOwnedDescendants({
     return Object.freeze({
       rootPid,
       sampleCount,
-      observedProcessIds: Object.freeze(
-        [...observedProcessIds].sort((a, b) => a - b),
-      ),
-      observedProcessGroupIds: Object.freeze(
-        [...observedProcessGroupIds].sort((a, b) => a - b),
-      ),
+      observedProcessIds: Object.freeze([...observedProcessIds].sort((a, b) => a - b)),
+      observedProcessGroupIds: Object.freeze([...observedProcessGroupIds].sort((a, b) => a - b)),
       activeProcessGroupIds: Object.freeze(
-        [...groupLeases.keys()]
-          .filter(isOwnedGroupAlive)
-          .sort((a, b) => a - b),
+        [...groupLeases.keys()].filter(isOwnedGroupAlive).sort((a, b) => a - b)
       ),
       activeRootProcessGroup: rootGroupIsOwned(),
       rootProcessIdentity,
@@ -467,41 +409,27 @@ export function monitorOwnedDescendants({
 
   function rootGroupIsOwned() {
     if (rootProcessIdentity === null) return false;
-    const members = lastProcessTable.filter(
-      ({ pgid }) => pgid === rootPid,
-    );
+    const members = lastProcessTable.filter(({ pgid }) => pgid === rootPid);
     const leader = members.find(({ pid }) => pid === rootPid);
     if (leader !== undefined) {
-      return (
-        processIdentityKey(leader) ===
-        processIdentityKey(rootProcessIdentity)
-      );
+      return processIdentityKey(leader) === processIdentityKey(rootProcessIdentity);
     }
     return members.some(
       (processIdentity) =>
         processIdentity.sessionId === rootProcessIdentity.sessionId ||
-        rootGroupMemberIdentities.has(
-          processIdentityKey(processIdentity),
-        ),
+        rootGroupMemberIdentities.has(processIdentityKey(processIdentity))
     );
   }
 }
 
-export async function freezeOwnedProcessTree({
-  rootProcessGroupIds,
-  label,
-} = {}) {
+export async function freezeOwnedProcessTree({ rootProcessGroupIds, label } = {}) {
   assertOwnedProcessTreeSupport();
   if (
     !Array.isArray(rootProcessGroupIds) ||
     rootProcessGroupIds.length === 0 ||
-    rootProcessGroupIds.some(
-      (pgid) => !Number.isSafeInteger(pgid) || pgid < 1,
-    )
+    rootProcessGroupIds.some((pgid) => !Number.isSafeInteger(pgid) || pgid < 1)
   ) {
-    throw new TypeError(
-      'rootProcessGroupIds must contain positive integers',
-    );
+    throw new TypeError('rootProcessGroupIds must contain positive integers');
   }
   if (typeof label !== 'string' || label.trim().length === 0) {
     throw new TypeError('frozen process-tree label must be non-empty');
@@ -514,44 +442,30 @@ export async function freezeOwnedProcessTree({
     for (const pgid of processGroupIds) signalOwnedGroup(pgid, 'SIGSTOP');
     const rows = await readProcessTable();
     const memberProcessIds = new Set(
-      rows
-        .filter(({ pgid }) => processGroupIds.has(pgid))
-        .map(({ pid }) => pid),
+      rows.filter(({ pgid }) => processGroupIds.has(pgid)).map(({ pid }) => pid)
     );
     for (const pid of memberProcessIds) processIds.add(pid);
-    const descendants = collectDescendantProcesses(
-      rows,
-      memberProcessIds,
-    );
+    const descendants = collectDescendantProcesses(rows, memberProcessIds);
     for (const { pid } of descendants) processIds.add(pid);
     let discovered = 0;
     for (const { pgid } of descendants) {
       if (processGroupIds.has(pgid)) continue;
       processGroupIds.add(pgid);
-      leases.push(
-        registerOwnedProcessGroup(
-          pgid,
-          `${label}:frozen-descendant-${pgid}`,
-        ),
-      );
+      leases.push(registerOwnedProcessGroup(pgid, `${label}:frozen-descendant-${pgid}`));
       signalOwnedGroup(pgid, 'SIGSTOP');
       discovered += 1;
     }
     if (discovered === 0) {
       const evidence = Object.freeze({
-        processIds: Object.freeze(
-          [...processIds].sort((a, b) => a - b),
-        ),
-        processGroupIds: Object.freeze(
-          [...processGroupIds].sort((a, b) => a - b),
-        ),
+        processIds: Object.freeze([...processIds].sort((a, b) => a - b)),
+        processGroupIds: Object.freeze([...processGroupIds].sort((a, b) => a - b)),
       });
       return Object.freeze({
         evidence,
         releaseVerified() {
           if (evidence.processGroupIds.some(isOwnedGroupAlive)) {
             throw new Error(
-              'frozen process-tree ownership cannot be released while a group is alive',
+              'frozen process-tree ownership cannot be released while a group is alive'
             );
           }
           for (const lease of leases) lease.release();
@@ -559,9 +473,7 @@ export async function freezeOwnedProcessTree({
       });
     }
   }
-  throw new Error(
-    'owned process-tree discovery did not reach a frozen fixed point',
-  );
+  throw new Error('owned process-tree discovery did not reach a frozen fixed point');
 }
 
 /**
@@ -585,7 +497,7 @@ export async function beginOwnedProcessScope(label) {
   // identity key carries lstart, so a recycled pid no longer matches its
   // baseline entry and is correctly reconsidered as newly born.
   const baselineIdentities = new Map(
-    (await readProcessTable()).map((row) => [row.pid, processIdentityKey(row)]),
+    (await readProcessTable()).map((row) => [row.pid, processIdentityKey(row)])
   );
   let closed = false;
 
@@ -610,11 +522,7 @@ async function reapOwnershipResiduals(token, baselineIdentities) {
   let sweepCount = 0;
   let residualProcessIds = [];
 
-  for (
-    let iteration = 0;
-    iteration < OWNERSHIP_REAP_ITERATIONS;
-    iteration += 1
-  ) {
+  for (let iteration = 0; iteration < OWNERSHIP_REAP_ITERATIONS; iteration += 1) {
     let sweep;
     try {
       sweep = await sweepOwnershipResiduals(token, baselineIdentities);
@@ -623,7 +531,7 @@ async function reapOwnershipResiduals(token, baselineIdentities) {
         Object.freeze({
           name: typeof error?.name === 'string' ? error.name : typeof error,
           message: error instanceof Error ? error.message : String(error),
-        }),
+        })
       );
       break;
     }
@@ -636,7 +544,7 @@ async function reapOwnershipResiduals(token, baselineIdentities) {
           message:
             `${sweep.candidateCount} processes appeared during the owned scope, ` +
             `above the ${MAX_OWNERSHIP_PROBES_PER_SWEEP} probe budget`,
-        }),
+        })
       );
       residualProcessIds = [];
       break;
@@ -663,7 +571,7 @@ async function reapOwnershipResiduals(token, baselineIdentities) {
             Object.freeze({
               name: 'OwnershipResidualKillFailed',
               message: `residual process ${pid} could not be signalled`,
-            }),
+            })
           );
         }
       }
@@ -691,9 +599,7 @@ function ownershipEvidence({
 }) {
   return Object.freeze({
     verified,
-    residualProcessIds: Object.freeze(
-      [...residualProcessIds].sort((a, b) => a - b),
-    ),
+    residualProcessIds: Object.freeze([...residualProcessIds].sort((a, b) => a - b)),
     candidateCount,
     sweepCount,
     probeBudget: MAX_OWNERSHIP_PROBES_PER_SWEEP,
@@ -708,7 +614,7 @@ async function sweepOwnershipResiduals(token, baselineIdentities) {
     (row) =>
       !selfAncestry.has(row.pid) &&
       (!baselineIdentities.has(row.pid) ||
-        baselineIdentities.get(row.pid) !== processIdentityKey(row)),
+        baselineIdentities.get(row.pid) !== processIdentityKey(row))
   );
   if (candidates.length > MAX_OWNERSHIP_PROBES_PER_SWEEP) {
     return {
@@ -732,11 +638,7 @@ function collectSelfAncestry(rows) {
   const byPid = new Map(rows.map((row) => [row.pid, row]));
   const ancestry = new Set([process.pid]);
   let cursor = byPid.get(process.pid);
-  while (
-    cursor !== undefined &&
-    cursor.ppid > 0 &&
-    !ancestry.has(cursor.ppid)
-  ) {
+  while (cursor !== undefined && cursor.ppid > 0 && !ancestry.has(cursor.ppid)) {
     ancestry.add(cursor.ppid);
     cursor = byPid.get(cursor.ppid);
   }
@@ -755,23 +657,17 @@ function collectSelfAncestry(rows) {
  */
 async function processCarriesOwnershipToken(pid, token) {
   try {
-    const { stdout } = await execFileAsync(
-      'ps',
-      ['eww', '-p', String(pid)],
-      {
-        encoding: 'utf8',
-        maxBuffer: 1024 * 1024,
-        timeout: OWNERSHIP_PROBE_TIMEOUT_MS,
-      },
-    );
+    const { stdout } = await execFileAsync('ps', ['eww', '-p', String(pid)], {
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024,
+      timeout: OWNERSHIP_PROBE_TIMEOUT_MS,
+    });
     return stdout.includes(`${OWNERSHIP_TOKEN_ENV}=${token}`);
   } catch (error) {
     // `ps` exits 1 when the pid vanished between listing and probing, which is
     // the ordinary outcome for a process that has already been reaped.
     if (error?.code === 1 && error?.killed !== true) return false;
-    throw new Error(
-      `owned ownership probe failed for pid ${pid} (${describeProbeFailure(error)})`,
-    );
+    throw new Error(`owned ownership probe failed for pid ${pid} (${describeProbeFailure(error)})`);
   }
 }
 
@@ -790,12 +686,11 @@ function installLifecycleHooks() {
     const handler = () => {
       if (signalShutdownStarted) return;
       signalShutdownStarted = true;
-      void terminateAllOwnedGroups()
-        .finally(() => {
-          killAllOwnedGroupsSynchronously();
-          removeLifecycleHooks({ resetShutdown: false });
-          process.kill(process.pid, signal);
-        });
+      void terminateAllOwnedGroups().finally(() => {
+        killAllOwnedGroupsSynchronously();
+        removeLifecycleHooks({ resetShutdown: false });
+        process.kill(process.pid, signal);
+      });
     };
     process.on(signal, handler);
     lifecycleRemovers.push(() => process.off(signal, handler));
@@ -807,9 +702,7 @@ function installLifecycleHooks() {
 
   const exceptionMonitor = () => killAllOwnedGroupsSynchronously();
   process.on('uncaughtExceptionMonitor', exceptionMonitor);
-  lifecycleRemovers.push(() =>
-    process.off('uncaughtExceptionMonitor', exceptionMonitor)
-  );
+  lifecycleRemovers.push(() => process.off('uncaughtExceptionMonitor', exceptionMonitor));
 }
 
 function removeLifecycleHooks({ resetShutdown = true } = {}) {
@@ -839,14 +732,9 @@ async function terminateAllOwnedGroups() {
     }
     const currentGroups = new Set(ownedGroups.keys());
     const memberProcessIds = new Set(
-      rows
-        .filter(({ pgid }) => currentGroups.has(pgid))
-        .map(({ pid }) => pid),
+      rows.filter(({ pgid }) => currentGroups.has(pgid)).map(({ pid }) => pid)
     );
-    const descendants = collectDescendantProcesses(
-      rows,
-      memberProcessIds,
-    );
+    const descendants = collectDescendantProcesses(rows, memberProcessIds);
     let discovered = 0;
     for (const { pgid } of descendants) {
       if (ownedGroups.has(pgid)) continue;
@@ -884,10 +772,7 @@ async function waitForAllGroupsReleased(timeoutMs) {
     pruneReleasedGroups();
     if (ownedGroups.size === 0) return true;
     await new Promise((resolvePromise) => {
-      setTimeout(
-        resolvePromise,
-        Math.min(25, Math.max(1, deadline - Date.now())),
-      );
+      setTimeout(resolvePromise, Math.min(25, Math.max(1, deadline - Date.now())));
     });
   }
   pruneReleasedGroups();
@@ -939,8 +824,7 @@ function parseProcessTable(stdout) {
   const rows = [];
   for (const line of stdout.split('\n')) {
     if (line.trim() === '') continue;
-    const match =
-      /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+?)\s*$/u.exec(line);
+    const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+?)\s*$/u.exec(line);
     if (match === null) {
       throw new TypeError('ps returned an unparseable process row');
     }
@@ -952,19 +836,14 @@ function parseProcessTable(stdout) {
         pgid: Number(pgid),
         sessionId: Number(sessionId),
         startedAt,
-      }),
+      })
     );
   }
   return rows;
 }
 
 function processIdentityKey(value) {
-  return [
-    value.pid,
-    value.pgid,
-    value.sessionId,
-    value.startedAt,
-  ].join('\0');
+  return [value.pid, value.pgid, value.sessionId, value.startedAt].join('\0');
 }
 
 export const ownedProcessRegistryTesting = Object.freeze({

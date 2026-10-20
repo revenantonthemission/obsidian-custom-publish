@@ -1,34 +1,31 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import ProfileShell from "../components/profile/ProfileShell.astro";
-import ResumeContent from "../components/profile/ResumeContent.astro";
-import { buildResumePresentation } from "../components/profile/presentation.js";
-import { getCurrentResumeDocumentLink } from "../lib/profile/current-resume-document.js";
-import { buildApprovedResumeMetadata } from "../lib/profile/metadata.js";
-import { getProductionProfileAssembly } from "../lib/profile/production-profile.js";
-import "../styles/profile/font.css";
-import "../styles/profile/foundation.css";
-import "../styles/profile/resume.css";
-import "../styles/profile/print.css";
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProfileShell from '../components/profile/ProfileShell.astro';
+import ResumeContent from '../components/profile/ResumeContent.astro';
+import { buildResumePresentation } from '../components/profile/presentation.js';
+import { getCurrentResumeDocumentLink } from '../lib/profile/current-resume-document.js';
+import { buildApprovedResumeMetadata } from '../lib/profile/metadata.js';
+import { getProductionProfileAssembly } from '../lib/profile/production-profile.js';
+import '../styles/profile/font.css';
+import '../styles/profile/foundation.css';
+import '../styles/profile/resume.css';
+import '../styles/profile/print.css';
 
 const origin = Astro.site?.origin;
 if (origin === undefined) {
-  throw new TypeError("Profile metadata requires Astro.site.");
+  throw new TypeError('Profile metadata requires Astro.site.');
 }
 
 const assembly = getProductionProfileAssembly();
-const metadataResult = buildApprovedResumeMetadata(
-  Object.freeze({ origin }),
-  assembly.source,
-);
+const metadataResult = buildApprovedResumeMetadata(Object.freeze({ origin }), assembly.source);
 if (!metadataResult.ok) {
-  throw new TypeError("Invalid approved résumé metadata.");
+  throw new TypeError('Invalid approved résumé metadata.');
 }
 
 const metadata = metadataResult.value;
 const presentation = buildResumePresentation(
   assembly.resume,
-  await getCurrentResumeDocumentLink(assembly.source),
+  await getCurrentResumeDocumentLink(assembly.source)
 );
 ---
 

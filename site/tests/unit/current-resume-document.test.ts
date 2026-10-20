@@ -45,8 +45,9 @@ async function fixture() {
 describe('current résumé document link', () => {
   test('returns only the public link when current identities and PDF bytes match', async () => {
     const { manifest, pdfBytes, receipt } = await fixture();
-    expect(resolveCurrentResumeDocumentLinkForTest(manifest, receipt, pdfBytes))
-      .toEqual(getResumeDocumentLink());
+    expect(resolveCurrentResumeDocumentLinkForTest(manifest, receipt, pdfBytes)).toEqual(
+      getResumeDocumentLink()
+    );
   });
 
   test('withholds the link after source or manifest identity changes', async () => {
@@ -71,7 +72,10 @@ describe('current résumé document link', () => {
       { ...receipt, kind: 'resume-draft' },
       { ...receipt, result: 'pending' },
       { ...receipt, publicTarget: { ...receipt.publicTarget, href: '/old-resume.pdf' } },
-      { ...receipt, publicTarget: { ...receipt.publicTarget, repositoryPath: 'site/public/old.pdf' } },
+      {
+        ...receipt,
+        publicTarget: { ...receipt.publicTarget, repositoryPath: 'site/public/old.pdf' },
+      },
       { ...receipt, sourceIdentity: { ...receipt.sourceIdentity, algorithm: 'sha1' } },
     ]) {
       expect(resolveCurrentResumeDocumentLinkForTest(manifest, changed, pdfBytes)).toBeUndefined();
@@ -84,10 +88,16 @@ describe('current résumé document link', () => {
       const changed = { ...receipt, [key]: { ...receipt[key], pdfSha256: 'c'.repeat(64) } };
       expect(resolveCurrentResumeDocumentLinkForTest(manifest, changed, pdfBytes)).toBeUndefined();
     }
-    expect(resolveCurrentResumeDocumentLinkForTest(manifest, {
-      ...receipt,
-      manualReview: { ...receipt.manualReview, result: 'pending' },
-    }, pdfBytes)).toBeUndefined();
+    expect(
+      resolveCurrentResumeDocumentLinkForTest(
+        manifest,
+        {
+          ...receipt,
+          manualReview: { ...receipt.manualReview, result: 'pending' },
+        },
+        pdfBytes
+      )
+    ).toBeUndefined();
   });
 
   test('rejects malformed receipts without invoking getters', async () => {
@@ -95,7 +105,10 @@ describe('current résumé document link', () => {
     let reads = 0;
     const candidate = {
       ...receipt,
-      get result() { reads += 1; return 'approved'; },
+      get result() {
+        reads += 1;
+        return 'approved';
+      },
     };
     for (const value of [null, {}, candidate]) {
       expect(resolveCurrentResumeDocumentLinkForTest(manifest, value, pdfBytes)).toBeUndefined();

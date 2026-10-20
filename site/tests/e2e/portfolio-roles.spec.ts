@@ -12,15 +12,22 @@ const MOBILE_VIEWPORT = { width: 375, height: 812 };
 
 for (const { route, label, projectIds } of [
   { route: '/portfolio/product-engineer', label: 'Product Engineer', projectIds: ['docsuri'] },
-  { route: '/portfolio/infra-engineer', label: 'Infra Engineer', projectIds: ['docsuri', 'obsidian-custom-publish'] },
+  {
+    route: '/portfolio/infra-engineer',
+    label: 'Infra Engineer',
+    projectIds: ['docsuri', 'obsidian-custom-publish'],
+  },
 ] as const) {
   test.describe(`${label} portfolio`, () => {
-    test('switches roles by keyboard and preserves the selected approved facts', async ({ page }) => {
+    test('switches roles by keyboard and preserves the selected approved facts', async ({
+      page,
+    }) => {
       await gotoRoute(page, '/portfolio');
       const approvedFacts = new Map(await renderedFacts(page));
       const roles = page.getByRole('navigation', { name: '직무별 포트폴리오', exact: true });
-      await expect(roles.getByRole('link', { name: 'Data Engineer / AI', exact: true }))
-        .toHaveAttribute('aria-current', 'page');
+      await expect(
+        roles.getByRole('link', { name: 'Data Engineer / AI', exact: true })
+      ).toHaveAttribute('aria-current', 'page');
       await expect(roles.locator('[aria-current="page"]')).toHaveCount(1);
 
       const roleLink = roles.getByRole('link', { name: label, exact: true });
@@ -33,14 +40,16 @@ for (const { route, label, projectIds } of [
       await page.waitForLoadState('networkidle');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${label} Portfolio`);
       await expect(roles.locator('[aria-current="page"]')).toHaveCount(1);
-      await expect(roles.getByRole('link', { name: label, exact: true }))
-        .toHaveAttribute('aria-current', 'page');
+      await expect(roles.getByRole('link', { name: label, exact: true })).toHaveAttribute(
+        'aria-current',
+        'page'
+      );
       await expect(page.locator('.portfolio-summary')).not.toHaveAttribute('data-profile-fact-id');
       await expect(page.locator('.portfolio-project-focus')).toHaveCount(projectIds.length);
 
-      const renderedProjectIds = await page.locator('.portfolio-case-study').evaluateAll((elements) =>
-        elements.map((element) => element.id),
-      );
+      const renderedProjectIds = await page
+        .locator('.portfolio-case-study')
+        .evaluateAll((elements) => elements.map((element) => element.id));
       expect(renderedProjectIds).toEqual(projectIds.map((id) => `project-${id}`));
       const facts = await renderedFacts(page);
       expect(facts.length).toBeGreaterThan(0);
@@ -65,12 +74,17 @@ for (const { route, label, projectIds } of [
       await page.keyboard.press('Enter');
       await expect(page).toHaveURL(/\/portfolio\/?$/);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('Portfolio');
-      await expect(page.locator('.portfolio-case-study').first()).toHaveAttribute('id', 'project-docsuri');
+      await expect(page.locator('.portfolio-case-study').first()).toHaveAttribute(
+        'id',
+        'project-docsuri'
+      );
     });
 
     for (const theme of ['light', 'dark'] as const) {
       for (const viewport of [MOBILE_VIEWPORT, { width: 1280, height: 900 }]) {
-        test(`stays readable and accessible at ${viewport.width}px in ${theme} mode`, async ({ page }, testInfo) => {
+        test(`stays readable and accessible at ${viewport.width}px in ${theme} mode`, async ({
+          page,
+        }, testInfo) => {
           const runtimeErrors: string[] = [];
           page.on('pageerror', (error) => runtimeErrors.push(error.message));
           await page.setViewportSize(viewport);
@@ -88,7 +102,10 @@ for (const { route, label, projectIds } of [
           }
           for (const state of ['closed', 'all-open'] as const) {
             await applyDetailsState(page, state);
-            await expectNoHorizontalOverflow(page, `${label} ${viewport.width}px ${theme} ${state}`);
+            await expectNoHorizontalOverflow(
+              page,
+              `${label} ${viewport.width}px ${theme} ${state}`
+            );
             expect(await findClippedContent(page)).toEqual([]);
             await expectNoAxeViolations(page);
           }
@@ -99,7 +116,10 @@ for (const { route, label, projectIds } of [
       }
     }
 
-    test('keeps role and project navigation usable without page JavaScript', async ({ browser, baseURL }) => {
+    test('keeps role and project navigation usable without page JavaScript', async ({
+      browser,
+      baseURL,
+    }) => {
       const context = await browser.newContext({
         baseURL,
         javaScriptEnabled: false,
@@ -109,7 +129,9 @@ for (const { route, label, projectIds } of [
         const page = await context.newPage();
         const response = await page.goto(route, { waitUntil: 'load' });
         expect(response?.status()).toBe(200);
-        const projectLink = page.locator('.portfolio-project-navigation a[href="#project-docsuri"]');
+        const projectLink = page.locator(
+          '.portfolio-project-navigation a[href="#project-docsuri"]'
+        );
         await projectLink.focus();
         await page.keyboard.press('Enter');
         await expect(page).toHaveURL(new RegExp(`${route}/?#project-docsuri$`));
@@ -121,7 +143,8 @@ for (const { route, label, projectIds } of [
         await expect(details).toHaveAttribute('open', '');
         await expect(details.locator('.case-study-details-content')).toBeVisible();
 
-        const dataLink = page.getByRole('navigation', { name: '직무별 포트폴리오', exact: true })
+        const dataLink = page
+          .getByRole('navigation', { name: '직무별 포트폴리오', exact: true })
           .getByRole('link', { name: 'Data Engineer / AI', exact: true });
         await dataLink.focus();
         await page.keyboard.press('Enter');
@@ -135,21 +158,27 @@ for (const { route, label, projectIds } of [
 }
 
 async function renderedFacts(page: Page): Promise<Array<[string, string]>> {
-  return page.locator('.profile-shell [data-profile-fact-id]').evaluateAll((elements) =>
-    elements.map((element): [string, string] => [
-      element.getAttribute('data-profile-fact-id')!,
-      (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
-    ]),
-  );
+  return page
+    .locator('.profile-shell [data-profile-fact-id]')
+    .evaluateAll((elements) =>
+      elements.map((element): [string, string] => [
+        element.getAttribute('data-profile-fact-id')!,
+        (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      ])
+    );
 }
 
 async function expectVisibleFocus(locator: Locator): Promise<void> {
   const indicator = await locator.evaluate((element) => {
     const style = window.getComputedStyle(element);
-    return (style.outlineStyle !== 'none' && Number.parseFloat(style.outlineWidth) > 0)
-      || style.boxShadow !== 'none';
+    return (
+      (style.outlineStyle !== 'none' && Number.parseFloat(style.outlineWidth) > 0) ||
+      style.boxShadow !== 'none'
+    );
   });
-  expect(indicator, 'the focused portfolio role link must have a visible focus indicator').toBe(true);
+  expect(indicator, 'the focused portfolio role link must have a visible focus indicator').toBe(
+    true
+  );
 }
 
 async function expectNoAxeViolations(page: Page): Promise<void> {
@@ -163,6 +192,6 @@ async function expectNoAxeViolations(page: Page): Promise<void> {
       id,
       impact,
       targets: nodes.map(({ target }) => target),
-    })),
+    }))
   ).toEqual([]);
 }

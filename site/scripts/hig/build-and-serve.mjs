@@ -36,7 +36,9 @@ function run(command, args, cwd) {
 
 function prepareFixtureContent() {
   if (!existsSync(PREPROCESSOR)) {
-    fail('the release preprocessor is missing; run `cargo build --release --manifest-path preprocessor/Cargo.toml` first');
+    fail(
+      'the release preprocessor is missing; run `cargo build --release --manifest-path preprocessor/Cargo.toml` first'
+    );
   }
   // The preprocessor resolves .puppeteer-config.json from its cwd, so it runs
   // from the repository root like the Justfile and Jenkins do.

@@ -62,7 +62,11 @@ export async function ensureHomepageFixtureContent() {
   if (!existsSync(bodyPath) || !existsSync(metaPath)) {
     await mkdir(homepageDir, { recursive: true });
     await writeFile(bodyPath, HOMEPAGE_BODY, 'utf8');
-    await writeFile(metaPath, `${JSON.stringify({ title: 'Fixture Homepage' }, null, 2)}\n`, 'utf8');
+    await writeFile(
+      metaPath,
+      `${JSON.stringify({ title: 'Fixture Homepage' }, null, 2)}\n`,
+      'utf8'
+    );
   }
 
   const metaDir = resolve(contentRoot, 'meta');

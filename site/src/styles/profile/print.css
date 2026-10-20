@@ -29,7 +29,7 @@
   .back-to-top,
   .search-dialog,
   .skip-link,
-  [data-profile-action-kind="document"] {
+  [data-profile-action-kind='document'] {
     display: none !important;
   }
 

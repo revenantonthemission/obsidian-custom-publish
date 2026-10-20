@@ -7,7 +7,9 @@ import { describe, expect, test } from 'vitest';
 import { renderMarkdown, wrapHomeSections } from '../../src/lib/render.js';
 
 function sections(html: string): string[] {
-  return [...html.matchAll(/<section class="home-card">([\s\S]*?)<\/section>/g)].map((match) => match[1]!);
+  return [...html.matchAll(/<section class="home-card">([\s\S]*?)<\/section>/g)].map(
+    (match) => match[1]!
+  );
 }
 
 const NOTE = [
@@ -47,7 +49,9 @@ describe('homepage section cards', () => {
 
   test('wraps nothing when the note has no H2', async () => {
     const markdown = '한 문단입니다.\n\n### 작은 제목\n\n본문입니다.\n';
-    expect(await renderMarkdown(markdown, { homeSections: true })).toBe(await renderMarkdown(markdown));
+    expect(await renderMarkdown(markdown, { homeSections: true })).toBe(
+      await renderMarkdown(markdown)
+    );
   });
 
   test('keeps nested headings inside their H2 section and the intro outside every card', async () => {

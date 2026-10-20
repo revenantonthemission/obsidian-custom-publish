@@ -9,27 +9,12 @@ export const RETRY_ELIGIBLE_STARTUP_STAGES = Object.freeze([
 
 const retryEligibleStages = new Set(RETRY_ELIGIBLE_STARTUP_STAGES);
 const alreadyCleanedRetryError = Symbol('alreadyCleanedRetryError');
-const resourceWords = new Set([
-  'context',
-  'instance',
-  'pid',
-  'port',
-  'process',
-]);
-const identitySuffixes = new Set([
-  'id',
-  'identity',
-  'ids',
-  'number',
-  'token',
-]);
+const resourceWords = new Set(['context', 'instance', 'pid', 'port', 'process']);
+const identitySuffixes = new Set(['id', 'identity', 'ids', 'number', 'token']);
 
 export class StartupStageError extends Error {
   constructor({ stage, errorCode, message, details = {}, cause }) {
-    super(
-      `${checkedText(errorCode, 'errorCode')}: ${checkedText(message, 'message')}`,
-      { cause },
-    );
+    super(`${checkedText(errorCode, 'errorCode')}: ${checkedText(message, 'message')}`, { cause });
     this.name = 'StartupStageError';
     this.stage = checkedText(stage, 'stage');
     this.code = errorCode;
@@ -41,19 +26,8 @@ export class StartupStageError extends Error {
 }
 
 export class StartupRetryError extends Error {
-  constructor({
-    stage,
-    attempt,
-    errorCode,
-    message,
-    identities,
-    details = {},
-    cause,
-  }) {
-    super(
-      `${checkedText(errorCode, 'errorCode')}: ${checkedText(message, 'message')}`,
-      { cause },
-    );
+  constructor({ stage, attempt, errorCode, message, identities, details = {}, cause }) {
+    super(`${checkedText(errorCode, 'errorCode')}: ${checkedText(message, 'message')}`, { cause });
     this.name = 'StartupRetryError';
     this.stage = checkedText(stage, 'stage');
     this.attempt = checkedAttempt(attempt);
@@ -69,10 +43,7 @@ export function isRetryEligibleStartupStage(stage) {
   return retryEligibleStages.has(stage);
 }
 
-export function assertFreshStartupIdentity(
-  previousIdentity,
-  nextIdentity,
-) {
+export function assertFreshStartupIdentity(previousIdentity, nextIdentity) {
   const next = snapshotIdentity(nextIdentity);
   if (previousIdentity === null || previousIdentity === undefined) {
     return next;
@@ -114,15 +85,14 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
           maxAttempts: MAX_STARTUP_ATTEMPTS,
           previousIdentity: previousIdentity ?? null,
           rule: STARTUP_RETRY_RULE,
-        }),
+        })
       );
     } catch (cause) {
       throw terminalError({
         stage: 'startup.attempt.factory',
         attempt,
         errorCode: 'STARTUP_ATTEMPT_FACTORY_FAILED',
-        message:
-          'the attempt factory failed before returning an owned startup scope',
+        message: 'the attempt factory failed before returning an owned startup scope',
         identities,
         attempts,
         retryDecision: 'terminal',
@@ -134,17 +104,13 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
       !isPlainRecord(scope) ||
       typeof scope.run !== 'function' ||
       typeof scope.teardown !== 'function' ||
-      (
-        scope.getRuntimeIdentity !== undefined &&
-        typeof scope.getRuntimeIdentity !== 'function'
-      )
+      (scope.getRuntimeIdentity !== undefined && typeof scope.getRuntimeIdentity !== 'function')
     ) {
       throw terminalError({
         stage: 'startup.attempt.factory',
         attempt,
         errorCode: 'STARTUP_ATTEMPT_SCOPE_INVALID',
-        message:
-          'createAttempt must return identity, run, and teardown members',
+        message: 'createAttempt must return identity, run, and teardown members',
         identities,
         attempts,
         retryDecision: 'terminal',
@@ -174,7 +140,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
           maxAttempts: MAX_STARTUP_ATTEMPTS,
           previousIdentity: previousIdentity ?? null,
           rule: STARTUP_RETRY_RULE,
-        }),
+        })
       );
       const runtimeIdentity = await resolveRuntimeIdentity(scope, identity);
       identities.push(runtimeIdentity);
@@ -192,14 +158,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
           identities,
           attempts,
         });
-        attempts.push(
-          failedAttemptEvidence(
-            attempt,
-            runtimeIdentity,
-            failure,
-            teardown.proof,
-          ),
-        );
+        attempts.push(failedAttemptEvidence(attempt, runtimeIdentity, failure, teardown.proof));
         if (teardown.error) throw teardown.error;
         throw terminalError({
           ...failure,
@@ -215,7 +174,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
           attempt,
           identity: runtimeIdentity,
           outcome: 'succeeded',
-        }),
+        })
       );
       return Object.freeze({
         value,
@@ -250,14 +209,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
           identities,
           attempts,
         });
-        attempts.push(
-          failedAttemptEvidence(
-            attempt,
-            identity,
-            identityFailure,
-            teardown.proof,
-          ),
-        );
+        attempts.push(failedAttemptEvidence(attempt, identity, identityFailure, teardown.proof));
         if (teardown.error) throw teardown.error;
         throw terminalError({
           ...identityFailure,
@@ -283,14 +235,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
           identities,
           attempts,
         });
-        attempts.push(
-          failedAttemptEvidence(
-            attempt,
-            runtimeIdentity,
-            freshness,
-            teardown.proof,
-          ),
-        );
+        attempts.push(failedAttemptEvidence(attempt, runtimeIdentity, freshness, teardown.proof));
         if (teardown.error) throw teardown.error;
         throw terminalError({
           ...freshness,
@@ -308,14 +253,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
         identities,
         attempts,
       });
-      attempts.push(
-        failedAttemptEvidence(
-          attempt,
-          runtimeIdentity,
-          failure,
-          teardown.proof,
-        ),
-      );
+      attempts.push(failedAttemptEvidence(attempt, runtimeIdentity, failure, teardown.proof));
 
       if (teardown.error) {
         throw teardown.error;
@@ -332,9 +270,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
         attempt,
         identities,
         attempts,
-        retryDecision: eligible
-          ? 'attempt-limit-reached'
-          : 'stage-not-eligible',
+        retryDecision: eligible ? 'attempt-limit-reached' : 'stage-not-eligible',
         cause,
       });
     }
@@ -343,14 +279,7 @@ export async function runWithStartupRetry({ createAttempt } = {}) {
   throw new Error('unreachable startup retry state');
 }
 
-async function teardownFailedScope({
-  scope,
-  attempt,
-  identity,
-  failure,
-  identities,
-  attempts,
-}) {
+async function teardownFailedScope({ scope, attempt, identity, failure, identities, attempts }) {
   let rawProof;
   try {
     rawProof = await scope.teardown(
@@ -359,15 +288,10 @@ async function teardownFailedScope({
         failure: failureEvidence(failure),
         identity,
         rule: STARTUP_RETRY_RULE,
-      }),
+      })
     );
   } catch (cause) {
-    const teardown = failedTeardownProof(
-      attempt,
-      identity,
-      'teardown-threw',
-      cause,
-    );
+    const teardown = failedTeardownProof(attempt, identity, 'teardown-threw', cause);
     return Object.freeze({
       error: terminalError({
         stage: 'startup.teardown',
@@ -375,15 +299,7 @@ async function teardownFailedScope({
         errorCode: 'STARTUP_TEARDOWN_FAILED',
         message: 'the failed startup scope could not be torn down',
         identities,
-        attempts: [
-          ...attempts,
-          failedAttemptEvidence(
-            attempt,
-            identity,
-            failure,
-            teardown,
-          ),
-        ],
+        attempts: [...attempts, failedAttemptEvidence(attempt, identity, failure, teardown)],
         retryDecision: 'cleanup-failed',
         details: { originalFailure: failureEvidence(failure) },
         cause,
@@ -397,29 +313,15 @@ async function teardownFailedScope({
       proof: validateTeardownProof(rawProof, attempt, identity),
     });
   } catch (cause) {
-    const teardown = failedTeardownProof(
-      attempt,
-      identity,
-      'evidence-invalid',
-      cause,
-    );
+    const teardown = failedTeardownProof(attempt, identity, 'evidence-invalid', cause);
     return Object.freeze({
       error: terminalError({
         stage: 'startup.teardown',
         attempt,
         errorCode: 'STARTUP_TEARDOWN_EVIDENCE_INVALID',
-        message:
-          'teardown did not provide successful zero-residual cleanup evidence',
+        message: 'teardown did not provide successful zero-residual cleanup evidence',
         identities,
-        attempts: [
-          ...attempts,
-          failedAttemptEvidence(
-            attempt,
-            identity,
-            failure,
-            teardown,
-          ),
-        ],
+        attempts: [...attempts, failedAttemptEvidence(attempt, identity, failure, teardown)],
         retryDecision: 'cleanup-failed',
         details: { originalFailure: failureEvidence(failure) },
         cause,
@@ -438,8 +340,7 @@ function failedTeardownProof(attempt, identity, reason, cause) {
     reason,
     error: Object.freeze({
       name: typeof cause?.name === 'string' ? cause.name : typeof cause,
-      message:
-        cause instanceof Error ? cause.message : safeText(String(cause), 'unknown'),
+      message: cause instanceof Error ? cause.message : safeText(String(cause), 'unknown'),
     }),
   });
 }
@@ -463,9 +364,7 @@ function validateTeardownProof(rawProof, attempt, identity) {
     !isPlainRecord(proof.identity) ||
     JSON.stringify(proof.identity) !== JSON.stringify(identity)
   ) {
-    throw new TypeError(
-      'teardown evidence identity must exactly match the failed attempt',
-    );
+    throw new TypeError('teardown evidence identity must exactly match the failed attempt');
   }
   return proof;
 }
@@ -485,10 +384,7 @@ async function resolveRuntimeIdentity(scope, baseIdentity) {
   if (!isPlainRecord(runtime)) {
     throw new TypeError('runtime identity must be a plain JSON object');
   }
-  if (
-    runtime.attemptId !== undefined &&
-    runtime.attemptId !== baseIdentity.attemptId
-  ) {
+  if (runtime.attemptId !== undefined && runtime.attemptId !== baseIdentity.attemptId) {
     throw new TypeError('runtime identity cannot replace attemptId');
   }
   return snapshotIdentity({
@@ -517,9 +413,7 @@ function findFreshnessIssues(previousIdentity, nextIdentity) {
   const previousResources = collectResourceIdentities(previousIdentity);
   const nextResources = collectResourceIdentities(nextIdentity);
   const categories = new Set(
-    [...previousResources.keys()].filter((category) =>
-      nextResources.has(category)
-    ),
+    [...previousResources.keys()].filter((category) => nextResources.has(category))
   );
 
   for (const category of [...categories].sort()) {
@@ -531,7 +425,7 @@ function findFreshnessIssues(previousIdentity, nextIdentity) {
         Object.freeze({
           path: `resource:${category}`,
           reason: 'reused',
-        }),
+        })
       );
     }
   }
@@ -581,11 +475,9 @@ function resourceIdentityCategory(key) {
     .filter(Boolean);
   const last = words.at(-1);
 
-  const isIdentity = (
+  const isIdentity =
     resourceWords.has(last) ||
-    (identitySuffixes.has(last) &&
-      words.some((word) => resourceWords.has(word)))
-  );
+    (identitySuffixes.has(last) && words.some((word) => resourceWords.has(word)));
   if (!isIdentity) return null;
   const resourceWord = words.find((word) => resourceWords.has(word));
   return resourceWord === 'pid' ? 'process' : resourceWord;
@@ -603,13 +495,10 @@ function normalizeFailure(cause) {
 
   return Object.freeze({
     stage: safeText(cause?.stage, 'startup.unclassified'),
-    errorCode: safeText(
-      cause?.errorCode ?? cause?.code,
-      'STARTUP_UNCLASSIFIED_FAILURE',
-    ),
+    errorCode: safeText(cause?.errorCode ?? cause?.code, 'STARTUP_UNCLASSIFIED_FAILURE'),
     message: safeText(
       cause instanceof Error ? cause.message : String(cause),
-      'an unclassified startup failure occurred',
+      'an unclassified startup failure occurred'
     ),
     details: safeSnapshot(cause?.details),
   });
@@ -670,14 +559,8 @@ function terminalError({
 }
 
 function checkedAttempt(attempt) {
-  if (
-    !Number.isSafeInteger(attempt) ||
-    attempt < 1 ||
-    attempt > MAX_STARTUP_ATTEMPTS
-  ) {
-    throw new TypeError(
-      'attempt must be a 1-based integer no greater than 2',
-    );
+  if (!Number.isSafeInteger(attempt) || attempt < 1 || attempt > MAX_STARTUP_ATTEMPTS) {
+    throw new TypeError('attempt must be a 1-based integer no greater than 2');
   }
   return attempt;
 }
@@ -690,9 +573,7 @@ function checkedText(value, label) {
     value.trim() !== value ||
     /[\u0000-\u001f\u007f]/u.test(value)
   ) {
-    throw new TypeError(
-      `${label} must be a non-empty, trimmed string without control characters`,
-    );
+    throw new TypeError(`${label} must be a non-empty, trimmed string without control characters`);
   }
   return value;
 }
@@ -720,11 +601,7 @@ function snapshotJson(value, label) {
   const ancestors = new Set();
 
   const visit = (entry, path) => {
-    if (
-      entry === null ||
-      typeof entry === 'string' ||
-      typeof entry === 'boolean'
-    ) {
+    if (entry === null || typeof entry === 'string' || typeof entry === 'boolean') {
       return entry;
     }
     if (typeof entry === 'number') {
@@ -738,9 +615,7 @@ function snapshotJson(value, label) {
         throw new TypeError(`${path} must not contain circular references`);
       }
       ancestors.add(entry);
-      const result = Object.freeze(
-        entry.map((item, index) => visit(item, `${path}[${index}]`)),
-      );
+      const result = Object.freeze(entry.map((item, index) => visit(item, `${path}[${index}]`)));
       ancestors.delete(entry);
       return result;
     }
@@ -767,11 +642,7 @@ function snapshotJson(value, label) {
 }
 
 function isPlainRecord(value) {
-  if (
-    value === null ||
-    typeof value !== 'object' ||
-    Array.isArray(value)
-  ) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }
   const prototype = Object.getPrototypeOf(value);

@@ -1,8 +1,4 @@
-import {
-  createValidationIssue,
-  profilePath,
-  sortAndDedupeIssues,
-} from './issues.js';
+import { createValidationIssue, profilePath, sortAndDedupeIssues } from './issues.js';
 import { normalizeText } from './normalization.js';
 import { hasValidatedProfileCapability } from './validation.js';
 import type {
@@ -28,13 +24,7 @@ declare const factCanonicalPathBrand: unique symbol;
 
 export const FACT_APPROVAL_SCHEMA_VERSION = 1;
 
-export const FACT_TARGET_SURFACES = [
-  'resume',
-  'portfolio',
-  'homepage',
-  'metadata',
-  'pdf',
-] as const;
+export const FACT_TARGET_SURFACES = ['resume', 'portfolio', 'homepage', 'metadata', 'pdf'] as const;
 
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const CANONICAL_PATH_PATTERN =
@@ -209,26 +199,14 @@ export interface MaterializedFact {
 const RESUME_PDF = surfaceSet('resume', 'pdf');
 const RESUME_METADATA_PDF = surfaceSet('resume', 'metadata', 'pdf');
 const RESUME_HOMEPAGE_PDF = surfaceSet('resume', 'homepage', 'pdf');
-const RESUME_HOMEPAGE_METADATA_PDF = surfaceSet(
-  'resume',
-  'homepage',
-  'metadata',
-  'pdf',
-);
+const RESUME_HOMEPAGE_METADATA_PDF = surfaceSet('resume', 'homepage', 'metadata', 'pdf');
 const PORTFOLIO = surfaceSet('portfolio');
 const PORTFOLIO_METADATA = surfaceSet('portfolio', 'metadata');
 const RESUME_PORTFOLIO_PDF = surfaceSet('resume', 'portfolio', 'pdf');
-const RESUME_PORTFOLIO_METADATA_PDF = surfaceSet(
-  'resume',
-  'portfolio',
-  'metadata',
-  'pdf',
-);
+const RESUME_PORTFOLIO_METADATA_PDF = surfaceSet('resume', 'portfolio', 'metadata', 'pdf');
 const HOMEPAGE = surfaceSet('homepage');
 
-export function collectMaterializedFacts(
-  profile: ValidatedProfile,
-): readonly MaterializedFact[] {
+export function collectMaterializedFacts(profile: ValidatedProfile): readonly MaterializedFact[] {
   // DeepReadonly intentionally makes the aggregate opaque at the boundary.
   // Runtime representation remains the validated ProfileData shape.
   const source = profile as unknown as ProfileData;
@@ -240,7 +218,7 @@ export function collectMaterializedFacts(
     'profile.identity.name',
     'profile.identity.name',
     RESUME_HOMEPAGE_METADATA_PDF,
-    'required',
+    'required'
   );
   addTextFact(
     facts,
@@ -248,7 +226,7 @@ export function collectMaterializedFacts(
     'profile.identity.headline',
     'profile.identity.headline',
     RESUME_HOMEPAGE_PDF,
-    'required',
+    'required'
   );
   addTextFact(
     facts,
@@ -256,7 +234,7 @@ export function collectMaterializedFacts(
     'profile.narrative.shortIntro',
     'profile.narrative.shortIntro',
     HOMEPAGE,
-    'required',
+    'required'
   );
   collectContentBlocks(
     facts,
@@ -264,7 +242,7 @@ export function collectMaterializedFacts(
     'profile.narrative.detailedIntro',
     'profile.narrative.detailedIntro',
     RESUME_PDF,
-    'required',
+    'required'
   );
   addTextFact(
     facts,
@@ -272,7 +250,7 @@ export function collectMaterializedFacts(
     'profile.narrative.resumeSummary',
     'profile.narrative.resumeSummary',
     RESUME_METADATA_PDF,
-    'required',
+    'required'
   );
   addTextFact(
     facts,
@@ -280,7 +258,7 @@ export function collectMaterializedFacts(
     'profile.narrative.portfolioSummary',
     'profile.narrative.portfolioSummary',
     PORTFOLIO_METADATA,
-    'required',
+    'required'
   );
 
   addEmailFact(
@@ -289,7 +267,7 @@ export function collectMaterializedFacts(
     'profile.contact.email',
     'profile.contact.email',
     RESUME_PORTFOLIO_METADATA_PDF,
-    'required',
+    'required'
   );
   addGitHubFact(
     facts,
@@ -297,7 +275,7 @@ export function collectMaterializedFacts(
     'profile.contact.github',
     'profile.contact.github',
     RESUME_PORTFOLIO_METADATA_PDF,
-    'required',
+    'required'
   );
   collectEvidenceLinks(
     facts,
@@ -306,15 +284,13 @@ export function collectMaterializedFacts(
     'profile.contact.additionalLinks',
     RESUME_PORTFOLIO_PDF,
     RESUME_PORTFOLIO_PDF,
-    'optional',
+    'optional'
   );
 
-  for (const {
-    item: group,
-    sourceIndex: groupIndex,
-  } of orderedWithSourceIndex(source.skillGroups)) {
-    const canonicalGroupPath =
-      `profile.skillGroups[id=${group.id}]` as FactCanonicalPath;
+  for (const { item: group, sourceIndex: groupIndex } of orderedWithSourceIndex(
+    source.skillGroups
+  )) {
+    const canonicalGroupPath = `profile.skillGroups[id=${group.id}]` as FactCanonicalPath;
     const sourceGroupPath = `profile.skillGroups[${groupIndex}]`;
 
     addTextFact(
@@ -323,30 +299,23 @@ export function collectMaterializedFacts(
       `${canonicalGroupPath}.title`,
       `${sourceGroupPath}.title`,
       RESUME_PDF,
-      'required',
+      'required'
     );
 
-    for (const {
-      item: skill,
-      sourceIndex: skillIndex,
-    } of orderedWithSourceIndex(group.skills)) {
+    for (const { item: skill, sourceIndex: skillIndex } of orderedWithSourceIndex(group.skills)) {
       addTextFact(
         facts,
         skill.name,
         `${canonicalGroupPath}.skills[id=${skill.id}].name`,
         `${sourceGroupPath}.skills[${skillIndex}].name`,
         RESUME_PDF,
-        'required',
+        'required'
       );
     }
   }
 
-  for (const {
-    item: experience,
-    sourceIndex,
-  } of orderedWithSourceIndex(source.experiences)) {
-    const canonicalBase =
-      `profile.experiences[id=${experience.id}]` as FactCanonicalPath;
+  for (const { item: experience, sourceIndex } of orderedWithSourceIndex(source.experiences)) {
+    const canonicalBase = `profile.experiences[id=${experience.id}]` as FactCanonicalPath;
     const sourceBase = `profile.experiences[${sourceIndex}]`;
 
     addTextFact(
@@ -355,7 +324,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.organization`,
       `${sourceBase}.organization`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     addTextFact(
       facts,
@@ -363,7 +332,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.role`,
       `${sourceBase}.role`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     addPeriodFact(
       facts,
@@ -371,7 +340,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.period`,
       `${sourceBase}.period`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     addTextFact(
       facts,
@@ -379,7 +348,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.summary`,
       `${sourceBase}.summary`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -387,7 +356,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.details`,
       `${sourceBase}.details`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     collectEvidenceLinks(
       facts,
@@ -396,16 +365,12 @@ export function collectMaterializedFacts(
       `${sourceBase}.evidence`,
       RESUME_PDF,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
   }
 
-  for (const {
-    item: achievement,
-    sourceIndex,
-  } of orderedWithSourceIndex(source.achievements)) {
-    const canonicalBase =
-      `profile.achievements[id=${achievement.id}]` as FactCanonicalPath;
+  for (const { item: achievement, sourceIndex } of orderedWithSourceIndex(source.achievements)) {
+    const canonicalBase = `profile.achievements[id=${achievement.id}]` as FactCanonicalPath;
     const sourceBase = `profile.achievements[${sourceIndex}]`;
 
     addTextFact(
@@ -414,7 +379,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.title`,
       `${sourceBase}.title`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     if (achievement.period !== undefined) {
       addPeriodFact(
@@ -423,7 +388,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.period`,
         `${sourceBase}.period`,
         RESUME_PDF,
-        'optional',
+        'optional'
       );
     }
     addTextFact(
@@ -432,7 +397,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.summary`,
       `${sourceBase}.summary`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -440,7 +405,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.details`,
       `${sourceBase}.details`,
       RESUME_PDF,
-      'required',
+      'required'
     );
     collectEvidenceLinks(
       facts,
@@ -449,16 +414,12 @@ export function collectMaterializedFacts(
       `${sourceBase}.evidence`,
       RESUME_PDF,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
   }
 
-  for (const {
-    item: project,
-    sourceIndex,
-  } of orderedWithSourceIndex(source.projects)) {
-    const canonicalBase =
-      `profile.projects[id=${project.id}]` as FactCanonicalPath;
+  for (const { item: project, sourceIndex } of orderedWithSourceIndex(source.projects)) {
+    const canonicalBase = `profile.projects[id=${project.id}]` as FactCanonicalPath;
     const sourceBase = `profile.projects[${sourceIndex}]`;
 
     addTextFact(
@@ -467,7 +428,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.title`,
       `${sourceBase}.title`,
       RESUME_PORTFOLIO_METADATA_PDF,
-      'required',
+      'required'
     );
     if (project.period !== undefined) {
       addPeriodFact(
@@ -476,7 +437,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.period`,
         `${sourceBase}.period`,
         RESUME_PORTFOLIO_PDF,
-        'optional',
+        'optional'
       );
     }
     addTextFact(
@@ -485,7 +446,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.outcomeSummary`,
       `${sourceBase}.outcomeSummary`,
       RESUME_PORTFOLIO_METADATA_PDF,
-      'required',
+      'required'
     );
     if (project.resumeDetails !== undefined) {
       collectContentBlocks(
@@ -494,7 +455,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.resumeDetails`,
         `${sourceBase}.resumeDetails`,
         RESUME_PDF,
-        'optional',
+        'optional'
       );
     }
     collectContentBlocks(
@@ -503,7 +464,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.problem`,
       `${sourceBase}.problem`,
       PORTFOLIO,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -511,7 +472,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.role`,
       `${sourceBase}.role`,
       PORTFOLIO,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -519,7 +480,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.keyDecisions`,
       `${sourceBase}.keyDecisions`,
       PORTFOLIO,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -527,7 +488,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.architecture`,
       `${sourceBase}.architecture`,
       PORTFOLIO,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -535,7 +496,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.outcomes`,
       `${sourceBase}.outcomes`,
       PORTFOLIO,
-      'required',
+      'required'
     );
     collectContentBlocks(
       facts,
@@ -543,7 +504,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.lessons`,
       `${sourceBase}.lessons`,
       PORTFOLIO,
-      'required',
+      'required'
     );
     collectEvidenceLinks(
       facts,
@@ -552,16 +513,12 @@ export function collectMaterializedFacts(
       `${sourceBase}.evidence`,
       PORTFOLIO,
       PORTFOLIO_METADATA,
-      'optional',
+      'optional'
     );
   }
 
-  for (const {
-    item: education,
-    sourceIndex,
-  } of orderedWithSourceIndex(source.education)) {
-    const canonicalBase =
-      `profile.education[id=${education.id}]` as FactCanonicalPath;
+  for (const { item: education, sourceIndex } of orderedWithSourceIndex(source.education)) {
+    const canonicalBase = `profile.education[id=${education.id}]` as FactCanonicalPath;
     const sourceBase = `profile.education[${sourceIndex}]`;
 
     addTextFact(
@@ -570,7 +527,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.title`,
       `${sourceBase}.title`,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
     if (education.subtitle !== undefined) {
       addTextFact(
@@ -579,7 +536,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.subtitle`,
         `${sourceBase}.subtitle`,
         RESUME_PDF,
-        'optional',
+        'optional'
       );
     }
     if (education.period !== undefined) {
@@ -589,7 +546,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.period`,
         `${sourceBase}.period`,
         RESUME_PDF,
-        'optional',
+        'optional'
       );
     }
     collectContentBlocks(
@@ -598,7 +555,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.details`,
       `${sourceBase}.details`,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
     collectEvidenceLinks(
       facts,
@@ -607,16 +564,14 @@ export function collectMaterializedFacts(
       `${sourceBase}.evidence`,
       RESUME_PDF,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
   }
 
-  for (const {
-    item: certification,
-    sourceIndex,
-  } of orderedWithSourceIndex(source.certifications)) {
-    const canonicalBase =
-      `profile.certifications[id=${certification.id}]` as FactCanonicalPath;
+  for (const { item: certification, sourceIndex } of orderedWithSourceIndex(
+    source.certifications
+  )) {
+    const canonicalBase = `profile.certifications[id=${certification.id}]` as FactCanonicalPath;
     const sourceBase = `profile.certifications[${sourceIndex}]`;
 
     addTextFact(
@@ -625,7 +580,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.title`,
       `${sourceBase}.title`,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
     if (certification.issuer !== undefined) {
       addTextFact(
@@ -634,7 +589,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.issuer`,
         `${sourceBase}.issuer`,
         RESUME_PDF,
-        'optional',
+        'optional'
       );
     }
     if (certification.period !== undefined) {
@@ -644,7 +599,7 @@ export function collectMaterializedFacts(
         `${canonicalBase}.period`,
         `${sourceBase}.period`,
         RESUME_PDF,
-        'optional',
+        'optional'
       );
     }
     collectContentBlocks(
@@ -653,7 +608,7 @@ export function collectMaterializedFacts(
       `${canonicalBase}.details`,
       `${sourceBase}.details`,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
     collectEvidenceLinks(
       facts,
@@ -662,7 +617,7 @@ export function collectMaterializedFacts(
       `${sourceBase}.evidence`,
       RESUME_PDF,
       RESUME_PDF,
-      'optional',
+      'optional'
     );
   }
 
@@ -671,12 +626,10 @@ export function collectMaterializedFacts(
 
 export function validateFactApproval(
   profile: ValidatedProfile,
-  review: FactApprovalReview,
+  review: FactApprovalReview
 ): ValidationResult<FactApprovedProfile> {
   if (!hasValidatedProfileCapability(profile)) {
-    return failure([
-      createValidationIssue('approval.status', 'profile.facts'),
-    ]);
+    return failure([createValidationIssue('approval.status', 'profile.facts')]);
   }
 
   const materializedFacts = collectMaterializedFacts(profile);
@@ -694,7 +647,7 @@ export function validateFactApproval(
     productionDiff,
     review.materializedProfileDigest,
     receipt,
-    issues,
+    issues
   );
   validateInventoryUniqueness(inventory.records, issues);
   validateFactCorrespondence(materializedFacts, inventory.records, issues);
@@ -739,7 +692,7 @@ export function validateFactApproval(
  * @internal
  */
 export function hasVerifiedFactApprovalCapability(
-  candidate: unknown,
+  candidate: unknown
 ): candidate is FactApprovedProfile {
   try {
     return (
@@ -752,9 +705,7 @@ export function hasVerifiedFactApprovalCapability(
   }
 }
 
-function validateReviewShape(
-  review: FactApprovalReview,
-): ValidationResult<FactApprovalReview> {
+function validateReviewShape(review: FactApprovalReview): ValidationResult<FactApprovalReview> {
   const issues: ValidationIssue[] = [];
 
   if (!isObject(review)) {
@@ -802,7 +753,7 @@ function validateReviewShape(
 
 function validateInventoryShape(
   inventory: Record<PropertyKey, unknown>,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (
     !hasExactKeys(inventory, INVENTORY_KEYS) ||
@@ -827,7 +778,7 @@ function validateInventoryShape(
 function validateReviewRecordShape(
   candidate: unknown,
   index: number,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const basePath = `profile.facts[${index}]`;
   if (!isObject(candidate)) {
@@ -843,45 +794,30 @@ function validateReviewRecordShape(
     typeof candidate.factId !== 'string' ||
     !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(candidate.factId)
   ) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.factId`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.factId`));
   }
 
   if (
     typeof candidate.canonicalPath !== 'string' ||
     !CANONICAL_PATH_PATTERN.test(candidate.canonicalPath)
   ) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.canonicalPath`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.canonicalPath`));
   }
 
   if (!isFactReviewValue(candidate.normalizedValue)) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.normalizedValue`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.normalizedValue`));
   }
 
   if (!isFactReviewEvidence(candidate.evidence)) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.evidence`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.evidence`));
   }
 
   if (!isCanonicalSurfaceSet(candidate.targetSurfaces)) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.targetSurfaces`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.targetSurfaces`));
   }
 
-  if (
-    candidate.requirement !== 'required' &&
-    candidate.requirement !== 'optional'
-  ) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.requirement`),
-    );
+  if (candidate.requirement !== 'required' && candidate.requirement !== 'optional') {
+    issues.push(createValidationIssue('approval.status', `${basePath}.requirement`));
   }
 
   if (
@@ -889,17 +825,11 @@ function validateReviewRecordShape(
     candidate.status !== 'Excluded' &&
     candidate.status !== 'Pending'
   ) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.status`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.status`));
   }
 
-  if (
-    !isDecisionRecordForStatus(candidate.decisionRecord, candidate.status)
-  ) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.decisionRecord`),
-    );
+  if (!isDecisionRecordForStatus(candidate.decisionRecord, candidate.status)) {
+    issues.push(createValidationIssue('approval.status', `${basePath}.decisionRecord`));
   }
 
   if (
@@ -908,18 +838,15 @@ function validateReviewRecordShape(
       candidate.normalizedValue.kind === 'external-url') &&
     (!isObject(candidate.evidence) ||
       candidate.evidence.kind !== 'public-source' ||
-      candidate.evidence.expectedDestination !==
-        candidate.normalizedValue.value)
+      candidate.evidence.expectedDestination !== candidate.normalizedValue.value)
   ) {
-    issues.push(
-      createValidationIssue('approval.status', `${basePath}.evidence`),
-    );
+    issues.push(createValidationIssue('approval.status', `${basePath}.evidence`));
   }
 }
 
 function validateProductionDiffShape(
   productionDiff: Record<PropertyKey, unknown>,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (
     !hasExactKeys(productionDiff, PRODUCTION_DIFF_KEYS) ||
@@ -937,7 +864,7 @@ function validateProductionDiffShape(
 
 function validateReceiptShape(
   receipt: Record<PropertyKey, unknown>,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (
     !hasExactKeys(receipt, RECEIPT_KEYS) ||
@@ -962,7 +889,7 @@ function validateReviewIdentity(
   productionDiff: FactProductionDiffIdentity,
   materializedProfileDigest: string,
   receipt: FactApprovalReceipt,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (
     productionDiff.inventoryRevision !== inventory.revision ||
@@ -976,15 +903,13 @@ function validateReviewIdentity(
     productionDiff.materializedProfileDigest !== materializedProfileDigest ||
     receipt.materializedProfileDigest !== materializedProfileDigest
   ) {
-    issues.push(
-      createValidationIssue('approval.value-mismatch', 'profile.facts'),
-    );
+    issues.push(createValidationIssue('approval.value-mismatch', 'profile.facts'));
   }
 }
 
 function validateInventoryUniqueness(
   records: readonly FactReviewRecord[],
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const factIdLocations = new Map<string, number[]>();
   const pathLocations = new Map<string, number[]>();
@@ -1001,23 +926,21 @@ function validateInventoryUniqueness(
 function validateFactCorrespondence(
   materializedFacts: readonly MaterializedFact[],
   records: readonly FactReviewRecord[],
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const recordsByFactId = groupRecords(records, 'factId');
   const recordsByPath = groupRecords(records, 'canonicalPath');
   const materializedByFactId = new Map<string, MaterializedFact>(
-    materializedFacts.map((fact) => [fact.factId, fact] as const),
+    materializedFacts.map((fact) => [fact.factId, fact] as const)
   );
   const materializedByPath = new Map(
-    materializedFacts.map((fact) => [fact.canonicalPath, fact] as const),
+    materializedFacts.map((fact) => [fact.canonicalPath, fact] as const)
   );
 
   for (const fact of materializedFacts) {
     const factIdRecords = recordsByFactId.get(fact.factId) ?? [];
     if (factIdRecords.length === 0) {
-      issues.push(
-        createValidationIssue('approval.record.missing', fact.sourcePath),
-      );
+      issues.push(createValidationIssue('approval.record.missing', fact.sourcePath));
       continue;
     }
     if (factIdRecords.length > 1) {
@@ -1029,13 +952,8 @@ function validateFactCorrespondence(
     if (pathRecords.length > 1) {
       continue;
     }
-    if (
-      record.canonicalPath !== fact.canonicalPath ||
-      pathRecords[0]?.factId !== fact.factId
-    ) {
-      issues.push(
-        createValidationIssue('approval.production-extra', fact.sourcePath),
-      );
+    if (record.canonicalPath !== fact.canonicalPath || pathRecords[0]?.factId !== fact.factId) {
+      issues.push(createValidationIssue('approval.production-extra', fact.sourcePath));
       continue;
     }
 
@@ -1048,9 +966,7 @@ function validateFactCorrespondence(
       !surfaceSetsEqual(record.targetSurfaces, fact.targetSurfaces) ||
       record.requirement !== fact.requirement
     ) {
-      issues.push(
-        createValidationIssue('approval.value-mismatch', fact.sourcePath),
-      );
+      issues.push(createValidationIssue('approval.value-mismatch', fact.sourcePath));
     }
   }
 
@@ -1067,9 +983,7 @@ function validateFactCorrespondence(
         matchingFact.canonicalPath !== record.canonicalPath ||
         matchingPathFact.factId !== record.factId)
     ) {
-      issues.push(
-        createValidationIssue('approval.status', `${recordPath}.status`),
-      );
+      issues.push(createValidationIssue('approval.status', `${recordPath}.status`));
     }
 
     if (
@@ -1086,29 +1000,23 @@ function validateFactCorrespondence(
         matchingFact.canonicalPath !== record.canonicalPath ||
         matchingPathFact.factId !== record.factId)
     ) {
-      issues.push(
-        createValidationIssue('approval.record.missing', recordPath),
-      );
+      issues.push(createValidationIssue('approval.record.missing', recordPath));
     }
   });
 
-  const hasAmbiguousRecord = [...recordsByFactId.values()].some(
-    (group) => group.length > 1,
-  ) || [...recordsByPath.values()].some((group) => group.length > 1);
+  const hasAmbiguousRecord =
+    [...recordsByFactId.values()].some((group) => group.length > 1) ||
+    [...recordsByPath.values()].some((group) => group.length > 1);
   if (hasAmbiguousRecord) {
     return;
   }
 
-  const inventoryPositions = new Map(
-    records.map((record, index) => [record, index] as const),
-  );
+  const inventoryPositions = new Map(records.map((record, index) => [record, index] as const));
   const materializedRecordPositions: number[] = [];
 
   for (const fact of materializedFacts) {
     const record = recordsByFactId.get(fact.factId)?.[0];
-    const position = record === undefined
-      ? undefined
-      : inventoryPositions.get(record);
+    const position = record === undefined ? undefined : inventoryPositions.get(record);
     if (
       record === undefined ||
       position === undefined ||
@@ -1121,15 +1029,12 @@ function validateFactCorrespondence(
   }
 
   for (let index = 1; index < materializedRecordPositions.length; index += 1) {
-    if (
-      materializedRecordPositions[index - 1] >
-      materializedRecordPositions[index]
-    ) {
+    if (materializedRecordPositions[index - 1] > materializedRecordPositions[index]) {
       issues.push(
         createValidationIssue(
           'approval.value-mismatch',
-          `profile.facts[${materializedRecordPositions[index]}]`,
-        ),
+          `profile.facts[${materializedRecordPositions[index]}]`
+        )
       );
     }
   }
@@ -1141,7 +1046,7 @@ function addTextFact<Value extends string>(
   canonicalPathValue: string,
   sourcePathValue: string,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   addFact(
     facts,
@@ -1150,7 +1055,7 @@ function addTextFact<Value extends string>(
     sourcePathValue,
     Object.freeze({ kind: 'text', value: fact.value }),
     targetSurfaces,
-    requirement,
+    requirement
   );
 }
 
@@ -1160,7 +1065,7 @@ function addEmailFact<Value extends string>(
   canonicalPathValue: string,
   sourcePathValue: string,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   addFact(
     facts,
@@ -1169,7 +1074,7 @@ function addEmailFact<Value extends string>(
     sourcePathValue,
     Object.freeze({ kind: 'email', value: fact.value }),
     targetSurfaces,
-    requirement,
+    requirement
   );
 }
 
@@ -1179,7 +1084,7 @@ function addGitHubFact<Value extends string>(
   canonicalPathValue: string,
   sourcePathValue: string,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   addFact(
     facts,
@@ -1188,7 +1093,7 @@ function addGitHubFact<Value extends string>(
     sourcePathValue,
     Object.freeze({ kind: 'github-url', value: fact.value }),
     targetSurfaces,
-    requirement,
+    requirement
   );
 }
 
@@ -1198,7 +1103,7 @@ function addPeriodFact(
   canonicalPathValue: string,
   sourcePathValue: string,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   addFact(
     facts,
@@ -1210,7 +1115,7 @@ function addPeriodFact(
       value: clonePeriod(fact.value),
     }),
     targetSurfaces,
-    requirement,
+    requirement
   );
 }
 
@@ -1220,7 +1125,7 @@ function addLinkDestinationFact(
   canonicalPathValue: string,
   sourcePathValue: string,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   const normalizedValue: ExternalUrlReviewValue | InternalPathReviewValue =
     fact.value.tag === 'external'
@@ -1240,7 +1145,7 @@ function addLinkDestinationFact(
     sourcePathValue,
     normalizedValue,
     targetSurfaces,
-    requirement,
+    requirement
   );
 }
 
@@ -1251,7 +1156,7 @@ function addFact(
   sourcePathValue: string,
   normalizedValue: DeepReadonly<FactReviewValue>,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   facts.push(
     Object.freeze({
@@ -1261,7 +1166,7 @@ function addFact(
       normalizedValue,
       targetSurfaces,
       requirement,
-    }),
+    })
   );
 }
 
@@ -1271,7 +1176,7 @@ function collectContentBlocks(
   canonicalBase: string,
   sourceBase: string,
   targetSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
   blocks.forEach((block, blockIndex) => {
     if (block.tag === 'paragraph') {
@@ -1281,7 +1186,7 @@ function collectContentBlocks(
         `${canonicalBase}[${blockIndex}].text`,
         `${sourceBase}[${blockIndex}].text`,
         targetSurfaces,
-        requirement,
+        requirement
       );
       return;
     }
@@ -1293,7 +1198,7 @@ function collectContentBlocks(
         `${canonicalBase}[${blockIndex}].items[${itemIndex}]`,
         `${sourceBase}[${blockIndex}].items[${itemIndex}]`,
         targetSurfaces,
-        requirement,
+        requirement
       );
     });
   });
@@ -1306,12 +1211,9 @@ function collectEvidenceLinks(
   sourceBase: string,
   labelSurfaces: readonly FactTargetSurface[],
   destinationSurfaces: readonly FactTargetSurface[],
-  requirement: FactRequirement,
+  requirement: FactRequirement
 ): void {
-  for (const {
-    item: link,
-    sourceIndex,
-  } of orderedWithSourceIndex(links)) {
+  for (const { item: link, sourceIndex } of orderedWithSourceIndex(links)) {
     const canonicalLinkBase = `${canonicalBase}[id=${link.id}]`;
     const sourceLinkBase = `${sourceBase}[${sourceIndex}]`;
 
@@ -1321,7 +1223,7 @@ function collectEvidenceLinks(
       `${canonicalLinkBase}.label`,
       `${sourceLinkBase}.label`,
       labelSurfaces,
-      requirement,
+      requirement
     );
     addLinkDestinationFact(
       facts,
@@ -1329,15 +1231,13 @@ function collectEvidenceLinks(
       `${canonicalLinkBase}.destination`,
       `${sourceLinkBase}.destination`,
       destinationSurfaces,
-      requirement,
+      requirement
     );
   }
 }
 
-function orderedWithSourceIndex<
-  Value extends Readonly<{ id: string; order: number }>,
->(
-  values: readonly Value[],
+function orderedWithSourceIndex<Value extends Readonly<{ id: string; order: number }>>(
+  values: readonly Value[]
 ): readonly Readonly<{ item: Value; sourceIndex: number }>[] {
   return values
     .map((item, sourceIndex) => ({ item, sourceIndex }))
@@ -1363,27 +1263,17 @@ export function factCanonicalPath(value: string): FactCanonicalPath {
   return value as FactCanonicalPath;
 }
 
-function surfaceSet(
-  ...surfaces: readonly FactTargetSurface[]
-): readonly FactTargetSurface[] {
+function surfaceSet(...surfaces: readonly FactTargetSurface[]): readonly FactTargetSurface[] {
   const selected = new Set(surfaces);
-  return Object.freeze(
-    FACT_TARGET_SURFACES.filter((surface) => selected.has(surface)),
-  );
+  return Object.freeze(FACT_TARGET_SURFACES.filter((surface) => selected.has(surface)));
 }
 
-function isCanonicalSurfaceSet(
-  value: unknown,
-): value is readonly FactTargetSurface[] {
+function isCanonicalSurfaceSet(value: unknown): value is readonly FactTargetSurface[] {
   if (!Array.isArray(value) || value.length === 0) {
     return false;
   }
 
-  if (
-    !value.every((surface) =>
-      FACT_TARGET_SURFACES.includes(surface as FactTargetSurface),
-    )
-  ) {
+  if (!value.every((surface) => FACT_TARGET_SURFACES.includes(surface as FactTargetSurface))) {
     return false;
   }
 
@@ -1393,12 +1283,9 @@ function isCanonicalSurfaceSet(
 
 function surfaceSetsEqual(
   left: readonly FactTargetSurface[],
-  right: readonly FactTargetSurface[],
+  right: readonly FactTargetSurface[]
 ): boolean {
-  return (
-    left.length === right.length &&
-    left.every((surface, index) => surface === right[index])
-  );
+  return left.length === right.length && left.every((surface, index) => surface === right[index]);
 }
 
 function isFactReviewValue(value: unknown): value is FactReviewValue {
@@ -1424,11 +1311,7 @@ function isFactReviewValue(value: unknown): value is FactReviewValue {
 }
 
 function isCanonicalPeriod(value: unknown): value is Period {
-  if (
-    !isObject(value) ||
-    !hasExactKeys(value, ['start', 'end']) ||
-    !isDatePoint(value.start)
-  ) {
+  if (!isObject(value) || !hasExactKeys(value, ['start', 'end']) || !isDatePoint(value.start)) {
     return false;
   }
 
@@ -1436,14 +1319,10 @@ function isCanonicalPeriod(value: unknown): value is Period {
     return false;
   }
 
-  return value.end.tag === 'present'
-    ? hasExactKeys(value.end, ['tag'])
-    : isDatePoint(value.end);
+  return value.end.tag === 'present' ? hasExactKeys(value.end, ['tag']) : isDatePoint(value.end);
 }
 
-function isDatePoint(
-  value: unknown,
-): value is Period['start'] {
+function isDatePoint(value: unknown): value is Period['start'] {
   if (
     !isObject(value) ||
     !hasExactKeys(value, ['tag', 'value']) ||
@@ -1457,10 +1336,7 @@ function isDatePoint(
     return /^\d{4}$/.test(value.value);
   }
 
-  return (
-    value.tag === 'year-month' &&
-    /^\d{4}-(?:0[1-9]|1[0-2])$/.test(value.value)
-  );
+  return value.tag === 'year-month' && /^\d{4}-(?:0[1-9]|1[0-2])$/.test(value.value);
 }
 
 function isFactReviewEvidence(value: unknown): value is FactReviewEvidence {
@@ -1478,13 +1354,7 @@ function isFactReviewEvidence(value: unknown): value is FactReviewEvidence {
 
   return (
     value.kind === 'public-source' &&
-    hasExactKeys(value, [
-      'kind',
-      'reference',
-      'expectedDestination',
-      'verifier',
-      'checkedAt',
-    ]) &&
+    hasExactKeys(value, ['kind', 'reference', 'expectedDestination', 'verifier', 'checkedAt']) &&
     isCanonicalPublicString(value.expectedDestination) &&
     isCanonicalPublicString(value.verifier) &&
     isTimestamp(value.checkedAt)
@@ -1493,7 +1363,7 @@ function isFactReviewEvidence(value: unknown): value is FactReviewEvidence {
 
 function isDecisionRecordForStatus(
   value: unknown,
-  status: unknown,
+  status: unknown
 ): value is FactDecisionRecord | null {
   if (status === 'Pending') {
     return value === null;
@@ -1505,11 +1375,7 @@ function isDecisionRecordForStatus(
 
   return (
     isObject(value) &&
-    hasExactKeys(value, [
-      'decision',
-      'auditInteractionId',
-      'recordedAt',
-    ]) &&
+    hasExactKeys(value, ['decision', 'auditInteractionId', 'recordedAt']) &&
     value.decision === status &&
     isCanonicalIdentifier(value.auditInteractionId) &&
     isTimestamp(value.recordedAt)
@@ -1518,7 +1384,7 @@ function isDecisionRecordForStatus(
 
 function factReviewValuesEqual(
   left: FactReviewValue,
-  right: DeepReadonly<FactReviewValue>,
+  right: DeepReadonly<FactReviewValue>
 ): boolean {
   if (left.kind !== right.kind) {
     return false;
@@ -1530,16 +1396,11 @@ function factReviewValuesEqual(
       left.value.start.value === right.value.start.value &&
       left.value.end.tag === right.value.end.tag &&
       (left.value.end.tag === 'present' ||
-        (right.value.end.tag !== 'present' &&
-          left.value.end.value === right.value.end.value))
+        (right.value.end.tag !== 'present' && left.value.end.value === right.value.end.value))
     );
   }
 
-  return (
-    left.kind !== 'period' &&
-    right.kind !== 'period' &&
-    left.value === right.value
-  );
+  return left.kind !== 'period' && right.kind !== 'period' && left.value === right.value;
 }
 
 function clonePeriod(period: Period): Period {
@@ -1560,7 +1421,7 @@ function clonePeriod(period: Period): Period {
 
 function groupRecords<Key extends 'factId' | 'canonicalPath'>(
   records: readonly FactReviewRecord[],
-  key: Key,
+  key: Key
 ): Map<FactReviewRecord[Key], FactReviewRecord[]> {
   const groups = new Map<FactReviewRecord[Key], FactReviewRecord[]>();
   for (const record of records) {
@@ -1575,11 +1436,7 @@ function groupRecords<Key extends 'factId' | 'canonicalPath'>(
   return groups;
 }
 
-function appendLocation(
-  locations: Map<string, number[]>,
-  key: string,
-  index: number,
-): void {
+function appendLocation(locations: Map<string, number[]>, key: string, index: number): void {
   const current = locations.get(key);
   if (current === undefined) {
     locations.set(key, [index]);
@@ -1591,7 +1448,7 @@ function appendLocation(
 function addDuplicateRecordIssues(
   locations: ReadonlyMap<string, readonly number[]>,
   field: 'factId' | 'canonicalPath',
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   for (const indices of locations.values()) {
     if (indices.length < 2) {
@@ -1599,22 +1456,13 @@ function addDuplicateRecordIssues(
     }
 
     for (const index of indices) {
-      issues.push(
-        createValidationIssue(
-          'approval.status',
-          `profile.facts[${index}].${field}`,
-        ),
-      );
+      issues.push(createValidationIssue('approval.status', `profile.facts[${index}].${field}`));
     }
   }
 }
 
 function isCanonicalPublicString(value: unknown): value is string {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    normalizeText(value) === value
-  );
+  return typeof value === 'string' && value.length > 0 && normalizeText(value) === value;
 }
 
 function isCanonicalIdentifier(value: unknown): value is string {
@@ -1634,9 +1482,7 @@ function isCanonicalIdentifier(value: unknown): value is string {
  * copy rejects an approval this module legitimately issued — which is exactly
  * what a lowercase-only slug pattern did to the uppercase decision audit ID.
  */
-export function isCanonicalApprovalIdentifier(
-  value: unknown,
-): value is string {
+export function isCanonicalApprovalIdentifier(value: unknown): value is string {
   return isCanonicalIdentifier(value);
 }
 
@@ -1647,23 +1493,16 @@ function isSha256Digest(value: unknown): value is string {
 function isTimestamp(value: unknown): value is string {
   return (
     typeof value === 'string' &&
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
-      value,
-    ) &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) &&
     Number.isFinite(Date.parse(value))
   );
 }
 
-function isObject(
-  value: unknown,
-): value is Record<PropertyKey, unknown> {
+function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function hasExactKeys(
-  value: Record<PropertyKey, unknown>,
-  expected: readonly string[],
-): boolean {
+function hasExactKeys(value: Record<PropertyKey, unknown>, expected: readonly string[]): boolean {
   const actual = Object.keys(value).sort(compareAscii);
   const canonicalExpected = [...expected].sort(compareAscii);
   return (
@@ -1682,9 +1521,7 @@ function compareAscii(left: string, right: string): number {
   return 0;
 }
 
-function failure<Value>(
-  issues: readonly ValidationIssue[],
-): ValidationResult<Value> {
+function failure<Value>(issues: readonly ValidationIssue[]): ValidationResult<Value> {
   return Object.freeze({
     ok: false,
     issues: issues as NonEmptyReadonlyArray<ValidationIssue>,

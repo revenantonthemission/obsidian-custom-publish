@@ -1,6 +1,6 @@
 ---
-import type { TextBlockView } from "./presentation.js";
-import ContentText from "./ContentText.astro";
+import type { TextBlockView } from './presentation.js';
+import ContentText from './ContentText.astro';
 
 interface Props {
   blocks: readonly TextBlockView[];
@@ -10,24 +10,18 @@ interface Props {
 const { blocks, withSubtitles = false } = Astro.props;
 ---
 
-{blocks.map((block) => (
-  block.tag === "paragraph" ? (
-    withSubtitles && block.text.value.indexOf("\n") > 0 ? (
-      <div
-        class="profile-content-subsection"
-        data-profile-fact-id={block.text.factId}
-      >
+{blocks.map((block) =>
+  block.tag === 'paragraph' ? (
+    withSubtitles && block.text.value.indexOf('\n') > 0 ? (
+      <div class="profile-content-subsection" data-profile-fact-id={block.text.factId}>
         <ContentText text={block.text.value} withSubtitles />
       </div>
     ) : (
-      <p
-        class="profile-content-paragraph"
-        data-profile-fact-id={block.text.factId}
-      >
+      <p class="profile-content-paragraph" data-profile-fact-id={block.text.factId}>
         {block.text.value}
       </p>
     )
-  ) : block.style === "ordered" ? (
+  ) : block.style === 'ordered' ? (
     <ol class="profile-content-list profile-content-list-ordered">
       {block.items.map((item) => (
         <li data-profile-fact-id={item.factId}>
@@ -44,4 +38,4 @@ const { blocks, withSubtitles = false } = Astro.props;
       ))}
     </ul>
   )
-))}
+)}

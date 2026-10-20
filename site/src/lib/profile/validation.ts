@@ -1,12 +1,5 @@
-import {
-  createValidationIssue,
-  sortAndDedupeIssues,
-} from './issues.js';
-import {
-  isKebabIdentifier,
-  normalizeProfile,
-  normalizeText,
-} from './normalization.js';
+import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
+import { isKebabIdentifier, normalizeProfile, normalizeText } from './normalization.js';
 import type {
   Achievement,
   Certification,
@@ -50,10 +43,8 @@ interface ValidationContext {
 }
 
 const CONTROL_OR_WHITESPACE_PATTERN = /[\u0000-\u0020\u007f]/;
-const EMAIL_LOCAL_PATTERN =
-  /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
-const DOMAIN_LABEL_PATTERN =
-  /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
+const EMAIL_LOCAL_PATTERN = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
+const DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
 const YEAR_PATTERN = /^\d{4}$/;
 const YEAR_MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
 const GITHUB_PROFILE_PATTERN =
@@ -61,16 +52,11 @@ const GITHUB_PROFILE_PATTERN =
 
 const VALIDATED_PROFILE_CAPABILITIES = new WeakSet<object>();
 
-export function validateProfile(
-  input: ProfileData,
-): ValidationResult<ValidatedProfile> {
+export function validateProfile(input: ProfileData): ValidationResult<ValidatedProfile> {
   const shape = inspectShape(input);
 
   if (!shape.normalizable) {
-    return validationFailure([
-      ...shape.issues,
-      ...validateDiscoverableUnsafeBranches(input),
-    ]);
+    return validationFailure([...shape.issues, ...validateDiscoverableUnsafeBranches(input)]);
   }
 
   const normalized = normalizeProfile(input);
@@ -83,9 +69,7 @@ export function validateProfile(
     return validationFailure(issues);
   }
 
-  const validated = deepFreezeValidatedGraph(
-    normalized,
-  ) as unknown as ValidatedProfile;
+  const validated = deepFreezeValidatedGraph(normalized) as unknown as ValidatedProfile;
   VALIDATED_PROFILE_CAPABILITIES.add(validated);
 
   return Object.freeze({
@@ -100,9 +84,7 @@ export function validateProfile(
  *
  * @internal
  */
-export function hasValidatedProfileCapability(
-  candidate: unknown,
-): candidate is ValidatedProfile {
+export function hasValidatedProfileCapability(candidate: unknown): candidate is ValidatedProfile {
   try {
     return (
       candidate !== null &&
@@ -120,22 +102,14 @@ export function requireValidProfile(input: ProfileData): ValidatedProfile {
     return result.value;
   }
 
-  const diagnostics = result.issues
-    .map((issue) => `${issue.code}@${issue.path}`)
-    .join(', ');
+  const diagnostics = result.issues.map((issue) => `${issue.code}@${issue.path}`).join(', ');
   throw new TypeError(`Profile validation failed: ${diagnostics}`);
 }
 
-function validationFailure(
-  issues: readonly ValidationIssue[],
-): ValidationResult<never> {
+function validationFailure(issues: readonly ValidationIssue[]): ValidationResult<never> {
   const canonical = sortAndDedupeIssues(issues);
   const nonEmpty =
-    canonical.length > 0
-      ? canonical
-      : [
-          createValidationIssue('field.type', 'profile'),
-        ];
+    canonical.length > 0 ? canonical : [createValidationIssue('field.type', 'profile')];
 
   return Object.freeze({
     ok: false,
@@ -145,7 +119,7 @@ function validationFailure(
 
 function deepFreezeValidatedGraph<Value>(
   value: Value,
-  visited: WeakSet<object> = new WeakSet<object>(),
+  visited: WeakSet<object> = new WeakSet<object>()
 ): Value {
   if (value === null || typeof value !== 'object') {
     return value;
@@ -173,62 +147,27 @@ function inspectShape(input: unknown): ShapeContext {
     return context;
   }
 
-  const identity = requiredRecord(
-    input,
-    'identity',
-    'profile.identity',
-    context,
-  );
+  const identity = requiredRecord(input, 'identity', 'profile.identity', context);
   if (identity) {
     inspectTextFact(identity, 'name', 'profile.identity.name', context);
-    inspectTextFact(
-      identity,
-      'headline',
-      'profile.identity.headline',
-      context,
-    );
+    inspectTextFact(identity, 'headline', 'profile.identity.headline', context);
   }
 
-  const narrative = requiredRecord(
-    input,
-    'narrative',
-    'profile.narrative',
-    context,
-  );
+  const narrative = requiredRecord(input, 'narrative', 'profile.narrative', context);
   if (narrative) {
-    inspectTextFact(
-      narrative,
-      'shortIntro',
-      'profile.narrative.shortIntro',
-      context,
-    );
+    inspectTextFact(narrative, 'shortIntro', 'profile.narrative.shortIntro', context);
     inspectContentCollection(
       narrative,
       'detailedIntro',
       'profile.narrative.detailedIntro',
       true,
-      context,
+      context
     );
-    inspectTextFact(
-      narrative,
-      'resumeSummary',
-      'profile.narrative.resumeSummary',
-      context,
-    );
-    inspectTextFact(
-      narrative,
-      'portfolioSummary',
-      'profile.narrative.portfolioSummary',
-      context,
-    );
+    inspectTextFact(narrative, 'resumeSummary', 'profile.narrative.resumeSummary', context);
+    inspectTextFact(narrative, 'portfolioSummary', 'profile.narrative.portfolioSummary', context);
   }
 
-  const contact = requiredRecord(
-    input,
-    'contact',
-    'profile.contact',
-    context,
-  );
+  const contact = requiredRecord(input, 'contact', 'profile.contact', context);
   if (contact) {
     inspectTextFact(contact, 'email', 'profile.contact.email', context);
     inspectTextFact(contact, 'github', 'profile.contact.github', context);
@@ -236,16 +175,11 @@ function inspectShape(input: unknown): ShapeContext {
       contact,
       'additionalLinks',
       'profile.contact.additionalLinks',
-      context,
+      context
     );
   }
 
-  const skillGroups = requiredArray(
-    input,
-    'skillGroups',
-    'profile.skillGroups',
-    context,
-  );
+  const skillGroups = requiredArray(input, 'skillGroups', 'profile.skillGroups', context);
   if (skillGroups) {
     requireMinimum(skillGroups, 1, 'profile.skillGroups', context.issues);
     skillGroups.forEach((candidate, index) => {
@@ -275,15 +209,11 @@ function inspectShape(input: unknown): ShapeContext {
 
   const experiences = inspectExperiences(input, context);
   const achievements = inspectAchievements(input, context);
-  if (
-    experiences &&
-    achievements &&
-    experiences.length + achievements.length < 1
-  ) {
+  if (experiences && achievements && experiences.length + achievements.length < 1) {
     context.issues.push(
       createValidationIssue('collection.minimum', 'profile.experiences', {
         min: 1,
-      }),
+      })
     );
   }
 
@@ -295,10 +225,7 @@ function inspectShape(input: unknown): ShapeContext {
   return context;
 }
 
-function inspectResumeProjectSelection(
-  input: UnknownRecord,
-  context: ShapeContext,
-): void {
+function inspectResumeProjectSelection(input: UnknownRecord, context: ShapeContext): void {
   const path = 'profile.resumeProjectIds';
   try {
     const descriptor = Object.getOwnPropertyDescriptor(input, 'resumeProjectIds');
@@ -327,8 +254,10 @@ function inspectResumeProjectSelection(
     for (let index = 0; index < length; index += 1) {
       const item = Object.getOwnPropertyDescriptor(selection, String(index));
       if (
-        item === undefined || !hasOwn(item, 'value') ||
-        item.enumerable !== true || typeof item.value !== 'string'
+        item === undefined ||
+        !hasOwn(item, 'value') ||
+        item.enumerable !== true ||
+        typeof item.value !== 'string'
       ) {
         throw new TypeError('Résumé project IDs must be owned string values.');
       }
@@ -341,14 +270,9 @@ function inspectResumeProjectSelection(
 
 function inspectExperiences(
   root: UnknownRecord,
-  context: ShapeContext,
+  context: ShapeContext
 ): readonly unknown[] | undefined {
-  const experiences = requiredArray(
-    root,
-    'experiences',
-    'profile.experiences',
-    context,
-  );
+  const experiences = requiredArray(root, 'experiences', 'profile.experiences', context);
   if (!experiences) {
     return undefined;
   }
@@ -360,28 +284,12 @@ function inspectExperiences(
       return;
     }
     inspectEntityControls(experience, path, context);
-    inspectTextFact(
-      experience,
-      'organization',
-      `${path}.organization`,
-      context,
-    );
+    inspectTextFact(experience, 'organization', `${path}.organization`, context);
     inspectTextFact(experience, 'role', `${path}.role`, context);
     inspectPeriodFact(experience, 'period', `${path}.period`, false, context);
     inspectTextFact(experience, 'summary', `${path}.summary`, context);
-    inspectContentCollection(
-      experience,
-      'details',
-      `${path}.details`,
-      true,
-      context,
-    );
-    inspectEvidenceCollection(
-      experience,
-      'evidence',
-      `${path}.evidence`,
-      context,
-    );
+    inspectContentCollection(experience, 'details', `${path}.details`, true, context);
+    inspectEvidenceCollection(experience, 'evidence', `${path}.evidence`, context);
   });
 
   return experiences;
@@ -389,14 +297,9 @@ function inspectExperiences(
 
 function inspectAchievements(
   root: UnknownRecord,
-  context: ShapeContext,
+  context: ShapeContext
 ): readonly unknown[] | undefined {
-  const achievements = requiredArray(
-    root,
-    'achievements',
-    'profile.achievements',
-    context,
-  );
+  const achievements = requiredArray(root, 'achievements', 'profile.achievements', context);
   if (!achievements) {
     return undefined;
   }
@@ -409,39 +312,17 @@ function inspectAchievements(
     }
     inspectEntityControls(achievement, path, context);
     inspectTextFact(achievement, 'title', `${path}.title`, context);
-    inspectPeriodFact(
-      achievement,
-      'period',
-      `${path}.period`,
-      true,
-      context,
-    );
+    inspectPeriodFact(achievement, 'period', `${path}.period`, true, context);
     inspectTextFact(achievement, 'summary', `${path}.summary`, context);
-    inspectContentCollection(
-      achievement,
-      'details',
-      `${path}.details`,
-      true,
-      context,
-    );
-    inspectEvidenceCollection(
-      achievement,
-      'evidence',
-      `${path}.evidence`,
-      context,
-    );
+    inspectContentCollection(achievement, 'details', `${path}.details`, true, context);
+    inspectEvidenceCollection(achievement, 'evidence', `${path}.evidence`, context);
   });
 
   return achievements;
 }
 
 function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
-  const projects = requiredArray(
-    root,
-    'projects',
-    'profile.projects',
-    context,
-  );
+  const projects = requiredArray(root, 'projects', 'profile.projects', context);
   if (!projects) {
     return;
   }
@@ -451,7 +332,7 @@ function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
       createValidationIssue('collection.range', 'profile.projects', {
         min: 3,
         max: 6,
-      }),
+      })
     );
   }
 
@@ -464,12 +345,7 @@ function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
     inspectEntityControls(project, path, context);
     inspectTextFact(project, 'title', `${path}.title`, context);
     inspectPeriodFact(project, 'period', `${path}.period`, true, context);
-    inspectTextFact(
-      project,
-      'outcomeSummary',
-      `${path}.outcomeSummary`,
-      context,
-    );
+    inspectTextFact(project, 'outcomeSummary', `${path}.outcomeSummary`, context);
     inspectOptionalResumeDetails(project, `${path}.resumeDetails`, context);
     for (const dimension of [
       'problem',
@@ -479,13 +355,7 @@ function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
       'outcomes',
       'lessons',
     ] as const) {
-      inspectContentCollection(
-        project,
-        dimension,
-        `${path}.${dimension}`,
-        true,
-        context,
-      );
+      inspectContentCollection(project, dimension, `${path}.${dimension}`, true, context);
     }
     inspectEvidenceCollection(project, 'evidence', `${path}.evidence`, context);
     inspectOptionalReference(project, `${path}.relatedProfileEntity`, context);
@@ -495,19 +365,27 @@ function inspectProjects(root: UnknownRecord, context: ShapeContext): void {
 function inspectOptionalResumeDetails(
   project: UnknownRecord,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   const descriptor = Object.getOwnPropertyDescriptor(project, 'resumeDetails');
   if (descriptor === undefined && !('resumeDetails' in project)) return;
   if (
-    descriptor === undefined || !hasOwn(descriptor, 'value') ||
-    descriptor.enumerable !== true || !isOwnedContentData(descriptor.value)
+    descriptor === undefined ||
+    !hasOwn(descriptor, 'value') ||
+    descriptor.enumerable !== true ||
+    !isOwnedContentData(descriptor.value)
   ) {
     addShapeIssue(context, 'field.type', path);
     context.normalizable = false;
     return;
   }
-  inspectContentCollection({ resumeDetails: descriptor.value }, 'resumeDetails', path, true, context);
+  inspectContentCollection(
+    { resumeDetails: descriptor.value },
+    'resumeDetails',
+    path,
+    true,
+    context
+  );
 }
 
 function isOwnedContentData(value: unknown, ancestors = new Set<object>()): boolean {
@@ -517,7 +395,9 @@ function isOwnedContentData(value: unknown, ancestors = new Set<object>()): bool
   if (ancestors.has(value)) return false;
   const array = Array.isArray(value);
   const prototype = Object.getPrototypeOf(value);
-  if (array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null) {
+  if (
+    array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null
+  ) {
     return false;
   }
   const keys = Reflect.ownKeys(value);
@@ -534,8 +414,10 @@ function isOwnedContentData(value: unknown, ancestors = new Set<object>()): bool
     if (array && key === 'length') continue;
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
     if (
-      descriptor === undefined || !hasOwn(descriptor, 'value') ||
-      descriptor.enumerable !== true || !isOwnedContentData(descriptor.value, ancestors)
+      descriptor === undefined ||
+      !hasOwn(descriptor, 'value') ||
+      descriptor.enumerable !== true ||
+      !isOwnedContentData(descriptor.value, ancestors)
     ) {
       ancestors.delete(value);
       return false;
@@ -546,12 +428,7 @@ function isOwnedContentData(value: unknown, ancestors = new Set<object>()): bool
 }
 
 function inspectEducation(root: UnknownRecord, context: ShapeContext): void {
-  const education = requiredArray(
-    root,
-    'education',
-    'profile.education',
-    context,
-  );
+  const education = requiredArray(root, 'education', 'profile.education', context);
   if (!education) {
     return;
   }
@@ -571,16 +448,8 @@ function inspectEducation(root: UnknownRecord, context: ShapeContext): void {
   });
 }
 
-function inspectCertifications(
-  root: UnknownRecord,
-  context: ShapeContext,
-): void {
-  const certifications = requiredArray(
-    root,
-    'certifications',
-    'profile.certifications',
-    context,
-  );
+function inspectCertifications(root: UnknownRecord, context: ShapeContext): void {
+  const certifications = requiredArray(root, 'certifications', 'profile.certifications', context);
   if (!certifications) {
     return;
   }
@@ -600,18 +469,8 @@ function inspectCertifications(
   });
 }
 
-function inspectEntityControls(
-  entity: UnknownRecord,
-  path: string,
-  context: ShapeContext,
-): void {
-  inspectRequiredPrimitive(
-    entity,
-    'id',
-    `${path}.id`,
-    'string',
-    context,
-  );
+function inspectEntityControls(entity: UnknownRecord, path: string, context: ShapeContext): void {
+  inspectRequiredPrimitive(entity, 'id', `${path}.id`, 'string', context);
   if (!hasOwn(entity, 'order') || entity.order === undefined) {
     addShapeIssue(context, 'field.required', `${path}.order`);
     context.normalizable = false;
@@ -624,19 +483,13 @@ function inspectTextFact(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   const fact = requiredRecord(owner, key, path, context);
   if (!fact) {
     return;
   }
-  inspectRequiredPrimitive(
-    fact,
-    'factId',
-    `${path}.factId`,
-    'string',
-    context,
-  );
+  inspectRequiredPrimitive(fact, 'factId', `${path}.factId`, 'string', context);
   inspectRequiredPrimitive(fact, 'value', `${path}.value`, 'string', context);
 }
 
@@ -644,7 +497,7 @@ function inspectOptionalTextFact(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   if (!hasOwn(owner, key)) {
     return;
@@ -661,7 +514,7 @@ function inspectPeriodFact(
   key: string,
   path: string,
   optional: boolean,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   if (optional && !hasOwn(owner, key)) {
     return;
@@ -675,13 +528,7 @@ function inspectPeriodFact(
   if (!fact) {
     return;
   }
-  inspectRequiredPrimitive(
-    fact,
-    'factId',
-    `${path}.factId`,
-    'string',
-    context,
-  );
+  inspectRequiredPrimitive(fact, 'factId', `${path}.factId`, 'string', context);
   const period = requiredRecord(fact, 'value', `${path}.value`, context);
   if (!period) {
     return;
@@ -694,7 +541,7 @@ function inspectDatePoint(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   const point = requiredRecord(owner, key, path, context);
   if (!point) {
@@ -702,13 +549,7 @@ function inspectDatePoint(
   }
   inspectRequiredPrimitive(point, 'tag', `${path}.tag`, 'string', context);
   if (point.tag !== 'present') {
-    inspectRequiredPrimitive(
-      point,
-      'value',
-      `${path}.value`,
-      'string',
-      context,
-    );
+    inspectRequiredPrimitive(point, 'value', `${path}.value`, 'string', context);
   }
 }
 
@@ -717,7 +558,7 @@ function inspectContentCollection(
   key: string,
   path: string,
   minimumOne: boolean,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   const blocks = requiredArray(owner, key, path, context);
   if (!blocks) {
@@ -741,19 +582,8 @@ function inspectContentCollection(
     }
 
     if (candidate.tag === 'list') {
-      inspectRequiredPrimitive(
-        candidate,
-        'style',
-        `${blockPath}.style`,
-        'string',
-        context,
-      );
-      const items = requiredArray(
-        candidate,
-        'items',
-        `${blockPath}.items`,
-        context,
-      );
+      inspectRequiredPrimitive(candidate, 'style', `${blockPath}.style`, 'string', context);
+      const items = requiredArray(candidate, 'items', `${blockPath}.items`, context);
       if (!items) {
         return;
       }
@@ -767,20 +597,8 @@ function inspectContentCollection(
           context.normalizable = false;
           return;
         }
-        inspectRequiredPrimitive(
-          item,
-          'factId',
-          `${itemPath}.factId`,
-          'string',
-          context,
-        );
-        inspectRequiredPrimitive(
-          item,
-          'value',
-          `${itemPath}.value`,
-          'string',
-          context,
-        );
+        inspectRequiredPrimitive(item, 'factId', `${itemPath}.factId`, 'string', context);
+        inspectRequiredPrimitive(item, 'value', `${itemPath}.value`, 'string', context);
       });
       return;
     }
@@ -794,7 +612,7 @@ function inspectEvidenceCollection(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   const links = requiredArray(owner, key, path, context);
   if (!links) {
@@ -810,12 +628,7 @@ function inspectEvidenceCollection(
     inspectEntityControls(link, linkPath, context);
     inspectTextFact(link, 'label', `${linkPath}.label`, context);
 
-    const destination = requiredRecord(
-      link,
-      'destination',
-      `${linkPath}.destination`,
-      context,
-    );
+    const destination = requiredRecord(link, 'destination', `${linkPath}.destination`, context);
     if (!destination) {
       return;
     }
@@ -824,31 +637,20 @@ function inspectEvidenceCollection(
       'factId',
       `${linkPath}.destination.factId`,
       'string',
-      context,
+      context
     );
-    const value = requiredRecord(
-      destination,
-      'value',
-      `${linkPath}.destination.value`,
-      context,
-    );
+    const value = requiredRecord(destination, 'value', `${linkPath}.destination.value`, context);
     if (!value) {
       return;
     }
-    inspectRequiredPrimitive(
-      value,
-      'tag',
-      `${linkPath}.destination.value.tag`,
-      'string',
-      context,
-    );
+    inspectRequiredPrimitive(value, 'tag', `${linkPath}.destination.value.tag`, 'string', context);
     if (value.tag === 'external' || value.tag === 'internal') {
       inspectRequiredPrimitive(
         value,
         'value',
         `${linkPath}.destination.value.value`,
         'string',
-        context,
+        context
       );
     } else if (typeof value.tag === 'string') {
       context.normalizable = false;
@@ -859,7 +661,7 @@ function inspectEvidenceCollection(
 function inspectOptionalReference(
   project: UnknownRecord,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): void {
   if (!hasOwn(project, 'relatedProfileEntity')) {
     return;
@@ -889,7 +691,7 @@ function requiredRecord(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): UnknownRecord | undefined {
   if (!hasOwn(owner, key) || owner[key] === undefined) {
     addShapeIssue(context, 'field.required', path);
@@ -908,7 +710,7 @@ function requiredArray(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): readonly unknown[] | undefined {
   if (!hasOwn(owner, key) || owner[key] === undefined) {
     addShapeIssue(context, 'field.required', path);
@@ -926,7 +728,7 @@ function requiredArray(
 function arrayElementRecord(
   candidate: unknown,
   path: string,
-  context: ShapeContext,
+  context: ShapeContext
 ): UnknownRecord | undefined {
   if (!isRecord(candidate)) {
     addShapeIssue(context, 'field.type', path);
@@ -942,7 +744,7 @@ function inspectRequiredPrimitive(
   path: string,
   expected: 'string' | 'number',
   context: ShapeContext,
-  blocksNormalization = true,
+  blocksNormalization = true
 ): void {
   if (!hasOwn(owner, key) || owner[key] === undefined) {
     addShapeIssue(context, 'field.required', path);
@@ -959,17 +761,11 @@ function inspectRequiredPrimitive(
   }
 }
 
-function addShapeIssue(
-  context: ShapeContext,
-  code: ProfileIssueCode,
-  path: string,
-): void {
+function addShapeIssue(context: ShapeContext, code: ProfileIssueCode, path: string): void {
   context.issues.push(createValidationIssue(code, path));
 }
 
-function validateDiscoverableUnsafeBranches(
-  input: unknown,
-): readonly ValidationIssue[] {
+function validateDiscoverableUnsafeBranches(input: unknown): readonly ValidationIssue[] {
   if (!isRecord(input)) {
     return [];
   }
@@ -978,19 +774,13 @@ function validateDiscoverableUnsafeBranches(
 
   const identity = recordAt(input, 'identity');
   if (identity) {
-    validateUnsafeStringFact(
-      identity,
-      'name',
-      'profile.identity.name',
-      'single-line',
-      context,
-    );
+    validateUnsafeStringFact(identity, 'name', 'profile.identity.name', 'single-line', context);
     validateUnsafeStringFact(
       identity,
       'headline',
       'profile.identity.headline',
       'single-line',
-      context,
+      context
     );
   }
 
@@ -1001,49 +791,37 @@ function validateDiscoverableUnsafeBranches(
       'shortIntro',
       'profile.narrative.shortIntro',
       'body',
-      context,
+      context
     );
     validateUnsafeContentBlocks(
       narrative.detailedIntro,
       'profile.narrative.detailedIntro',
-      context,
+      context
     );
     validateUnsafeStringFact(
       narrative,
       'resumeSummary',
       'profile.narrative.resumeSummary',
       'single-line',
-      context,
+      context
     );
     validateUnsafeStringFact(
       narrative,
       'portfolioSummary',
       'profile.narrative.portfolioSummary',
       'single-line',
-      context,
+      context
     );
   }
 
   const contact = recordAt(input, 'contact');
   if (contact) {
-    validateUnsafeStringFact(
-      contact,
-      'email',
-      'profile.contact.email',
-      'email',
-      context,
-    );
-    validateUnsafeStringFact(
-      contact,
-      'github',
-      'profile.contact.github',
-      'github',
-      context,
-    );
+    validateUnsafeStringFact(contact, 'email', 'profile.contact.email', 'email', context);
+    validateUnsafeStringFact(contact, 'github', 'profile.contact.github', 'github', context);
     validateUnsafeEvidenceLinks(
       contact.additionalLinks,
       'profile.contact.additionalLinks',
-      context,
+      context
     );
   }
 
@@ -1060,16 +838,10 @@ function validateDiscoverableUnsafeBranches(
         context.entityIds.skill,
         context,
         (skill, skillPath) => {
-          validateUnsafeStringFact(
-            skill,
-            'name',
-            `${skillPath}.name`,
-            'single-line',
-            context,
-          );
-        },
+          validateUnsafeStringFact(skill, 'name', `${skillPath}.name`, 'single-line', context);
+        }
       );
-    },
+    }
   );
 
   validateUnsafeOrderedCollection(
@@ -1083,26 +855,14 @@ function validateDiscoverableUnsafeBranches(
         'organization',
         `${path}.organization`,
         'single-line',
-        context,
+        context
       );
-      validateUnsafeStringFact(
-        experience,
-        'role',
-        `${path}.role`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(experience, 'role', `${path}.role`, 'single-line', context);
       validateUnsafePeriodFact(experience, 'period', `${path}.period`, context);
-      validateUnsafeStringFact(
-        experience,
-        'summary',
-        `${path}.summary`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(experience, 'summary', `${path}.summary`, 'single-line', context);
       validateUnsafeContentBlocks(experience.details, `${path}.details`, context);
       validateUnsafeEvidenceLinks(experience.evidence, `${path}.evidence`, context);
-    },
+    }
   );
 
   validateUnsafeOrderedCollection(
@@ -1111,24 +871,12 @@ function validateDiscoverableUnsafeBranches(
     context.entityIds.achievement,
     context,
     (achievement, path) => {
-      validateUnsafeStringFact(
-        achievement,
-        'title',
-        `${path}.title`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(achievement, 'title', `${path}.title`, 'single-line', context);
       validateUnsafePeriodFact(achievement, 'period', `${path}.period`, context);
-      validateUnsafeStringFact(
-        achievement,
-        'summary',
-        `${path}.summary`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(achievement, 'summary', `${path}.summary`, 'single-line', context);
       validateUnsafeContentBlocks(achievement.details, `${path}.details`, context);
       validateUnsafeEvidenceLinks(achievement.evidence, `${path}.evidence`, context);
-    },
+    }
   );
 
   validateUnsafeOrderedCollection(
@@ -1137,23 +885,21 @@ function validateDiscoverableUnsafeBranches(
     context.entityIds.project,
     context,
     (project, path) => {
-      validateUnsafeStringFact(
-        project,
-        'title',
-        `${path}.title`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(project, 'title', `${path}.title`, 'single-line', context);
       validateUnsafePeriodFact(project, 'period', `${path}.period`, context);
       validateUnsafeStringFact(
         project,
         'outcomeSummary',
         `${path}.outcomeSummary`,
         'single-line',
-        context,
+        context
       );
       const resumeDetails = Object.getOwnPropertyDescriptor(project, 'resumeDetails');
-      if (resumeDetails !== undefined && hasOwn(resumeDetails, 'value') && isOwnedContentData(resumeDetails.value)) {
+      if (
+        resumeDetails !== undefined &&
+        hasOwn(resumeDetails, 'value') &&
+        isOwnedContentData(resumeDetails.value)
+      ) {
         validateUnsafeContentBlocks(resumeDetails.value, `${path}.resumeDetails`, context);
       }
       for (const dimension of [
@@ -1164,11 +910,7 @@ function validateDiscoverableUnsafeBranches(
         'outcomes',
         'lessons',
       ] as const) {
-        validateUnsafeContentBlocks(
-          project[dimension],
-          `${path}.${dimension}`,
-          context,
-        );
+        validateUnsafeContentBlocks(project[dimension], `${path}.${dimension}`, context);
       }
       validateUnsafeEvidenceLinks(project.evidence, `${path}.evidence`, context);
       const reference = recordAt(project, 'relatedProfileEntity');
@@ -1179,21 +921,13 @@ function validateDiscoverableUnsafeBranches(
           reference.tag !== 'achievement'
         ) {
           context.issues.push(
-            createValidationIssue(
-              'reference.kind',
-              `${path}.relatedProfileEntity`,
-            ),
+            createValidationIssue('reference.kind', `${path}.relatedProfileEntity`)
           );
         } else {
-          validateIdentifier(
-            reference.id,
-            `${path}.relatedProfileEntity.id`,
-            undefined,
-            context,
-          );
+          validateIdentifier(reference.id, `${path}.relatedProfileEntity.id`, undefined, context);
         }
       }
-    },
+    }
   );
 
   validateUnsafeOrderedCollection(
@@ -1202,24 +936,12 @@ function validateDiscoverableUnsafeBranches(
     context.entityIds.education,
     context,
     (education, path) => {
-      validateUnsafeStringFact(
-        education,
-        'title',
-        `${path}.title`,
-        'single-line',
-        context,
-      );
-      validateUnsafeStringFact(
-        education,
-        'subtitle',
-        `${path}.subtitle`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(education, 'title', `${path}.title`, 'single-line', context);
+      validateUnsafeStringFact(education, 'subtitle', `${path}.subtitle`, 'single-line', context);
       validateUnsafePeriodFact(education, 'period', `${path}.period`, context);
       validateUnsafeContentBlocks(education.details, `${path}.details`, context);
       validateUnsafeEvidenceLinks(education.evidence, `${path}.evidence`, context);
-    },
+    }
   );
 
   validateUnsafeOrderedCollection(
@@ -1228,44 +950,15 @@ function validateDiscoverableUnsafeBranches(
     context.entityIds.certification,
     context,
     (certification, path) => {
-      validateUnsafeStringFact(
-        certification,
-        'title',
-        `${path}.title`,
-        'single-line',
-        context,
-      );
-      validateUnsafeStringFact(
-        certification,
-        'issuer',
-        `${path}.issuer`,
-        'single-line',
-        context,
-      );
-      validateUnsafePeriodFact(
-        certification,
-        'period',
-        `${path}.period`,
-        context,
-      );
-      validateUnsafeContentBlocks(
-        certification.details,
-        `${path}.details`,
-        context,
-      );
-      validateUnsafeEvidenceLinks(
-        certification.evidence,
-        `${path}.evidence`,
-        context,
-      );
-    },
+      validateUnsafeStringFact(certification, 'title', `${path}.title`, 'single-line', context);
+      validateUnsafeStringFact(certification, 'issuer', `${path}.issuer`, 'single-line', context);
+      validateUnsafePeriodFact(certification, 'period', `${path}.period`, context);
+      validateUnsafeContentBlocks(certification.details, `${path}.details`, context);
+      validateUnsafeEvidenceLinks(certification.evidence, `${path}.evidence`, context);
+    }
   );
 
-  addDuplicateIssues(
-    context.factIds,
-    'fact.identifier.duplicate',
-    context.issues,
-  );
+  addDuplicateIssues(context.factIds, 'fact.identifier.duplicate', context.issues);
   for (const occurrences of Object.values(context.entityIds)) {
     addDuplicateIssues(occurrences, 'identifier.duplicate', context.issues);
   }
@@ -1275,12 +968,7 @@ function validateDiscoverableUnsafeBranches(
 }
 
 type UnsafeStringFactKind =
-  | 'single-line'
-  | 'body'
-  | 'content-single-line'
-  | 'content-body'
-  | 'email'
-  | 'github';
+  'single-line' | 'body' | 'content-single-line' | 'content-body' | 'email' | 'github';
 
 function validateUnsafeStringFact(
   owner: UnknownRecord,
@@ -1288,7 +976,7 @@ function validateUnsafeStringFact(
   path: string,
   kind: UnsafeStringFactKind,
   context: ValidationContext,
-  contentEmptyPath = path,
+  contentEmptyPath = path
 ): void {
   const fact = recordAt(owner, key);
   if (!fact) {
@@ -1300,31 +988,23 @@ function validateUnsafeStringFact(
   }
 
   const value = normalizeText(fact.value);
-  const isContent =
-    kind === 'content-single-line' || kind === 'content-body';
+  const isContent = kind === 'content-single-line' || kind === 'content-body';
   if (value.length === 0) {
     context.issues.push(
       createValidationIssue(
         isContent ? 'content.block.empty' : 'text.empty',
-        isContent ? contentEmptyPath : path,
-      ),
+        isContent ? contentEmptyPath : path
+      )
     );
     return;
   }
 
-  if (
-    (kind === 'single-line' || kind === 'content-single-line') &&
-    value.includes('\n')
-  ) {
+  if ((kind === 'single-line' || kind === 'content-single-line') && value.includes('\n')) {
     context.issues.push(createValidationIssue('field.type', path));
   } else if (kind === 'email' && !isValidEmail(value)) {
-    context.issues.push(
-      createValidationIssue('contact.email.invalid', path),
-    );
+    context.issues.push(createValidationIssue('contact.email.invalid', path));
   } else if (kind === 'github' && !isValidGitHubProfileUrl(value)) {
-    context.issues.push(
-      createValidationIssue('contact.github.invalid', path),
-    );
+    context.issues.push(createValidationIssue('contact.github.invalid', path));
   }
 }
 
@@ -1332,7 +1012,7 @@ function validateUnsafePeriodFact(
   owner: UnknownRecord,
   key: string,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   const fact = recordAt(owner, key);
   if (!fact) {
@@ -1345,17 +1025,13 @@ function validateUnsafePeriodFact(
   if (!period || !start || !end) {
     return;
   }
-  validatePeriod(
-    { start, end } as unknown as Period,
-    path,
-    context,
-  );
+  validatePeriod({ start, end } as unknown as Period, path, context);
 }
 
 function validateUnsafeContentBlocks(
   candidate: unknown,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   if (!Array.isArray(candidate)) {
     return;
@@ -1372,7 +1048,7 @@ function validateUnsafeContentBlocks(
         `${blockPath}.text`,
         'content-body',
         context,
-        blockPath,
+        blockPath
       );
       return;
     }
@@ -1382,9 +1058,7 @@ function validateUnsafeContentBlocks(
         blockCandidate.style !== 'ordered' &&
         blockCandidate.style !== 'unordered'
       ) {
-        context.issues.push(
-          createValidationIssue('field.type', `${blockPath}.style`),
-        );
+        context.issues.push(createValidationIssue('field.type', `${blockPath}.style`));
       }
       if (!Array.isArray(blockCandidate.items)) {
         return;
@@ -1398,7 +1072,7 @@ function validateUnsafeContentBlocks(
           'item',
           `${blockPath}.items[${itemIndex}]`,
           'content-single-line',
-          context,
+          context
         );
       });
     }
@@ -1408,7 +1082,7 @@ function validateUnsafeContentBlocks(
 function validateUnsafeEvidenceLinks(
   candidate: unknown,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateUnsafeOrderedCollection(
     candidate,
@@ -1416,13 +1090,7 @@ function validateUnsafeEvidenceLinks(
     context.entityIds.evidenceLink,
     context,
     (link, linkPath) => {
-      validateUnsafeStringFact(
-        link,
-        'label',
-        `${linkPath}.label`,
-        'single-line',
-        context,
-      );
+      validateUnsafeStringFact(link, 'label', `${linkPath}.label`, 'single-line', context);
       const destination = recordAt(link, 'destination');
       if (!destination) {
         return;
@@ -1430,7 +1098,7 @@ function validateUnsafeEvidenceLinks(
       validateFactId(
         destination as unknown as PublicFact<unknown>,
         `${linkPath}.destination`,
-        context,
+        context
       );
       const value = recordAt(destination, 'value');
       if (!value || typeof value.value !== 'string') {
@@ -1445,13 +1113,10 @@ function validateUnsafeEvidenceLinks(
             : false;
       if (!valid) {
         context.issues.push(
-          createValidationIssue(
-            'evidence.url.invalid',
-            `${linkPath}.destination`,
-          ),
+          createValidationIssue('evidence.url.invalid', `${linkPath}.destination`)
         );
       }
-    },
+    }
   );
 }
 
@@ -1460,7 +1125,7 @@ function validateUnsafeOrderedCollection(
   path: string,
   entityIds: Map<string, string[]>,
   context: ValidationContext,
-  validateItem: (item: UnknownRecord, path: string) => void,
+  validateItem: (item: UnknownRecord, path: string) => void
 ): void {
   if (!Array.isArray(candidate)) {
     return;
@@ -1480,10 +1145,7 @@ function validateUnsafeOrderedCollection(
   addDuplicateIssues(orders, 'order.duplicate', context.issues);
 }
 
-function validateUnsafeProjectReferences(
-  root: UnknownRecord,
-  context: ValidationContext,
-): void {
+function validateUnsafeProjectReferences(root: UnknownRecord, context: ValidationContext): void {
   const experienceIds = unsafeEntityIdSet(root.experiences);
   const achievementIds = unsafeEntityIdSet(root.achievements);
   if (!Array.isArray(root.projects)) {
@@ -1510,8 +1172,8 @@ function validateUnsafeProjectReferences(
       context.issues.push(
         createValidationIssue(
           'reference.missing',
-          `profile.projects[${index}].relatedProfileEntity`,
-        ),
+          `profile.projects[${index}].relatedProfileEntity`
+        )
       );
     }
   });
@@ -1525,52 +1187,37 @@ function unsafeEntityIdSet(candidate: unknown): ReadonlySet<string> {
     candidate
       .filter(isRecord)
       .map((entity) => entity.id)
-      .filter((id): id is string => typeof id === 'string'),
+      .filter((id): id is string => typeof id === 'string')
   );
 }
 
-function recordAt(
-  owner: UnknownRecord,
-  key: string,
-): UnknownRecord | undefined {
+function recordAt(owner: UnknownRecord, key: string): UnknownRecord | undefined {
   return isRecord(owner[key]) ? owner[key] : undefined;
 }
 
-function validateNormalizedProfile(
-  profile: ProfileData,
-): readonly ValidationIssue[] {
+function validateNormalizedProfile(profile: ProfileData): readonly ValidationIssue[] {
   const context = createValidationContext();
 
   validateTextFact(profile.identity.name, 'profile.identity.name', true, context);
-  validateTextFact(
-    profile.identity.headline,
-    'profile.identity.headline',
-    true,
-    context,
-  );
-  validateTextFact(
-    profile.narrative.shortIntro,
-    'profile.narrative.shortIntro',
-    false,
-    context,
-  );
+  validateTextFact(profile.identity.headline, 'profile.identity.headline', true, context);
+  validateTextFact(profile.narrative.shortIntro, 'profile.narrative.shortIntro', false, context);
   validateContentBlocks(
     profile.narrative.detailedIntro,
     'profile.narrative.detailedIntro',
     true,
-    context,
+    context
   );
   validateTextFact(
     profile.narrative.resumeSummary,
     'profile.narrative.resumeSummary',
     true,
-    context,
+    context
   );
   validateTextFact(
     profile.narrative.portfolioSummary,
     'profile.narrative.portfolioSummary',
     true,
-    context,
+    context
   );
 
   validateEmailFact(profile.contact.email, 'profile.contact.email', context);
@@ -1578,7 +1225,7 @@ function validateNormalizedProfile(
   validateEvidenceLinks(
     profile.contact.additionalLinks,
     'profile.contact.additionalLinks',
-    context,
+    context
   );
 
   requireMinimum(profile.skillGroups, 1, 'profile.skillGroups', context.issues);
@@ -1587,7 +1234,7 @@ function validateNormalizedProfile(
     'profile.skillGroups',
     context.entityIds.skillGroup,
     context,
-    (group, path) => validateSkillGroup(group, path, context),
+    (group, path) => validateSkillGroup(group, path, context)
   );
 
   validateOrderedCollection(
@@ -1595,20 +1242,20 @@ function validateNormalizedProfile(
     'profile.experiences',
     context.entityIds.experience,
     context,
-    (experience, path) => validateExperience(experience, path, context),
+    (experience, path) => validateExperience(experience, path, context)
   );
   validateOrderedCollection(
     profile.achievements,
     'profile.achievements',
     context.entityIds.achievement,
     context,
-    (achievement, path) => validateAchievement(achievement, path, context),
+    (achievement, path) => validateAchievement(achievement, path, context)
   );
   if (profile.experiences.length + profile.achievements.length < 1) {
     context.issues.push(
       createValidationIssue('collection.minimum', 'profile.experiences', {
         min: 1,
-      }),
+      })
     );
   }
 
@@ -1617,7 +1264,7 @@ function validateNormalizedProfile(
       createValidationIssue('collection.range', 'profile.projects', {
         min: 3,
         max: 6,
-      }),
+      })
     );
   }
   validateOrderedCollection(
@@ -1625,7 +1272,7 @@ function validateNormalizedProfile(
     'profile.projects',
     context.entityIds.project,
     context,
-    (project, path) => validateProject(project, path, context),
+    (project, path) => validateProject(project, path, context)
   );
 
   validateOrderedCollection(
@@ -1633,28 +1280,19 @@ function validateNormalizedProfile(
     'profile.education',
     context.entityIds.education,
     context,
-    (education, path) => validateEducation(education, path, context),
+    (education, path) => validateEducation(education, path, context)
   );
   validateOrderedCollection(
     profile.certifications,
     'profile.certifications',
     context.entityIds.certification,
     context,
-    (certification, path) =>
-      validateCertification(certification, path, context),
+    (certification, path) => validateCertification(certification, path, context)
   );
 
-  addDuplicateIssues(
-    context.factIds,
-    'fact.identifier.duplicate',
-    context.issues,
-  );
+  addDuplicateIssues(context.factIds, 'fact.identifier.duplicate', context.issues);
   for (const occurrences of Object.values(context.entityIds)) {
-    addDuplicateIssues(
-      occurrences,
-      'identifier.duplicate',
-      context.issues,
-    );
+    addDuplicateIssues(occurrences, 'identifier.duplicate', context.issues);
   }
   validateProjectReferences(profile, context);
   validateResumeProjectSelection(profile, context);
@@ -1679,11 +1317,7 @@ function createValidationContext(): ValidationContext {
   };
 }
 
-function validateSkillGroup(
-  group: SkillGroup,
-  path: string,
-  context: ValidationContext,
-): void {
+function validateSkillGroup(group: SkillGroup, path: string, context: ValidationContext): void {
   validateTextFact(group.title, `${path}.title`, true, context);
   requireMinimum(group.skills, 1, `${path}.skills`, context.issues);
   validateOrderedCollection(
@@ -1691,29 +1325,20 @@ function validateSkillGroup(
     `${path}.skills`,
     context.entityIds.skill,
     context,
-    (skill, skillPath) => validateSkill(skill, skillPath, context),
+    (skill, skillPath) => validateSkill(skill, skillPath, context)
   );
 }
 
-function validateSkill(
-  skill: Skill,
-  path: string,
-  context: ValidationContext,
-): void {
+function validateSkill(skill: Skill, path: string, context: ValidationContext): void {
   validateTextFact(skill.name, `${path}.name`, true, context);
 }
 
 function validateExperience(
   experience: Experience,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
-  validateTextFact(
-    experience.organization,
-    `${path}.organization`,
-    true,
-    context,
-  );
+  validateTextFact(experience.organization, `${path}.organization`, true, context);
   validateTextFact(experience.role, `${path}.role`, true, context);
   validatePeriodFact(experience.period, `${path}.period`, context);
   validateTextFact(experience.summary, `${path}.summary`, true, context);
@@ -1724,7 +1349,7 @@ function validateExperience(
 function validateAchievement(
   achievement: Achievement,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateTextFact(achievement.title, `${path}.title`, true, context);
   if (achievement.period !== undefined) {
@@ -1735,21 +1360,12 @@ function validateAchievement(
   validateEvidenceLinks(achievement.evidence, `${path}.evidence`, context);
 }
 
-function validateProject(
-  project: Project,
-  path: string,
-  context: ValidationContext,
-): void {
+function validateProject(project: Project, path: string, context: ValidationContext): void {
   validateTextFact(project.title, `${path}.title`, true, context);
   if (project.period !== undefined) {
     validatePeriodFact(project.period, `${path}.period`, context);
   }
-  validateTextFact(
-    project.outcomeSummary,
-    `${path}.outcomeSummary`,
-    true,
-    context,
-  );
+  validateTextFact(project.outcomeSummary, `${path}.outcomeSummary`, true, context);
   if (project.resumeDetails !== undefined) {
     validateContentBlocks(project.resumeDetails, `${path}.resumeDetails`, true, context);
   }
@@ -1761,12 +1377,7 @@ function validateProject(
     'outcomes',
     'lessons',
   ] as const) {
-    validateContentBlocks(
-      project[dimension],
-      `${path}.${dimension}`,
-      true,
-      context,
-    );
+    validateContentBlocks(project[dimension], `${path}.${dimension}`, true, context);
   }
   validateEvidenceLinks(project.evidence, `${path}.evidence`, context);
 
@@ -1777,28 +1388,14 @@ function validateProject(
       reference.tag !== 'experience' &&
       reference.tag !== 'achievement'
     ) {
-      context.issues.push(
-        createValidationIssue(
-          'reference.kind',
-          `${path}.relatedProfileEntity`,
-        ),
-      );
+      context.issues.push(createValidationIssue('reference.kind', `${path}.relatedProfileEntity`));
     } else {
-      validateIdentifier(
-        reference.id,
-        `${path}.relatedProfileEntity.id`,
-        undefined,
-        context,
-      );
+      validateIdentifier(reference.id, `${path}.relatedProfileEntity.id`, undefined, context);
     }
   }
 }
 
-function validateEducation(
-  education: Education,
-  path: string,
-  context: ValidationContext,
-): void {
+function validateEducation(education: Education, path: string, context: ValidationContext): void {
   validateTextFact(education.title, `${path}.title`, true, context);
   if (education.subtitle !== undefined) {
     validateTextFact(education.subtitle, `${path}.subtitle`, true, context);
@@ -1813,7 +1410,7 @@ function validateEducation(
 function validateCertification(
   certification: Certification,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateTextFact(certification.title, `${path}.title`, true, context);
   if (certification.issuer !== undefined) {
@@ -1822,12 +1419,7 @@ function validateCertification(
   if (certification.period !== undefined) {
     validatePeriodFact(certification.period, `${path}.period`, context);
   }
-  validateContentBlocks(
-    certification.details,
-    `${path}.details`,
-    false,
-    context,
-  );
+  validateContentBlocks(certification.details, `${path}.details`, false, context);
   validateEvidenceLinks(certification.evidence, `${path}.evidence`, context);
 }
 
@@ -1836,7 +1428,7 @@ function validateOrderedCollection<Item extends { readonly id: unknown; readonly
   path: string,
   entityIds: Map<string, string[]>,
   context: ValidationContext,
-  validateItem: (item: Item, path: string) => void,
+  validateItem: (item: Item, path: string) => void
 ): void {
   const orders = new Map<string, string[]>();
 
@@ -1854,7 +1446,7 @@ function validateIdentifier(
   value: unknown,
   path: string,
   occurrences: Map<string, string[]> | undefined,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   if (typeof value !== 'string') {
     return;
@@ -1871,19 +1463,13 @@ function validateOrder(
   value: unknown,
   path: string,
   occurrences: Map<string, string[]>,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   if (value === undefined) {
     return;
   }
-  if (
-    typeof value !== 'number' ||
-    !Number.isInteger(value) ||
-    value <= 0
-  ) {
-    context.issues.push(
-      createValidationIssue('order.positive-integer', path),
-    );
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    context.issues.push(createValidationIssue('order.positive-integer', path));
   }
   if (typeof value === 'number') {
     addOccurrence(occurrences, Object.is(value, -0) ? '0' : String(value), path);
@@ -1894,7 +1480,7 @@ function validateTextFact(
   fact: PublicFact<string>,
   path: string,
   singleLine: boolean,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateFactId(fact, path, context);
   if (fact.value.length === 0) {
@@ -1909,7 +1495,7 @@ function validateTextFact(
 function validateEmailFact(
   fact: PublicFact<string>,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateFactId(fact, path, context);
   if (fact.value.length === 0) {
@@ -1917,16 +1503,14 @@ function validateEmailFact(
     return;
   }
   if (!isValidEmail(fact.value)) {
-    context.issues.push(
-      createValidationIssue('contact.email.invalid', path),
-    );
+    context.issues.push(createValidationIssue('contact.email.invalid', path));
   }
 }
 
 function validateGitHubFact(
   fact: PublicFact<string>,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateFactId(fact, path, context);
   if (fact.value.length === 0) {
@@ -1934,26 +1518,20 @@ function validateGitHubFact(
     return;
   }
   if (!isValidGitHubProfileUrl(fact.value)) {
-    context.issues.push(
-      createValidationIssue('contact.github.invalid', path),
-    );
+    context.issues.push(createValidationIssue('contact.github.invalid', path));
   }
 }
 
 function validatePeriodFact(
   fact: PublicFact<Period>,
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateFactId(fact, path, context);
   validatePeriod(fact.value, path, context);
 }
 
-function validatePeriod(
-  period: Period,
-  path: string,
-  context: ValidationContext,
-): void {
+function validatePeriod(period: Period, path: string, context: ValidationContext): void {
   const start = validateDatePoint(period.start, `${path}.value.start`, false, context);
   const end =
     period.end.tag === 'present'
@@ -1964,16 +1542,10 @@ function validatePeriod(
     return;
   }
   if (start.precision !== end.precision) {
-    context.issues.push(
-      createValidationIssue('period.precision', path),
-    );
+    context.issues.push(createValidationIssue('period.precision', path));
     return;
   }
-  if (
-    start.ordinal !== undefined &&
-    end.ordinal !== undefined &&
-    end.ordinal < start.ordinal
-  ) {
+  if (start.ordinal !== undefined && end.ordinal !== undefined && end.ordinal < start.ordinal) {
     context.issues.push(createValidationIssue('period.range', path));
   }
 }
@@ -1982,7 +1554,7 @@ function validateDatePoint(
   point: DatePoint,
   path: string,
   allowPresent: boolean,
-  context: ValidationContext,
+  context: ValidationContext
 ):
   | Readonly<{
       valid: true;
@@ -2040,7 +1612,7 @@ function validateContentBlocks(
   blocks: readonly ContentBlock[],
   path: string,
   minimumOne: boolean,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   if (minimumOne) {
     requireMinimum(blocks, 1, path, context.issues);
@@ -2051,50 +1623,38 @@ function validateContentBlocks(
     if (block.tag === 'paragraph') {
       validateFactId(block.text, `${blockPath}.text`, context);
       if (block.text.value.length === 0) {
-        context.issues.push(
-          createValidationIssue('content.block.empty', blockPath),
-        );
+        context.issues.push(createValidationIssue('content.block.empty', blockPath));
       }
       return;
     }
 
     if (block.tag === 'list') {
       if (block.style !== 'ordered' && block.style !== 'unordered') {
-        context.issues.push(
-          createValidationIssue('field.type', `${blockPath}.style`),
-        );
+        context.issues.push(createValidationIssue('field.type', `${blockPath}.style`));
       }
       if (block.items.length === 0) {
-        context.issues.push(
-          createValidationIssue('content.block.empty', blockPath),
-        );
+        context.issues.push(createValidationIssue('content.block.empty', blockPath));
       }
       block.items.forEach((item, itemIndex) => {
         const itemPath = `${blockPath}.items[${itemIndex}]`;
         validateFactId(item, itemPath, context);
         if (item.value.length === 0) {
-          context.issues.push(
-            createValidationIssue('content.block.empty', itemPath),
-          );
+          context.issues.push(createValidationIssue('content.block.empty', itemPath));
         } else if (item.value.includes('\n')) {
-          context.issues.push(
-            createValidationIssue('field.type', itemPath),
-          );
+          context.issues.push(createValidationIssue('field.type', itemPath));
         }
       });
       return;
     }
 
-    context.issues.push(
-      createValidationIssue('content.block.kind', blockPath),
-    );
+    context.issues.push(createValidationIssue('content.block.kind', blockPath));
   });
 }
 
 function validateEvidenceLinks(
   links: readonly EvidenceLink[],
   path: string,
-  context: ValidationContext,
+  context: ValidationContext
 ): void {
   validateOrderedCollection(
     links,
@@ -2105,68 +1665,44 @@ function validateEvidenceLinks(
       validateTextFact(link.label, `${linkPath}.label`, true, context);
       validateFactId(link.destination, `${linkPath}.destination`, context);
       const destination = link.destination.value as unknown as UnknownRecord;
-      if (
-        destination.tag === 'external' &&
-        typeof destination.value === 'string'
-      ) {
+      if (destination.tag === 'external' && typeof destination.value === 'string') {
         if (!isValidExternalEvidenceUrl(destination.value)) {
           context.issues.push(
-            createValidationIssue(
-              'evidence.url.invalid',
-              `${linkPath}.destination`,
-            ),
+            createValidationIssue('evidence.url.invalid', `${linkPath}.destination`)
           );
         }
         return;
       }
-      if (
-        destination.tag === 'internal' &&
-        typeof destination.value === 'string'
-      ) {
+      if (destination.tag === 'internal' && typeof destination.value === 'string') {
         if (!isValidInternalEvidencePath(destination.value)) {
           context.issues.push(
-            createValidationIssue(
-              'evidence.url.invalid',
-              `${linkPath}.destination`,
-            ),
+            createValidationIssue('evidence.url.invalid', `${linkPath}.destination`)
           );
         }
         return;
       }
       if (typeof destination.tag === 'string') {
         context.issues.push(
-          createValidationIssue(
-            'evidence.url.invalid',
-            `${linkPath}.destination`,
-          ),
+          createValidationIssue('evidence.url.invalid', `${linkPath}.destination`)
         );
       }
-    },
+    }
   );
 }
 
-function validateFactId(
-  fact: PublicFact<unknown>,
-  path: string,
-  context: ValidationContext,
-): void {
+function validateFactId(fact: PublicFact<unknown>, path: string, context: ValidationContext): void {
   const factId = fact.factId as unknown;
   if (typeof factId !== 'string') {
     return;
   }
   const factIdPath = `${path}.factId`;
   if (!isKebabIdentifier(factId)) {
-    context.issues.push(
-      createValidationIssue('fact.identifier.format', factIdPath),
-    );
+    context.issues.push(createValidationIssue('fact.identifier.format', factIdPath));
   }
   addOccurrence(context.factIds, factId, factIdPath);
 }
 
-function validateResumeProjectSelection(
-  profile: ProfileData,
-  context: ValidationContext,
-): void {
+function validateResumeProjectSelection(profile: ProfileData, context: ValidationContext): void {
   if (profile.resumeProjectIds === undefined) return;
   const sourceIds = new Set(profile.projects.map(({ id }) => id));
   const selectedIds = new Map<string, string[]>();
@@ -2182,19 +1718,16 @@ function validateResumeProjectSelection(
   addDuplicateIssues(selectedIds, 'identifier.duplicate', context.issues);
 }
 
-function validateProjectReferences(
-  profile: ProfileData,
-  context: ValidationContext,
-): void {
+function validateProjectReferences(profile: ProfileData, context: ValidationContext): void {
   const experienceIds = new Set(
     profile.experiences
       .map((experience) => experience.id as unknown)
-      .filter((id): id is string => typeof id === 'string'),
+      .filter((id): id is string => typeof id === 'string')
   );
   const achievementIds = new Set(
     profile.achievements
       .map((achievement) => achievement.id as unknown)
-      .filter((id): id is string => typeof id === 'string'),
+      .filter((id): id is string => typeof id === 'string')
   );
 
   profile.projects.forEach((project, index) => {
@@ -2204,16 +1737,10 @@ function validateProjectReferences(
     }
     const path = `profile.projects[${index}].relatedProfileEntity`;
     const candidate = reference as unknown as UnknownRecord;
-    if (
-      candidate.tag !== 'experience' &&
-      candidate.tag !== 'achievement'
-    ) {
+    if (candidate.tag !== 'experience' && candidate.tag !== 'achievement') {
       return;
     }
-    if (
-      typeof candidate.id !== 'string' ||
-      !isKebabIdentifier(candidate.id)
-    ) {
+    if (typeof candidate.id !== 'string' || !isKebabIdentifier(candidate.id)) {
       return;
     }
     const exists =
@@ -2221,9 +1748,7 @@ function validateProjectReferences(
         ? experienceIds.has(candidate.id)
         : achievementIds.has(candidate.id);
     if (!exists) {
-      context.issues.push(
-        createValidationIssue('reference.missing', path),
-      );
+      context.issues.push(createValidationIssue('reference.missing', path));
     }
   });
 }
@@ -2257,10 +1782,7 @@ function isValidEmail(value: string): boolean {
   return (
     labels.length >= 2 &&
     labels.every(
-      (label) =>
-        label.length > 0 &&
-        label.length <= 63 &&
-        DOMAIN_LABEL_PATTERN.test(label),
+      (label) => label.length > 0 && label.length <= 63 && DOMAIN_LABEL_PATTERN.test(label)
     )
   );
 }
@@ -2312,29 +1834,21 @@ function isValidInternalEvidencePath(value: string): boolean {
   if (decodedPath.includes('\\') || decodedPath.includes('//')) {
     return false;
   }
-  return !decodedPath
-    .split('/')
-    .some((segment) => segment === '.' || segment === '..');
+  return !decodedPath.split('/').some((segment) => segment === '.' || segment === '..');
 }
 
 function requireMinimum(
   collection: readonly unknown[],
   min: number,
   path: string,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (collection.length < min) {
-    issues.push(
-      createValidationIssue('collection.minimum', path, { min }),
-    );
+    issues.push(createValidationIssue('collection.minimum', path, { min }));
   }
 }
 
-function addOccurrence(
-  occurrences: Map<string, string[]>,
-  value: string,
-  path: string,
-): void {
+function addOccurrence(occurrences: Map<string, string[]>, value: string, path: string): void {
   const paths = occurrences.get(value);
   if (paths) {
     paths.push(path);
@@ -2346,7 +1860,7 @@ function addOccurrence(
 function addDuplicateIssues(
   occurrences: ReadonlyMap<string, readonly string[]>,
   code: 'fact.identifier.duplicate' | 'identifier.duplicate' | 'order.duplicate',
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   for (const paths of occurrences.values()) {
     if (paths.length < 2) {
@@ -2359,11 +1873,7 @@ function addDuplicateIssues(
 }
 
 function isRecord(value: unknown): value is UnknownRecord {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value)
-  );
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function hasOwn(value: object, key: PropertyKey): boolean {

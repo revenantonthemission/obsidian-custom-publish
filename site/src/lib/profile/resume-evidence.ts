@@ -1,11 +1,5 @@
-import {
-  createValidationIssue,
-  sortAndDedupeIssues,
-} from './issues.js';
-import {
-  compareResumeFactManifests,
-  RESUME_MANIFEST_SCHEMA_VERSION,
-} from './resume-manifest.js';
+import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
+import { compareResumeFactManifests, RESUME_MANIFEST_SCHEMA_VERSION } from './resume-manifest.js';
 import type {
   ProfileSourceIdentity,
   ResumeEntityOrder,
@@ -52,8 +46,7 @@ export interface ResumeToolVersions {
   readonly pretendard: typeof RESUME_TOOL_VERSIONS.pretendard;
 }
 
-export interface RenderedManifestEntryObservation
-  extends ResumeManifestEntry {
+export interface RenderedManifestEntryObservation extends ResumeManifestEntry {
   readonly occurrenceOrder: number;
   readonly annotationOccurrence: number;
   readonly domPresent: true;
@@ -70,10 +63,9 @@ export interface RenderedResumeManifestObservation {
   readonly entries: readonly RenderedManifestEntryObservation[];
 }
 
-export type RenderedSurfaceEvidence =
-  RenderedResumeManifestObservation & {
-    readonly [renderedSurfaceEvidenceBrand]: 'RenderedSurfaceEvidence';
-  };
+export type RenderedSurfaceEvidence = RenderedResumeManifestObservation & {
+  readonly [renderedSurfaceEvidenceBrand]: 'RenderedSurfaceEvidence';
+};
 
 export interface PdfTextFragment {
   readonly pageNumber: number;
@@ -235,9 +227,7 @@ export interface SurfaceManifestComparison {
 
 export type ResumeEvidenceResult<Value> = ValidationResult<Value>;
 
-type SnapshotResult =
-  | Readonly<{ ok: true; value: unknown }>
-  | Readonly<{ ok: false }>;
+type SnapshotResult = Readonly<{ ok: true; value: unknown }> | Readonly<{ ok: false }>;
 
 type OwnRecord = Record<string, unknown>;
 
@@ -285,17 +275,8 @@ const PDF_OCCURRENCE_KEYS = [
   'urlAnnotations',
   'structurePath',
 ] as const;
-const PDF_FRAGMENT_KEYS = [
-  'pageNumber',
-  'itemIndex',
-  'text',
-  'lineWrapBefore',
-] as const;
-const PDF_URL_KEYS = [
-  'pageNumber',
-  'annotationIndex',
-  'destination',
-] as const;
+const PDF_FRAGMENT_KEYS = ['pageNumber', 'itemIndex', 'text', 'lineWrapBefore'] as const;
+const PDF_URL_KEYS = ['pageNumber', 'annotationIndex', 'destination'] as const;
 const PDF_STRUCTURE_KEYS = [
   'tagged',
   'readingOrder',
@@ -330,7 +311,7 @@ const VALUE_KINDS = new Set<ResumeManifestValueKind>([
  */
 export function compareRenderedManifest(
   expected: ResumeFactManifest,
-  observation: unknown,
+  observation: unknown
 ): ResumeEvidenceResult<RenderedSurfaceEvidence> {
   try {
     const safeExpected = inspectManifest(expected);
@@ -346,10 +327,7 @@ export function compareRenderedManifest(
 
     const surface = snapshot.value.surface;
     if (surface !== 'web' && surface !== 'print') {
-      return evidenceFailure(
-        'field.type',
-        'profile.document.rendered.surface',
-      );
+      return evidenceFailure('field.type', 'profile.document.rendered.surface');
     }
 
     const rootPath = `profile.document.${surface}`;
@@ -357,36 +335,16 @@ export function compareRenderedManifest(
     if (snapshot.value.schemaVersion !== RESUME_EVIDENCE_SCHEMA_VERSION) {
       issues.push(issue('field.type', `${rootPath}.schemaVersion`));
     }
-    if (
-      !resumeDocumentDataEqual(
-        safeExpected.sourceIdentity,
-        snapshot.value.sourceIdentity,
-      )
-    ) {
+    if (!resumeDocumentDataEqual(safeExpected.sourceIdentity, snapshot.value.sourceIdentity)) {
       issues.push(issue('document.stale', `${rootPath}.sourceIdentity`));
     }
-    if (
-      !resumeDocumentDataEqual(
-        safeExpected.fingerprint,
-        snapshot.value.fingerprint,
-      )
-    ) {
+    if (!resumeDocumentDataEqual(safeExpected.fingerprint, snapshot.value.fingerprint)) {
       issues.push(issue('document.stale', `${rootPath}.fingerprint`));
     }
-    if (
-      !resumeDocumentDataEqual(
-        safeExpected.sectionOrder,
-        snapshot.value.sectionOrder,
-      )
-    ) {
+    if (!resumeDocumentDataEqual(safeExpected.sectionOrder, snapshot.value.sectionOrder)) {
       issues.push(issue('document.parity', `${rootPath}.sectionOrder`));
     }
-    if (
-      !resumeDocumentDataEqual(
-        safeExpected.entityOrder,
-        snapshot.value.entityOrder,
-      )
-    ) {
+    if (!resumeDocumentDataEqual(safeExpected.entityOrder, snapshot.value.entityOrder)) {
       issues.push(issue('document.parity', `${rootPath}.entityOrder`));
     }
 
@@ -394,13 +352,7 @@ export function compareRenderedManifest(
     if (!Array.isArray(observedEntries)) {
       issues.push(issue('field.type', `${rootPath}.entries`));
     } else {
-      compareRenderedEntries(
-        safeExpected.entries,
-        observedEntries,
-        surface,
-        rootPath,
-        issues,
-      );
+      compareRenderedEntries(safeExpected.entries, observedEntries, surface, rootPath, issues);
     }
 
     if (issues.length > 0) {
@@ -408,7 +360,7 @@ export function compareRenderedManifest(
     }
 
     return success(
-      deepFreezeResumeDocumentData(snapshot.value) as unknown as RenderedSurfaceEvidence,
+      deepFreezeResumeDocumentData(snapshot.value) as unknown as RenderedSurfaceEvidence
     );
   } catch {
     return evidenceFailure('document.parity', 'profile.document.rendered');
@@ -422,7 +374,7 @@ export function compareRenderedManifest(
  */
 export function mapPdfEvidence(
   expected: ResumeFactManifest,
-  snapshotCandidate: unknown,
+  snapshotCandidate: unknown
 ): ResumeEvidenceResult<MappedResumeEvidence> {
   try {
     const expectedSnapshot = inspectManifest(expected);
@@ -450,44 +402,26 @@ export function mapPdfEvidence(
 
     const mappings: ResumeEvidenceMapping[] = [];
     const claimedOccurrenceOrders = new Set<number>();
-    for (
-      let entryIndex = 0;
-      entryIndex < expectedSnapshot.entries.length;
-      entryIndex += 1
-    ) {
+    for (let entryIndex = 0; entryIndex < expectedSnapshot.entries.length; entryIndex += 1) {
       const entry = expectedSnapshot.entries[entryIndex];
       if (entry === undefined) {
-        issues.push(
-          issue('document.parity', `profile.document.pdf.entries[${entryIndex}]`),
-        );
+        issues.push(issue('document.parity', `profile.document.pdf.entries[${entryIndex}]`));
         continue;
       }
 
       const sectionOrdinal = findSectionOrdinal(expectedSnapshot, entry);
       const entityOrdinal = findEntityOrdinal(expectedSnapshot, entry);
       if (sectionOrdinal < 0 || entityOrdinal === undefined) {
-        issues.push(
-          issue('document.parity', `profile.document.pdf.entries[${entryIndex}]`),
-        );
+        issues.push(issue('document.parity', `profile.document.pdf.entries[${entryIndex}]`));
         continue;
       }
 
       const candidates = parsed.filter((occurrence) =>
-        occurrenceMatches(
-          occurrence,
-          entry,
-          sectionOrdinal,
-          entityOrdinal,
-        ),
+        occurrenceMatches(occurrence, entry, sectionOrdinal, entityOrdinal)
       );
 
       if (candidates.length !== 1) {
-        issues.push(
-          issue(
-            'document.parity',
-            `profile.document.pdf.occurrences[${entryIndex}]`,
-          ),
-        );
+        issues.push(issue('document.parity', `profile.document.pdf.occurrences[${entryIndex}]`));
         continue;
       }
 
@@ -497,12 +431,7 @@ export function mapPdfEvidence(
         occurrence.occurrenceOrder !== entryIndex + 1 ||
         claimedOccurrenceOrders.has(occurrence.occurrenceOrder)
       ) {
-        issues.push(
-          issue(
-            'document.parity',
-            `profile.document.pdf.occurrences[${entryIndex}]`,
-          ),
-        );
+        issues.push(issue('document.parity', `profile.document.pdf.occurrences[${entryIndex}]`));
         continue;
       }
 
@@ -517,13 +446,11 @@ export function mapPdfEvidence(
           pageNumber: fragment.pageNumber,
           itemIndex: fragment.itemIndex,
         })),
-        urlAnnotationReferences: occurrence.urlAnnotations.map(
-          (annotation) => ({
-            pageNumber: annotation.pageNumber,
-            annotationIndex: annotation.annotationIndex,
-            destination: annotation.destination,
-          }),
-        ),
+        urlAnnotationReferences: occurrence.urlAnnotations.map((annotation) => ({
+          pageNumber: annotation.pageNumber,
+          annotationIndex: annotation.annotationIndex,
+          destination: annotation.destination,
+        })),
         structurePath: occurrence.structurePath,
       });
     }
@@ -551,7 +478,7 @@ export function mapPdfEvidence(
         outline: pdf.outline,
         renderedPages: pdf.renderedPages,
         tools: pdf.tools,
-      }) as unknown as MappedResumeEvidence,
+      }) as unknown as MappedResumeEvidence
     );
   } catch {
     return evidenceFailure('document.parity', 'profile.document.pdf');
@@ -573,12 +500,7 @@ export function compareResumeSurfaces(input: {
     if (
       !inputSnapshot.ok ||
       !isOwnRecord(inputSnapshot.value) ||
-      !hasExactKeys(inputSnapshot.value, [
-        'expected',
-        'web',
-        'print',
-        'pdf',
-      ])
+      !hasExactKeys(inputSnapshot.value, ['expected', 'web', 'print', 'pdf'])
     ) {
       return evidenceFailure('field.type', 'profile.document.comparison');
     }
@@ -588,14 +510,8 @@ export function compareResumeSurfaces(input: {
       return evidenceFailure('document.source.invalid', 'profile.document.expected');
     }
 
-    const webResult = compareRenderedManifest(
-      expected,
-      inputSnapshot.value.web,
-    );
-    const printResult = compareRenderedManifest(
-      expected,
-      inputSnapshot.value.print,
-    );
+    const webResult = compareRenderedManifest(expected, inputSnapshot.value.web);
+    const printResult = compareRenderedManifest(expected, inputSnapshot.value.print);
     const issues: ValidationIssue[] = [];
     if (!webResult.ok) {
       issues.push(...webResult.issues);
@@ -608,10 +524,7 @@ export function compareResumeSurfaces(input: {
       issues.push(issue('document.parity', 'profile.document.print.surface'));
     }
 
-    const mappedPdf = validateMappedEvidence(
-      expected,
-      inputSnapshot.value.pdf,
-    );
+    const mappedPdf = validateMappedEvidence(expected, inputSnapshot.value.pdf);
     if (!mappedPdf.ok) {
       issues.push(...mappedPdf.issues);
     }
@@ -638,11 +551,9 @@ export function compareResumeSurfaces(input: {
           mappedEntryCount: mappedPdf.value.mappings.length,
           sectionOrder: mappedPdf.value.sectionOrder,
           entityOrder: mappedPdf.value.entityOrder,
-          entries: mappedPdf.value.mappings.map(
-            (mapping) => mapping.expectedEntry,
-          ),
+          entries: mappedPdf.value.mappings.map((mapping) => mapping.expectedEntry),
         },
-      }) as unknown as SurfaceManifestComparison,
+      }) as unknown as SurfaceManifestComparison
     );
   } catch {
     return evidenceFailure('document.parity', 'profile.document.comparison');
@@ -665,7 +576,7 @@ function compareRenderedEntries(
   candidates: readonly unknown[],
   surface: 'web' | 'print',
   rootPath: string,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (candidates.length !== expectedEntries.length) {
     issues.push(issue('document.parity', `${rootPath}.entries`));
@@ -719,7 +630,7 @@ function compareRenderedEntries(
 function validatePdfEnvelope(
   expected: ResumeFactManifest,
   pdf: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (pdf.schemaVersion !== RESUME_EVIDENCE_SCHEMA_VERSION) {
     issues.push(issue('field.type', 'profile.document.pdf.schemaVersion'));
@@ -743,7 +654,7 @@ function validatePdfEnvelope(
 
 function parsePdfOccurrences(
   pdf: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): readonly ParsedPdfOccurrence[] | null {
   if (!Array.isArray(pdf.occurrences)) {
     issues.push(issue('field.type', 'profile.document.pdf.occurrences'));
@@ -764,10 +675,7 @@ function parsePdfOccurrences(
       !hasExactKeys(value, PDF_OCCURRENCE_KEYS) ||
       value.occurrenceOrder !== index + 1 ||
       !isNonNegativeInteger(value.sectionOrdinal) ||
-      !(
-        value.entityOrdinal === null ||
-        isNonNegativeInteger(value.entityOrdinal)
-      ) ||
+      !(value.entityOrdinal === null || isNonNegativeInteger(value.entityOrdinal)) ||
       !isManifestValueKind(value.valueKind) ||
       !Array.isArray(value.fragments) ||
       !Array.isArray(value.urlAnnotations) ||
@@ -784,11 +692,7 @@ function parsePdfOccurrences(
     structurePaths.add(structurePathKey);
 
     const fragments: PdfTextFragment[] = [];
-    for (
-      let fragmentIndex = 0;
-      fragmentIndex < value.fragments.length;
-      fragmentIndex += 1
-    ) {
+    for (let fragmentIndex = 0; fragmentIndex < value.fragments.length; fragmentIndex += 1) {
       const fragment = value.fragments[fragmentIndex];
       if (
         !isOwnRecord(fragment) ||
@@ -799,17 +703,13 @@ function parsePdfOccurrences(
         typeof fragment.lineWrapBefore !== 'boolean' ||
         (fragmentIndex === 0 && fragment.lineWrapBefore)
       ) {
-        issues.push(
-          issue('field.type', `${path}.fragments[${fragmentIndex}]`),
-        );
+        issues.push(issue('field.type', `${path}.fragments[${fragmentIndex}]`));
         continue;
       }
 
       const key = `${fragment.pageNumber}:${fragment.itemIndex}`;
       if (fragmentKeys.has(key)) {
-        issues.push(
-          issue('document.parity', `${path}.fragments[${fragmentIndex}]`),
-        );
+        issues.push(issue('document.parity', `${path}.fragments[${fragmentIndex}]`));
       }
       fragmentKeys.add(key);
       fragments.push(fragment as unknown as PdfTextFragment);
@@ -829,23 +729,13 @@ function parsePdfOccurrences(
         !isNonNegativeInteger(annotation.annotationIndex) ||
         typeof annotation.destination !== 'string'
       ) {
-        issues.push(
-          issue(
-            'field.type',
-            `${path}.urlAnnotations[${annotationIndex}]`,
-          ),
-        );
+        issues.push(issue('field.type', `${path}.urlAnnotations[${annotationIndex}]`));
         continue;
       }
 
       const key = `${annotation.pageNumber}:${annotation.annotationIndex}`;
       if (annotationKeys.has(key)) {
-        issues.push(
-          issue(
-            'document.parity',
-            `${path}.urlAnnotations[${annotationIndex}]`,
-          ),
-        );
+        issues.push(issue('document.parity', `${path}.urlAnnotations[${annotationIndex}]`));
       }
       annotationKeys.add(key);
       urlAnnotations.push(annotation as unknown as PdfUrlAnnotation);
@@ -854,7 +744,7 @@ function parsePdfOccurrences(
     const normalizedObservedValue = normalizePdfOccurrence(
       value.valueKind,
       fragments,
-      urlAnnotations,
+      urlAnnotations
     );
     if (normalizedObservedValue === null) {
       issues.push(issue('document.parity', path));
@@ -879,7 +769,7 @@ function parsePdfOccurrences(
 function normalizePdfOccurrence(
   kind: ResumeManifestValueKind,
   fragments: readonly PdfTextFragment[],
-  annotations: readonly PdfUrlAnnotation[],
+  annotations: readonly PdfUrlAnnotation[]
 ): string | null {
   if (isLinkValueKind(kind)) {
     if (annotations.length !== 1) {
@@ -951,7 +841,7 @@ function occurrenceMatches(
   occurrence: ParsedPdfOccurrence,
   entry: ResumeManifestEntry,
   sectionOrdinal: number,
-  entityOrdinal: number | null,
+  entityOrdinal: number | null
 ): boolean {
   if (
     occurrence.sectionOrdinal !== sectionOrdinal ||
@@ -968,20 +858,15 @@ function occurrenceMatches(
 
   const destination = occurrence.urlAnnotations[0]?.destination;
   const expectedDestination =
-    entry.valueKind === 'email'
-      ? `mailto:${entry.normalizedValue}`
-      : entry.normalizedValue;
-  return (
-    occurrence.urlAnnotations.length === 1 &&
-    destination === expectedDestination
-  );
+    entry.valueKind === 'email' ? `mailto:${entry.normalizedValue}` : entry.normalizedValue;
+  return occurrence.urlAnnotations.length === 1 && destination === expectedDestination;
 }
 
 function validateStructure(
   expected: ResumeFactManifest,
   pdf: OwnRecord,
   occurrences: readonly ParsedPdfOccurrence[],
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (!structureTreeMatches(pdf.structure, expected, occurrences)) {
     issues.push(issue('document.parity', 'profile.document.pdf.structure'));
@@ -991,7 +876,7 @@ function validateStructure(
 function validateOutline(
   expected: ResumeFactManifest,
   pdf: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const outline = pdf.outline;
   if (
@@ -1009,26 +894,17 @@ function validateOutline(
     const entry = outline.entries[index];
     if (
       !isOwnRecord(entry) ||
-      !hasExactKeys(entry, [
-        'outlineOrder',
-        'sectionOrdinal',
-        'pageNumber',
-      ]) ||
+      !hasExactKeys(entry, ['outlineOrder', 'sectionOrdinal', 'pageNumber']) ||
       entry.outlineOrder !== index + 1 ||
       entry.sectionOrdinal !== index ||
       !isPageNumber(entry.pageNumber, pageCount)
     ) {
-      issues.push(
-        issue('document.parity', `profile.document.pdf.outline.entries[${index}]`),
-      );
+      issues.push(issue('document.parity', `profile.document.pdf.outline.entries[${index}]`));
     }
   }
 }
 
-function validateRenderedPages(
-  pdf: OwnRecord,
-  issues: ValidationIssue[],
-): void {
+function validateRenderedPages(pdf: OwnRecord, issues: ValidationIssue[]): void {
   if (!Array.isArray(pdf.renderedPages) || !isPositiveInteger(pdf.pageCount)) {
     issues.push(issue('document.unreadable', 'profile.document.pdf.renderedPages'));
     return;
@@ -1045,16 +921,14 @@ function validateRenderedPages(
       page.pageNumber !== index + 1 ||
       !isSafeIdentifier(page.evidenceId)
     ) {
-      issues.push(
-        issue('document.unreadable', `profile.document.pdf.renderedPages[${index}]`),
-      );
+      issues.push(issue('document.unreadable', `profile.document.pdf.renderedPages[${index}]`));
     }
   }
 }
 
 function validateMappedEvidence(
   expected: ResumeFactManifest,
-  candidate: unknown,
+  candidate: unknown
 ): ResumeEvidenceResult<MappedResumeEvidence> {
   if (!isOwnRecord(candidate)) {
     return evidenceFailure('field.type', 'profile.document.pdf');
@@ -1099,13 +973,9 @@ function validateMappedEvidence(
     const mapping = candidate.mappings[index];
     const expectedEntry = expected.entries[index];
     const expectedSectionOrdinal =
-      expectedEntry === undefined
-        ? -1
-        : findSectionOrdinal(expected, expectedEntry);
+      expectedEntry === undefined ? -1 : findSectionOrdinal(expected, expectedEntry);
     const expectedEntityOrdinal =
-      expectedEntry === undefined
-        ? undefined
-        : findEntityOrdinal(expected, expectedEntry);
+      expectedEntry === undefined ? undefined : findEntityOrdinal(expected, expectedEntry);
     if (
       !isOwnRecord(mapping) ||
       !hasExactKeys(mapping, [
@@ -1118,80 +988,52 @@ function validateMappedEvidence(
         'urlAnnotationReferences',
         'structurePath',
       ]) ||
-      !resumeDocumentDataEqual(
-        expectedEntry,
-        mapping.expectedEntry,
-      ) ||
+      !resumeDocumentDataEqual(expectedEntry, mapping.expectedEntry) ||
       mapping.observedOccurrenceOrder !== index + 1 ||
       observedOrders.has(mapping.observedOccurrenceOrder as number) ||
       mapping.sectionOrdinal !== expectedSectionOrdinal ||
       mapping.entityOrdinal !== expectedEntityOrdinal ||
-      mapping.normalizedObservedValue !==
-        expectedEntry?.normalizedValue ||
-      !isReferenceArray(
-        mapping.fragmentReferences,
-        false,
-        renderedPageCount,
-      ) ||
-      !isReferenceArray(
-        mapping.urlAnnotationReferences,
-        true,
-        renderedPageCount,
-      ) ||
+      mapping.normalizedObservedValue !== expectedEntry?.normalizedValue ||
+      !isReferenceArray(mapping.fragmentReferences, false, renderedPageCount) ||
+      !isReferenceArray(mapping.urlAnnotationReferences, true, renderedPageCount) ||
       !isNonEmptyIntegerArray(mapping.structurePath) ||
       !mappingReferencesMatchEntry(mapping, expectedEntry) ||
-      structurePaths.has(
-        (mapping.structurePath as readonly number[]).join('.'),
-      )
+      structurePaths.has((mapping.structurePath as readonly number[]).join('.'))
     ) {
-      return evidenceFailure(
-        'document.parity',
-        `profile.document.pdf.mappings[${index}]`,
-      );
+      return evidenceFailure('document.parity', `profile.document.pdf.mappings[${index}]`);
     }
     observedOrders.add(mapping.observedOccurrenceOrder as number);
-    structurePaths.add(
-      (mapping.structurePath as readonly number[]).join('.'),
-    );
+    structurePaths.add((mapping.structurePath as readonly number[]).join('.'));
     if (
       !addUniqueReferences(
         mapping.fragmentReferences as readonly OwnRecord[],
         false,
-        fragmentReferences,
+        fragmentReferences
       ) ||
       !addUniqueReferences(
         mapping.urlAnnotationReferences as readonly OwnRecord[],
         true,
-        annotationReferences,
+        annotationReferences
       )
     ) {
-      return evidenceFailure(
-        'document.parity',
-        `profile.document.pdf.mappings[${index}]`,
-      );
+      return evidenceFailure('document.parity', `profile.document.pdf.mappings[${index}]`);
     }
   }
 
   if (
     !isMappedStructure(candidate.structure, expected, candidate.mappings) ||
-    !isMappedOutline(
-      candidate.outline,
-      expected,
-      candidate.renderedPages,
-    ) ||
+    !isMappedOutline(candidate.outline, expected, candidate.renderedPages) ||
     !isMappedRenderedPages(candidate.renderedPages)
   ) {
     return evidenceFailure('document.parity', 'profile.document.pdf');
   }
 
-  return success(
-    deepFreezeResumeDocumentData(candidate) as unknown as MappedResumeEvidence,
-  );
+  return success(deepFreezeResumeDocumentData(candidate) as unknown as MappedResumeEvidence);
 }
 
 function mappingReferencesMatchEntry(
   mapping: OwnRecord,
-  entry: ResumeManifestEntry | undefined,
+  entry: ResumeManifestEntry | undefined
 ): boolean {
   if (
     entry === undefined ||
@@ -1201,34 +1043,24 @@ function mappingReferencesMatchEntry(
     return false;
   }
   if (!isLinkValueKind(entry.valueKind)) {
-    return (
-      mapping.fragmentReferences.length > 0 &&
-      mapping.urlAnnotationReferences.length === 0
-    );
+    return mapping.fragmentReferences.length > 0 && mapping.urlAnnotationReferences.length === 0;
   }
   if (mapping.urlAnnotationReferences.length !== 1) {
     return false;
   }
   const annotation = mapping.urlAnnotationReferences[0];
   const expectedDestination =
-    entry.valueKind === 'email'
-      ? `mailto:${entry.normalizedValue}`
-      : entry.normalizedValue;
-  return (
-    isOwnRecord(annotation) &&
-    annotation.destination === expectedDestination
-  );
+    entry.valueKind === 'email' ? `mailto:${entry.normalizedValue}` : entry.normalizedValue;
+  return isOwnRecord(annotation) && annotation.destination === expectedDestination;
 }
 
 function addUniqueReferences(
   references: readonly OwnRecord[],
   annotation: boolean,
-  seen: Set<string>,
+  seen: Set<string>
 ): boolean {
   for (const reference of references) {
-    const index = annotation
-      ? reference.annotationIndex
-      : reference.itemIndex;
+    const index = annotation ? reference.annotationIndex : reference.itemIndex;
     const key = `${reference.pageNumber}:${index}`;
     if (seen.has(key)) {
       return false;
@@ -1241,7 +1073,7 @@ function addUniqueReferences(
 /** Rebrands a persisted mapped-evidence value after full structural checks. */
 export function validateMappedResumeEvidence(
   expected: ResumeFactManifest,
-  candidate: unknown,
+  candidate: unknown
 ): ResumeEvidenceResult<MappedResumeEvidence> {
   try {
     const safeExpected = inspectManifest(expected);
@@ -1258,7 +1090,7 @@ export function validateMappedResumeEvidence(
 function isReferenceArray(
   value: unknown,
   includesDestination: boolean,
-  maximumPageNumber: number,
+  maximumPageNumber: number
 ): boolean {
   if (!Array.isArray(value)) {
     return false;
@@ -1280,9 +1112,7 @@ function isReferenceArray(
     ) {
       return false;
     }
-    const index = includesDestination
-      ? reference.annotationIndex
-      : reference.itemIndex;
+    const index = includesDestination ? reference.annotationIndex : reference.itemIndex;
     const key = `${reference.pageNumber}:${index}`;
     if (seen.has(key)) {
       return false;
@@ -1295,7 +1125,7 @@ function isReferenceArray(
 function structureTreeMatches(
   value: unknown,
   expected: ResumeFactManifest,
-  occurrences: readonly StructureOccurrenceBinding[],
+  occurrences: readonly StructureOccurrenceBinding[]
 ): boolean {
   if (
     !isOwnRecord(value) ||
@@ -1320,24 +1150,12 @@ function structureTreeMatches(
       node.nodeOrder !== index + 1 ||
       !isNonEmptyIntegerArray(node.path) ||
       !isStructureRole(node.role) ||
-      !(
-        node.parentPath === null ||
-        isNonEmptyIntegerArray(node.parentPath)
-      ) ||
+      !(node.parentPath === null || isNonEmptyIntegerArray(node.parentPath)) ||
       !Array.isArray(node.children) ||
       !node.children.every(isNonEmptyIntegerArray) ||
-      !(
-        node.sectionOrdinal === null ||
-        isNonNegativeInteger(node.sectionOrdinal)
-      ) ||
-      !(
-        node.entityOrdinal === null ||
-        isNonNegativeInteger(node.entityOrdinal)
-      ) ||
-      !(
-        node.occurrenceOrder === null ||
-        isPositiveInteger(node.occurrenceOrder)
-      ) ||
+      !(node.sectionOrdinal === null || isNonNegativeInteger(node.sectionOrdinal)) ||
+      !(node.entityOrdinal === null || isNonNegativeInteger(node.entityOrdinal)) ||
+      !(node.occurrenceOrder === null || isPositiveInteger(node.occurrenceOrder)) ||
       node.path[0] !== 0
     ) {
       return false;
@@ -1373,10 +1191,7 @@ function structureTreeMatches(
       if (childPath === undefined) {
         return false;
       }
-      const expectedChildPath = [
-        ...(node.path as readonly number[]),
-        childIndex,
-      ];
+      const expectedChildPath = [...(node.path as readonly number[]), childIndex];
       if (!numberArraysEqual(childPath, expectedChildPath)) {
         return false;
       }
@@ -1385,10 +1200,7 @@ function structureTreeMatches(
       if (
         child === undefined ||
         childKeys.has(childKey) ||
-        !numberArraysEqual(
-          child.parentPath as readonly number[],
-          node.path as readonly number[],
-        )
+        !numberArraysEqual(child.parentPath as readonly number[], node.path as readonly number[])
       ) {
         return false;
       }
@@ -1397,9 +1209,7 @@ function structureTreeMatches(
     if (
       node !== root &&
       (node.parentPath === null ||
-        byPath.get(
-          structurePathKey(node.parentPath as readonly number[]),
-        ) === undefined)
+        byPath.get(structurePathKey(node.parentPath as readonly number[])) === undefined)
     ) {
       return false;
     }
@@ -1410,10 +1220,7 @@ function structureTreeMatches(
   if (!appendStructurePreorder(root, byPath, visited, traversal)) {
     return false;
   }
-  if (
-    traversal.length !== nodes.length ||
-    traversal.some((node, index) => node !== nodes[index])
-  ) {
+  if (traversal.length !== nodes.length || traversal.some((node, index) => node !== nodes[index])) {
     return false;
   }
 
@@ -1440,14 +1247,8 @@ function structureTreeMatches(
       section.sectionOrdinal !== index ||
       section.entityOrdinal !== null ||
       section.occurrenceOrder !== null ||
-      !numberArraysEqual(
-        section.parentPath as readonly number[],
-        root.path as readonly number[],
-      ) ||
-      !numberArraysEqual(
-        section.path as readonly number[],
-        rootChild,
-      )
+      !numberArraysEqual(section.parentPath as readonly number[], root.path as readonly number[]) ||
+      !numberArraysEqual(section.path as readonly number[], rootChild)
     ) {
       return false;
     }
@@ -1466,8 +1267,7 @@ function structureTreeMatches(
     }
     const sectionOrdinal = expected.sectionOrder.findIndex(
       (section) =>
-        section.key === expectedEntity.sectionKey &&
-        section.order === expectedEntity.sectionOrder,
+        section.key === expectedEntity.sectionKey && section.order === expectedEntity.sectionOrder
     );
     if (sectionOrdinal < 0 || node.sectionOrdinal !== sectionOrdinal) {
       return false;
@@ -1490,7 +1290,7 @@ function structureTreeMatches(
       expectedParent === undefined ||
       !numberArraysEqual(
         node.parentPath as readonly number[],
-        expectedParent.path as readonly number[],
+        expectedParent.path as readonly number[]
       )
     ) {
       return false;
@@ -1517,10 +1317,7 @@ function structureTreeMatches(
       node.sectionOrdinal !== occurrence.sectionOrdinal ||
       node.entityOrdinal !== occurrence.entityOrdinal ||
       (node.children as readonly unknown[]).length !== 0 ||
-      !numberArraysEqual(
-        node.path as readonly number[],
-        occurrence.structurePath,
-      )
+      !numberArraysEqual(node.path as readonly number[], occurrence.structurePath)
     ) {
       return false;
     }
@@ -1532,7 +1329,7 @@ function structureTreeMatches(
       expectedParent === undefined ||
       !numberArraysEqual(
         node.parentPath as readonly number[],
-        expectedParent.path as readonly number[],
+        expectedParent.path as readonly number[]
       )
     ) {
       return false;
@@ -1542,15 +1339,15 @@ function structureTreeMatches(
   return (
     numberArraysEqual(
       value.readingOrder,
-      facts.map((node) => node.occurrenceOrder as number),
+      facts.map((node) => node.occurrenceOrder as number)
     ) &&
     numberArraysEqual(
       value.sectionOrder,
-      sections.map((node) => node.sectionOrdinal as number),
+      sections.map((node) => node.sectionOrdinal as number)
     ) &&
     numberArraysEqual(
       value.entityOrder,
-      entities.map((node) => node.entityOrdinal as number),
+      entities.map((node) => node.entityOrdinal as number)
     )
   );
 }
@@ -1559,7 +1356,7 @@ function appendStructurePreorder(
   node: OwnRecord,
   byPath: ReadonlyMap<string, OwnRecord>,
   visited: Set<string>,
-  output: OwnRecord[],
+  output: OwnRecord[]
 ): boolean {
   const key = structurePathKey(node.path as readonly number[]);
   if (visited.has(key)) {
@@ -1569,10 +1366,7 @@ function appendStructurePreorder(
   output.push(node);
   for (const childPath of node.children as readonly (readonly number[])[]) {
     const child = byPath.get(structurePathKey(childPath));
-    if (
-      child === undefined ||
-      !appendStructurePreorder(child, byPath, visited, output)
-    ) {
+    if (child === undefined || !appendStructurePreorder(child, byPath, visited, output)) {
       return false;
     }
   }
@@ -1584,18 +1378,13 @@ function structurePathKey(path: readonly number[]): string {
 }
 
 function isStructureRole(value: unknown): value is PdfStructureRole {
-  return (
-    value === 'document' ||
-    value === 'section' ||
-    value === 'entity' ||
-    value === 'fact'
-  );
+  return value === 'document' || value === 'section' || value === 'entity' || value === 'fact';
 }
 
 function isMappedStructure(
   value: unknown,
   expected: ResumeFactManifest,
-  mappings: readonly unknown[],
+  mappings: readonly unknown[]
 ): boolean {
   const bindings: StructureOccurrenceBinding[] = [];
   for (const mapping of mappings) {
@@ -1603,10 +1392,7 @@ function isMappedStructure(
       !isOwnRecord(mapping) ||
       !isPositiveInteger(mapping.observedOccurrenceOrder) ||
       !isNonNegativeInteger(mapping.sectionOrdinal) ||
-      !(
-        mapping.entityOrdinal === null ||
-        isNonNegativeInteger(mapping.entityOrdinal)
-      ) ||
+      !(mapping.entityOrdinal === null || isNonNegativeInteger(mapping.entityOrdinal)) ||
       !isNonEmptyIntegerArray(mapping.structurePath)
     ) {
       return false;
@@ -1624,7 +1410,7 @@ function isMappedStructure(
 function isMappedOutline(
   value: unknown,
   expected: ResumeFactManifest,
-  renderedPages: unknown,
+  renderedPages: unknown
 ): boolean {
   if (
     !isOwnRecord(value) ||
@@ -1638,15 +1424,11 @@ function isMappedOutline(
   return value.entries.every(
     (entry, index) =>
       isOwnRecord(entry) &&
-      hasExactKeys(entry, [
-        'outlineOrder',
-        'sectionOrdinal',
-        'pageNumber',
-      ]) &&
+      hasExactKeys(entry, ['outlineOrder', 'sectionOrdinal', 'pageNumber']) &&
       entry.outlineOrder === index + 1 &&
       entry.sectionOrdinal === index &&
       isPositiveInteger(entry.pageNumber) &&
-      entry.pageNumber <= renderedPages.length,
+      entry.pageNumber <= renderedPages.length
   );
 }
 
@@ -1659,24 +1441,20 @@ function isMappedRenderedPages(value: unknown): boolean {
         isOwnRecord(page) &&
         hasExactKeys(page, ['pageNumber', 'evidenceId']) &&
         page.pageNumber === index + 1 &&
-        isSafeIdentifier(page.evidenceId),
+        isSafeIdentifier(page.evidenceId)
     )
   );
 }
 
-function findSectionOrdinal(
-  manifest: ResumeFactManifest,
-  entry: ResumeManifestEntry,
-): number {
+function findSectionOrdinal(manifest: ResumeFactManifest, entry: ResumeManifestEntry): number {
   return manifest.sectionOrder.findIndex(
-    (section) =>
-      section.key === entry.sectionKey && section.order === entry.sectionOrder,
+    (section) => section.key === entry.sectionKey && section.order === entry.sectionOrder
   );
 }
 
 function findEntityOrdinal(
   manifest: ResumeFactManifest,
-  entry: ResumeManifestEntry,
+  entry: ResumeManifestEntry
 ): number | null | undefined {
   if (entry.entity === null) {
     return null;
@@ -1712,14 +1490,12 @@ function inspectManifest(candidate: unknown): ResumeFactManifest | null {
 
   const comparison = compareResumeFactManifests(
     snapshot.value as unknown as ResumeFactManifest,
-    snapshot.value,
+    snapshot.value
   );
   return comparison.ok ? comparison.value : null;
 }
 
-function surfaceIdentity(
-  value: RenderedSurfaceEvidence,
-): ExactSurfaceIdentity {
+function surfaceIdentity(value: RenderedSurfaceEvidence): ExactSurfaceIdentity {
   return {
     surface: value.surface,
     sourceIdentity: value.sourceIdentity,
@@ -1732,9 +1508,11 @@ function surfaceIdentity(
     entries: value.entries.map((entry) => {
       const base: Record<string, unknown> = {};
       for (const key of Object.keys(entry)) {
-        if (!RENDERED_ENTRY_ADDITIONAL_KEYS.includes(
-          key as (typeof RENDERED_ENTRY_ADDITIONAL_KEYS)[number],
-        )) {
+        if (
+          !RENDERED_ENTRY_ADDITIONAL_KEYS.includes(
+            key as (typeof RENDERED_ENTRY_ADDITIONAL_KEYS)[number]
+          )
+        ) {
           base[key] = entry[key as keyof RenderedManifestEntryObservation];
         }
       }
@@ -1756,13 +1534,7 @@ function isCandidateIdentity(value: unknown): boolean {
 function isToolVersions(value: unknown): boolean {
   return (
     isOwnRecord(value) &&
-    hasExactKeys(value, [
-      'node',
-      'playwright',
-      'chromium',
-      'pdfjs',
-      'pretendard',
-    ]) &&
+    hasExactKeys(value, ['node', 'playwright', 'chromium', 'pdfjs', 'pretendard']) &&
     isCanonicalNonEmptyString(value.node) &&
     value.playwright === RESUME_TOOL_VERSIONS.playwright &&
     isCanonicalNonEmptyString(value.chromium) &&
@@ -1773,10 +1545,7 @@ function isToolVersions(value: unknown): boolean {
 
 function isLinkValueKind(kind: ResumeManifestValueKind): boolean {
   return (
-    kind === 'email' ||
-    kind === 'github-url' ||
-    kind === 'external-url' ||
-    kind === 'internal-path'
+    kind === 'email' || kind === 'github-url' || kind === 'external-url' || kind === 'internal-path'
   );
 }
 
@@ -1785,11 +1554,7 @@ function isManifestValueKind(value: unknown): value is ResumeManifestValueKind {
 }
 
 function isPageNumber(value: unknown, pageCount: number): value is number {
-  return (
-    isPositiveInteger(value) &&
-    isPositiveInteger(pageCount) &&
-    value <= pageCount
-  );
+  return isPositiveInteger(value) && isPositiveInteger(pageCount) && value <= pageCount;
 }
 
 function isPositiveInteger(value: unknown): value is number {
@@ -1804,20 +1569,12 @@ function isIntegerArray(value: unknown): value is readonly number[] {
   return Array.isArray(value) && value.every(isNonNegativeInteger);
 }
 
-function isNonEmptyIntegerArray(
-  value: unknown,
-): value is NonEmptyReadonlyArray<number> {
+function isNonEmptyIntegerArray(value: unknown): value is NonEmptyReadonlyArray<number> {
   return Array.isArray(value) && value.length > 0 && value.every(isNonNegativeInteger);
 }
 
-function numberArraysEqual(
-  left: readonly number[],
-  right: readonly number[],
-): boolean {
-  return (
-    left.length === right.length &&
-    left.every((value, index) => value === right[index])
-  );
+function numberArraysEqual(left: readonly number[], right: readonly number[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function isSafeIdentifier(value: unknown): value is string {
@@ -1841,38 +1598,25 @@ function success<Value>(value: Value): ValidationResult<Value> {
   return Object.freeze({ ok: true, value });
 }
 
-function evidenceFailure(
-  code: ValidationIssue['code'],
-  path: string,
-): ValidationResult<never> {
+function evidenceFailure(code: ValidationIssue['code'], path: string): ValidationResult<never> {
   return failure([issue(code, path)]);
 }
 
-function failure(
-  issues: readonly ValidationIssue[],
-): ValidationResult<never> {
+function failure(issues: readonly ValidationIssue[]): ValidationResult<never> {
   const sorted = sortAndDedupeIssues(issues);
-  const nonEmpty =
-    sorted.length > 0
-      ? sorted
-      : [issue('document.parity', 'profile.document')];
+  const nonEmpty = sorted.length > 0 ? sorted : [issue('document.parity', 'profile.document')];
   return Object.freeze({
     ok: false,
     issues: Object.freeze(nonEmpty) as NonEmptyReadonlyArray<ValidationIssue>,
   });
 }
 
-function issue(
-  code: ValidationIssue['code'],
-  path: string,
-): ValidationIssue {
+function issue(code: ValidationIssue['code'], path: string): ValidationIssue {
   return createValidationIssue(code, path as ProfilePath);
 }
 
 /** @internal Shared only with the pure receipt module. */
-export function snapshotResumeDocumentData(
-  value: unknown,
-): SnapshotResult {
+export function snapshotResumeDocumentData(value: unknown): SnapshotResult {
   try {
     return {
       ok: true,
@@ -1883,19 +1627,11 @@ export function snapshotResumeDocumentData(
   }
 }
 
-function cloneOwnedData(
-  value: unknown,
-  seen: WeakMap<object, unknown>,
-  depth: number,
-): unknown {
+function cloneOwnedData(value: unknown, seen: WeakMap<object, unknown>, depth: number): unknown {
   if (depth > 100) {
     throw new TypeError('Document evidence nesting is too deep.');
   }
-  if (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'boolean'
-  ) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return value;
   }
   if (typeof value === 'number') {
@@ -1916,9 +1652,7 @@ function cloneOwnedData(
     const keys = Reflect.ownKeys(descriptors);
     if (
       keys.some(
-        (key) =>
-          typeof key === 'symbol' ||
-          (key !== 'length' && !/^(?:0|[1-9]\d*)$/.test(key)),
+        (key) => typeof key === 'symbol' || (key !== 'length' && !/^(?:0|[1-9]\d*)$/.test(key))
       )
     ) {
       throw new TypeError('Document evidence array has extra keys.');
@@ -1927,11 +1661,7 @@ function cloneOwnedData(
     seen.set(value, clone);
     for (let index = 0; index < value.length; index += 1) {
       const descriptor = descriptors[String(index)];
-      if (
-        descriptor === undefined ||
-        !('value' in descriptor) ||
-        descriptor.enumerable !== true
-      ) {
+      if (descriptor === undefined || !('value' in descriptor) || descriptor.enumerable !== true) {
         throw new TypeError('Document evidence array must be dense data.');
       }
       clone.push(cloneOwnedData(descriptor.value, seen, depth + 1));
@@ -1952,11 +1682,7 @@ function cloneOwnedData(
       throw new TypeError('Document evidence symbol keys are forbidden.');
     }
     const descriptor = descriptors[key];
-    if (
-      descriptor === undefined ||
-      !('value' in descriptor) ||
-      descriptor.enumerable !== true
-    ) {
+    if (descriptor === undefined || !('value' in descriptor) || descriptor.enumerable !== true) {
       throw new TypeError('Document evidence accessors are forbidden.');
     }
     clone[key] = cloneOwnedData(descriptor.value, seen, depth + 1);
@@ -1966,10 +1692,7 @@ function cloneOwnedData(
 }
 
 /** @internal Shared only with the pure receipt module. */
-export function resumeDocumentDataEqual(
-  left: unknown,
-  right: unknown,
-): boolean {
+export function resumeDocumentDataEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) {
     return true;
   }
@@ -1978,9 +1701,7 @@ export function resumeDocumentDataEqual(
       Array.isArray(left) &&
       Array.isArray(right) &&
       left.length === right.length &&
-      left.every((value, index) =>
-        resumeDocumentDataEqual(value, right[index]),
-      )
+      left.every((value, index) => resumeDocumentDataEqual(value, right[index]))
     );
   }
   if (!isOwnRecord(left) || !isOwnRecord(right)) {
@@ -1993,7 +1714,7 @@ export function resumeDocumentDataEqual(
     leftKeys.every(
       (key) =>
         Object.prototype.hasOwnProperty.call(right, key) &&
-        resumeDocumentDataEqual(left[key], right[key]),
+        resumeDocumentDataEqual(left[key], right[key])
     )
   );
 }
@@ -2013,10 +1734,7 @@ function isOwnRecord(value: unknown): value is OwnRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function hasExactKeys(
-  value: OwnRecord,
-  expected: readonly string[],
-): boolean {
+function hasExactKeys(value: OwnRecord, expected: readonly string[]): boolean {
   const keys = Object.keys(value);
   return (
     keys.length === expected.length &&

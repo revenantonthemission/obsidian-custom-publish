@@ -12,14 +12,8 @@ export {
 } from './document-boundary.js';
 export { buildApprovedResumeManifest } from './resume-manifest.js';
 
-export type {
-  FactApprovalReceipt,
-  FactApprovalReview,
-} from './fact-approval.js';
-export type {
-  ResumeDocumentLink,
-  ResumeDocumentRequest,
-} from './document-boundary.js';
+export type { FactApprovalReceipt, FactApprovalReview } from './fact-approval.js';
+export type { ResumeDocumentLink, ResumeDocumentRequest } from './document-boundary.js';
 export type {
   ProfilePageMetadata,
   ProfileRoute,

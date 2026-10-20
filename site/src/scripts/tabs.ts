@@ -17,9 +17,9 @@ export function selectTab(tab: HTMLElement): void {
   if (!tablist) return;
   for (const candidate of tabsOf(tablist)) {
     const selected = candidate === tab;
-    candidate.setAttribute("aria-selected", String(selected));
+    candidate.setAttribute('aria-selected', String(selected));
     candidate.tabIndex = selected ? 0 : -1;
-    const panelId = candidate.getAttribute("aria-controls");
+    const panelId = candidate.getAttribute('aria-controls');
     const panel = panelId === null ? null : document.getElementById(panelId);
     if (panel) panel.hidden = !selected;
   }
@@ -34,13 +34,13 @@ export function selectedTab(root: ParentNode): HTMLElement | null {
 function targetIndex(key: string, index: number, count: number): number | null {
   const last = count - 1;
   switch (key) {
-    case "ArrowRight":
+    case 'ArrowRight':
       return index === last ? 0 : index + 1;
-    case "ArrowLeft":
+    case 'ArrowLeft':
       return index === 0 ? last : index - 1;
-    case "Home":
+    case 'Home':
       return 0;
-    case "End":
+    case 'End':
       return last;
     default:
       return null;
@@ -66,6 +66,6 @@ function onClick(event: MouseEvent): void {
 }
 
 for (const tablist of document.querySelectorAll<HTMLElement>('[role="tablist"][data-tabs]')) {
-  tablist.addEventListener("keydown", onKeydown);
-  tablist.addEventListener("click", onClick);
+  tablist.addEventListener('keydown', onKeydown);
+  tablist.addEventListener('click', onClick);
 }

@@ -8,7 +8,7 @@
  * scores 100, and every indexed word that a query token begins adds its
  * count for each document it appears in.
  */
-import type { SearchDocument, SearchHit } from "./types";
+import type { SearchDocument, SearchHit } from './types';
 
 export const SEARCH_RESULT_LIMIT = 10;
 const TITLE_MATCH_BOOST = 100;
@@ -29,14 +29,18 @@ export interface PreparedSearchIndex {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
 function toDocument(value: unknown): SearchDocument {
-  if (!isRecord(value) || typeof value.slug !== "string" || typeof value.title !== "string") {
-    throw new Error("search-index.json has a malformed document");
+  if (!isRecord(value) || typeof value.slug !== 'string' || typeof value.title !== 'string') {
+    throw new Error('search-index.json has a malformed document');
   }
-  return { slug: value.slug, title: value.title, snippet: typeof value.snippet === "string" ? value.snippet : "" };
+  return {
+    slug: value.slug,
+    title: value.title,
+    snippet: typeof value.snippet === 'string' ? value.snippet : '',
+  };
 }
 
 function toHits(value: unknown, documentCount: number): SearchHit[] {
@@ -44,21 +48,22 @@ function toHits(value: unknown, documentCount: number): SearchHit[] {
   return value.flatMap((hit) => {
     if (!isRecord(hit)) return [];
     const { doc_idx: index, count } = hit;
-    const valid = Number.isInteger(index) && (index as number) >= 0 && (index as number) < documentCount;
-    return valid && typeof count === "number" ? [{ doc_idx: index as number, count }] : [];
+    const valid =
+      Number.isInteger(index) && (index as number) >= 0 && (index as number) < documentCount;
+    return valid && typeof count === 'number' ? [{ doc_idx: index as number, count }] : [];
   });
 }
 
 /** Validates the fetched index; throws when it is not a search index at all. */
 export function prepareSearchIndex(raw: unknown): PreparedSearchIndex {
   if (!isRecord(raw) || !Array.isArray(raw.documents) || !isRecord(raw.inverted_index)) {
-    throw new Error("search-index.json is not a search index");
+    throw new Error('search-index.json is not a search index');
   }
   const documents = raw.documents.map(toDocument);
   const postings = new Map(
     Object.entries(raw.inverted_index)
       .map(([word, hits]) => [word, toHits(hits, documents.length)] as const)
-      .filter(([, hits]) => hits.length > 0),
+      .filter(([, hits]) => hits.length > 0)
   );
   return { documents, postings, words: [...postings.keys()].sort() };
 }
@@ -69,7 +74,7 @@ function firstWordFrom(words: readonly string[], token: string): number {
   let high = words.length;
   while (low < high) {
     const middle = (low + high) >>> 1;
-    if ((words[middle] ?? "") < token) low = middle + 1;
+    if ((words[middle] ?? '') < token) low = middle + 1;
     else high = middle;
   }
   return low;
@@ -89,7 +94,7 @@ function wordsStartingWith(words: readonly string[], token: string): string[] {
 /** The best matches for the query, at most SEARCH_RESULT_LIMIT, best first. */
 export function searchIndex(index: PreparedSearchIndex, query: string): SearchResult[] {
   const normalized = query.toLowerCase().trim();
-  if (normalized === "") return [];
+  if (normalized === '') return [];
   const scores = new Map<number, number>();
   const add = (document: number, points: number): void => {
     scores.set(document, (scores.get(document) ?? 0) + points);

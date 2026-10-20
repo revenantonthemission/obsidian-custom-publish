@@ -128,9 +128,7 @@ export interface BrowserRequestLedgerEvidence {
     successful: 0;
   }>;
   readonly guard: Readonly<{
-    routeRegistration:
-      | 'context-unroute-fallback'
-      | 'playwright-disposable';
+    routeRegistration: 'context-unroute-fallback' | 'playwright-disposable';
     pendingHandlers: 0;
     inFlightRequests: 0;
     pages: 0;
@@ -268,7 +266,7 @@ export interface ComposeVerificationEvidenceInput {
 }
 
 export function composeVerificationEvidence(
-  input: ComposeVerificationEvidenceInput,
+  input: ComposeVerificationEvidenceInput
 ): ComposedVerificationEvidence;
 
 export function runE2EVerification(input?: {

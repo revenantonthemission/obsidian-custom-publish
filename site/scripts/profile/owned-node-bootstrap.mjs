@@ -23,7 +23,7 @@ if (process.env[REAPER_ROOT_ENV] !== undefined) {
       `${JSON.stringify({
         errorCode: 'OWNED_BOOTSTRAP_REAPER_FAILED',
         message: error instanceof Error ? error.message : String(error),
-      })}\n`,
+      })}\n`
     );
     process.exit(1);
   });
@@ -62,12 +62,7 @@ function runBootstrap() {
   };
   process.once('disconnect', onDisconnect);
   process.once('message', (message) => {
-    if (
-      message?.type !== START ||
-      message?.token !== token ||
-      started ||
-      finishing
-    ) {
+    if (message?.type !== START || message?.token !== token || started || finishing) {
       finish(1);
       return;
     }
@@ -85,7 +80,7 @@ function runBootstrap() {
         `${JSON.stringify({
           errorCode: 'OWNED_BOOTSTRAP_CHILD_LAUNCH_FAILED',
           message: error.message,
-        })}\n`,
+        })}\n`
       );
       finish(1);
     });
@@ -95,7 +90,7 @@ function runBootstrap() {
           `${JSON.stringify({
             errorCode: 'OWNED_BOOTSTRAP_CHILD_SIGNALED',
             signal,
-          })}\n`,
+          })}\n`
         );
         finish(1);
         return;
@@ -136,7 +131,7 @@ function runBootstrap() {
         `${JSON.stringify({
           errorCode: 'OWNED_BOOTSTRAP_REAPER_HANDOFF_FAILED',
           message: error instanceof Error ? error.message : String(error),
-        })}\n`,
+        })}\n`
       );
       killProcessGroup(process.pid);
       process.exit(1);
@@ -203,9 +198,7 @@ function waitForReaperReady(reaper, token, timeoutMs) {
     }
     function onExit(code, signal) {
       settleReject(
-        new Error(
-          `owned bootstrap reaper exited before readiness (${code ?? signal ?? 'unknown'})`,
-        ),
+        new Error(`owned bootstrap reaper exited before readiness (${code ?? signal ?? 'unknown'})`)
       );
     }
 
@@ -232,34 +225,27 @@ async function runReaper() {
   delete process.env[REAPER_ROOT_ENV];
   delete process.env[REAPER_TOKEN_ENV];
 
-  const initial = await snapshotDescendantProcessTree([
-    rootProcessGroupId,
-  ]);
-  const rootIdentity = initial.processTable.find(
-    ({ pid }) => pid === rootProcessGroupId,
-  );
+  const initial = await snapshotDescendantProcessTree([rootProcessGroupId]);
+  const rootIdentity = initial.processTable.find(({ pid }) => pid === rootProcessGroupId);
   if (
     rootIdentity === undefined ||
     rootIdentity.pgid !== rootProcessGroupId ||
     process.ppid !== rootProcessGroupId
   ) {
-    throw new Error(
-      'owned bootstrap reaper could not bind the live root identity',
-    );
+    throw new Error('owned bootstrap reaper could not bind the live root identity');
   }
   const rootLease = registerOwnedProcessGroup(
     rootProcessGroupId,
-    'owned-bootstrap-parent-loss-root',
+    'owned-bootstrap-parent-loss-root'
   );
   const inheritedProcessGroupIds = initial.processGroupIds.filter(
-    (processGroupId) => processGroupId !== process.pid,
+    (processGroupId) => processGroupId !== process.pid
   );
-  const inheritedLeases = inheritedProcessGroupIds.map(
-    (processGroupId) =>
-      registerOwnedProcessGroup(
-        processGroupId,
-        `owned-bootstrap-parent-loss-descendant-${processGroupId}`,
-      ),
+  const inheritedLeases = inheritedProcessGroupIds.map((processGroupId) =>
+    registerOwnedProcessGroup(
+      processGroupId,
+      `owned-bootstrap-parent-loss-descendant-${processGroupId}`
+    )
   );
   process.send({
     type: REAPER_READY,
@@ -277,19 +263,13 @@ async function runReaper() {
   await waitForParentReparenting(rootProcessGroupId, 2_000);
 
   const frozen = await freezeOwnedProcessTree({
-    rootProcessGroupIds: [
-      rootProcessGroupId,
-      ...inheritedProcessGroupIds,
-    ],
+    rootProcessGroupIds: [rootProcessGroupId, ...inheritedProcessGroupIds],
     label: 'owned-bootstrap-parent-loss-tree',
   });
   for (const processGroupId of frozen.evidence.processGroupIds) {
     killProcessGroup(processGroupId);
   }
-  await waitForGroupsReleased(
-    frozen.evidence.processGroupIds,
-    2_000,
-  );
+  await waitForGroupsReleased(frozen.evidence.processGroupIds, 2_000);
   frozen.releaseVerified();
   for (const lease of inheritedLeases) lease.release();
   rootLease.release();
@@ -303,9 +283,7 @@ async function waitForParentReparenting(parentPid, timeoutMs) {
     });
   }
   if (process.ppid === parentPid) {
-    throw new Error(
-      'owned bootstrap did not exit after transferring reaper custody',
-    );
+    throw new Error('owned bootstrap did not exit after transferring reaper custody');
   }
 }
 

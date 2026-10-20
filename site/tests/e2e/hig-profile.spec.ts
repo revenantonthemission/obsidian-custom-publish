@@ -4,11 +4,26 @@
 // cover the HIG presentation around them. Colors are the light tokens.
 import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoSettled, horizontalOverflow, measureTargets, undersized, viewportFor } from './support/hig';
+import {
+  gotoSettled,
+  horizontalOverflow,
+  measureTargets,
+  undersized,
+  viewportFor,
+} from './support/hig';
 
 const TARGET = { width: 44, height: 44 };
-const PROFILE_ROUTES = ['/resume', '/portfolio', '/portfolio/product-engineer', '/portfolio/infra-engineer'] as const;
-const PORTFOLIO_ROUTES = ['/portfolio', '/portfolio/product-engineer', '/portfolio/infra-engineer'] as const;
+const PROFILE_ROUTES = [
+  '/resume',
+  '/portfolio',
+  '/portfolio/product-engineer',
+  '/portfolio/infra-engineer',
+] as const;
+const PORTFOLIO_ROUTES = [
+  '/portfolio',
+  '/portfolio/product-engineer',
+  '/portfolio/infra-engineer',
+] as const;
 /** Routes whose shared stylesheets define what every page loads anyway. */
 const BASELINE_ROUTES = ['/404', '/tags', '/graph'] as const;
 const PROFILE_CSS_GZIP_LIMIT = 24 * 1024;
@@ -28,7 +43,9 @@ async function pageBackground(page: Page): Promise<string> {
 async function routeStylesheets(page: Page, path: string): Promise<Map<string, Buffer>> {
   await gotoSettled(page, path);
   const { hrefs, inline } = await page.evaluate(() => ({
-    hrefs: [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map((link) => link.href),
+    hrefs: [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map(
+      (link) => link.href
+    ),
     inline: [...document.querySelectorAll('style')].map((style) => style.textContent ?? ''),
   }));
   const sheets = new Map<string, Buffer>();
@@ -43,23 +60,37 @@ test.describe('profile pages (W12, W13)', () => {
   test.use({ viewport: viewportFor(1024) });
 
   for (const path of PROFILE_ROUTES) {
-    test(`${path} sits on the grouped background with a segmented local navigation`, async ({ page }) => {
+    test(`${path} sits on the grouped background with a segmented local navigation`, async ({
+      page,
+    }) => {
       await gotoSettled(page, path);
       expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
       const navigation = page.locator('nav.profile-local-navigation');
       await expect(navigation.locator('ul')).toHaveCSS('background-color', LIGHT.fill);
-      await expect(navigation.locator('a[aria-current="page"]')).toHaveCSS('background-color', LIGHT.surface);
-      expect(undersized(await measureTargets(page, '.profile-local-navigation a'), TARGET)).toEqual([]);
+      await expect(navigation.locator('a[aria-current="page"]')).toHaveCSS(
+        'background-color',
+        LIGHT.surface
+      );
+      expect(undersized(await measureTargets(page, '.profile-local-navigation a'), TARGET)).toEqual(
+        []
+      );
     });
   }
 
   for (const path of PORTFOLIO_ROUTES) {
-    test(`${path} switches roles with a segmented control and jumps to projects by 44 px chips`, async ({ page }) => {
+    test(`${path} switches roles with a segmented control and jumps to projects by 44 px chips`, async ({
+      page,
+    }) => {
       await gotoSettled(page, path);
       const roles = page.locator('nav.portfolio-role-navigation');
       await expect(roles.locator('ul')).toHaveCSS('background-color', LIGHT.fill);
-      await expect(roles.locator('a[aria-current="page"]')).toHaveCSS('background-color', LIGHT.surface);
-      expect(undersized(await measureTargets(page, '.portfolio-role-navigation a'), TARGET)).toEqual([]);
+      await expect(roles.locator('a[aria-current="page"]')).toHaveCSS(
+        'background-color',
+        LIGHT.surface
+      );
+      expect(
+        undersized(await measureTargets(page, '.portfolio-role-navigation a'), TARGET)
+      ).toEqual([]);
 
       const chips = await page.locator('.portfolio-project-navigation a').evaluateAll((links) =>
         links.map((link) => {
@@ -67,9 +98,11 @@ test.describe('profile pages (W12, W13)', () => {
           return {
             text: link.textContent ?? '',
             icon: link.querySelector('svg[aria-hidden="true"]') !== null,
-            capsule: Number.parseFloat(style.borderTopLeftRadius) >= link.getBoundingClientRect().height / 2 - 1,
+            capsule:
+              Number.parseFloat(style.borderTopLeftRadius) >=
+              link.getBoundingClientRect().height / 2 - 1,
           };
-        }),
+        })
       );
       expect(chips.length).toBeGreaterThan(0);
       for (const chip of chips) {
@@ -77,10 +110,14 @@ test.describe('profile pages (W12, W13)', () => {
         expect(chip.icon, chip.text).toBe(true);
         expect(chip.capsule, chip.text).toBe(true);
       }
-      expect(undersized(await measureTargets(page, '.portfolio-project-navigation a'), TARGET)).toEqual([]);
+      expect(
+        undersized(await measureTargets(page, '.portfolio-project-navigation a'), TARGET)
+      ).toEqual([]);
     });
 
-    test(`${path} shows each case study as a grouped card with closed disclosures`, async ({ page }) => {
+    test(`${path} shows each case study as a grouped card with closed disclosures`, async ({
+      page,
+    }) => {
       await gotoSettled(page, path);
       const cards = await page.locator('article.portfolio-case-study').evaluateAll((articles) =>
         articles.map((article) => {
@@ -92,16 +129,24 @@ test.describe('profile pages (W12, W13)', () => {
             dimensions: article.querySelectorAll('[data-profile-dimension] > h4').length,
             open: article.querySelectorAll('details.case-study-details[open]').length,
           };
-        }),
+        })
       );
       expect(cards.length).toBeGreaterThan(0);
       for (const card of cards) {
-        expect(card, card.id).toEqual({ id: card.id, background: LIGHT.surface, radius: '22px', dimensions: 6, open: 0 });
+        expect(card, card.id).toEqual({
+          id: card.id,
+          background: LIGHT.surface,
+          radius: '22px',
+          dimensions: 6,
+          open: 0,
+        });
       }
     });
   }
 
-  test('résumé entries are grouped rows with a chevron, never a + or − glyph, and skills are grouped', async ({ page }) => {
+  test('résumé entries are grouped rows with a chevron, never a + or − glyph, and skills are grouped', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/resume');
     const rows = await page.locator('details.resume-entry').evaluateAll((entries) =>
       entries.map((entry) => {
@@ -111,7 +156,7 @@ test.describe('profile pages (W12, W13)', () => {
           background: getComputedStyle(entry).backgroundColor,
           marker: getComputedStyle(summary, '::after').content,
         };
-      }),
+      })
     );
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
@@ -119,9 +164,9 @@ test.describe('profile pages (W12, W13)', () => {
       expect(row.background).toBe(LIGHT.surface);
       expect(row.marker).not.toMatch(/[+−]/);
     }
-    const skills = await page.locator('.resume-skill-group').evaluateAll((groups) =>
-      groups.map((group) => getComputedStyle(group).backgroundColor),
-    );
+    const skills = await page
+      .locator('.resume-skill-group')
+      .evaluateAll((groups) => groups.map((group) => getComputedStyle(group).backgroundColor));
     expect(skills.length).toBeGreaterThan(0);
     for (const background of skills) expect(background).toBe(LIGHT.surface);
   });
@@ -133,8 +178,9 @@ test.describe('profile pages (W12, W13)', () => {
         links.map((link) => ({
           text: link.textContent?.trim() ?? '',
           capsule:
-            Number.parseFloat(getComputedStyle(link).borderTopLeftRadius) >= link.getBoundingClientRect().height / 2 - 1,
-        })),
+            Number.parseFloat(getComputedStyle(link).borderTopLeftRadius) >=
+            link.getBoundingClientRect().height / 2 - 1,
+        }))
       );
       expect(actions.length).toBeGreaterThan(0);
       for (const action of actions) expect(action.capsule, action.text).toBe(true);
@@ -163,7 +209,9 @@ test.describe('profile CSS budget', () => {
   test('the stylesheets only profile routes load stay within 24 KiB gzip', async ({ page }) => {
     const baseline: Map<string, Buffer>[] = [];
     for (const path of BASELINE_ROUTES) baseline.push(await routeStylesheets(page, path));
-    const shared = new Set([...baseline[0]!.keys()].filter((key) => baseline.every((sheets) => sheets.has(key))));
+    const shared = new Set(
+      [...baseline[0]!.keys()].filter((key) => baseline.every((sheets) => sheets.has(key)))
+    );
     const profile = new Map<string, Buffer>();
     for (const path of PROFILE_ROUTES) {
       for (const [key, bytes] of await routeStylesheets(page, path)) {
@@ -173,14 +221,16 @@ test.describe('profile CSS budget', () => {
     expect(profile.size).toBeGreaterThan(0);
     const gzipBytes = [...profile.values()].reduce(
       (total, bytes) => total + gzipSync(bytes, { level: 9 }).byteLength,
-      0,
+      0
     );
     expect(gzipBytes).toBeLessThanOrEqual(PROFILE_CSS_GZIP_LIMIT);
   });
 });
 
 test.describe('résumé print (W14; R-09)', () => {
-  test('prints on A4 with 12 mm margins, every text run at 10 pt or more with a line height of 1.35 or more', async ({ page }) => {
+  test('prints on A4 with 12 mm margins, every text run at 10 pt or more with a line height of 1.35 or more', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/resume');
     await page.emulateMedia({ media: 'print' });
     const report = await page.evaluate(() => {
@@ -202,15 +252,18 @@ test.describe('résumé print (W14; R-09)', () => {
       const offenders = new Set<string>();
       for (const element of document.querySelectorAll<HTMLElement>('.profile-shell *')) {
         const ownText = [...element.childNodes].some(
-          (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== '',
+          (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== ''
         );
         if (!ownText || element.getClientRects().length === 0) continue;
         const style = getComputedStyle(element);
         if (style.visibility === 'hidden') continue;
         const size = Number.parseFloat(style.fontSize);
-        const line = style.lineHeight === 'normal' ? Number.NaN : Number.parseFloat(style.lineHeight);
+        const line =
+          style.lineHeight === 'normal' ? Number.NaN : Number.parseFloat(style.lineHeight);
         if (size < 10 * pointInPixels - 0.05 || !(line >= size * 1.35 - 0.05)) {
-          offenders.add(`${element.tagName.toLowerCase()}.${element.className} ${size.toFixed(2)}px / ${style.lineHeight}`);
+          offenders.add(
+            `${element.tagName.toLowerCase()}.${element.className} ${size.toFixed(2)}px / ${style.lineHeight}`
+          );
         }
       }
       return { pages, offenders: [...offenders].slice(0, 20) };

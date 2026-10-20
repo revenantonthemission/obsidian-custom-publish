@@ -15,12 +15,8 @@ import {
   buildResumeManifestForTest,
   compareResumeFactManifests,
 } from '../../../src/lib/profile/resume-manifest.js';
-import type {
-  ResumeFactManifest,
-} from '../../../src/lib/profile/resume-manifest.js';
-import type {
-  ResumeProfile,
-} from '../../../src/lib/profile/types.js';
+import type { ResumeFactManifest } from '../../../src/lib/profile/resume-manifest.js';
+import type { ResumeProfile } from '../../../src/lib/profile/types.js';
 import {
   approveSyntheticProfile,
   buildResumeManifestOracle,
@@ -49,15 +45,9 @@ test.prop([resumeManifestSourceArbitrary])(
     expect(first.value.algorithm).toBe('sha256');
     expect(first.value.digest).toMatch(/^[a-f0-9]{64}$/);
 
-    const composed = await digestProfileSource(
-      resumeWithSummary(resume, '합성 Café'),
-    );
-    const decomposed = await digestProfileSource(
-      resumeWithSummary(resume, '합성 Cafe\u0301'),
-    );
-    const changed = await digestProfileSource(
-      resumeWithSummary(resume, '합성 Cafés'),
-    );
+    const composed = await digestProfileSource(resumeWithSummary(resume, '합성 Café'));
+    const decomposed = await digestProfileSource(resumeWithSummary(resume, '합성 Cafe\u0301'));
+    const changed = await digestProfileSource(resumeWithSummary(resume, '합성 Cafés'));
     expect(composed.ok).toBe(true);
     expect(decomposed.ok).toBe(true);
     expect(changed.ok).toBe(true);
@@ -65,7 +55,7 @@ test.prop([resumeManifestSourceArbitrary])(
 
     expect(decomposed.value.digest).toBe(composed.value.digest);
     expect(changed.value.digest).not.toBe(composed.value.digest);
-  },
+  }
 );
 
 test.prop([resumeManifestSourceArbitrary])(
@@ -94,14 +84,10 @@ test.prop([resumeManifestSourceArbitrary])(
     expect(fingerprint.ok).toBe(true);
     if (fingerprint.ok) {
       expect(manifest.fingerprint).toEqual(fingerprint.value);
-      expect(manifest.fingerprint.domain).toBe(
-        'obsidian-press:resume-fact-manifest',
-      );
-      expect(manifest.fingerprint.digest).not.toBe(
-        manifest.sourceIdentity.digest,
-      );
+      expect(manifest.fingerprint.domain).toBe('obsidian-press:resume-fact-manifest');
+      expect(manifest.fingerprint.digest).not.toBe(manifest.sourceIdentity.digest);
     }
-  },
+  }
 );
 
 test.prop([resumeManifestSourceArbitrary])(
@@ -111,23 +97,14 @@ test.prop([resumeManifestSourceArbitrary])(
     expect(built.ok).toBe(true);
     if (!built.ok) return;
 
-    const identical = compareResumeFactManifests(
-      built.value,
-      structuredClone(built.value),
-    );
+    const identical = compareResumeFactManifests(built.value, structuredClone(built.value));
     expect(identical.ok).toBe(true);
 
     for (const mutationKind of MANIFEST_MUTATION_KINDS) {
-      const candidate = mutateResumeManifest(
-        built.value,
-        mutationKind,
-      );
+      const candidate = mutateResumeManifest(built.value, mutationKind);
       expect(candidate).not.toEqual(built.value);
 
-      const mismatch = compareResumeFactManifests(
-        built.value,
-        candidate,
-      );
+      const mismatch = compareResumeFactManifests(built.value, candidate);
       expect(mismatch.ok, mutationKind).toBe(false);
       if (!mismatch.ok) {
         expect(mismatch.issues).toEqual([
@@ -138,13 +115,10 @@ test.prop([resumeManifestSourceArbitrary])(
         ]);
       }
     }
-  },
+  }
 );
 
-test.prop([
-  resumeManifestSourceArbitrary,
-  documentRequestMutationKindArbitrary,
-])(
+test.prop([resumeManifestSourceArbitrary, documentRequestMutationKindArbitrary])(
   'U1-P12 guards source identity, fixed paths and full request parity',
   async ({ validated }, mutationKind) => {
     const assembly = approveSyntheticProfile(validated);
@@ -155,38 +129,25 @@ test.prop([
     expect(built.value.sourceRoute).toBe('/resume');
     expect(built.value.publicHref).toBe('/resume.pdf');
     expect(built.value.repositoryPath).toBe('site/public/resume.pdf');
-    expect(built.value.sourceIdentity).toEqual(
-      built.value.expectedManifest.sourceIdentity,
-    );
-    expect(built.value.manifestFingerprint).toEqual(
-      built.value.expectedManifest.fingerprint,
-    );
+    expect(built.value.sourceIdentity).toEqual(built.value.expectedManifest.sourceIdentity);
+    expect(built.value.manifestFingerprint).toEqual(built.value.expectedManifest.fingerprint);
 
-    const current = await validateCurrentResumeDocumentRequest(
-      built.value,
-      assembly,
-    );
+    const current = await validateCurrentResumeDocumentRequest(built.value, assembly);
     expect(current.ok).toBe(true);
 
-    const mutation = mutateDocumentRequest(
-      built.value,
-      mutationKind,
-    );
-    const rejected = await validateCurrentResumeDocumentRequest(
-      mutation.candidate,
-      assembly,
-    );
+    const mutation = mutateDocumentRequest(built.value, mutationKind);
+    const rejected = await validateCurrentResumeDocumentRequest(mutation.candidate, assembly);
     expect(rejected.ok).toBe(false);
     if (!rejected.ok) {
       expect(rejected.issues).toContainEqual(
         expect.objectContaining({
           code: mutation.expectedCode,
           path: mutation.expectedPath,
-        }),
+        })
       );
       expect('value' in rejected).toBe(false);
     }
-  },
+  }
 );
 
 test.prop([fc.constantFrom<'href' | 'label'>('href', 'label')])(
@@ -207,16 +168,13 @@ test.prop([fc.constantFrom<'href' | 'label'>('href', 'label')])(
         expect.objectContaining({
           code: 'document.link.invalid',
           path: 'profile.document.href',
-        }),
+        })
       );
     }
-  },
+  }
 );
 
-function resumeWithSummary(
-  profile: ResumeProfile,
-  value: string,
-): ResumeProfile {
+function resumeWithSummary(profile: ResumeProfile, value: string): ResumeProfile {
   const candidate = structuredClone(profile) as unknown as {
     resumeSummary: { value: string };
   };

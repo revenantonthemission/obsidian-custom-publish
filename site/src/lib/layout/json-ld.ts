@@ -1,19 +1,13 @@
 import { createValidationIssue } from '../profile/issues.js';
 import type { JsonLdDocument } from '../profile/metadata.js';
-import type {
-  NonEmptyReadonlyArray,
-  ValidationIssue,
-  ValidationResult,
-} from '../profile/types.js';
+import type { NonEmptyReadonlyArray, ValidationIssue, ValidationResult } from '../profile/types.js';
 
 export interface JsonLdScriptPayload {
   readonly type: 'application/ld+json';
   readonly payload: string;
 }
 
-export type JsonLdScriptHost =
-  | NonEmptyReadonlyArray<JsonLdScriptPayload>
-  | null;
+export type JsonLdScriptHost = NonEmptyReadonlyArray<JsonLdScriptPayload> | null;
 
 const JSON_LD_ISSUE_PATH = 'profile.metadata.structuredData';
 const SCRIPT_UNSAFE_PATTERN = /[<>&\u2028\u2029]/;
@@ -30,7 +24,7 @@ const SCRIPT_ESCAPE = new Map<string, string>([
  * preserving document order. An absent or empty collection has no host.
  */
 export function serializeJsonLdDocuments(
-  documents: readonly JsonLdDocument[] | null | undefined,
+  documents: readonly JsonLdDocument[] | null | undefined
 ): ValidationResult<JsonLdScriptHost> {
   if (documents === null || documents === undefined) {
     return success(null);
@@ -63,17 +57,12 @@ export function serializeJsonLdDocuments(
         Object.freeze({
           type: 'application/ld+json',
           payload: escapeForScript(serialized),
-        }),
+        })
       );
     }
 
-    const host = Object.freeze(
-      payloads,
-    ) as NonEmptyReadonlyArray<JsonLdScriptPayload>;
-    const roundTrip = verifyJsonLdRoundTrip(
-      Object.freeze(snapshots),
-      host,
-    );
+    const host = Object.freeze(payloads) as NonEmptyReadonlyArray<JsonLdScriptPayload>;
+    const roundTrip = verifyJsonLdRoundTrip(Object.freeze(snapshots), host);
     return roundTrip.ok ? success(host) : roundTrip;
   } catch {
     return serializationFailure();
@@ -85,7 +74,7 @@ export function serializeJsonLdDocuments(
  * extraction seam used by BaseLayout contract tests.
  */
 export function extractJsonLdDocuments(
-  host: JsonLdScriptHost,
+  host: JsonLdScriptHost
 ): ValidationResult<readonly JsonLdDocument[]> {
   if (host === null) {
     return success(Object.freeze([]));
@@ -108,10 +97,7 @@ export function extractJsonLdDocuments(
       }
 
       const parsed: unknown = JSON.parse(script.payload);
-      const payload = snapshotJsonObject(
-        parsed,
-        new WeakSet<object>(),
-      );
+      const payload = snapshotJsonObject(parsed, new WeakSet<object>());
       if (payload === null) {
         return serializationFailure();
       }
@@ -123,7 +109,7 @@ export function extractJsonLdDocuments(
         Object.freeze({
           schemaType,
           payload,
-        }) as JsonLdDocument,
+        }) as JsonLdDocument
       );
     }
 
@@ -138,22 +124,18 @@ export function extractJsonLdDocuments(
  */
 export function verifyJsonLdRoundTrip(
   expected: readonly JsonLdDocument[] | null | undefined,
-  host: JsonLdScriptHost,
+  host: JsonLdScriptHost
 ): ValidationResult<readonly JsonLdDocument[]> {
   try {
     if (expected === null || expected === undefined) {
-      return host === null
-        ? success(Object.freeze([]))
-        : serializationFailure();
+      return host === null ? success(Object.freeze([])) : serializationFailure();
     }
     const expectedValues = exactArrayDataValues(expected);
     if (expectedValues === null) {
       return serializationFailure();
     }
     if (expectedValues.length === 0) {
-      return host === null
-        ? success(Object.freeze([]))
-        : serializationFailure();
+      return host === null ? success(Object.freeze([])) : serializationFailure();
     }
 
     const snapshots: JsonLdDocument[] = [];
@@ -171,9 +153,7 @@ export function verifyJsonLdRoundTrip(
     }
     if (
       extracted.value.length !== snapshots.length ||
-      !snapshots.every((document, index) =>
-        jsonValuesEqual(document, extracted.value[index]),
-      )
+      !snapshots.every((document, index) => jsonValuesEqual(document, extracted.value[index]))
     ) {
       return serializationFailure();
     }
@@ -187,13 +167,11 @@ export function verifyJsonLdRoundTrip(
 function escapeForScript(serialized: string): string {
   return serialized.replace(
     /[<>&\u2028\u2029]/g,
-    (character) => SCRIPT_ESCAPE.get(character) as string,
+    (character) => SCRIPT_ESCAPE.get(character) as string
   );
 }
 
-function snapshotJsonLdDocument(
-  value: unknown,
-): JsonLdDocument | null {
+function snapshotJsonLdDocument(value: unknown): JsonLdDocument | null {
   if (!isPlainJsonObject(value)) {
     return null;
   }
@@ -209,14 +187,8 @@ function snapshotJsonLdDocument(
     return null;
   }
 
-  const payloadSnapshot = snapshotJsonObject(
-    payload,
-    new WeakSet<object>(),
-  );
-  if (
-    payloadSnapshot === null ||
-    enumerableDataValue(payloadSnapshot, '@type') !== schemaType
-  ) {
+  const payloadSnapshot = snapshotJsonObject(payload, new WeakSet<object>());
+  if (payloadSnapshot === null || enumerableDataValue(payloadSnapshot, '@type') !== schemaType) {
     return null;
   }
 
@@ -226,9 +198,7 @@ function snapshotJsonLdDocument(
   }) as JsonLdDocument;
 }
 
-function isJsonLdSchemaType(
-  value: unknown,
-): value is JsonLdDocument['schemaType'] {
+function isJsonLdSchemaType(value: unknown): value is JsonLdDocument['schemaType'] {
   return (
     value === 'ProfilePage' ||
     value === 'Person' ||
@@ -239,19 +209,13 @@ function isJsonLdSchemaType(
 
 function snapshotJsonValue(
   value: unknown,
-  ancestors: WeakSet<object>,
+  ancestors: WeakSet<object>
 ): JsonLdDocument['payload'][string] | undefined {
-  if (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'boolean'
-  ) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return value;
   }
   if (typeof value === 'number') {
-    return Number.isFinite(value) && !Object.is(value, -0)
-      ? value
-      : undefined;
+    return Number.isFinite(value) && !Object.is(value, -0) ? value : undefined;
   }
   if (typeof value !== 'object') {
     return undefined;
@@ -287,7 +251,7 @@ function snapshotJsonValue(
 
 function snapshotJsonObject(
   value: unknown,
-  ancestors: WeakSet<object>,
+  ancestors: WeakSet<object>
 ): JsonLdDocument['payload'] | null {
   if (!isPlainJsonObject(value) || ancestors.has(value)) {
     return null;
@@ -295,20 +259,13 @@ function snapshotJsonObject(
 
   ancestors.add(value);
   try {
-    const snapshot = Object.create(null) as Record<
-      string,
-      JsonLdDocument['payload'][string]
-    >;
+    const snapshot = Object.create(null) as Record<string, JsonLdDocument['payload'][string]>;
     for (const key of Reflect.ownKeys(value)) {
       if (typeof key === 'symbol') {
         return null;
       }
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      if (
-        descriptor === undefined ||
-        descriptor.enumerable !== true ||
-        !('value' in descriptor)
-      ) {
+      if (descriptor === undefined || descriptor.enumerable !== true || !('value' in descriptor)) {
         return null;
       }
       const child = snapshotJsonValue(descriptor.value, ancestors);
@@ -328,20 +285,12 @@ function snapshotJsonObject(
   }
 }
 
-function exactArrayDataValues(
-  value: unknown,
-): readonly unknown[] | null {
-  if (
-    !Array.isArray(value) ||
-    Object.getPrototypeOf(value) !== Array.prototype
-  ) {
+function exactArrayDataValues(value: unknown): readonly unknown[] | null {
+  if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
     return null;
   }
 
-  const lengthDescriptor = Object.getOwnPropertyDescriptor(
-    value,
-    'length',
-  );
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
   if (
     lengthDescriptor === undefined ||
     !('value' in lengthDescriptor) ||
@@ -377,9 +326,7 @@ function exactArrayDataValues(
   return Object.freeze(values);
 }
 
-function isPlainJsonObject(
-  value: unknown,
-): value is Readonly<Record<string, unknown>> {
+function isPlainJsonObject(value: unknown): value is Readonly<Record<string, unknown>> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }
@@ -387,9 +334,7 @@ function isPlainJsonObject(
   return prototype === Object.prototype || prototype === null;
 }
 
-function snapshotScriptPayload(
-  value: unknown,
-): JsonLdScriptPayload | null {
+function snapshotScriptPayload(value: unknown): JsonLdScriptPayload | null {
   if (!isPlainJsonObject(value)) {
     return null;
   }
@@ -408,14 +353,9 @@ function snapshotScriptPayload(
   return Object.freeze({ type, payload });
 }
 
-function enumerableDataValue(
-  owner: object,
-  key: PropertyKey,
-): unknown {
+function enumerableDataValue(owner: object, key: PropertyKey): unknown {
   const descriptor = Object.getOwnPropertyDescriptor(owner, key);
-  return descriptor !== undefined &&
-    descriptor.enumerable === true &&
-    'value' in descriptor
+  return descriptor !== undefined && descriptor.enumerable === true && 'value' in descriptor
     ? descriptor.value
     : undefined;
 }
@@ -424,12 +364,7 @@ function jsonValuesEqual(left: unknown, right: unknown): boolean {
   if (left === right) {
     return true;
   }
-  if (
-    left === null ||
-    right === null ||
-    typeof left !== 'object' ||
-    typeof right !== 'object'
-  ) {
+  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
     return false;
   }
   if (Array.isArray(left) || Array.isArray(right)) {
@@ -450,8 +385,8 @@ function jsonValuesEqual(left: unknown, right: unknown): boolean {
         key === rightKeys[index] &&
         jsonValuesEqual(
           (left as Record<string, unknown>)[key],
-          (right as Record<string, unknown>)[key],
-        ),
+          (right as Record<string, unknown>)[key]
+        )
     )
   );
 }
@@ -466,10 +401,7 @@ function compareAscii(left: string, right: string): number {
   return 0;
 }
 
-function comparePropertyKeys(
-  left: PropertyKey,
-  right: PropertyKey,
-): number {
+function comparePropertyKeys(left: PropertyKey, right: PropertyKey): number {
   if (typeof left !== 'string') {
     return typeof right === 'string' ? 1 : 0;
   }
@@ -484,10 +416,7 @@ function success<Value>(value: Value): ValidationResult<Value> {
 }
 
 function serializationFailure<Value>(): ValidationResult<Value> {
-  const issue = createValidationIssue(
-    'jsonld.serialization',
-    JSON_LD_ISSUE_PATH,
-  );
+  const issue = createValidationIssue('jsonld.serialization', JSON_LD_ISSUE_PATH);
   return Object.freeze({
     ok: false,
     issues: Object.freeze([issue]) as NonEmptyReadonlyArray<ValidationIssue>,

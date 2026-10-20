@@ -16,18 +16,15 @@ const SPEC_FILE = 'profile-cross-browser.spec.ts';
  * The two focused projects exist so the non-Chromium engines are exercised
  * deliberately rather than as a side effect of a shared run.
  */
-const ENGINE_BY_PROJECT: Readonly<Record<string, FocusedEngine>> =
-  Object.freeze({
-    'firefox-focused': 'firefox',
-    'webkit-focused': 'webkit',
-  });
+const ENGINE_BY_PROJECT: Readonly<Record<string, FocusedEngine>> = Object.freeze({
+  'firefox-focused': 'firefox',
+  'webkit-focused': 'webkit',
+});
 
 function engineFor(projectName: string): FocusedEngine {
   const engine = ENGINE_BY_PROJECT[projectName];
   if (engine === undefined) {
-    throw new Error(
-      `Project "${projectName}" is not a focused engine project.`,
-    );
+    throw new Error(`Project "${projectName}" is not a focused engine project.`);
   }
   return engine;
 }
@@ -77,11 +74,11 @@ test.describe('engine compatibility', () => {
 
             expect(
               readable.textLength,
-              `${route} must carry its content without scripting`,
+              `${route} must carry its content without scripting`
             ).toBeGreaterThan(0);
             expect(
               readable.scrollWidth,
-              `${route} @ ${viewport} must not scroll horizontally`,
+              `${route} @ ${viewport} must not scroll horizontally`
             ).toBeLessThanOrEqual(readable.clientWidth + 1);
 
             await page.close();
@@ -97,9 +94,7 @@ test.describe('engine compatibility', () => {
 
   test.afterAll(async ({}, testInfo) => {
     const expected =
-      PROFILE_ROUTES.length *
-      COMPATIBILITY_VIEWPORTS.length *
-      JAVASCRIPT_STATES.length;
+      PROFILE_ROUTES.length * COMPATIBILITY_VIEWPORTS.length * JAVASCRIPT_STATES.length;
     if (completed.length !== expected || engineName === undefined) return;
     await recordEvidenceFragment({
       specFile: SPEC_FILE,

@@ -11,14 +11,11 @@ export function installRequestLedger(
     pages(): readonly unknown[];
     route(
       pattern: string,
-      handler: (route: unknown) => Promise<void>,
-    ): Promise<
-      | {
-          dispose(): Promise<void>;
-          [Symbol.asyncDispose]?: () => Promise<void>;
-        }
-      | void
-    >;
+      handler: (route: unknown) => Promise<void>
+    ): Promise<{
+      dispose(): Promise<void>;
+      [Symbol.asyncDispose]?: () => Promise<void>;
+    } | void>;
     on(event: string, handler: (value: any) => void): void;
     off(event: string, handler: (value: any) => void): void;
     unroute?(pattern: string, handler: (route: unknown) => Promise<void>): Promise<void>;
@@ -31,15 +28,17 @@ export function installRequestLedger(
       sha256: string;
     }[];
     buildIdentity?: unknown;
-  },
-): Promise<Readonly<{
-  supervisedOrigin: string;
-  finalize(input?: {
-    requireProfileRoutes?: boolean;
-    staticAssetEvidence?: unknown;
-    timeoutMs?: number;
-  }): Promise<Readonly<Record<string, any>>>;
-  snapshot(): Readonly<Record<string, any>>;
-}>>;
+  }
+): Promise<
+  Readonly<{
+    supervisedOrigin: string;
+    finalize(input?: {
+      requireProfileRoutes?: boolean;
+      staticAssetEvidence?: unknown;
+      timeoutMs?: number;
+    }): Promise<Readonly<Record<string, any>>>;
+    snapshot(): Readonly<Record<string, any>>;
+  }>
+>;
 
 export const requestLedgerTesting: Readonly<Record<string, unknown>>;

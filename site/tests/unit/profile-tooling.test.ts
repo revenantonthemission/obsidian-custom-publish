@@ -16,15 +16,9 @@ import { basename, dirname, extname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, test } from 'vitest';
 import { build as viteBuild } from 'vite';
-import {
-  fontMaterializerTesting,
-} from '../../scripts/profile/font-materializer.mjs';
-import {
-  cleanProfileBuildTesting,
-} from '../../scripts/profile/clean-profile-build.mjs';
-import {
-  assetBudgetTesting,
-} from '../../scripts/profile/asset-budget.mjs';
+import { fontMaterializerTesting } from '../../scripts/profile/font-materializer.mjs';
+import { cleanProfileBuildTesting } from '../../scripts/profile/clean-profile-build.mjs';
+import { assetBudgetTesting } from '../../scripts/profile/asset-budget.mjs';
 import {
   PreviewSupervisorError,
   previewSupervisorTesting,
@@ -33,13 +27,8 @@ import {
   BrowserRequestLedgerError,
   installRequestLedger,
 } from '../../scripts/profile/request-ledger.mjs';
-import {
-  runWithStartupRetry,
-  StartupStageError,
-} from '../../scripts/profile/startup-retry.mjs';
-import {
-  verificationProviderTesting,
-} from '../../scripts/profile/verification-provider.mjs';
+import { runWithStartupRetry, StartupStageError } from '../../scripts/profile/startup-retry.mjs';
+import { verificationProviderTesting } from '../../scripts/profile/verification-provider.mjs';
 
 const runner = resolve(process.cwd(), 'scripts/profile/pbt-runner.mjs');
 const focusedFile = 'tests/pbt/u1/profile-domain.pbt.test.ts';
@@ -77,26 +66,18 @@ const fixtureRoots: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    fixtureRoots.splice(0).map((root) =>
-      rm(root, { force: true, recursive: true }),
-    ),
+    fixtureRoots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
   );
 });
 
 describe('verified Pretendard materialization', () => {
   test('publishes a complete deterministic tree and reuses it without mutation', async () => {
     const fixture = await createFontFixture();
-    const staleStage = join(
-      fixture.siteRoot,
-      '.generated',
-      '.profile-font-staging-stale',
-    );
+    const staleStage = join(fixture.siteRoot, '.generated', '.profile-font-staging-stale');
     await mkdir(staleStage, { recursive: true });
     await writeFile(join(staleStage, 'sentinel'), 'preserve');
 
-    const first = await fontMaterializerTesting.materializeAtSiteRoot(
-      fixture.siteRoot,
-    );
+    const first = await fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot);
     const manifestPath = join(fixture.outputRoot, 'manifest.json');
     const cssPath = join(fixture.outputRoot, 'pretendard-profile.css');
     const before = await stat(manifestPath);
@@ -119,31 +100,22 @@ describe('verified Pretendard materialization', () => {
     expect(css).not.toContain("font-family: 'Pretendard Variable';");
     expect(css.startsWith('/*!\nCopyright')).toBe(true);
 
-    const second = await fontMaterializerTesting.materializeAtSiteRoot(
-      fixture.siteRoot,
-    );
+    const second = await fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot);
     const after = await stat(manifestPath);
 
     expect(second.status).toBe('reused');
     expect(after.ino).toBe(before.ino);
     expect(after.mtimeMs).toBe(before.mtimeMs);
-    expect(await readFile(join(staleStage, 'sentinel'), 'utf8')).toBe(
-      'preserve',
-    );
+    expect(await readFile(join(staleStage, 'sentinel'), 'utf8')).toBe('preserve');
   });
 
   test('rejects a package-lock identity mismatch before publishing', async () => {
     const fixture = await createFontFixture();
-    const packageLock = JSON.parse(
-      await readFile(fixture.packageLockPath, 'utf8'),
-    );
+    const packageLock = JSON.parse(await readFile(fixture.packageLockPath, 'utf8'));
     packageLock.packages['node_modules/pretendard'].version = '1.3.8';
     await writeJson(fixture.packageLockPath, packageLock);
 
-    await expectMaterializationError(
-      fixture,
-      'FONT_PACKAGE_MISMATCH',
-    );
+    await expectMaterializationError(fixture, 'FONT_PACKAGE_MISMATCH');
   });
 
   test('rejects a missing allowlisted source without fallback output', async () => {
@@ -159,10 +131,7 @@ describe('verified Pretendard materialization', () => {
     bytes[4] ^= 0xff;
     await writeFile(fixture.woff2Paths[17], bytes);
 
-    await expectMaterializationError(
-      fixture,
-      'FONT_SOURCE_HASH_MISMATCH',
-    );
+    await expectMaterializationError(fixture, 'FONT_SOURCE_HASH_MISMATCH');
   });
 
   test('rejects a symlinked allowlisted source', async () => {
@@ -178,10 +147,7 @@ describe('verified Pretendard materialization', () => {
     await unlink(fixture.woff2Paths[31]);
     await mkdir(fixture.woff2Paths[31]);
 
-    await expectMaterializationError(
-      fixture,
-      'FONT_SOURCE_NOT_REGULAR',
-    );
+    await expectMaterializationError(fixture, 'FONT_SOURCE_NOT_REGULAR');
   });
 
   test('rejects traversal in the tracked allowlist', async () => {
@@ -198,7 +164,7 @@ describe('verified Pretendard materialization', () => {
     const css = await readFile(fixture.cssPath, 'utf8');
     const changed = css.replace(
       'PretendardVariable.subset.0.woff2',
-      'PretendardVariable.subset.1.woff2',
+      'PretendardVariable.subset.1.woff2'
     );
     await writeFile(fixture.cssPath, changed);
 
@@ -208,10 +174,7 @@ describe('verified Pretendard materialization', () => {
     allowlist.sourceSetSha256 = digestAllowlistSourceSet(allowlist);
     await writeJson(fixture.allowlistPath, allowlist);
 
-    await expectMaterializationError(
-      fixture,
-      'FONT_CSS_REFERENCE_MISMATCH',
-    );
+    await expectMaterializationError(fixture, 'FONT_CSS_REFERENCE_MISMATCH');
   });
 
   test('preserves and rejects a tampered published target', async () => {
@@ -221,7 +184,7 @@ describe('verified Pretendard materialization', () => {
     await writeFile(sentinelPath, 'do-not-delete');
 
     await expect(
-      fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot),
+      fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot)
     ).rejects.toMatchObject({ code: 'FONT_OUTPUT_INVALID' });
     expect(await readFile(sentinelPath, 'utf8')).toBe('do-not-delete');
   });
@@ -234,77 +197,46 @@ describe('verified Pretendard materialization', () => {
       fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot),
     ]);
 
-    expect(results.map((result) => result.status).sort()).toEqual([
-      'materialized',
-      'reused',
-    ]);
+    expect(results.map((result) => result.status).sort()).toEqual(['materialized', 'reused']);
     expect(await countFiles(fixture.outputRoot)).toBe(95);
-    const generatedEntries = await readdir(
-      join(fixture.siteRoot, '.generated'),
+    const generatedEntries = await readdir(join(fixture.siteRoot, '.generated'));
+    expect(generatedEntries.filter((entry) => entry.startsWith('.profile-font-staging-'))).toEqual(
+      []
     );
-    expect(
-      generatedEntries.filter((entry) =>
-        entry.startsWith('.profile-font-staging-'),
-      ),
-    ).toEqual([]);
     expect(generatedEntries).not.toContain('.profile-font-publish.lock');
   });
 
   test('Vite preserves OFL metadata in its CSS hash and emits hashed WOFF2 assets', async () => {
     const fixture = await createFontFixture();
-    const materialized =
-      await fontMaterializerTesting.materializeAtSiteRoot(
-        fixture.siteRoot,
-      );
+    const materialized = await fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot);
     const entryPath = join(fixture.siteRoot, 'profile-font-entry.css');
     const outputDirectory = join(fixture.siteRoot, 'vite-dist');
-    await writeFile(
-      entryPath,
-      '@import "./.generated/profile-font/pretendard-profile.css";\n',
-    );
+    await writeFile(entryPath, '@import "./.generated/profile-font/pretendard-profile.css";\n');
 
-    await buildProfileCss(
-      fixture.siteRoot,
-      entryPath,
-      outputDirectory,
-    );
+    await buildProfileCss(fixture.siteRoot, entryPath, outputDirectory);
 
     const emittedFiles = await listFiles(outputDirectory);
-    const cssOutputs = emittedFiles.filter(
-      (path) => extname(path) === '.css',
-    );
-    const fontOutputs = emittedFiles.filter(
-      (path) => extname(path) === '.woff2',
-    );
+    const cssOutputs = emittedFiles.filter((path) => extname(path) === '.css');
+    const fontOutputs = emittedFiles.filter((path) => extname(path) === '.woff2');
     expect(cssOutputs).toHaveLength(1);
     expect(fontOutputs).toHaveLength(92);
     expect(
       fontOutputs.every((path) =>
-        /PretendardVariable\.subset\.\d+-[A-Za-z0-9_-]+\.woff2$/.test(
-          path,
-        ),
-      ),
+        /PretendardVariable\.subset\.\d+-[A-Za-z0-9_-]+\.woff2$/.test(path)
+      )
     ).toBe(true);
 
     const emittedCss = await readFile(cssOutputs[0], 'utf8');
-    expect(emittedCss.startsWith(materialized.licenseMetadata)).toBe(
-      true,
-    );
-    expect(
-      emittedCss.split(materialized.licenseMetadata).length - 1,
-    ).toBe(1);
+    expect(emittedCss.startsWith(materialized.licenseMetadata)).toBe(true);
+    expect(emittedCss.split(materialized.licenseMetadata).length - 1).toBe(1);
     expect(emittedCss).toContain('with Reserved Font Name Pretendard');
-    expect(emittedCss).toContain(
-      'https://github.com/orioncactus/pretendard',
-    );
+    expect(emittedCss).toContain('https://github.com/orioncactus/pretendard');
     expect(emittedCss).toContain('SIL Open Font License, Version 1.1');
     expect(emittedCss).toContain('http://scripts.sil.org/OFL');
     expect(emittedCss).toContain('RVNNT Profile');
     expect(emittedCss).not.toContain('Pretendard Variable');
     const emittedFontUrls = [
-      ...emittedCss.matchAll(
-        /url\((?:["']?)([^"')]+\.woff2)(?:["']?)\)/gu,
-      ),
+      ...emittedCss.matchAll(/url\((?:["']?)([^"')]+\.woff2)(?:["']?)\)/gu),
     ].map((match) => match[1]);
     expect(emittedFontUrls).toHaveLength(92);
     expect(new Set(emittedFontUrls).size).toBe(92);
@@ -314,52 +246,33 @@ describe('verified Pretendard materialization', () => {
           url.startsWith('/assets/') &&
           !url.startsWith('//') &&
           !url.includes('\\') &&
-          !/^[a-z][a-z\d+.-]*:/iu.test(url),
-      ),
+          !/^[a-z][a-z\d+.-]*:/iu.test(url)
+      )
     ).toBe(true);
     expect(emittedFontUrls.map((url) => basename(url)).sort()).toEqual(
-      fontOutputs.map((path) => basename(path)).sort(),
+      fontOutputs.map((path) => basename(path)).sort()
     );
-    expect(
-      emittedFiles.some((path) =>
-        /(?:LICENSE|manifest\.json)$/i.test(path),
-      ),
-    ).toBe(false);
+    expect(emittedFiles.some((path) => /(?:LICENSE|manifest\.json)$/i.test(path))).toBe(false);
 
-    const materializedCssPath = join(
-      fixture.outputRoot,
-      'pretendard-profile.css',
-    );
+    const materializedCssPath = join(fixture.outputRoot, 'pretendard-profile.css');
     const materializedCss = await readFile(materializedCssPath, 'utf8');
     const changedMetadata = materialized.licenseMetadata.replace(
       'Reserved Font Name Pretendard',
-      'Reserved Font Name Pretendard Hash Probe',
+      'Reserved Font Name Pretendard Hash Probe'
     );
     expect(changedMetadata).not.toBe(materialized.licenseMetadata);
     await writeFile(
       materializedCssPath,
-      materializedCss.replace(
-        materialized.licenseMetadata,
-        changedMetadata,
-      ),
+      materializedCss.replace(materialized.licenseMetadata, changedMetadata)
     );
 
-    const changedOutputDirectory = join(
-      fixture.siteRoot,
-      'vite-dist-changed',
+    const changedOutputDirectory = join(fixture.siteRoot, 'vite-dist-changed');
+    await buildProfileCss(fixture.siteRoot, entryPath, changedOutputDirectory);
+    const changedCssOutputs = (await listFiles(changedOutputDirectory)).filter(
+      (path) => extname(path) === '.css'
     );
-    await buildProfileCss(
-      fixture.siteRoot,
-      entryPath,
-      changedOutputDirectory,
-    );
-    const changedCssOutputs = (
-      await listFiles(changedOutputDirectory)
-    ).filter((path) => extname(path) === '.css');
     expect(changedCssOutputs).toHaveLength(1);
-    expect(basename(changedCssOutputs[0])).not.toBe(
-      basename(cssOutputs[0]),
-    );
+    expect(basename(changedCssOutputs[0])).not.toBe(basename(cssOutputs[0]));
   });
 });
 
@@ -397,11 +310,7 @@ describe('classified startup retry', () => {
           }
           return { attempt, status: 'ready' };
         },
-        async teardown({
-          identity,
-        }: {
-          identity: Record<string, unknown>;
-        }) {
+        async teardown({ identity }: { identity: Record<string, unknown> }) {
           teardownAttempts.push(attempt);
           return {
             status: 'succeeded',
@@ -459,11 +368,7 @@ describe('classified startup retry', () => {
             }
             return { status: 'ready' };
           },
-          async teardown({
-            identity,
-          }: {
-            identity: Record<string, unknown>;
-          }) {
+          async teardown({ identity }: { identity: Record<string, unknown> }) {
             teardownAttempts.push(attempt);
             return {
               status: 'succeeded',
@@ -473,15 +378,13 @@ describe('classified startup retry', () => {
             };
           },
         }),
-      }),
+      })
     ).rejects.toMatchObject({
       errorCode: 'STARTUP_ATTEMPT_NOT_FRESH',
       attempt: 2,
       stage: 'startup.attempt.identity',
       details: expect.objectContaining({
-        freshnessIssues: [
-          { path: 'resource:port', reason: 'reused' },
-        ],
+        freshnessIssues: [{ path: 'resource:port', reason: 'reused' }],
       }),
     });
     expect(teardownAttempts).toEqual([1, 2]);
@@ -502,11 +405,7 @@ describe('classified startup retry', () => {
               message: 'a ready route returned the wrong MIME type',
             });
           },
-          async teardown({
-            identity,
-          }: {
-            identity: Record<string, unknown>;
-          }) {
+          async teardown({ identity }: { identity: Record<string, unknown> }) {
             return {
               status: 'succeeded',
               attempt,
@@ -515,7 +414,7 @@ describe('classified startup retry', () => {
             };
           },
         }),
-      }),
+      })
     ).rejects.toMatchObject({
       errorCode: 'PREVIEW_STATIC_MIME_INVALID',
       attempt: 1,
@@ -536,11 +435,7 @@ describe('classified startup retry', () => {
               message: 'browser process did not launch',
             });
           },
-          async teardown({
-            identity,
-          }: {
-            identity: Record<string, unknown>;
-          }) {
+          async teardown({ identity }: { identity: Record<string, unknown> }) {
             return {
               status: 'succeeded',
               attempt,
@@ -549,7 +444,7 @@ describe('classified startup retry', () => {
             };
           },
         }),
-      }),
+      })
     ).rejects.toMatchObject({
       errorCode: 'STARTUP_TEARDOWN_EVIDENCE_INVALID',
       attempt: 1,
@@ -560,22 +455,14 @@ describe('classified startup retry', () => {
 
 describe('clean build process ownership', () => {
   test('awaits timeout escalation and proves the build process tree is released', async () => {
-    const child = spawn(
-      process.execPath,
-      ['-e', 'setInterval(() => {}, 1000)'],
-      {
-        detached: process.platform !== 'win32',
-        stdio: 'ignore',
-      },
-    );
+    const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+      detached: process.platform !== 'win32',
+      stdio: 'ignore',
+    });
 
     try {
-      const result = await cleanProfileBuildTesting.waitForBuildProcess(
-        child,
-        25,
-      );
-      const cleanup =
-        await cleanProfileBuildTesting.releaseBuildProcessTree(child);
+      const result = await cleanProfileBuildTesting.waitForBuildProcess(child, 25);
+      const cleanup = await cleanProfileBuildTesting.releaseBuildProcessTree(child);
 
       expect(result).toMatchObject({
         timedOut: true,
@@ -612,36 +499,30 @@ describe('clean build process ownership', () => {
         {
           detached: true,
           stdio: ['ignore', 'pipe', 'ignore'],
-        },
+        }
       );
       let grandchildPid: number | undefined;
 
       try {
         grandchildPid = Number(await readProcessLine(child));
-        const cleanup =
-          await cleanProfileBuildTesting.releaseBuildProcessTree(child);
+        const cleanup = await cleanProfileBuildTesting.releaseBuildProcessTree(child);
 
         expect(cleanup).toMatchObject({
           pidReleased: true,
           processTreeReleased: true,
           descendantProcessTree: {
-            observedProcessGroupIds: expect.arrayContaining([
-              grandchildPid,
-            ]),
+            observedProcessGroupIds: expect.arrayContaining([grandchildPid]),
             failures: [],
           },
         });
         expect(isTestProcessGroupAlive(grandchildPid)).toBe(false);
       } finally {
         await cleanProfileBuildTesting.releaseBuildProcessTree(child);
-        if (
-          grandchildPid !== undefined &&
-          isTestProcessGroupAlive(grandchildPid)
-        ) {
+        if (grandchildPid !== undefined && isTestProcessGroupAlive(grandchildPid)) {
           process.kill(-grandchildPid, 'SIGKILL');
         }
       }
-    },
+    }
   );
 });
 
@@ -651,17 +532,17 @@ describe('owned preview and browser request boundaries', () => {
       previewSupervisorTesting.normalizeRequiredRoutes([
         '/resume',
         { path: '/portfolio', expectedMime: 'text/html' },
-      ]),
+      ])
     ).toEqual([
       { path: '/resume', expectedMime: 'text/html' },
       { path: '/portfolio', expectedMime: 'text/html' },
     ]);
-    expect(() =>
-      previewSupervisorTesting.normalizeRequiredRoutes(['/resume', '/resume'])
-    ).toThrow(/duplicate exact path/u);
-    expect(() =>
-      previewSupervisorTesting.normalizeRequiredRoutes(['/resume/../private'])
-    ).toThrow(/normalized route/u);
+    expect(() => previewSupervisorTesting.normalizeRequiredRoutes(['/resume', '/resume'])).toThrow(
+      /duplicate exact path/u
+    );
+    expect(() => previewSupervisorTesting.normalizeRequiredRoutes(['/resume/../private'])).toThrow(
+      /normalized route/u
+    );
   });
 
   test('retains actual failed-preview cleanup proof in startup diagnostics', () => {
@@ -681,7 +562,7 @@ describe('owned preview and browser request boundaries', () => {
           processTreeReleased: true,
           portReleased: true,
         },
-      },
+      }
     );
 
     expect(normalized).toMatchObject({
@@ -756,9 +637,8 @@ describe('owned preview and browser request boundaries', () => {
     expect(evidence.missingProfileRoutes).toEqual([]);
     expect(
       evidence.successful.find(
-        ({ resourceType }: { resourceType: string }) =>
-          resourceType === 'stylesheet',
-      )?.emittedAssetIdentity,
+        ({ resourceType }: { resourceType: string }) => resourceType === 'stylesheet'
+      )?.emittedAssetIdentity
     ).toEqual({
       path: '_astro/profile.css',
       bytes: 7,
@@ -786,20 +666,18 @@ describe('owned preview and browser request boundaries', () => {
       aborted: 'blockedbyclient',
       continued: false,
     });
-    await expect(
-      ledger.finalize({ requireProfileRoutes: false }),
-    ).rejects.toThrow(
-        expect.objectContaining<Partial<BrowserRequestLedgerError>>({
-          code: 'NON_LOOPBACK_REQUEST_ATTEMPTED',
-          details: expect.objectContaining({
-            external: {
-              attempted: 1,
-              blocked: 1,
-              successful: 0,
-            },
-          }),
+    await expect(ledger.finalize({ requireProfileRoutes: false })).rejects.toThrow(
+      expect.objectContaining<Partial<BrowserRequestLedgerError>>({
+        code: 'NON_LOOPBACK_REQUEST_ATTEMPTED',
+        details: expect.objectContaining({
+          external: {
+            attempted: 1,
+            blocked: 1,
+            successful: 0,
+          },
         }),
-      );
+      })
+    );
   });
 });
 
@@ -808,16 +686,14 @@ describe('manifest-backed profile resource evidence', () => {
     const fixture = createAssetBudgetManifestFixture();
     const evidence = await assetBudgetTesting.analyzeManifest(
       fixture.manifest,
-      async (path: string) => requireFixtureOutput(fixture.outputs, path),
+      async (path: string) => requireFixtureOutput(fixture.outputs, path)
     );
 
     expect(evidence.result).toBe('pass');
     expect(evidence.css.uniqueAssetCount).toBe(3);
     expect(evidence.css.totalGzipBytes).toBeLessThanOrEqual(24 * 1024);
     expect(
-      evidence.css.assets.find(
-        ({ kind }: { kind: string }) => kind === 'inline',
-      ),
+      evidence.css.assets.find(({ kind }: { kind: string }) => kind === 'inline')
     ).toMatchObject({
       routes: ['/portfolio'],
       profileStyleRoots: ['src/styles/profile/portfolio.css'],
@@ -826,12 +702,11 @@ describe('manifest-backed profile resource evidence', () => {
       profileOwnedHydratedComponents: 0,
       profileOwnedNewClientChunks: 0,
     });
-      const consumeAssetBudget =
-        verificationProviderTesting.requireAssetBudget as (
-          value: unknown,
-          buildId: string,
-          routeDocuments: ReadonlyMap<string, string>,
-        ) => unknown;
+    const consumeAssetBudget = verificationProviderTesting.requireAssetBudget as (
+      value: unknown,
+      buildId: string,
+      routeDocuments: ReadonlyMap<string, string>
+    ) => unknown;
     expect(() =>
       consumeAssetBudget(
         evidence,
@@ -839,15 +714,14 @@ describe('manifest-backed profile resource evidence', () => {
         new Map([
           ['/resume', 'resume/index.html'],
           ['/portfolio', 'portfolio/index.html'],
-        ]),
+        ])
       )
     ).not.toThrow();
   });
 
   test('fails closed when a profile-owned source appears in a client chunk', async () => {
     const fixture = createAssetBudgetManifestFixture();
-    const clientChunk =
-      fixture.manifest.rollupGraphs.client.outputs[0];
+    const clientChunk = fixture.manifest.rollupGraphs.client.outputs[0];
     if (clientChunk === undefined) {
       throw new Error('missing client chunk fixture');
     }
@@ -855,10 +729,9 @@ describe('manifest-backed profile resource evidence', () => {
     refreshAssetManifestIdentity(fixture.manifest);
 
     await expect(
-      assetBudgetTesting.analyzeManifest(
-        fixture.manifest,
-        async (path: string) => requireFixtureOutput(fixture.outputs, path),
-      ),
+      assetBudgetTesting.analyzeManifest(fixture.manifest, async (path: string) =>
+        requireFixtureOutput(fixture.outputs, path)
+      )
     ).rejects.toMatchObject({
       code: 'PROFILE_CLIENT_JAVASCRIPT_ADDED',
     });
@@ -866,11 +739,9 @@ describe('manifest-backed profile resource evidence', () => {
 
   test('fails closed when an unapproved profile stylesheet enters CSS provenance', async () => {
     const fixture = createAssetBudgetManifestFixture();
-    const foundationChunk =
-      fixture.manifest.initialRollupGraphs.prerender.outputs
-      .find(({ file }: { file: string }) =>
-        file === 'chunks/foundation.mjs'
-      );
+    const foundationChunk = fixture.manifest.initialRollupGraphs.prerender.outputs.find(
+      ({ file }: { file: string }) => file === 'chunks/foundation.mjs'
+    );
     if (foundationChunk?.type !== 'chunk') {
       throw new Error('missing foundation chunk fixture');
     }
@@ -878,10 +749,9 @@ describe('manifest-backed profile resource evidence', () => {
     refreshAssetManifestIdentity(fixture.manifest);
 
     await expect(
-      assetBudgetTesting.analyzeManifest(
-        fixture.manifest,
-        async (path: string) => requireFixtureOutput(fixture.outputs, path),
-      ),
+      assetBudgetTesting.analyzeManifest(fixture.manifest, async (path: string) =>
+        requireFixtureOutput(fixture.outputs, path)
+      )
     ).rejects.toMatchObject({
       code: 'PROFILE_CSS_SOURCE_UNAPPROVED',
     });
@@ -895,14 +765,13 @@ describe('manifest-backed profile resource evidence', () => {
       Buffer.concat([
         requireFixtureOutput(fixture.outputs, 'resume/index.html'),
         Buffer.from('<style>.untracked{display:none}</style>'),
-      ]),
+      ])
     );
 
     await expect(
-      assetBudgetTesting.analyzeManifest(
-        fixture.manifest,
-        async (path: string) => requireFixtureOutput(fixture.outputs, path),
-      ),
+      assetBudgetTesting.analyzeManifest(fixture.manifest, async (path: string) =>
+        requireFixtureOutput(fixture.outputs, path)
+      )
     ).rejects.toMatchObject({
       code: 'PROFILE_CSS_INLINE_UNCLASSIFIED',
     });
@@ -916,14 +785,13 @@ describe('manifest-backed profile resource evidence', () => {
       Buffer.concat([
         requireFixtureOutput(fixture.outputs, 'portfolio/index.html'),
         Buffer.from('<script>globalThis.profileBypass=true</script>'),
-      ]),
+      ])
     );
 
     await expect(
-      assetBudgetTesting.analyzeManifest(
-        fixture.manifest,
-        async (path: string) => requireFixtureOutput(fixture.outputs, path),
-      ),
+      assetBudgetTesting.analyzeManifest(fixture.manifest, async (path: string) =>
+        requireFixtureOutput(fixture.outputs, path)
+      )
     ).rejects.toMatchObject({
       code: 'PROFILE_INLINE_SCRIPT_UNAPPROVED',
     });
@@ -931,14 +799,10 @@ describe('manifest-backed profile resource evidence', () => {
 
   test('fails closed for an unapproved Rollup-to-inline CSS transform', async () => {
     const fixture = createAssetBudgetManifestFixture();
-    const asset = fixture.manifest.initialRollupGraphs.prerender.outputs
-      .find(({ file }: { file: string }) =>
-        file === '_astro/portfolio.css'
-      );
-    if (
-      asset?.type !== 'asset' ||
-      typeof asset.contentBase64 !== 'string'
-    ) {
+    const asset = fixture.manifest.initialRollupGraphs.prerender.outputs.find(
+      ({ file }: { file: string }) => file === '_astro/portfolio.css'
+    );
+    if (asset?.type !== 'asset' || typeof asset.contentBase64 !== 'string') {
       throw new Error('missing portfolio CSS asset fixture');
     }
     const bytes = Buffer.concat([
@@ -953,10 +817,9 @@ describe('manifest-backed profile resource evidence', () => {
     refreshAssetManifestIdentity(fixture.manifest);
 
     await expect(
-      assetBudgetTesting.analyzeManifest(
-        fixture.manifest,
-        async (path: string) => requireFixtureOutput(fixture.outputs, path),
-      ),
+      assetBudgetTesting.analyzeManifest(fixture.manifest, async (path: string) =>
+        requireFixtureOutput(fixture.outputs, path)
+      )
     ).rejects.toMatchObject({
       code: 'PROFILE_CSS_INLINE_TRANSFORM_UNAPPROVED',
     });
@@ -969,15 +832,15 @@ describe('manifest-backed profile resource evidence', () => {
     const fixture = createAssetBudgetManifestFixture({ inlineFoundation: true });
     const evidence = await assetBudgetTesting.analyzeManifest(
       fixture.manifest,
-      async (path: string) => requireFixtureOutput(fixture.outputs, path),
+      async (path: string) => requireFixtureOutput(fixture.outputs, path)
     );
 
     expect(evidence.result).toBe('pass');
     expect(evidence.css.uniqueAssetCount).toBe(3);
     expect(
       evidence.css.assets.find(({ profileStyleRoots }: { profileStyleRoots: string[] }) =>
-        profileStyleRoots.includes('src/styles/profile/foundation.css'),
-      ),
+        profileStyleRoots.includes('src/styles/profile/foundation.css')
+      )
     ).toMatchObject({
       kind: 'inline',
       routes: ['/portfolio', '/resume'],
@@ -998,14 +861,17 @@ describe('manifest-backed profile resource evidence', () => {
     }
     for (const path of ['resume/index.html', 'portfolio/index.html']) {
       const document = requireFixtureOutput(fixture.outputs, path).toString('utf8');
-      replaceFixtureOutput(fixture, path, Buffer.from(document.replace('display:block', 'display:none')));
+      replaceFixtureOutput(
+        fixture,
+        path,
+        Buffer.from(document.replace('display:block', 'display:none'))
+      );
     }
 
     await expect(
-      assetBudgetTesting.analyzeManifest(
-        fixture.manifest,
-        async (path: string) => requireFixtureOutput(fixture.outputs, path),
-      ),
+      assetBudgetTesting.analyzeManifest(fixture.manifest, async (path: string) =>
+        requireFixtureOutput(fixture.outputs, path)
+      )
     ).rejects.toMatchObject({
       code: 'PROFILE_CSS_INLINE_TRANSFORM_UNAPPROVED',
     });
@@ -1032,10 +898,7 @@ function createFakeBrowserContext() {
     pages() {
       return [];
     },
-    async route(
-      _pattern: string,
-      handler: NonNullable<typeof routeHandler>,
-    ) {
+    async route(_pattern: string, handler: NonNullable<typeof routeHandler>) {
       routeHandler = handler;
     },
     on(event: string, handler: NonNullable<typeof responseHandler>) {
@@ -1060,10 +923,7 @@ function createFakeBrowserContext() {
       });
       return { aborted, continued };
     },
-    dispatchResponse(
-      request: ReturnType<typeof fakeRequest>,
-      status: number,
-    ) {
+    dispatchResponse(request: ReturnType<typeof fakeRequest>, status: number) {
       if (responseHandler === undefined) {
         throw new Error('response handler was not installed');
       }
@@ -1096,15 +956,11 @@ function fakeRequest({
 function createAssetBudgetManifestFixture({
   inlineFoundation = false,
 }: { inlineFoundation?: boolean } = {}) {
-  const foundation = Buffer.from(
-    '@font-face{font-family:RVNNT} .profile{display:block}',
-  );
+  const foundation = Buffer.from('@font-face{font-family:RVNNT} .profile{display:block}');
   const resume = Buffer.from(
-    '.resume-entry{break-inside:avoid-page}@media print{body{font-size:10pt}}',
+    '.resume-entry{break-inside:avoid-page}@media print{body{font-size:10pt}}'
   );
-  const portfolio = Buffer.from(
-    '.case-study{display:grid}.case-study__dimension{min-width:0}',
-  );
+  const portfolio = Buffer.from('.case-study{display:grid}.case-study__dimension{min-width:0}');
   // The shared stylesheet is either linked from both routes or, when the
   // build inlines it, copied into each route's HTML.
   const foundationHtml = inlineFoundation
@@ -1119,14 +975,10 @@ function createAssetBudgetManifestFixture({
       }
     : { type: 'external', src: '_astro/foundation.css' };
   const resumeDocument = Buffer.from(
-    '<!doctype html>' +
-      foundationHtml +
-      '<link rel="stylesheet" href="/_astro/resume.css">',
+    '<!doctype html>' + foundationHtml + '<link rel="stylesheet" href="/_astro/resume.css">'
   );
   const portfolioDocument = Buffer.from(
-    '<!doctype html>' +
-      foundationHtml +
-      `<style>${portfolio.toString('utf8')}</style>`,
+    '<!doctype html>' + foundationHtml + `<style>${portfolio.toString('utf8')}</style>`
   );
   const outputs = new Map<string, Buffer>([
     ...(inlineFoundation ? [] : [['_astro/foundation.css', foundation] as const]),
@@ -1149,28 +1001,17 @@ function createAssetBudgetManifestFixture({
     modules: string[];
     importedCss: string[];
   };
-  type RollupOutputFixture =
-    | RollupAssetFixture
-    | RollupChunkFixture;
-  const asset = (
-    file: string,
-    bytes: Buffer,
-  ): RollupAssetFixture => ({
+  type RollupOutputFixture = RollupAssetFixture | RollupChunkFixture;
+  const asset = (file: string, bytes: Buffer): RollupAssetFixture => ({
     type: 'asset',
     file,
     names: [],
     originalFileNames: [],
     bytes: bytes.byteLength,
     sha256: digest(bytes),
-    contentBase64: file.endsWith('.css')
-      ? bytes.toString('base64')
-      : undefined,
+    contentBase64: file.endsWith('.css') ? bytes.toString('base64') : undefined,
   });
-  const chunk = (
-    file: string,
-    modules: string[],
-    importedCss: string[],
-  ): RollupChunkFixture => ({
+  const chunk = (file: string, modules: string[], importedCss: string[]): RollupChunkFixture => ({
     type: 'chunk',
     file,
     modules,
@@ -1182,28 +1023,18 @@ function createAssetBudgetManifestFixture({
     asset('_astro/portfolio.css', portfolio),
     chunk(
       'chunks/foundation.mjs',
-      [
-        'src/styles/profile/font.css',
-        'src/styles/profile/foundation.css',
-      ],
-      ['_astro/foundation.css'],
+      ['src/styles/profile/font.css', 'src/styles/profile/foundation.css'],
+      ['_astro/foundation.css']
     ),
     chunk(
       'chunks/resume.mjs',
-      [
-        'src/pages/resume.astro',
-        'src/styles/profile/print.css',
-        'src/styles/profile/resume.css',
-      ],
-      ['_astro/resume.css'],
+      ['src/pages/resume.astro', 'src/styles/profile/print.css', 'src/styles/profile/resume.css'],
+      ['_astro/resume.css']
     ),
     chunk(
       'chunks/portfolio.mjs',
-      [
-        'src/pages/portfolio.astro',
-        'src/styles/profile/portfolio.css',
-      ],
-      ['_astro/portfolio.css'],
+      ['src/pages/portfolio.astro', 'src/styles/profile/portfolio.css'],
+      ['_astro/portfolio.css']
     ),
   ];
   const clientOutputs: RollupChunkFixture[] = [
@@ -1216,99 +1047,99 @@ function createAssetBudgetManifestFixture({
   ];
 
   const manifest = {
-      schemaVersion: 1,
-      buildIdentity: {
-        id: '',
-        sourceGraphSha256: '',
-        outputSha256: '',
-        routes: ['/resume', '/portfolio'],
-      },
-      pageGraph: {
-        pages: [
-          {
-            component: 'src/pages/resume.astro',
-            route: { route: '/resume', pathname: '/resume' },
-            styles: [
-              {
-                depth: 1,
-                order: 1,
-                sheet: structuredClone(foundationSheet),
-              },
-              {
-                depth: 1,
-                order: 2,
-                sheet: {
-                  type: 'external',
-                  src: '_astro/resume.css',
-                },
-              },
-            ],
-          },
-          {
-            component: 'src/pages/portfolio.astro',
-            route: { route: '/portfolio', pathname: '/portfolio' },
-            styles: [
-              {
-                depth: 1,
-                order: 1,
-                sheet: structuredClone(foundationSheet),
-              },
-              {
-                depth: 1,
-                order: 2,
-                sheet: {
-                  type: 'inline',
-                  bytes: portfolio.byteLength,
-                  sha256: digest(portfolio),
-                  contentBase64: portfolio.toString('base64'),
-                },
-              },
-            ],
-          },
-        ],
-      },
-      routeOutputs: [
+    schemaVersion: 1,
+    buildIdentity: {
+      id: '',
+      sourceGraphSha256: '',
+      outputSha256: '',
+      routes: ['/resume', '/portfolio'],
+    },
+    pageGraph: {
+      pages: [
         {
-          route: '/portfolio',
-          outputs: ['portfolio/index.html'],
-        },
-        {
-          route: '/resume',
-          outputs: ['resume/index.html'],
-        },
-      ],
-      viteManifest: {
-        'src/islands/Search.tsx': {
-          src: 'src/islands/Search.tsx',
-          file: '_astro/Search.js',
-          isEntry: true,
-        },
-      },
-      initialRollupGraphs: {
-        client: { outputs: structuredClone(clientOutputs) },
-        prerender: { outputs: initialPrerenderOutputs },
-      },
-      rollupGraphs: {
-        client: { outputs: clientOutputs },
-        prerender: {
-          outputs: [
-            ...(inlineFoundation ? [] : [asset('_astro/foundation.css', foundation)]),
-            asset('_astro/resume.css', resume),
+          component: 'src/pages/resume.astro',
+          route: { route: '/resume', pathname: '/resume' },
+          styles: [
+            {
+              depth: 1,
+              order: 1,
+              sheet: structuredClone(foundationSheet),
+            },
+            {
+              depth: 1,
+              order: 2,
+              sheet: {
+                type: 'external',
+                src: '_astro/resume.css',
+              },
+            },
           ],
         },
+        {
+          component: 'src/pages/portfolio.astro',
+          route: { route: '/portfolio', pathname: '/portfolio' },
+          styles: [
+            {
+              depth: 1,
+              order: 1,
+              sheet: structuredClone(foundationSheet),
+            },
+            {
+              depth: 1,
+              order: 2,
+              sheet: {
+                type: 'inline',
+                bytes: portfolio.byteLength,
+                sha256: digest(portfolio),
+                contentBase64: portfolio.toString('base64'),
+              },
+            },
+          ],
+        },
+      ],
+    },
+    routeOutputs: [
+      {
+        route: '/portfolio',
+        outputs: ['portfolio/index.html'],
       },
-      outputFiles: [...outputs].map(([path, bytes]) => ({
-        path,
-        bytes: bytes.byteLength,
-        sha256: digest(bytes),
-      })),
-      tools: {
-        node: process.versions.node,
-        astro: 'fixture',
-        vite: 'fixture',
-        gzip: 'node:zlib.gzipSync(level=9,mtime=0)',
+      {
+        route: '/resume',
+        outputs: ['resume/index.html'],
       },
-    };
+    ],
+    viteManifest: {
+      'src/islands/Search.tsx': {
+        src: 'src/islands/Search.tsx',
+        file: '_astro/Search.js',
+        isEntry: true,
+      },
+    },
+    initialRollupGraphs: {
+      client: { outputs: structuredClone(clientOutputs) },
+      prerender: { outputs: initialPrerenderOutputs },
+    },
+    rollupGraphs: {
+      client: { outputs: clientOutputs },
+      prerender: {
+        outputs: [
+          ...(inlineFoundation ? [] : [asset('_astro/foundation.css', foundation)]),
+          asset('_astro/resume.css', resume),
+        ],
+      },
+    },
+    outputFiles: [...outputs].map(([path, bytes]) => ({
+      path,
+      bytes: bytes.byteLength,
+      sha256: digest(bytes),
+    })),
+    tools: {
+      node: process.versions.node,
+      astro: 'fixture',
+      vite: 'fixture',
+      gzip: 'node:zlib.gzipSync(level=9,mtime=0)',
+    },
+  };
   refreshAssetManifestIdentity(manifest);
 
   return {
@@ -1326,31 +1157,29 @@ function refreshAssetManifestIdentity(manifest: Record<string, any>) {
         initialRollupGraphs: manifest.initialRollupGraphs,
         rollupGraphs: manifest.rollupGraphs,
         viteManifest: manifest.viteManifest,
-      }),
-    ),
+      })
+    )
   );
-  manifest.buildIdentity.outputSha256 = digest(
-    Buffer.from(JSON.stringify(manifest.outputFiles)),
-  );
+  manifest.buildIdentity.outputSha256 = digest(Buffer.from(JSON.stringify(manifest.outputFiles)));
   manifest.buildIdentity.id = digest(
     Buffer.from(
       JSON.stringify({
         sourceGraphSha256: manifest.buildIdentity.sourceGraphSha256,
         outputSha256: manifest.buildIdentity.outputSha256,
         builtRoutes: manifest.buildIdentity.routes,
-      }),
-    ),
+      })
+    )
   );
 }
 
 function replaceFixtureOutput(
   fixture: ReturnType<typeof createAssetBudgetManifestFixture>,
   path: string,
-  bytes: Buffer,
+  bytes: Buffer
 ) {
   fixture.outputs.set(path, bytes);
   const output = fixture.manifest.outputFiles.find(
-    (entry: { path: string }) => entry.path === path,
+    (entry: { path: string }) => entry.path === path
   );
   if (output === undefined) {
     throw new Error(`missing fixture output identity: ${path}`);
@@ -1399,10 +1228,7 @@ function isTestProcessGroupAlive(processGroupId: number) {
   }
 }
 
-function requireFixtureOutput(
-  outputs: Map<string, Buffer>,
-  path: string,
-) {
+function requireFixtureOutput(outputs: Map<string, Buffer>, path: string) {
   const bytes = outputs.get(path);
   if (bytes === undefined) {
     throw new Error(`missing fixture output: ${path}`);
@@ -1474,8 +1300,7 @@ async function createFontFixture(): Promise<FontFixture> {
   fixtureRoots.push(siteRoot);
 
   const packageRoot = join(siteRoot, 'node_modules', 'pretendard');
-  const cssRelative =
-    'dist/web/variable/pretendardvariable-dynamic-subset.css';
+  const cssRelative = 'dist/web/variable/pretendardvariable-dynamic-subset.css';
   const licenseRelative = 'dist/LICENSE.txt';
   const cssPath = join(packageRoot, ...cssRelative.split('/'));
   const licensePath = join(packageRoot, ...licenseRelative.split('/'));
@@ -1500,15 +1325,10 @@ async function createFontFixture(): Promise<FontFixture> {
 
   for (let index = 0; index < 92; index += 1) {
     const sourcePath =
-      `dist/web/variable/woff2-dynamic-subset/` +
-      `PretendardVariable.subset.${index}.woff2`;
-    const outputPath =
-      `woff2-dynamic-subset/PretendardVariable.subset.${index}.woff2`;
+      `dist/web/variable/woff2-dynamic-subset/` + `PretendardVariable.subset.${index}.woff2`;
+    const outputPath = `woff2-dynamic-subset/PretendardVariable.subset.${index}.woff2`;
     const absolutePath = join(packageRoot, ...sourcePath.split('/'));
-    const bytes = Buffer.concat([
-      Buffer.from('wOF2'),
-      Buffer.from(`fixture-${index}`),
-    ]);
+    const bytes = Buffer.concat([Buffer.from('wOF2'), Buffer.from(`fixture-${index}`)]);
     await mkdir(dirname(absolutePath), { recursive: true });
     await writeFile(absolutePath, bytes);
     woff2Paths.push(absolutePath);
@@ -1574,12 +1394,7 @@ async function createFontFixture(): Promise<FontFixture> {
   };
   allowlist.sourceSetSha256 = digestAllowlistSourceSet(allowlist);
 
-  const allowlistPath = join(
-    siteRoot,
-    'scripts',
-    'profile',
-    'font-allowlist.json',
-  );
+  const allowlistPath = join(siteRoot, 'scripts', 'profile', 'font-allowlist.json');
   await writeJson(allowlistPath, allowlist);
 
   return {
@@ -1594,18 +1409,20 @@ async function createFontFixture(): Promise<FontFixture> {
 }
 
 function createFixtureCss() {
-  const faces = Array.from({ length: 92 }, (_, index) => [
-    `/* [${index}] */`,
-    '@font-face {',
-    "\tfont-family: 'Pretendard Variable';",
-    '\tfont-style: normal;',
-    '\tfont-display: swap;',
-    '\tfont-weight: 45 920;',
-    `\tsrc: url(./woff2-dynamic-subset/PretendardVariable.subset.${index}.woff2) format('woff2-variations');`,
-    `\tunicode-range: U+${(0x20 + index).toString(16)};`,
-    '}',
-    '',
-  ].join('\n')).join('\n');
+  const faces = Array.from({ length: 92 }, (_, index) =>
+    [
+      `/* [${index}] */`,
+      '@font-face {',
+      "\tfont-family: 'Pretendard Variable';",
+      '\tfont-style: normal;',
+      '\tfont-display: swap;',
+      '\tfont-weight: 45 920;',
+      `\tsrc: url(./woff2-dynamic-subset/PretendardVariable.subset.${index}.woff2) format('woff2-variations');`,
+      `\tunicode-range: U+${(0x20 + index).toString(16)};`,
+      '}',
+      '',
+    ].join('\n')
+  ).join('\n');
 
   return [
     '/*',
@@ -1619,35 +1436,23 @@ function createFixtureCss() {
   ].join('\n');
 }
 
-async function expectMaterializationError(
-  fixture: FontFixture,
-  code: string,
-) {
+async function expectMaterializationError(fixture: FontFixture, code: string) {
   await expect(
-    fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot),
+    fontMaterializerTesting.materializeAtSiteRoot(fixture.siteRoot)
   ).rejects.toMatchObject({ code });
   await expect(lstat(fixture.outputRoot)).rejects.toMatchObject({
     code: 'ENOENT',
   });
 }
 
-async function readAllowlist(
-  fixture: FontFixture,
-): Promise<FontAllowlist> {
+async function readAllowlist(fixture: FontFixture): Promise<FontAllowlist> {
   return JSON.parse(await readFile(fixture.allowlistPath, 'utf8'));
 }
 
 function digestAllowlistSourceSet(allowlist: FontAllowlist) {
   const hash = createHash('sha256');
-  for (const entry of [
-    allowlist.css,
-    ...allowlist.woff2,
-    allowlist.license,
-  ]) {
-    hash.update(
-      `${entry.sourcePath}\t${entry.bytes}\t${entry.sha256}\n`,
-      'utf8',
-    );
+  for (const entry of [allowlist.css, ...allowlist.woff2, allowlist.license]) {
+    hash.update(`${entry.sourcePath}\t${entry.bytes}\t${entry.sha256}\n`, 'utf8');
   }
   return hash.digest('hex');
 }
@@ -1670,11 +1475,7 @@ async function countFiles(root: string): Promise<number> {
   return count;
 }
 
-async function buildProfileCss(
-  root: string,
-  entryPath: string,
-  outputDirectory: string,
-) {
+async function buildProfileCss(root: string, entryPath: string, outputDirectory: string) {
   await viteBuild({
     configFile: false,
     root,

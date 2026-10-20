@@ -1,7 +1,7 @@
 ---
-import TableOfContents from "./TableOfContents.astro";
-import NavTreeIsland from "../islands/NavTree.tsx";
-import "../styles/segmented.css";
+import TableOfContents from './TableOfContents.astro';
+import NavTreeIsland from '../islands/NavTree.tsx';
+import '../styles/segmented.css';
 
 interface Props {
   /** Keeps ids unique: the outline panel and the outline sheet each render one copy. */
@@ -36,8 +36,8 @@ const navPanel = `${idPrefix}-panel-nav`;
     role="tab"
     id={navTab}
     aria-controls={navPanel}
-    aria-selected={hasToc ? "false" : "true"}
-    tabindex={hasToc ? "-1" : undefined}
+    aria-selected={hasToc ? 'false' : 'true'}
+    tabindex={hasToc ? '-1' : undefined}
   >
     탐색
   </button>

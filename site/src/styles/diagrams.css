@@ -63,23 +63,23 @@ pre.diagram-d2-ascii {
 
 /* Dark: the system setting unless light was chosen, or an explicit dark choice. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .diagram-light {
+  :root:not([data-theme='light']) .diagram-light {
     opacity: 0;
     pointer-events: none;
   }
 
-  :root:not([data-theme="light"]) .diagram-dark {
+  :root:not([data-theme='light']) .diagram-dark {
     opacity: 1;
     pointer-events: auto;
   }
 }
 
-:root[data-theme="dark"] .diagram-light {
+:root[data-theme='dark'] .diagram-light {
   opacity: 0;
   pointer-events: none;
 }
 
-:root[data-theme="dark"] .diagram-dark {
+:root[data-theme='dark'] .diagram-dark {
   opacity: 1;
   pointer-events: auto;
 }

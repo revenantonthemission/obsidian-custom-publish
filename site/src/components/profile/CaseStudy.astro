@@ -1,7 +1,7 @@
 ---
-import ContactActions from "./ContactActions.astro";
-import ContentBlocks from "./ContentBlocks.astro";
-import type { CaseStudyView } from "./presentation.js";
+import ContactActions from './ContactActions.astro';
+import ContentBlocks from './ContentBlocks.astro';
+import type { CaseStudyView } from './presentation.js';
 
 interface Props {
   project: CaseStudyView;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { project, position, focus } = Astro.props;
-const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]);
+const expandableDimensions = new Set(['keyDecisions', 'architecture', 'lessons']);
 ---
 
 <article
@@ -24,28 +24,19 @@ const expandableDimensions = new Set(["keyDecisions", "architecture", "lessons"]
   <header class="portfolio-case-study-header">
     {position !== undefined && (
       <p class="portfolio-case-number" aria-hidden="true">
-        프로젝트 {String(position).padStart(2, "0")}
+        프로젝트 {String(position).padStart(2, '0')}
       </p>
     )}
     {focus && <p class="portfolio-project-focus">{focus}</p>}
-    <h3
-      data-profile-fact-id={project.title.factId}
-      data-testid={`case-study-title-${project.id}`}
-    >
+    <h3 data-profile-fact-id={project.title.factId} data-testid={`case-study-title-${project.id}`}>
       {project.title.value}
     </h3>
     {project.period !== undefined && (
-      <p
-        class="profile-period"
-        data-profile-fact-id={project.period.factId}
-      >
+      <p class="profile-period" data-profile-fact-id={project.period.factId}>
         {project.period.text}
       </p>
     )}
-    <p
-      class="portfolio-outcome-summary"
-      data-profile-fact-id={project.outcomeSummary.factId}
-    >
+    <p class="portfolio-outcome-summary" data-profile-fact-id={project.outcomeSummary.factId}>
       {project.outcomeSummary.value}
     </p>
   </header>

@@ -1,5 +1,5 @@
 ---
-import type { ProfileLocalNavigationItemView } from "./presentation.js";
+import type { ProfileLocalNavigationItemView } from './presentation.js';
 
 interface Props {
   items: readonly ProfileLocalNavigationItemView[];
@@ -18,7 +18,7 @@ const { items } = Astro.props;
       <li>
         <a
           href={item.href}
-          aria-current={item.current ? "page" : undefined}
+          aria-current={item.current ? 'page' : undefined}
           data-testid={`profile-local-navigation-link-${item.id}`}
         >
           {item.label}

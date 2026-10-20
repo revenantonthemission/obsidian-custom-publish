@@ -64,24 +64,17 @@ describe('release path safety', () => {
     expect(() =>
       releaseStoreTesting.assertAllowlistedPath(
         resolve(PROFILE_PATHS.siteRoot, 'src', 'pages', 'resume.astro'),
-        'test',
-      ),
+        'test'
+      )
     ).toThrow(/allowlist/i);
   });
 
   test('a traversal out of an allowed root is refused', () => {
     expect(() =>
       releaseStoreTesting.assertAllowlistedPath(
-        resolve(
-          PROFILE_PATHS.releaseRecoveryRoot,
-          '..',
-          '..',
-          '..',
-          '..',
-          'escaped.pdf',
-        ),
-        'test',
-      ),
+        resolve(PROFILE_PATHS.releaseRecoveryRoot, '..', '..', '..', '..', 'escaped.pdf'),
+        'test'
+      )
     ).toThrow(/allowlist/i);
   });
 
@@ -92,7 +85,7 @@ describe('release path safety', () => {
     await symlink(real, link);
 
     await expect(
-      releaseStoreTesting.assertSafeTarget(link, 'test', { mustExist: true }),
+      releaseStoreTesting.assertSafeTarget(link, 'test', { mustExist: true })
     ).rejects.toMatchObject({ code: 'RELEASE_TARGET_SYMLINK' });
   });
 
@@ -103,7 +96,7 @@ describe('release path safety', () => {
     await expect(
       releaseStoreTesting.assertSafeTarget(directory, 'test', {
         mustExist: true,
-      }),
+      })
     ).rejects.toMatchObject({ code: 'RELEASE_TARGET_NOT_REGULAR' });
   });
 
@@ -112,8 +105,8 @@ describe('release path safety', () => {
       releaseStoreTesting.assertSafeTarget(
         resolve(PROFILE_PATHS.releaseStagingRoot, 'missing.pdf'),
         'test',
-        { mustExist: true },
-      ),
+        { mustExist: true }
+      )
     ).rejects.toMatchObject({ code: 'RELEASE_TARGET_MISSING' });
   });
 });
@@ -153,9 +146,8 @@ describe('single-writer lock', () => {
   });
 
   test('a lock with no journal is reported as orphaned, not as interrupted', async () => {
-    const { verifyCurrentRelease } = await import(
-      '../../scripts/profile/verification-provider.mjs'
-    );
+    const { verifyCurrentRelease } =
+      await import('../../scripts/profile/verification-provider.mjs');
     const lock = await acquireReleaseLock();
     try {
       await expect(readReleaseJournal({})).resolves.toBeNull();
@@ -184,10 +176,7 @@ describe('interrupted transactions fail closed', () => {
 
   test('a journal in an unknown state is refused rather than assumed fresh', async () => {
     await mkdir(PROFILE_PATHS.releaseRoot, { recursive: true });
-    await writeFile(
-      PROFILE_PATHS.releaseJournalPath,
-      journalFixture('SOMETHING_ELSE'),
-    );
+    await writeFile(PROFILE_PATHS.releaseJournalPath, journalFixture('SOMETHING_ELSE'));
 
     await expect(readReleaseJournal()).rejects.toMatchObject({
       code: 'RELEASE_JOURNAL_INVALID',
@@ -196,10 +185,7 @@ describe('interrupted transactions fail closed', () => {
 
   test('an existing journal blocks a new promotion', async () => {
     await mkdir(PROFILE_PATHS.releaseRoot, { recursive: true });
-    await writeFile(
-      PROFILE_PATHS.releaseJournalPath,
-      journalFixture('PDF_COMMITTED'),
-    );
+    await writeFile(PROFILE_PATHS.releaseJournalPath, journalFixture('PDF_COMMITTED'));
 
     await expect(
       promoteResumeRelease({
@@ -208,16 +194,13 @@ describe('interrupted transactions fail closed', () => {
         candidatePath: resolve(PROFILE_PATHS.pdfCandidateRoot, `${SHA_A}.pdf`),
         candidateBytes: Buffer.from('pdf'),
         releaseReceipt: { kind: 'resume-release' },
-      }),
+      })
     ).rejects.toMatchObject({ code: 'RELEASE_JOURNAL_ACTIVE' });
   });
 
   test('a present journal marks the state active so read-only commands stop', async () => {
     await mkdir(PROFILE_PATHS.releaseRoot, { recursive: true });
-    await writeFile(
-      PROFILE_PATHS.releaseJournalPath,
-      journalFixture('RECEIPT_PROMOTED'),
-    );
+    await writeFile(PROFILE_PATHS.releaseJournalPath, journalFixture('RECEIPT_PROMOTED'));
 
     const state = await inspectReleaseState();
 
@@ -251,7 +234,7 @@ describe('promotion refuses mismatched identity before mutating anything', () =>
           candidateId: SHA_A,
           pdfSha256: SHA_B,
         },
-      }),
+      })
     ).rejects.toMatchObject({ code: 'RELEASE_CANDIDATE_STALE' });
 
     // The refusal must leave no journal behind for a later run to resume from.
@@ -266,7 +249,7 @@ describe('promotion refuses mismatched identity before mutating anything', () =>
         candidatePath: resolve(PROFILE_PATHS.pdfCandidateRoot, 'x.pdf'),
         candidateBytes: Buffer.from('pdf'),
         releaseReceipt: { kind: 'resume-release' },
-      }),
+      })
     ).rejects.toMatchObject({ code: 'RELEASE_CANDIDATE_ID_INVALID' });
   });
 
@@ -278,27 +261,21 @@ describe('promotion refuses mismatched identity before mutating anything', () =>
         candidatePath: resolve(PROFILE_PATHS.pdfCandidateRoot, `${SHA_A}.pdf`),
         candidateBytes: Buffer.from('pdf'),
         releaseReceipt: { kind: 'resume-inspection-draft' },
-      }),
+      })
     ).rejects.toMatchObject({ code: 'RELEASE_RECEIPT_INVALID' });
   });
 
   test('a prepared candidate whose draft names other bytes is refused', async () => {
     await mkdir(PROFILE_PATHS.pdfCandidateRoot, { recursive: true });
-    const candidatePath = resolve(
-      PROFILE_PATHS.pdfCandidateRoot,
-      `${SHA_A}.pdf`,
-    );
-    const draftPath = resolve(
-      PROFILE_PATHS.pdfCandidateRoot,
-      `${SHA_A}.draft.json`,
-    );
+    const candidatePath = resolve(PROFILE_PATHS.pdfCandidateRoot, `${SHA_A}.pdf`);
+    const draftPath = resolve(PROFILE_PATHS.pdfCandidateRoot, `${SHA_A}.draft.json`);
     await writeFile(candidatePath, 'candidate bytes');
     await writeFile(
       draftPath,
       JSON.stringify({
         kind: 'resume-inspection-draft',
         candidate: { candidateId: SHA_A, pdfSha256: SHA_B },
-      }),
+      })
     );
 
     try {
@@ -314,9 +291,7 @@ describe('promotion refuses mismatched identity before mutating anything', () =>
 
 describe('the pending capability cannot be forged or replayed', () => {
   test('an object this store did not issue is not a capability', () => {
-    expect(() =>
-      resolvePendingRelease({ kind: 'pending-resume-release' }),
-    ).toThrow(/not issued/i);
+    expect(() => resolvePendingRelease({ kind: 'pending-resume-release' })).toThrow(/not issued/i);
   });
 
   test('a capability cannot be serialised into something recoverable', () => {
@@ -353,9 +328,7 @@ describe('the pending capability cannot be forged or replayed', () => {
       settled: true,
     });
 
-    expect(() => resolvePendingRelease(capability)).toThrow(
-      /finalized or rolled back/i,
-    );
+    expect(() => resolvePendingRelease(capability)).toThrow(/finalized or rolled back/i);
   });
 });
 
@@ -366,9 +339,7 @@ describe('named journal transitions', () => {
   });
 
   test('rollback must restore in order and cannot jump to done', () => {
-    expect(nextReleaseState('ROLLBACK_REQUIRED', 'completeRollback').ok).toBe(
-      false,
-    );
+    expect(nextReleaseState('ROLLBACK_REQUIRED', 'completeRollback').ok).toBe(false);
     expect(nextReleaseState('ROLLBACK_REQUIRED', 'restorePdf')).toMatchObject({
       ok: true,
       state: 'ROLLBACK_PDF_RESTORED',
@@ -416,9 +387,9 @@ describe('the stable command surface', () => {
   });
 
   test('promote requires both the candidate and the review record', async () => {
-    await expect(
-      cliMain(['resume:pdf', '--promote', SHA_A]),
-    ).rejects.toMatchObject({ code: 'CLI_PROMOTE_ARGUMENTS_REQUIRED' });
+    await expect(cliMain(['resume:pdf', '--promote', SHA_A])).rejects.toMatchObject({
+      code: 'CLI_PROMOTE_ARGUMENTS_REQUIRED',
+    });
   });
 
   test('a passing verdict the CLI computed itself is still reported', () => {
@@ -431,7 +402,7 @@ describe('the stable command surface', () => {
         result: 'pass',
         candidateId: SHA_A,
         pdfSha256: SHA_B,
-      }),
+      })
     ).toBe(true);
   });
 
@@ -441,7 +412,7 @@ describe('the stable command surface', () => {
         rule: 'LC-U1-19/NFR-U1-010',
         result: 'pass',
         routed: true,
-      }),
+      })
     ).toBe(false);
   });
 

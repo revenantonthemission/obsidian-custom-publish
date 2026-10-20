@@ -32,7 +32,7 @@ for (const viewport of VIEWPORTS) {
       for (const target of CORE_NAV_TARGETS) {
         expect(
           await page.locator(`header a[href="${target}"]`).count(),
-          `header must link to ${target}`,
+          `header must link to ${target}`
         ).toBeGreaterThan(0);
       }
     });

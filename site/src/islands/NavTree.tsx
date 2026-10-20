@@ -1,44 +1,44 @@
-import { useEffect, useState } from "preact/hooks";
-import type { NavTreeData } from "../lib/types";
-import { TreeNodeItem, isAncestor } from "./TreeNodeItem";
+import { useEffect, useState } from 'preact/hooks';
+import type { NavTreeData } from '../lib/types';
+import { TreeNodeItem, isAncestor } from './TreeNodeItem';
 
 interface Props {
   currentSlug: string;
 }
 
 type TreeState =
-  | { readonly status: "loading" }
-  | { readonly status: "error" }
-  | { readonly status: "ready"; readonly data: NavTreeData };
+  | { readonly status: 'loading' }
+  | { readonly status: 'error' }
+  | { readonly status: 'ready'; readonly data: NavTreeData };
 
 /**
  * The hub navigation tree in the outline's 탐색 tab (FR4.2, FR4.5, FR5.4).
  * A failed load shows an error with a retry instead of an empty panel.
  */
 export default function NavTree({ currentSlug }: Props) {
-  const [state, setState] = useState<TreeState>({ status: "loading" });
+  const [state, setState] = useState<TreeState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: "loading" });
-    fetch("/nav-tree.json")
+    setState({ status: 'loading' });
+    fetch('/nav-tree.json')
       .then((response) => {
         if (!response.ok) throw new Error(`nav-tree.json answered ${response.status}`);
         return response.json() as Promise<NavTreeData>;
       })
       .then((data) => {
-        if (!cancelled) setState({ status: "ready", data });
+        if (!cancelled) setState({ status: 'ready', data });
       })
       .catch(() => {
-        if (!cancelled) setState({ status: "error" });
+        if (!cancelled) setState({ status: 'error' });
       });
     return () => {
       cancelled = true;
     };
   }, [attempt]);
 
-  if (state.status === "loading") {
+  if (state.status === 'loading') {
     return (
       <p class="outline-status" role="status">
         탐색 목록을 불러오는 중
@@ -46,7 +46,7 @@ export default function NavTree({ currentSlug }: Props) {
     );
   }
 
-  if (state.status === "error") {
+  if (state.status === 'error') {
     return (
       <div class="outline-status" role="alert">
         <p>탐색 목록을 불러오지 못했습니다</p>
@@ -74,7 +74,12 @@ export default function NavTree({ currentSlug }: Props) {
           />
         ))}
         {orphans.map((node) => (
-          <TreeNodeItem key={node.slug} node={node} currentSlug={currentSlug} defaultExpanded={false} />
+          <TreeNodeItem
+            key={node.slug}
+            node={node}
+            currentSlug={currentSlug}
+            defaultExpanded={false}
+          />
         ))}
       </ul>
     </nav>

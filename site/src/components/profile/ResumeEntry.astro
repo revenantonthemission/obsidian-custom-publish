@@ -1,14 +1,14 @@
 ---
-import ContactActions from "./ContactActions.astro";
-import ContentBlocks from "./ContentBlocks.astro";
-import type { ResumeEntryView } from "./presentation.js";
+import ContactActions from './ContactActions.astro';
+import ContentBlocks from './ContentBlocks.astro';
+import type { ResumeEntryView } from './presentation.js';
 
 interface Props {
   entry: ResumeEntryView;
 }
 
 const { entry } = Astro.props;
-const heading = entry.kind === "career" ? entry.role : entry.title;
+const heading = entry.kind === 'career' ? entry.role : entry.title;
 ---
 
 <details
@@ -27,26 +27,17 @@ const heading = entry.kind === "career" ? entry.role : entry.title;
     >
       {heading.value}
     </span>
-    {entry.kind === "career" && (
-      <span
-        class="resume-entry-organization"
-        data-profile-fact-id={entry.organization.factId}
-      >
+    {entry.kind === 'career' && (
+      <span class="resume-entry-organization" data-profile-fact-id={entry.organization.factId}>
         {entry.organization.value}
       </span>
     )}
     {entry.period !== undefined && (
-      <span
-        class="resume-entry-period"
-        data-profile-fact-id={entry.period.factId}
-      >
+      <span class="resume-entry-period" data-profile-fact-id={entry.period.factId}>
         {entry.period.text}
       </span>
     )}
-    <span
-      class="resume-entry-summary"
-      data-profile-fact-id={entry.summary.factId}
-    >
+    <span class="resume-entry-summary" data-profile-fact-id={entry.summary.factId}>
       {entry.summary.value}
     </span>
   </summary>

@@ -24,7 +24,7 @@ import type { FactApprovedProfile } from './types.js';
  * The existing release pipeline remains responsible for review and promotion.
  */
 export async function getCurrentResumeDocumentLink(
-  source: FactApprovedProfile,
+  source: FactApprovedProfile
 ): Promise<ResumeDocumentLink | undefined> {
   try {
     const manifest = await buildApprovedResumeManifest(source);
@@ -38,7 +38,7 @@ export async function getCurrentResumeDocumentLink(
     return resolveCurrentResumeDocumentLinkForTest(
       manifest.value,
       JSON.parse(receiptText),
-      pdfBytes,
+      pdfBytes
     );
   } catch {
     return undefined;
@@ -49,7 +49,7 @@ export async function getCurrentResumeDocumentLink(
 export function resolveCurrentResumeDocumentLinkForTest(
   manifest: ResumeFactManifest,
   receiptCandidate: unknown,
-  pdfBytes: Uint8Array,
+  pdfBytes: Uint8Array
 ): ResumeDocumentLink | undefined {
   try {
     const snapshot = snapshotResumeDocumentData(receiptCandidate);
@@ -93,17 +93,28 @@ function matchesIdentity(
   candidate: unknown,
   manifest: ResumeFactManifest,
   pdfSha256: string,
-  candidateId: string,
+  candidateId: string
 ): boolean {
   if (!isRecord(candidate)) return false;
   const source = validateCanonicalDigest(candidate.sourceIdentity, PROFILE_SOURCE_DIGEST_DOMAIN);
-  const fingerprint = validateCanonicalDigest(candidate.manifestFingerprint, RESUME_FACT_MANIFEST_DIGEST_DOMAIN);
-  const manifestDigest = validateCanonicalDigest(candidate.manifestDigest, RESUME_FACT_MANIFEST_DIGEST_DOMAIN);
-  return candidate.candidateId === candidateId &&
+  const fingerprint = validateCanonicalDigest(
+    candidate.manifestFingerprint,
+    RESUME_FACT_MANIFEST_DIGEST_DOMAIN
+  );
+  const manifestDigest = validateCanonicalDigest(
+    candidate.manifestDigest,
+    RESUME_FACT_MANIFEST_DIGEST_DOMAIN
+  );
+  return (
+    candidate.candidateId === candidateId &&
     candidate.pdfSha256 === pdfSha256 &&
-    source.ok && source.value.digest === manifest.sourceIdentity.digest &&
-    fingerprint.ok && fingerprint.value.digest === manifest.fingerprint.digest &&
-    manifestDigest.ok && manifestDigest.value.digest === manifest.fingerprint.digest;
+    source.ok &&
+    source.value.digest === manifest.sourceIdentity.digest &&
+    fingerprint.ok &&
+    fingerprint.value.digest === manifest.fingerprint.digest &&
+    manifestDigest.ok &&
+    manifestDigest.value.digest === manifest.fingerprint.digest
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

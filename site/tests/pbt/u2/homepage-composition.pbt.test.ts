@@ -42,7 +42,7 @@ test.prop([safeBlock, fc.integer({ min: 0, max: 3 }), fc.integer({ min: 0, max: 
     } else {
       assertExactlyOneSlot(markdown, 'src.md');
     }
-  },
+  }
 );
 
 // FD-P-C06-01: with exactly one token, the plan holds exactly one slot chunk,
@@ -62,7 +62,7 @@ test.prop([safeBlock, safeBlock])(
     for (const line of [...before, ...after]) {
       if (line.trim() !== '') expect(joined).toContain(line);
     }
-  },
+  }
 );
 
 // FD-P-C10-01: every corruption mode fails closed with a coded diagnostic.
@@ -71,7 +71,7 @@ const corruptionMode = fc.constantFrom(
   'missing-body',
   'invalid-json',
   'empty-title',
-  'empty-body',
+  'empty-body'
 );
 
 test.prop([corruptionMode])(
@@ -98,7 +98,7 @@ test.prop([corruptionMode])(
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
-  },
+  }
 );
 
 // FD-P-C10-02: a valid artifact reads back exactly (site half of FD-P-C09-01).
@@ -127,7 +127,7 @@ test.prop([
       is_hub: fc.boolean(),
       published: fc.option(fc.constantFrom('2024-03-01', '2024-03-02'), { nil: undefined }),
     }),
-    { maxLength: 12 },
+    { maxLength: 12 }
   ),
 ])('filterTodayPosts keeps exactly the non-hub posts of the given date', (posts) => {
   const today = '2024-03-01';

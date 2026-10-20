@@ -37,11 +37,11 @@ for (const viewport of VIEWPORTS) {
       await expect(fragment).toBeVisible();
       await expect(fragment.getByRole('link', { name: 'Résumé' })).toHaveAttribute(
         'href',
-        '/resume',
+        '/resume'
       );
       await expect(fragment.getByRole('link', { name: 'Portfolio' })).toHaveAttribute(
         'href',
-        '/portfolio',
+        '/portfolio'
       );
 
       // FR-008.2: the temporary external Notion link is gone.
@@ -56,10 +56,9 @@ for (const viewport of VIEWPORTS) {
     test('shared header navigation is preserved (FE-P-U2-06, AC-U01-03)', async ({ page }) => {
       await page.goto('/');
       for (const href of ['/tags', '/graph', '/resume', '/portfolio']) {
-        expect(
-          await page.locator(`a[href="${href}"]`).count(),
-          `nav link ${href}`,
-        ).toBeGreaterThan(0);
+        expect(await page.locator(`a[href="${href}"]`).count(), `nav link ${href}`).toBeGreaterThan(
+          0
+        );
       }
     });
 
@@ -82,14 +81,12 @@ for (const viewport of VIEWPORTS) {
           '*, *::before, *::after { animation: none !important; transition: none !important; }',
       });
       await page.evaluate(() =>
-        document.getAnimations().forEach((animation) => animation.finish()),
+        document.getAnimations().forEach((animation) => animation.finish())
       );
       // @playwright/test and @axe-core/playwright resolve different playwright-core
       // copies; the U1 spec uses the same cast.
       const results = await new AxeBuilder({
-        page: page as unknown as ConstructorParameters<
-          typeof AxeBuilder
-        >[0]['page'],
+        page: page as unknown as ConstructorParameters<typeof AxeBuilder>[0]['page'],
       })
         .withTags(AXE_TAGS)
         .analyze();

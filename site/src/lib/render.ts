@@ -1,38 +1,41 @@
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkMath from "remark-math";
-import remarkGfm from "remark-gfm";
-import { remarkDefinitionList, defListHastHandlers } from "remark-definition-list";
-import remarkAbbr from "@richardtowers/remark-abbr";
-import remarkCjkFriendly from "remark-cjk-friendly";
-import remarkRehype from "remark-rehype";
-import rehypeKatex from "rehype-katex";
-import rehypeParse from "rehype-parse";
-import rehypeRaw from "rehype-raw";
-import rehypeShiki from "@shikijs/rehype";
-import { transformerMetaHighlight } from "@shikijs/transformers";
-import rehypeSlug from "rehype-slug";
-import rehypeStringify from "rehype-stringify";
-import { visit } from "unist-util-visit";
-import type { Root, Element } from "hast";
-import type { ThemeRegistration } from "@shikijs/types";
-import { rehypeHomeSections } from "./home-sections";
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
+import { remarkDefinitionList, defListHastHandlers } from 'remark-definition-list';
+import remarkAbbr from '@richardtowers/remark-abbr';
+import remarkCjkFriendly from 'remark-cjk-friendly';
+import remarkRehype from 'remark-rehype';
+import rehypeKatex from 'rehype-katex';
+import rehypeParse from 'rehype-parse';
+import rehypeRaw from 'rehype-raw';
+import rehypeShiki from '@shikijs/rehype';
+import { transformerMetaHighlight } from '@shikijs/transformers';
+import rehypeSlug from 'rehype-slug';
+import rehypeStringify from 'rehype-stringify';
+import { visit } from 'unist-util-visit';
+import type { Root, Element } from 'hast';
+import type { ThemeRegistration } from '@shikijs/types';
+import { rehypeHomeSections } from './home-sections';
 // Xcode-style code colors (design-system-mapping.md "Code Highlighting"; R-01):
 // every syntax color reaches 4.5:1 on the code panel token --c-code-bg
 // (tests/unit/hig-tokens.test.ts recomputes that from these files).
-import xcodeDarkJson from "./shiki-themes/xcode-dark.json";
-import xcodeLightJson from "./shiki-themes/xcode-light.json";
+import xcodeDarkJson from './shiki-themes/xcode-dark.json';
+import xcodeLightJson from './shiki-themes/xcode-light.json';
 
 /** JSON imports type `type` as string; check it, then hand Shiki its theme type. */
-function shikiTheme(theme: { readonly name: string; readonly type: string }, scheme: "light" | "dark"): ThemeRegistration {
+function shikiTheme(
+  theme: { readonly name: string; readonly type: string },
+  scheme: 'light' | 'dark'
+): ThemeRegistration {
   if (theme.type !== scheme) {
     throw new TypeError(`Shiki theme ${theme.name} must be a ${scheme} theme.`);
   }
   return theme as unknown as ThemeRegistration;
 }
 
-const xcodeLight = shikiTheme(xcodeLightJson, "light");
-const xcodeDark = shikiTheme(xcodeDarkJson, "dark");
+const xcodeLight = shikiTheme(xcodeLightJson, 'light');
+const xcodeDark = shikiTheme(xcodeDarkJson, 'dark');
 
 export interface RenderOptions {
   /** Wrap each H2 section in section.home-card. Homepage note only (R-04). */
@@ -43,32 +46,29 @@ export interface RenderOptions {
 
 function rehypeCodeFilename() {
   return (tree: Root) => {
-    visit(tree, "element", (node: Element, index, parent) => {
+    visit(tree, 'element', (node: Element, index, parent) => {
       if (!parent || index === undefined) return;
-      if (node.tagName !== "pre") return;
+      if (node.tagName !== 'pre') return;
       const code = node.children.find(
-        (c): c is Element => c.type === "element" && c.tagName === "code"
+        (c): c is Element => c.type === 'element' && c.tagName === 'code'
       );
       if (!code) return;
 
-      const meta =
-        (code.data?.meta as string) ||
-        (code.properties?.["dataMeta"] as string) ||
-        "";
+      const meta = (code.data?.meta as string) || (code.properties?.['dataMeta'] as string) || '';
       const match = meta.match(/title[=:]"([^"]+)"/);
       if (!match) return;
 
       const filename = match[1];
       const wrapper: Element = {
-        type: "element",
-        tagName: "div",
-        properties: { className: ["code-block"] },
+        type: 'element',
+        tagName: 'div',
+        properties: { className: ['code-block'] },
         children: [
           {
-            type: "element",
-            tagName: "div",
-            properties: { className: ["code-filename"] },
-            children: [{ type: "text", value: filename }],
+            type: 'element',
+            tagName: 'div',
+            properties: { className: ['code-filename'] },
+            children: [{ type: 'text', value: filename }],
           },
           node,
         ],
@@ -80,27 +80,27 @@ function rehypeCodeFilename() {
 
 function rehypeImageCaption() {
   return (tree: Root) => {
-    visit(tree, "element", (node: Element, index, parent) => {
+    visit(tree, 'element', (node: Element, index, parent) => {
       if (!parent || index === undefined) return;
-      if (node.tagName !== "img") return;
+      if (node.tagName !== 'img') return;
 
-      node.properties.loading = "lazy";
-      node.properties.decoding = "async";
+      node.properties.loading = 'lazy';
+      node.properties.decoding = 'async';
 
       const alt = node.properties.alt as string;
-      if (!alt || alt === "image") return;
+      if (!alt || alt === 'image') return;
 
       const figure: Element = {
-        type: "element",
-        tagName: "figure",
-        properties: { className: ["image-figure"] },
+        type: 'element',
+        tagName: 'figure',
+        properties: { className: ['image-figure'] },
         children: [
           node,
           {
-            type: "element",
-            tagName: "figcaption",
+            type: 'element',
+            tagName: 'figcaption',
             properties: {},
-            children: [{ type: "text", value: alt }],
+            children: [{ type: 'text', value: alt }],
           },
         ],
       };
@@ -111,14 +111,14 @@ function rehypeImageCaption() {
 
 function rehypeTableWrapper() {
   return (tree: Root) => {
-    visit(tree, "element", (node: Element, index, parent) => {
+    visit(tree, 'element', (node: Element, index, parent) => {
       if (!parent || index === undefined) return;
-      if (node.tagName !== "table") return;
+      if (node.tagName !== 'table') return;
 
       const wrapper: Element = {
-        type: "element",
-        tagName: "div",
-        properties: { className: ["table-wrapper"] },
+        type: 'element',
+        tagName: 'div',
+        properties: { className: ['table-wrapper'] },
         children: [node],
       };
       parent.children[index] = wrapper;
@@ -146,9 +146,9 @@ function createProcessor(homeSections: boolean) {
         allowDangerousHtml: true,
         // Korean names for the GFM footnote section and its back-references,
         // matching lang="ko" (FR5.5, C-12).
-        footnoteLabel: "각주",
+        footnoteLabel: '각주',
         footnoteBackLabel: (referenceIndex: number, rereferenceIndex: number) =>
-          `본문의 ${referenceIndex + 1}번 각주 위치로 돌아가기${rereferenceIndex > 1 ? ` (${rereferenceIndex})` : ""}`,
+          `본문의 ${referenceIndex + 1}번 각주 위치로 돌아가기${rereferenceIndex > 1 ? ` (${rereferenceIndex})` : ''}`,
         handlers: {
           ...defListHastHandlers,
           // Drop abbr definition nodes: without a handler remark-rehype falls
@@ -168,7 +168,7 @@ function createProcessor(homeSections: boolean) {
           {
             // Inject data-language attribute on <pre> for CSS language badge
             pre(node) {
-              node.properties["data-language"] = this.options.lang;
+              node.properties['data-language'] = this.options.lang;
             },
           },
         ],

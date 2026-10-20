@@ -1,11 +1,5 @@
-import {
-  createValidationIssue,
-  sortAndDedupeIssues,
-} from './profile/issues.js';
-import type {
-  ValidationIssue,
-  ValidationResult,
-} from './profile/types.js';
+import { createValidationIssue, sortAndDedupeIssues } from './profile/issues.js';
+import type { ValidationIssue, ValidationResult } from './profile/types.js';
 
 export interface NavigationItem {
   readonly href: string;
@@ -43,44 +37,31 @@ export function getProfileLocalNavigation(): readonly NavigationItem[] {
 }
 
 export function getPrimaryNavigationState(
-  pathname: string,
+  pathname: string
 ): ValidationResult<readonly NavigationState[]> {
   return getNavigationState(PRIMARY_NAVIGATION, pathname);
 }
 
 export function getProfileLocalNavigationState(
-  pathname: string,
+  pathname: string
 ): ValidationResult<readonly NavigationState[]> {
   return getNavigationState(PROFILE_LOCAL_NAVIGATION, pathname);
 }
 
 export function getNavigationState(
   items: readonly NavigationItem[],
-  pathname: string,
+  pathname: string
 ): ValidationResult<readonly NavigationState[]> {
   const issues: ValidationIssue[] = [];
   const inspectedItems = inspectNavigationItems(items, issues);
   const normalizedPathname = normalizePathname(pathname);
 
   if (normalizedPathname === undefined) {
-    issues.push(
-      createValidationIssue(
-        'navigation.current.invalid',
-        NAVIGATION_CURRENT_PATH,
-      ),
-    );
+    issues.push(createValidationIssue('navigation.current.invalid', NAVIGATION_CURRENT_PATH));
   }
 
-  if (
-    inspectedItems !== undefined &&
-    !isApprovedNavigationModel(inspectedItems)
-  ) {
-    issues.push(
-      createValidationIssue(
-        'navigation.model.invalid',
-        NAVIGATION_MODEL_PATH,
-      ),
-    );
+  if (inspectedItems !== undefined && !isApprovedNavigationModel(inspectedItems)) {
+    issues.push(createValidationIssue('navigation.model.invalid', NAVIGATION_MODEL_PATH));
   }
 
   let states: readonly NavigationState[] | undefined;
@@ -90,16 +71,11 @@ export function getNavigationState(
         href: item.href,
         label: item.label,
         current: matchesRoute(normalizedPathname, item.href),
-      })),
+      }))
     );
 
     if (states.filter((state) => state.current).length > 1) {
-      issues.push(
-        createValidationIssue(
-          'navigation.current.invalid',
-          NAVIGATION_CURRENT_PATH,
-        ),
-      );
+      issues.push(createValidationIssue('navigation.current.invalid', NAVIGATION_CURRENT_PATH));
     }
   }
 
@@ -108,12 +84,7 @@ export function getNavigationState(
     const failureIssues =
       finalIssues.length > 0
         ? finalIssues
-        : [
-            createValidationIssue(
-              'navigation.model.invalid',
-              NAVIGATION_MODEL_PATH,
-            ),
-          ];
+        : [createValidationIssue('navigation.model.invalid', NAVIGATION_MODEL_PATH)];
 
     return Object.freeze({
       ok: false,
@@ -129,32 +100,22 @@ export function getNavigationState(
 
 function inspectNavigationItems(
   items: readonly NavigationItem[],
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): readonly NavigationItem[] | undefined {
   try {
     return inspectNavigationItemsSafely(items, issues);
   } catch {
-    issues.push(
-      createValidationIssue(
-        'navigation.model.invalid',
-        NAVIGATION_MODEL_PATH,
-      ),
-    );
+    issues.push(createValidationIssue('navigation.model.invalid', NAVIGATION_MODEL_PATH));
     return undefined;
   }
 }
 
 function inspectNavigationItemsSafely(
   items: readonly NavigationItem[],
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): readonly NavigationItem[] | undefined {
   if (!Array.isArray(items) || items.length === 0) {
-    issues.push(
-      createValidationIssue(
-        'navigation.model.invalid',
-        NAVIGATION_MODEL_PATH,
-      ),
-    );
+    issues.push(createValidationIssue('navigation.model.invalid', NAVIGATION_MODEL_PATH));
     return undefined;
   }
 
@@ -170,11 +131,7 @@ function inspectNavigationItemsSafely(
     }
 
     const keys = Reflect.ownKeys(candidate);
-    if (
-      keys.length !== 2 ||
-      !keys.includes('href') ||
-      !keys.includes('label')
-    ) {
+    if (keys.length !== 2 || !keys.includes('href') || !keys.includes('label')) {
       valid = false;
       continue;
     }
@@ -214,21 +171,14 @@ function inspectNavigationItemsSafely(
   }
 
   if (!valid || inspected.length !== items.length) {
-    issues.push(
-      createValidationIssue(
-        'navigation.model.invalid',
-        NAVIGATION_MODEL_PATH,
-      ),
-    );
+    issues.push(createValidationIssue('navigation.model.invalid', NAVIGATION_MODEL_PATH));
     return undefined;
   }
 
   return inspected;
 }
 
-function isApprovedNavigationModel(
-  items: readonly NavigationItem[],
-): boolean {
+function isApprovedNavigationModel(items: readonly NavigationItem[]): boolean {
   return (
     sameNavigationModel(items, PRIMARY_NAVIGATION) ||
     sameNavigationModel(items, PROFILE_LOCAL_NAVIGATION)
@@ -237,14 +187,12 @@ function isApprovedNavigationModel(
 
 function sameNavigationModel(
   actual: readonly NavigationItem[],
-  expected: readonly NavigationItem[],
+  expected: readonly NavigationItem[]
 ): boolean {
   return (
     actual.length === expected.length &&
     actual.every(
-      (item, index) =>
-        item.href === expected[index]?.href &&
-        item.label === expected[index]?.label,
+      (item, index) => item.href === expected[index]?.href && item.label === expected[index]?.label
     )
   );
 }
@@ -271,10 +219,7 @@ function normalizeNavigationHref(value: string): string | undefined {
     return undefined;
   }
 
-  const normalized =
-    value.length > 1 && value.endsWith('/')
-      ? value.slice(0, -1)
-      : value;
+  const normalized = value.length > 1 && value.endsWith('/') ? value.slice(0, -1) : value;
 
   for (const segment of normalized.split('/')) {
     if (segment.length === 0) {
@@ -288,12 +233,7 @@ function normalizeNavigationHref(value: string): string | undefined {
       return undefined;
     }
 
-    if (
-      decoded === '.' ||
-      decoded === '..' ||
-      decoded.includes('/') ||
-      decoded.includes('\\')
-    ) {
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) {
       return undefined;
     }
   }
@@ -309,37 +249,29 @@ function matchesRoute(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function freezeNavigationModel(
-  items: readonly NavigationItem[],
-): readonly NavigationItem[] {
+function freezeNavigationModel(items: readonly NavigationItem[]): readonly NavigationItem[] {
   return Object.freeze(
     items.map((item) =>
       Object.freeze({
         href: item.href,
         label: item.label,
-      }),
-    ),
+      })
+    )
   );
 }
 
-function freezeNavigationStates(
-  states: readonly NavigationState[],
-): readonly NavigationState[] {
+function freezeNavigationStates(states: readonly NavigationState[]): readonly NavigationState[] {
   return Object.freeze(
     states.map((state) =>
       Object.freeze({
         href: state.href,
         label: state.label,
         current: state.current,
-      }),
-    ),
+      })
+    )
   );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value)
-  );
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

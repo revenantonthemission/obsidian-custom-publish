@@ -21,7 +21,8 @@ export const AXE_TAGS: readonly string[] = Object.freeze([
   'wcag22aa',
 ]);
 
-export type HigRouteKind = 'home' | 'post' | 'hub' | 'tags' | 'tag' | 'graph' | 'not-found' | 'profile';
+export type HigRouteKind =
+  'home' | 'post' | 'hub' | 'tags' | 'tag' | 'graph' | 'not-found' | 'profile';
 
 export interface HigRoute {
   readonly path: string;
@@ -56,17 +57,20 @@ export function viewportFor(width: number): { width: number; height: number } {
 /** Writes localStorage entries before any page script runs, including the bootstrap. */
 export async function seedStorage(
   page: Page,
-  entries: Readonly<Record<string, string>>,
+  entries: Readonly<Record<string, string>>
 ): Promise<void> {
-  await page.addInitScript((values: Record<string, string>) => {
-    try {
-      for (const [key, value] of Object.entries(values)) {
-        window.localStorage.setItem(key, value);
+  await page.addInitScript(
+    (values: Record<string, string>) => {
+      try {
+        for (const [key, value] of Object.entries(values)) {
+          window.localStorage.setItem(key, value);
+        }
+      } catch {
+        /* A context without storage keeps its defaults. */
       }
-    } catch {
-      /* A context without storage keeps its defaults. */
-    }
-  }, { ...entries });
+    },
+    { ...entries }
+  );
 }
 
 /** Navigates and waits until the route has stopped fetching. */
@@ -98,7 +102,7 @@ export async function axeViolations(page: Page): Promise<string[]> {
     (violation) =>
       `${violation.id} (${violation.impact ?? 'n/a'}): ${violation.nodes
         .map((node) => node.target.join(' '))
-        .join(' | ')}`,
+        .join(' | ')}`
   );
 }
 
@@ -138,10 +142,12 @@ export async function measureTargets(page: Page, selector: string): Promise<Targ
 
 export function undersized(
   boxes: readonly TargetBox[],
-  minimum: { readonly width: number; readonly height: number },
+  minimum: { readonly width: number; readonly height: number }
 ): TargetBox[] {
   // Sub-pixel layout rounding is tolerated; a real shortfall is never 0.5 px.
-  return boxes.filter((box) => box.width + 0.5 < minimum.width || box.height + 0.5 < minimum.height);
+  return boxes.filter(
+    (box) => box.width + 0.5 < minimum.width || box.height + 0.5 < minimum.height
+  );
 }
 
 export interface OverflowReport {
@@ -162,7 +168,12 @@ export async function horizontalOverflow(page: Page): Promise<OverflowReport> {
     const scrollsSideways = (element: Element | null): boolean => {
       for (let node = element; node !== null && node !== root; node = node.parentElement) {
         const overflowX = window.getComputedStyle(node).overflowX;
-        if (overflowX === 'auto' || overflowX === 'scroll' || overflowX === 'hidden' || overflowX === 'clip') {
+        if (
+          overflowX === 'auto' ||
+          overflowX === 'scroll' ||
+          overflowX === 'hidden' ||
+          overflowX === 'clip'
+        ) {
           return true;
         }
       }
@@ -174,9 +185,12 @@ export async function horizontalOverflow(page: Page): Promise<OverflowReport> {
       // Content that is not rendered (display: none, or inside a closed
       // details, whose content-visibility: hidden slot still reports a box)
       // cannot overflow the page.
-      if (!element.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true })) continue;
+      if (!element.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true }))
+        continue;
       if (scrollsSideways(element.parentElement)) continue;
-      offenders.push(`${element.tagName.toLowerCase()}.${String(element.className).slice(0, 60)} right=${Math.round(rect.right)}`);
+      offenders.push(
+        `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 60)} right=${Math.round(rect.right)}`
+      );
       if (offenders.length >= 8) break;
     }
     return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, offenders };

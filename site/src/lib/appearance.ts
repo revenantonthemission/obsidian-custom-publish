@@ -77,7 +77,7 @@ export function readStoredAppearance(storage: AppearanceStorage | null): Appeara
 /** Returns false when the choice could not be stored; it then lasts for the current page only. */
 export function writeStoredAppearance(
   storage: AppearanceStorage | null,
-  appearance: Appearance,
+  appearance: Appearance
 ): boolean {
   if (storage === null) return false;
   try {

@@ -32,22 +32,12 @@ const PROJECT_DIMENSIONS = [
   'lessons',
 ] as const;
 
-const DIMENSION_HEADINGS = [
-  '문제',
-  '역할',
-  '핵심 결정',
-  '구조',
-  '결과',
-  '배운 점',
-] as const;
+const DIMENSION_HEADINGS = ['문제', '역할', '핵심 결정', '구조', '결과', '배운 점'] as const;
 
 test.prop([validProfileProjectionsArbitrary])(
   'PBT-U1-PRESENTATION: résumé renderer-neutral tree preserves semantic hierarchy, fact attribution and closed disclosures',
   ({ resume }) => {
-    const presentation = buildResumePresentation(
-      resume,
-      getResumeDocumentLink(),
-    );
+    const presentation = buildResumePresentation(resume, getResumeDocumentLink());
 
     expect(presentation.shell.identity).toEqual({
       route: 'resume',
@@ -96,9 +86,7 @@ test.prop([validProfileProjectionsArbitrary])(
       expect(careers).toBeUndefined();
     } else {
       expect(careers?.heading).toBe('경력');
-      expect(itemVector(careers?.entries ?? [])).toEqual(
-        itemVector(resume.experiences),
-      );
+      expect(itemVector(careers?.entries ?? [])).toEqual(itemVector(resume.experiences));
       for (const [index, entry] of (careers?.entries ?? []).entries()) {
         const source = resume.experiences[index];
         expect(entry.kind).toBe('career');
@@ -113,16 +101,12 @@ test.prop([validProfileProjectionsArbitrary])(
       }
     }
 
-    const achievements = highlights.groups.find(
-      ({ kind }) => kind === 'achievement',
-    );
+    const achievements = highlights.groups.find(({ kind }) => kind === 'achievement');
     if (resume.achievements.length === 0) {
       expect(achievements).toBeUndefined();
     } else {
       expect(achievements?.heading).toBe('대표 성과');
-      expect(itemVector(achievements?.entries ?? [])).toEqual(
-        itemVector(resume.achievements),
-      );
+      expect(itemVector(achievements?.entries ?? [])).toEqual(itemVector(resume.achievements));
       for (const [index, entry] of (achievements?.entries ?? []).entries()) {
         const source = resume.achievements[index];
         expect(entry.kind).toBe('achievement');
@@ -137,9 +121,7 @@ test.prop([validProfileProjectionsArbitrary])(
     }
 
     const projects = resumeSection(presentation, 'projects');
-    expect(itemVector(projects.projects)).toEqual(
-      itemVector(resume.projectSummaries),
-    );
+    expect(itemVector(projects.projects)).toEqual(itemVector(resume.projectSummaries));
     for (const [index, project] of projects.projects.entries()) {
       const source = resume.projectSummaries[index];
       expect(project.title).toEqual(textFact(source.title));
@@ -151,7 +133,7 @@ test.prop([validProfileProjectionsArbitrary])(
 
     assertOptionalResumeSections(presentation, resume);
     assertRendererNeutralTree(presentation);
-  },
+  }
 );
 
 test.prop([validProfileProjectionsArbitrary])(
@@ -164,10 +146,7 @@ test.prop([validProfileProjectionsArbitrary])(
       pathname: '/portfolio',
       label: 'Portfolio',
     });
-    expect(presentation.sections.map(({ kind }) => kind)).toEqual([
-      'intro',
-      'projects',
-    ]);
+    expect(presentation.sections.map(({ kind }) => kind)).toEqual(['intro', 'projects']);
 
     const intro = portfolioSection(presentation, 'intro');
     expect(intro.heading).toBe('프로필');
@@ -178,9 +157,7 @@ test.prop([validProfileProjectionsArbitrary])(
     ]);
 
     const projects = portfolioSection(presentation, 'projects');
-    expect(itemVector(projects.projects)).toEqual(
-      itemVector(portfolio.projects),
-    );
+    expect(itemVector(projects.projects)).toEqual(itemVector(portfolio.projects));
     expect(projects.projects).toHaveLength(portfolio.projects.length);
     expect(projects.projects.length).toBeGreaterThanOrEqual(3);
     expect(projects.projects.length).toBeLessThanOrEqual(6);
@@ -190,12 +167,8 @@ test.prop([validProfileProjectionsArbitrary])(
       expect(project.title).toEqual(textFact(source.title));
       assertPeriod(project.period, source.period);
       expect(project.outcomeSummary).toEqual(textFact(source.outcomeSummary));
-      expect(project.dimensions.map(({ key }) => key)).toEqual(
-        PROJECT_DIMENSIONS,
-      );
-      expect(project.dimensions.map(({ heading }) => heading)).toEqual(
-        DIMENSION_HEADINGS,
-      );
+      expect(project.dimensions.map(({ key }) => key)).toEqual(PROJECT_DIMENSIONS);
+      expect(project.dimensions.map(({ heading }) => heading)).toEqual(DIMENSION_HEADINGS);
       expect(project.dimensions).toHaveLength(6);
       for (const [dimensionIndex, dimension] of project.dimensions.entries()) {
         const sourceDimension = source.dimensions[dimensionIndex];
@@ -206,21 +179,17 @@ test.prop([validProfileProjectionsArbitrary])(
     }
 
     assertRendererNeutralTree(presentation);
-  },
+  }
 );
 
 test.prop([validProfileProjectionsArbitrary])(
   'PBT-U1-PRESENTATION: removing optional source nodes removes only their renderer-neutral nodes and actions',
   ({ input, resume, portfolio }) => {
-    const strippedValidation = validateProfile(
-      stripOptionalPresentationData(input),
-    );
+    const strippedValidation = validateProfile(stripOptionalPresentationData(input));
     expect(strippedValidation.ok).toBe(true);
     if (!strippedValidation.ok) {
       throw new Error(
-        strippedValidation.issues
-          .map(({ code, path }) => `${code}@${path}`)
-          .join(', '),
+        strippedValidation.issues.map(({ code, path }) => `${code}@${path}`).join(', ')
       );
     }
 
@@ -230,40 +199,30 @@ test.prop([validProfileProjectionsArbitrary])(
     const basePortfolio = buildPortfolioPresentation(portfolio);
 
     expect(buildResumePresentation(stripped.resume, documentLink)).toEqual(
-      removeOptionalResumeNodes(baseResume),
+      removeOptionalResumeNodes(baseResume)
     );
     expect(buildPortfolioPresentation(stripped.portfolio)).toEqual(
-      removeOptionalPortfolioNodes(basePortfolio),
+      removeOptionalPortfolioNodes(basePortfolio)
     );
-  },
+  }
 );
 
 function resumeSection<Kind extends ResumePresentation['sections'][number]['kind']>(
   presentation: ResumePresentation,
-  kind: Kind,
+  kind: Kind
 ): Extract<ResumePresentation['sections'][number], { kind: Kind }> {
-  const section = presentation.sections.find(
-    (candidate) => candidate.kind === kind,
-  );
+  const section = presentation.sections.find((candidate) => candidate.kind === kind);
   expect(section, `missing résumé ${kind} section`).toBeDefined();
-  return section as Extract<
-    ResumePresentation['sections'][number],
-    { kind: Kind }
-  >;
+  return section as Extract<ResumePresentation['sections'][number], { kind: Kind }>;
 }
 
 function portfolioSection<Kind extends PortfolioPresentation['sections'][number]['kind']>(
   presentation: PortfolioPresentation,
-  kind: Kind,
+  kind: Kind
 ): Extract<PortfolioPresentation['sections'][number], { kind: Kind }> {
-  const section = presentation.sections.find(
-    (candidate) => candidate.kind === kind,
-  );
+  const section = presentation.sections.find((candidate) => candidate.kind === kind);
   expect(section, `missing portfolio ${kind} section`).toBeDefined();
-  return section as Extract<
-    PortfolioPresentation['sections'][number],
-    { kind: Kind }
-  >;
+  return section as Extract<PortfolioPresentation['sections'][number], { kind: Kind }>;
 }
 
 function textFact(fact: PublicFact<string>) {
@@ -272,7 +231,7 @@ function textFact(fact: PublicFact<string>) {
 
 function assertPeriod(
   actual: { factId: string; value: Period; text: string } | undefined,
-  source: PublicFact<Period> | undefined,
+  source: PublicFact<Period> | undefined
 ): void {
   if (source === undefined) {
     expect(actual).toBeUndefined();
@@ -290,10 +249,7 @@ function datePointText(point: Period['start'] | Period['end']): string {
   return point.tag === 'present' ? '현재' : point.value;
 }
 
-function assertTextBlocks(
-  actual: readonly TextBlockView[],
-  source: readonly ContentBlock[],
-): void {
+function assertTextBlocks(actual: readonly TextBlockView[], source: readonly ContentBlock[]): void {
   expect(actual).toHaveLength(source.length);
   for (const [index, block] of actual.entries()) {
     const sourceBlock = source[index];
@@ -319,7 +275,7 @@ function assertContactActions(
     readonly additionalLinks: readonly EvidenceLink[];
   },
   includeDocument: boolean,
-  labels: readonly [string, string],
+  labels: readonly [string, string]
 ): void {
   const documentLink = getResumeDocumentLink();
   const documentAction = actual.find(({ kind }) => kind === 'document');
@@ -345,11 +301,9 @@ function assertContactActions(
   assertEvidenceActions(
     actual.filter(({ kind }) => kind === 'additional'),
     contact.additionalLinks,
-    'additional',
+    'additional'
   );
-  expect(actual).toHaveLength(
-    2 + contact.additionalLinks.length + (includeDocument ? 1 : 0),
-  );
+  expect(actual).toHaveLength(2 + contact.additionalLinks.length + (includeDocument ? 1 : 0));
   if (!includeDocument) {
     expect(documentAction).toBeUndefined();
     return;
@@ -366,7 +320,7 @@ function assertContactActions(
 function assertEvidenceActions(
   actual: readonly ProfileActionView[],
   source: readonly EvidenceLink[],
-  kind: 'additional' | 'evidence' = 'evidence',
+  kind: 'additional' | 'evidence' = 'evidence'
 ): void {
   expect(actual).toHaveLength(source.length);
   for (const [index, action] of actual.entries()) {
@@ -405,11 +359,9 @@ function assertOptionalResumeSections(
       readonly details: readonly ContentBlock[];
       readonly evidence: readonly EvidenceLink[];
     }[];
-  },
+  }
 ): void {
-  const education = presentation.sections.find(
-    ({ kind }) => kind === 'education',
-  );
+  const education = presentation.sections.find(({ kind }) => kind === 'education');
   if (resume.education === undefined) {
     expect(education).toBeUndefined();
   } else {
@@ -420,7 +372,7 @@ function assertOptionalResumeSections(
         const source = resume.education[index];
         expect(entry.title).toEqual(textFact(source.title));
         expect(entry.subtitle).toEqual(
-          source.subtitle === undefined ? undefined : textFact(source.subtitle),
+          source.subtitle === undefined ? undefined : textFact(source.subtitle)
         );
         assertPeriod(entry.period, source.period);
         assertTextBlocks(entry.details, source.details);
@@ -429,22 +381,18 @@ function assertOptionalResumeSections(
     }
   }
 
-  const certifications = presentation.sections.find(
-    ({ kind }) => kind === 'certifications',
-  );
+  const certifications = presentation.sections.find(({ kind }) => kind === 'certifications');
   if (resume.certifications === undefined) {
     expect(certifications).toBeUndefined();
   } else {
     expect(certifications?.kind).toBe('certifications');
     if (certifications?.kind === 'certifications') {
-      expect(itemVector(certifications.entries)).toEqual(
-        itemVector(resume.certifications),
-      );
+      expect(itemVector(certifications.entries)).toEqual(itemVector(resume.certifications));
       for (const [index, entry] of certifications.entries.entries()) {
         const source = resume.certifications[index];
         expect(entry.title).toEqual(textFact(source.title));
         expect(entry.issuer).toEqual(
-          source.issuer === undefined ? undefined : textFact(source.issuer),
+          source.issuer === undefined ? undefined : textFact(source.issuer)
         );
         assertPeriod(entry.period, source.period);
         assertTextBlocks(entry.details, source.details);
@@ -478,9 +426,7 @@ function assertRendererNeutralTree(value: unknown): void {
 
   const record = value as Record<string, unknown>;
   for (const [key, child] of Object.entries(record)) {
-    expect(forbiddenKeys.has(key), `renderer-neutral tree exposed ${key}`).toBe(
-      false,
-    );
+    expect(forbiddenKeys.has(key), `renderer-neutral tree exposed ${key}`).toBe(false);
     assertRendererNeutralTree(child);
   }
   if (Object.hasOwn(record, 'initiallyOpen')) {
@@ -489,9 +435,7 @@ function assertRendererNeutralTree(value: unknown): void {
   if (Object.hasOwn(record, 'href') && Object.hasOwn(record, 'target')) {
     expect(typeof record.href).toBe('string');
     expect(record.href).not.toBe('');
-    expect(['email', 'external', 'internal', 'document']).toContain(
-      record.target,
-    );
+    expect(['email', 'external', 'internal', 'document']).toContain(record.target);
   }
 }
 
@@ -528,9 +472,7 @@ function stripOptionalPresentationData(input: ProfileData): ProfileData {
   return profile as unknown as ProfileData;
 }
 
-function removeOptionalResumeNodes(
-  presentation: ResumePresentation,
-): ResumePresentation {
+function removeOptionalResumeNodes(presentation: ResumePresentation): ResumePresentation {
   const sections: ResumePresentation['sections'][number][] = [];
   for (const section of presentation.sections) {
     if (section.kind === 'education' || section.kind === 'certifications') {
@@ -578,9 +520,7 @@ function removeOptionalResumeNodes(
   } as ResumePresentation;
 }
 
-function removeOptionalPortfolioNodes(
-  presentation: PortfolioPresentation,
-): PortfolioPresentation {
+function removeOptionalPortfolioNodes(presentation: PortfolioPresentation): PortfolioPresentation {
   return {
     ...presentation,
     sections: presentation.sections.map((section) => {
@@ -602,7 +542,7 @@ function removeOptionalPortfolioNodes(
 }
 
 function itemVector(
-  values: readonly { readonly id: string; readonly order: number }[],
+  values: readonly { readonly id: string; readonly order: number }[]
 ): Array<Readonly<{ id: string; order: number }>> {
   return values.map(({ id, order }) => ({ id, order }));
 }

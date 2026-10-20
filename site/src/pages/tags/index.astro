@@ -1,11 +1,13 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getTagIndex } from "../../lib/data";
-import "../../styles/grouped.css";
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getTagIndex } from '../../lib/data';
+import '../../styles/grouped.css';
 
 // The tag index (mockups W7; interaction-spec.md "Tag Chip"): capsule chips
 // at least 44 px tall, most used first. The count is part of each link's
-// name, read as "os, 글 12개"; the "#" is decoration.
+// name, read as "os, 글 12개"; the "#" is decoration. The "#" touches the
+// name: any whitespace between them renders as a space, so that one line is
+// kept out of Prettier, which would otherwise break it apart.
 const tagIndex = getTagIndex();
 const tags = Object.entries(tagIndex).sort((a, b) => b[1].length - a[1].length);
 ---
@@ -19,6 +21,7 @@ const tags = Object.entries(tagIndex).sort((a, b) => b[1].length - a[1].length);
     {tags.map(([tag, posts]) => (
       <li>
         <a href={`/tags/${tag}`} class="tag-chip" aria-label={`${tag}, 글 ${posts.length}개`}>
+          {/* prettier-ignore */}
           <span><span class="tag-chip-mark">#</span>{tag}</span>
           <span class="tag-chip-count">{posts.length}</span>
         </a>

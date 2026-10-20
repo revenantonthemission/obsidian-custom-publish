@@ -1,11 +1,11 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import GraphView from "../islands/GraphView.tsx";
-import GraphList from "../components/GraphList.astro";
-import { getGraph } from "../lib/data";
-import "../styles/segmented.css";
-import "../styles/grouped.css";
-import "../styles/graph.css";
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GraphView from '../islands/GraphView.tsx';
+import GraphList from '../components/GraphList.astro';
+import { getGraph } from '../lib/data';
+import '../styles/segmented.css';
+import '../styles/grouped.css';
+import '../styles/graph.css';
 
 // The graph page (mockups W8; FR4.3, FR4.5, FR5.6). The 그래프 tab holds the
 // force-directed graph, which loads /graph.json itself so it can show loading,
@@ -19,7 +19,13 @@ const graphData = getGraph();
   <header class="graph-header">
     <h1>그래프</h1>
     <div class="graph-tabs segmented" role="tablist" aria-label="그래프 보기 방식" data-tabs>
-      <button type="button" role="tab" id="graph-tab-graph" aria-controls="graph-panel-graph" aria-selected="true">
+      <button
+        type="button"
+        role="tab"
+        id="graph-tab-graph"
+        aria-controls="graph-panel-graph"
+        aria-selected="true"
+      >
         그래프
       </button>
       <button
@@ -49,6 +55,6 @@ const graphData = getGraph();
   </div>
 
   <script>
-    import "../scripts/tabs";
+    import '../scripts/tabs';
   </script>
 </BaseLayout>

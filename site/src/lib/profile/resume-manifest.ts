@@ -42,11 +42,9 @@ export const RESUME_SECTION_ORDER = Object.freeze([
   Object.freeze({ key: 'certifications' as const, order: 6 as const }),
 ]);
 
-export type ResumeSectionKey =
-  (typeof RESUME_SECTION_ORDER)[number]['key'];
+export type ResumeSectionKey = (typeof RESUME_SECTION_ORDER)[number]['key'];
 
-export type ResumeSectionRank =
-  (typeof RESUME_SECTION_ORDER)[number]['order'];
+export type ResumeSectionRank = (typeof RESUME_SECTION_ORDER)[number]['order'];
 
 export interface ResumeSectionOrder {
   readonly key: ResumeSectionKey;
@@ -71,12 +69,7 @@ export interface ResumeEntityOrder extends ResumeEntityIdentity {
 }
 
 export type ResumeManifestValueKind =
-  | 'text'
-  | 'email'
-  | 'github-url'
-  | 'external-url'
-  | 'internal-path'
-  | 'period';
+  'text' | 'email' | 'github-url' | 'external-url' | 'internal-path' | 'period';
 
 export interface ResumeManifestEntry {
   readonly entryOrder: number;
@@ -93,13 +86,9 @@ export interface ResumeManifestEntry {
   readonly normalizedValue: string;
 }
 
-export type ProfileSourceIdentity = CanonicalDigest<
-  typeof PROFILE_SOURCE_DIGEST_DOMAIN
->;
+export type ProfileSourceIdentity = CanonicalDigest<typeof PROFILE_SOURCE_DIGEST_DOMAIN>;
 
-export type ResumeManifestFingerprint = CanonicalDigest<
-  typeof RESUME_FACT_MANIFEST_DIGEST_DOMAIN
->;
+export type ResumeManifestFingerprint = CanonicalDigest<typeof RESUME_FACT_MANIFEST_DIGEST_DOMAIN>;
 
 export interface ResumeFactManifest {
   readonly schemaVersion: typeof RESUME_MANIFEST_SCHEMA_VERSION;
@@ -130,9 +119,7 @@ interface SectionContext {
   readonly order: ResumeSectionRank;
 }
 
-type SnapshotResult =
-  | Readonly<{ ok: true; value: unknown }>
-  | Readonly<{ ok: false }>;
+type SnapshotResult = Readonly<{ ok: true; value: unknown }> | Readonly<{ ok: false }>;
 
 type OwnRecord = Record<string, unknown>;
 
@@ -170,7 +157,7 @@ const YEAR_MONTH_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])$/;
  * `ValidatedProfile` or a page-local `ResumeProfile` for the approved source.
  */
 export async function buildApprovedResumeManifest(
-  source: FactApprovedProfile,
+  source: FactApprovedProfile
 ): Promise<ValidationResult<ResumeFactManifest>> {
   if (!hasVerifiedFactApprovalCapability(source)) {
     return sourceFailure();
@@ -195,7 +182,7 @@ export async function buildApprovedResumeManifest(
  * @internal
  */
 export async function buildResumeManifestForTest(
-  profile: ResumeProfile,
+  profile: ResumeProfile
 ): Promise<ValidationResult<ResumeFactManifest>> {
   try {
     const snapshot = snapshotOwnedData(profile);
@@ -242,7 +229,7 @@ export async function buildResumeManifestForTest(
  */
 export function compareResumeFactManifests(
   expected: ResumeFactManifest,
-  candidate: unknown,
+  candidate: unknown
 ): ValidationResult<ResumeFactManifest> {
   try {
     const expectedSnapshot = snapshotOwnedData(expected);
@@ -265,9 +252,7 @@ export function compareResumeFactManifests(
   }
 }
 
-function inspectApprovedResumeProfile(
-  source: FactApprovedProfile,
-): ResumeProfile | null {
+function inspectApprovedResumeProfile(source: FactApprovedProfile): ResumeProfile | null {
   const snapshot = snapshotOwnedData(source);
   if (!snapshot.ok || !isPlainRecord(snapshot.value)) {
     return null;
@@ -287,9 +272,7 @@ function inspectApprovedResumeProfile(
     return null;
   }
 
-  const validation = validateProfile(
-    sourceRecord.profile as unknown as ProfileData,
-  );
+  const validation = validateProfile(sourceRecord.profile as unknown as ProfileData);
   if (!validation.ok) {
     return null;
   }
@@ -337,29 +320,15 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
   };
 
   const intro = addSection(state, 'intro-contact', 1);
-  addStringFact(
-    state,
-    intro,
-    null,
-    profile.identity.name,
-    'profile.identity.name',
-    'text',
-  );
-  addStringFact(
-    state,
-    intro,
-    null,
-    profile.identity.headline,
-    'profile.identity.headline',
-    'text',
-  );
+  addStringFact(state, intro, null, profile.identity.name, 'profile.identity.name', 'text');
+  addStringFact(state, intro, null, profile.identity.headline, 'profile.identity.headline', 'text');
   addStringFact(
     state,
     intro,
     null,
     profile.resumeSummary,
     'profile.narrative.resumeSummary',
-    'text',
+    'text'
   );
   addContentBlocks(
     state,
@@ -367,49 +336,35 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
     null,
     profile.detailedIntro,
     'profile.narrative.detailedIntro',
-    true,
+    true
   );
-  addStringFact(
-    state,
-    intro,
-    null,
-    profile.contactActions.email,
-    'profile.contact.email',
-    'email',
-  );
+  addStringFact(state, intro, null, profile.contactActions.email, 'profile.contact.email', 'email');
   addStringFact(
     state,
     intro,
     null,
     profile.contactActions.github,
     'profile.contact.github',
-    'github-url',
+    'github-url'
   );
   addEvidenceLinks(
     state,
     intro,
     profile.contactActions.additionalLinks,
     'profile.contact.additionalLinks',
-    null,
+    null
   );
 
   const skills = addSection(state, 'skills', 2);
   for (const group of profile.skillGroups) {
-    const groupEntity = addEntity(
-      state,
-      skills,
-      'skill-group',
-      group.id,
-      group.order,
-      null,
-    );
+    const groupEntity = addEntity(state, skills, 'skill-group', group.id, group.order, null);
     addStringFact(
       state,
       skills,
       groupEntity,
       group.title,
       `profile.skillGroups[id=${group.id}].title`,
-      'text',
+      'text'
     );
 
     for (const skill of group.skills) {
@@ -419,7 +374,7 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
         'skill',
         skill.id,
         skill.order,
-        entityParent(groupEntity),
+        entityParent(groupEntity)
       );
       addStringFact(
         state,
@@ -427,7 +382,7 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
         skillEntity,
         skill.name,
         `profile.skillGroups[id=${group.id}].skills[id=${skill.id}].name`,
-        'text',
+        'text'
       );
     }
   }
@@ -440,54 +395,27 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
       'experience',
       experience.id,
       experience.order,
-      null,
+      null
     );
     const base = `profile.experiences[id=${experience.id}]`;
-    addStringFact(
-      state,
-      highlights,
-      entity,
-      experience.role,
-      `${base}.role`,
-      'text',
-    );
+    addStringFact(state, highlights, entity, experience.role, `${base}.role`, 'text');
     addStringFact(
       state,
       highlights,
       entity,
       experience.organization,
       `${base}.organization`,
-      'text',
+      'text'
     );
-    addPeriodFact(
-      state,
-      highlights,
-      entity,
-      experience.period,
-      `${base}.period`,
-    );
-    addStringFact(
-      state,
-      highlights,
-      entity,
-      experience.summary,
-      `${base}.summary`,
-      'text',
-    );
-    addContentBlocks(
-      state,
-      highlights,
-      entity,
-      experience.details,
-      `${base}.details`,
-      true,
-    );
+    addPeriodFact(state, highlights, entity, experience.period, `${base}.period`);
+    addStringFact(state, highlights, entity, experience.summary, `${base}.summary`, 'text');
+    addContentBlocks(state, highlights, entity, experience.details, `${base}.details`, true);
     addEvidenceLinks(
       state,
       highlights,
       experience.evidence,
       `${base}.evidence`,
-      entityParent(entity),
+      entityParent(entity)
     );
   }
 
@@ -498,78 +426,31 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
       'achievement',
       achievement.id,
       achievement.order,
-      null,
+      null
     );
     const base = `profile.achievements[id=${achievement.id}]`;
-    addStringFact(
-      state,
-      highlights,
-      entity,
-      achievement.title,
-      `${base}.title`,
-      'text',
-    );
+    addStringFact(state, highlights, entity, achievement.title, `${base}.title`, 'text');
     if (achievement.period !== undefined) {
-      addPeriodFact(
-        state,
-        highlights,
-        entity,
-        achievement.period,
-        `${base}.period`,
-      );
+      addPeriodFact(state, highlights, entity, achievement.period, `${base}.period`);
     }
-    addStringFact(
-      state,
-      highlights,
-      entity,
-      achievement.summary,
-      `${base}.summary`,
-      'text',
-    );
-    addContentBlocks(
-      state,
-      highlights,
-      entity,
-      achievement.details,
-      `${base}.details`,
-      true,
-    );
+    addStringFact(state, highlights, entity, achievement.summary, `${base}.summary`, 'text');
+    addContentBlocks(state, highlights, entity, achievement.details, `${base}.details`, true);
     addEvidenceLinks(
       state,
       highlights,
       achievement.evidence,
       `${base}.evidence`,
-      entityParent(entity),
+      entityParent(entity)
     );
   }
 
   const projects = addSection(state, 'project-summaries', 4);
   for (const project of profile.projectSummaries) {
-    const entity = addEntity(
-      state,
-      projects,
-      'project',
-      project.id,
-      project.order,
-      null,
-    );
+    const entity = addEntity(state, projects, 'project', project.id, project.order, null);
     const base = `profile.projects[id=${project.id}]`;
-    addStringFact(
-      state,
-      projects,
-      entity,
-      project.title,
-      `${base}.title`,
-      'text',
-    );
+    addStringFact(state, projects, entity, project.title, `${base}.title`, 'text');
     if (project.period !== undefined) {
-      addPeriodFact(
-        state,
-        projects,
-        entity,
-        project.period,
-        `${base}.period`,
-      );
+      addPeriodFact(state, projects, entity, project.period, `${base}.period`);
     }
     addStringFact(
       state,
@@ -577,7 +458,7 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
       entity,
       project.outcomeSummary,
       `${base}.outcomeSummary`,
-      'text',
+      'text'
     );
     if (project.details !== undefined) {
       addContentBlocks(state, projects, entity, project.details, `${base}.resumeDetails`, true);
@@ -593,17 +474,10 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
         'education',
         education.id,
         education.order,
-        null,
+        null
       );
       const base = `profile.education[id=${education.id}]`;
-      addStringFact(
-        state,
-        educationSection,
-        entity,
-        education.title,
-        `${base}.title`,
-        'text',
-      );
+      addStringFact(state, educationSection, entity, education.title, `${base}.title`, 'text');
       if (education.subtitle !== undefined) {
         addStringFact(
           state,
@@ -611,17 +485,11 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
           entity,
           education.subtitle,
           `${base}.subtitle`,
-          'text',
+          'text'
         );
       }
       if (education.period !== undefined) {
-        addPeriodFact(
-          state,
-          educationSection,
-          entity,
-          education.period,
-          `${base}.period`,
-        );
+        addPeriodFact(state, educationSection, entity, education.period, `${base}.period`);
       }
       addContentBlocks(
         state,
@@ -629,14 +497,14 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
         entity,
         education.details,
         `${base}.details`,
-        false,
+        false
       );
       addEvidenceLinks(
         state,
         educationSection,
         education.evidence,
         `${base}.evidence`,
-        entityParent(entity),
+        entityParent(entity)
       );
     }
   }
@@ -650,17 +518,16 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
         'certification',
         certification.id,
         certification.order,
-        null,
+        null
       );
-      const base =
-        `profile.certifications[id=${certification.id}]`;
+      const base = `profile.certifications[id=${certification.id}]`;
       addStringFact(
         state,
         certificationSection,
         entity,
         certification.title,
         `${base}.title`,
-        'text',
+        'text'
       );
       if (certification.issuer !== undefined) {
         addStringFact(
@@ -669,17 +536,11 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
           entity,
           certification.issuer,
           `${base}.issuer`,
-          'text',
+          'text'
         );
       }
       if (certification.period !== undefined) {
-        addPeriodFact(
-          state,
-          certificationSection,
-          entity,
-          certification.period,
-          `${base}.period`,
-        );
+        addPeriodFact(state, certificationSection, entity, certification.period, `${base}.period`);
       }
       addContentBlocks(
         state,
@@ -687,14 +548,14 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
         entity,
         certification.details,
         `${base}.details`,
-        false,
+        false
       );
       addEvidenceLinks(
         state,
         certificationSection,
         certification.evidence,
         `${base}.evidence`,
-        entityParent(entity),
+        entityParent(entity)
       );
     }
   }
@@ -709,7 +570,7 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
 function addSection(
   state: MutableManifest,
   key: ResumeSectionKey,
-  order: ResumeSectionRank,
+  order: ResumeSectionRank
 ): SectionContext {
   const canonical = RESUME_SECTION_ORDER[order - 1];
   if (canonical?.key !== key || canonical.order !== order) {
@@ -727,7 +588,7 @@ function addEntity<Kind extends EntityKind>(
   kind: Kind,
   id: EntityId<Kind>,
   order: DisplayOrder,
-  parent: ResumeEntityParent | null,
+  parent: ResumeEntityParent | null
 ): ResumeEntityIdentity {
   assertIdentifier(id);
   assertDisplayOrder(order);
@@ -755,14 +616,12 @@ function addEntity<Kind extends EntityKind>(
               kind: parent.kind,
               id: parent.id,
             }),
-    }),
+    })
   );
   return entity;
 }
 
-function entityParent(
-  entity: ResumeEntityIdentity,
-): ResumeEntityParent {
+function entityParent(entity: ResumeEntityIdentity): ResumeEntityParent {
   return Object.freeze({
     kind: entity.kind,
     id: entity.id,
@@ -775,19 +634,11 @@ function addStringFact<Value extends string>(
   entity: ResumeEntityIdentity | null,
   fact: PublicFact<Value>,
   rawPath: string,
-  valueKind: Exclude<ResumeManifestValueKind, 'period'>,
+  valueKind: Exclude<ResumeManifestValueKind, 'period'>
 ): void {
   assertFact(fact);
   assertNormalizedString(fact.value);
-  addEntry(
-    state,
-    section,
-    entity,
-    fact.factId,
-    rawPath,
-    valueKind,
-    fact.value,
-  );
+  addEntry(state, section, entity, fact.factId, rawPath, valueKind, fact.value);
 }
 
 function addPeriodFact(
@@ -795,18 +646,10 @@ function addPeriodFact(
   section: SectionContext,
   entity: ResumeEntityIdentity,
   fact: PublicFact<Period>,
-  rawPath: string,
+  rawPath: string
 ): void {
   assertFact(fact);
-  addEntry(
-    state,
-    section,
-    entity,
-    fact.factId,
-    rawPath,
-    'period',
-    serializePeriod(fact.value),
-  );
+  addEntry(state, section, entity, fact.factId, rawPath, 'period', serializePeriod(fact.value));
 }
 
 function addContentBlocks(
@@ -815,7 +658,7 @@ function addContentBlocks(
   entity: ResumeEntityIdentity | null,
   blocks: readonly ContentBlock[],
   base: string,
-  required: boolean,
+  required: boolean
 ): void {
   assertDenseArray(blocks);
   if (required && blocks.length === 0) {
@@ -826,14 +669,7 @@ function addContentBlocks(
     assertPlainRecord(block);
     if (block.tag === 'paragraph') {
       assertExactKeys(block, ['tag', 'text']);
-      addStringFact(
-        state,
-        section,
-        entity,
-        block.text,
-        `${base}[${blockIndex}].text`,
-        'text',
-      );
+      addStringFact(state, section, entity, block.text, `${base}[${blockIndex}].text`, 'text');
       return;
     }
 
@@ -855,7 +691,7 @@ function addContentBlocks(
         entity,
         item,
         `${base}[${blockIndex}].items[${itemIndex}]`,
-        'text',
+        'text'
       );
     });
   });
@@ -866,36 +702,16 @@ function addEvidenceLinks(
   section: SectionContext,
   links: readonly EvidenceLink[],
   base: string,
-  parent: ResumeEntityParent | null,
+  parent: ResumeEntityParent | null
 ): void {
   assertStrictOrder(links);
 
   for (const link of links) {
     assertExactKeys(link, ['id', 'order', 'label', 'destination']);
-    const entity = addEntity(
-      state,
-      section,
-      'evidence-link',
-      link.id,
-      link.order,
-      parent,
-    );
+    const entity = addEntity(state, section, 'evidence-link', link.id, link.order, parent);
     const linkBase = `${base}[id=${link.id}]`;
-    addStringFact(
-      state,
-      section,
-      entity,
-      link.label,
-      `${linkBase}.label`,
-      'text',
-    );
-    addDestinationFact(
-      state,
-      section,
-      entity,
-      link.destination,
-      `${linkBase}.destination`,
-    );
+    addStringFact(state, section, entity, link.label, `${linkBase}.label`, 'text');
+    addDestinationFact(state, section, entity, link.destination, `${linkBase}.destination`);
   }
 }
 
@@ -904,7 +720,7 @@ function addDestinationFact(
   section: SectionContext,
   entity: ResumeEntityIdentity,
   fact: EvidenceLink['destination'],
-  rawPath: string,
+  rawPath: string
 ): void {
   assertFact(fact);
   assertPlainRecord(fact.value);
@@ -912,27 +728,11 @@ function addDestinationFact(
   assertNormalizedString(fact.value.value);
 
   if (fact.value.tag === 'external') {
-    addEntry(
-      state,
-      section,
-      entity,
-      fact.factId,
-      rawPath,
-      'external-url',
-      fact.value.value,
-    );
+    addEntry(state, section, entity, fact.factId, rawPath, 'external-url', fact.value.value);
     return;
   }
   if (fact.value.tag === 'internal') {
-    addEntry(
-      state,
-      section,
-      entity,
-      fact.factId,
-      rawPath,
-      'internal-path',
-      fact.value.value,
-    );
+    addEntry(state, section, entity, fact.factId, rawPath, 'internal-path', fact.value.value);
     return;
   }
   throw new TypeError('Invalid résumé evidence destination.');
@@ -945,7 +745,7 @@ function addEntry(
   factId: FactId,
   rawPath: string,
   valueKind: ResumeManifestValueKind,
-  normalizedValue: string,
+  normalizedValue: string
 ): void {
   assertIdentifier(factId);
   if (state.factIds.has(factId)) {
@@ -976,7 +776,7 @@ function addEntry(
       path,
       valueKind,
       normalizedValue,
-    }),
+    })
   );
 }
 
@@ -992,28 +792,20 @@ function serializePeriod(period: Period): string {
   }
 
   const end = serializeDatePoint(period.end);
-  if (
-    period.start.tag !== period.end.tag ||
-    period.end.value < period.start.value
-  ) {
+  if (period.start.tag !== period.end.tag || period.end.value < period.start.value) {
     throw new TypeError('Invalid résumé period range.');
   }
   return `start:${start}|end:${end}`;
 }
 
-function serializeDatePoint(
-  point: Period['start'],
-): string {
+function serializeDatePoint(point: Period['start']): string {
   assertPlainRecord(point);
   assertExactKeys(point, ['tag', 'value']);
 
   if (point.tag === 'year' && YEAR_PATTERN.test(point.value)) {
     return `year:${point.value}`;
   }
-  if (
-    point.tag === 'year-month' &&
-    YEAR_MONTH_PATTERN.test(point.value)
-  ) {
+  if (point.tag === 'year-month' && YEAR_MONTH_PATTERN.test(point.value)) {
     return `year-month:${point.value}`;
   }
   throw new TypeError('Invalid résumé period point.');
@@ -1033,11 +825,7 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
   assertPlainRecord(profile.identity);
   assertExactKeys(profile.identity, ['name', 'headline']);
   assertPlainRecord(profile.contactActions);
-  assertExactKeys(profile.contactActions, [
-    'email',
-    'github',
-    'additionalLinks',
-  ]);
+  assertExactKeys(profile.contactActions, ['email', 'github', 'additionalLinks']);
 
   assertDenseArray(profile.detailedIntro);
   if (profile.detailedIntro.length === 0) {
@@ -1080,22 +868,19 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
     assertOptionalEntityKeys(
       achievement,
       ['id', 'order', 'title', 'summary', 'details', 'evidence'],
-      ['period'],
+      ['period']
     );
   }
 
   assertStrictOrder(profile.projectSummaries);
-  if (
-    profile.projectSummaries.length < 1 ||
-    profile.projectSummaries.length > 6
-  ) {
+  if (profile.projectSummaries.length < 1 || profile.projectSummaries.length > 6) {
     throw new TypeError('Résumé project summary count is invalid.');
   }
   for (const project of profile.projectSummaries) {
     assertOptionalEntityKeys(
       project,
       ['id', 'order', 'title', 'outcomeSummary'],
-      ['period', 'details'],
+      ['period', 'details']
     );
     if (hasOwn(project, 'details') && project.details === undefined) {
       throw new TypeError('Résumé project details cannot be explicitly undefined.');
@@ -1114,16 +899,14 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
       assertOptionalEntityKeys(
         education,
         ['id', 'order', 'title', 'details', 'evidence'],
-        ['subtitle', 'period'],
+        ['subtitle', 'period']
       );
     }
   }
 
   if (hasOwn(profile, 'certifications')) {
     if (profile.certifications === undefined) {
-      throw new TypeError(
-        'Résumé certifications cannot be explicitly undefined.',
-      );
+      throw new TypeError('Résumé certifications cannot be explicitly undefined.');
     }
     assertStrictOrder(profile.certifications);
     if (profile.certifications.length === 0) {
@@ -1133,7 +916,7 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
       assertOptionalEntityKeys(
         certification,
         ['id', 'order', 'title', 'details', 'evidence'],
-        ['issuer', 'period'],
+        ['issuer', 'period']
       );
     }
   }
@@ -1142,7 +925,7 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
 function assertOptionalEntityKeys(
   value: object,
   required: readonly string[],
-  optional: readonly string[],
+  optional: readonly string[]
 ): void {
   const presentOptional = optional.filter((key) => hasOwn(value, key));
   for (const key of presentOptional) {
@@ -1158,9 +941,9 @@ function assertOptionalEntityKeys(
   assertExactKeys(value, [...required, ...presentOptional]);
 }
 
-function assertStrictOrder<
-  Value extends Readonly<{ id: string; order: number }>,
->(values: readonly Value[]): void {
+function assertStrictOrder<Value extends Readonly<{ id: string; order: number }>>(
+  values: readonly Value[]
+): void {
   assertDenseArray(values);
   let previous = 0;
   for (const value of values) {
@@ -1174,9 +957,7 @@ function assertStrictOrder<
   }
 }
 
-function assertFact<Value>(
-  fact: PublicFact<Value>,
-): void {
+function assertFact<Value>(fact: PublicFact<Value>): void {
   assertPlainRecord(fact);
   assertExactKeys(fact, ['factId', 'value']);
   assertIdentifier(fact.factId);
@@ -1194,50 +975,37 @@ function assertNormalizedString(value: unknown): asserts value is string {
   }
 }
 
-function assertDisplayOrder(
-  value: unknown,
-): asserts value is DisplayOrder {
+function assertDisplayOrder(value: unknown): asserts value is DisplayOrder {
   if (!Number.isSafeInteger(value) || (value as number) <= 0) {
     throw new TypeError('Invalid résumé display order.');
   }
 }
 
-function assertIdentifier(
-  value: unknown,
-): asserts value is FactId {
+function assertIdentifier(value: unknown): asserts value is FactId {
   if (typeof value !== 'string' || !IDENTIFIER_PATTERN.test(value)) {
     throw new TypeError('Invalid résumé stable identifier.');
   }
 }
 
-function assertPlainRecord(
-  value: unknown,
-): asserts value is OwnRecord {
+function assertPlainRecord(value: unknown): asserts value is OwnRecord {
   if (!isPlainRecord(value)) {
     throw new TypeError('Expected a plain résumé record.');
   }
 }
 
-function assertDenseArray(
-  value: unknown,
-): asserts value is readonly unknown[] {
+function assertDenseArray(value: unknown): asserts value is readonly unknown[] {
   if (!Array.isArray(value)) {
     throw new TypeError('Expected a résumé array.');
   }
 }
 
-function assertExactKeys(
-  value: object,
-  keys: readonly string[],
-): void {
+function assertExactKeys(value: object, keys: readonly string[]): void {
   if (!hasExactKeys(value, keys)) {
     throw new TypeError('Unexpected résumé record shape.');
   }
 }
 
-function isResumeManifestSnapshot(
-  value: unknown,
-): boolean {
+function isResumeManifestSnapshot(value: unknown): boolean {
   if (
     !isPlainRecord(value) ||
     !hasExactKeys(value, [
@@ -1249,14 +1017,8 @@ function isResumeManifestSnapshot(
       'fingerprint',
     ]) ||
     value.schemaVersion !== RESUME_MANIFEST_SCHEMA_VERSION ||
-    !isCanonicalDigestSnapshot(
-      value.sourceIdentity,
-      PROFILE_SOURCE_DIGEST_DOMAIN,
-    ) ||
-    !isCanonicalDigestSnapshot(
-      value.fingerprint,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-    ) ||
+    !isCanonicalDigestSnapshot(value.sourceIdentity, PROFILE_SOURCE_DIGEST_DOMAIN) ||
+    !isCanonicalDigestSnapshot(value.fingerprint, RESUME_FACT_MANIFEST_DIGEST_DOMAIN) ||
     !Array.isArray(value.sectionOrder) ||
     !Array.isArray(value.entityOrder) ||
     !Array.isArray(value.entries)
@@ -1284,14 +1046,10 @@ function isResumeManifestSnapshot(
       return false;
     }
     const previousOrder =
-      index === 0 || !isPlainRecord(sections[index - 1])
-        ? 0
-        : sections[index - 1].order;
+      index === 0 || !isPlainRecord(sections[index - 1]) ? 0 : sections[index - 1].order;
     if (
       index >= 4 &&
-      (typeof previousOrder !== 'number' ||
-        section.order <= previousOrder ||
-        section.order < 5)
+      (typeof previousOrder !== 'number' || section.order <= previousOrder || section.order < 5)
     ) {
       return false;
     }
@@ -1302,14 +1060,7 @@ function isResumeManifestSnapshot(
   for (const entity of value.entityOrder) {
     if (
       !isPlainRecord(entity) ||
-      !hasExactKeys(entity, [
-        'sectionKey',
-        'sectionOrder',
-        'kind',
-        'id',
-        'order',
-        'parent',
-      ]) ||
+      !hasExactKeys(entity, ['sectionKey', 'sectionOrder', 'kind', 'id', 'order', 'parent']) ||
       !isEntityKind(entity.kind) ||
       !isIdentifier(entity.id) ||
       !isPositiveInteger(entity.order) ||
@@ -1367,18 +1118,10 @@ function isResumeManifestSnapshot(
   return value.entries.length > 0;
 }
 
-function isCanonicalDigestSnapshot(
-  value: unknown,
-  domain: string,
-): boolean {
+function isCanonicalDigestSnapshot(value: unknown, domain: string): boolean {
   return (
     isPlainRecord(value) &&
-    hasExactKeys(value, [
-      'domain',
-      'schemaVersion',
-      'algorithm',
-      'digest',
-    ]) &&
+    hasExactKeys(value, ['domain', 'schemaVersion', 'algorithm', 'digest']) &&
     value.domain === domain &&
     value.schemaVersion === 1 &&
     value.algorithm === 'sha256' &&
@@ -1420,9 +1163,7 @@ function isEntityKind(value: unknown): value is EntityKind {
   );
 }
 
-function isManifestValueKind(
-  value: unknown,
-): value is ResumeManifestValueKind {
+function isManifestValueKind(value: unknown): value is ResumeManifestValueKind {
   return (
     value === 'text' ||
     value === 'email' ||
@@ -1433,13 +1174,8 @@ function isManifestValueKind(
   );
 }
 
-function isResumeSection(
-  key: string,
-  order: unknown,
-): boolean {
-  return RESUME_SECTION_ORDER.some(
-    (section) => section.key === key && section.order === order,
-  );
+function isResumeSection(key: string, order: unknown): boolean {
+  return RESUME_SECTION_ORDER.some((section) => section.key === key && section.order === order);
 }
 
 function snapshotOwnedData(value: unknown): SnapshotResult {
@@ -1450,15 +1186,8 @@ function snapshotOwnedData(value: unknown): SnapshotResult {
   }
 }
 
-function snapshotOwnedDataInternal(
-  value: unknown,
-  ancestors: WeakSet<object>,
-): SnapshotResult {
-  if (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'boolean'
-  ) {
+function snapshotOwnedDataInternal(value: unknown, ancestors: WeakSet<object>): SnapshotResult {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return Object.freeze({ ok: true, value });
   }
   if (typeof value === 'number') {
@@ -1478,10 +1207,7 @@ function snapshotOwnedDataInternal(
   return result;
 }
 
-function snapshotArray(
-  value: readonly unknown[],
-  ancestors: WeakSet<object>,
-): SnapshotResult {
+function snapshotArray(value: readonly unknown[], ancestors: WeakSet<object>): SnapshotResult {
   const lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
   if (
     lengthDescriptor === undefined ||
@@ -1498,9 +1224,7 @@ function snapshotArray(
   if (
     keys.length !== length + 1 ||
     keys.some(
-      (key) =>
-        typeof key !== 'string' ||
-        (key !== 'length' && !/^(?:0|[1-9]\d*)$/.test(key)),
+      (key) => typeof key !== 'string' || (key !== 'length' && !/^(?:0|[1-9]\d*)$/.test(key))
     )
   ) {
     return Object.freeze({ ok: false });
@@ -1529,20 +1253,14 @@ function snapshotArray(
   });
 }
 
-function snapshotRecord(
-  value: object,
-  ancestors: WeakSet<object>,
-): SnapshotResult {
+function snapshotRecord(value: object, ancestors: WeakSet<object>): SnapshotResult {
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) {
     return Object.freeze({ ok: false });
   }
 
   const keys = Reflect.ownKeys(value);
-  if (
-    keys.length > 1_000 ||
-    keys.some((key) => typeof key !== 'string')
-  ) {
+  if (keys.length > 1_000 || keys.some((key) => typeof key !== 'string')) {
     return Object.freeze({ ok: false });
   }
 
@@ -1572,19 +1290,11 @@ function snapshotRecord(
   });
 }
 
-function deepStructuralEqual(
-  left: unknown,
-  right: unknown,
-): boolean {
+function deepStructuralEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) {
     return true;
   }
-  if (
-    left === null ||
-    right === null ||
-    typeof left !== 'object' ||
-    typeof right !== 'object'
-  ) {
+  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
     return false;
   }
   if (Array.isArray(left) || Array.isArray(right)) {
@@ -1592,32 +1302,21 @@ function deepStructuralEqual(
       Array.isArray(left) &&
       Array.isArray(right) &&
       left.length === right.length &&
-      left.every((value, index) =>
-        deepStructuralEqual(value, right[index]),
-      )
+      left.every((value, index) => deepStructuralEqual(value, right[index]))
     );
   }
 
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
-  if (
-    leftKeys.length !== rightKeys.length ||
-    leftKeys.some((key) => !hasOwn(right, key))
-  ) {
+  if (leftKeys.length !== rightKeys.length || leftKeys.some((key) => !hasOwn(right, key))) {
     return false;
   }
   return leftKeys.every((key) =>
-    deepStructuralEqual(
-      (left as OwnRecord)[key],
-      (right as OwnRecord)[key],
-    ),
+    deepStructuralEqual((left as OwnRecord)[key], (right as OwnRecord)[key])
   );
 }
 
-function hasExactKeys(
-  value: object,
-  expected: readonly string[],
-): boolean {
+function hasExactKeys(value: object, expected: readonly string[]): boolean {
   const keys = Reflect.ownKeys(value);
   return (
     keys.length === expected.length &&
@@ -1649,9 +1348,7 @@ function isSha256(value: unknown): value is string {
 function isTimestamp(value: unknown): value is string {
   return (
     typeof value === 'string' &&
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
-      value,
-    ) &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) &&
     Number.isFinite(Date.parse(value))
   );
 }
@@ -1660,9 +1357,7 @@ function isPositiveInteger(value: unknown): value is number {
   return Number.isSafeInteger(value) && (value as number) > 0;
 }
 
-function freezeArray<Value>(
-  values: readonly Value[],
-): readonly Value[] {
+function freezeArray<Value>(values: readonly Value[]): readonly Value[] {
   return Object.freeze([...values]);
 }
 
@@ -1677,31 +1372,16 @@ function deepFreezeOwned<Value>(value: Value): Value {
 }
 
 function sourceFailure(): ValidationResult<never> {
-  return failure(
-    createValidationIssue(
-      'document.source.invalid',
-      'profile.document.source',
-    ),
-  );
+  return failure(createValidationIssue('document.source.invalid', 'profile.document.source'));
 }
 
 function parityFailure(): ValidationResult<never> {
-  return failure(
-    createValidationIssue(
-      'document.parity',
-      'profile.document.parity',
-    ),
-  );
+  return failure(createValidationIssue('document.parity', 'profile.document.parity'));
 }
 
-function failure(
-  issue: ValidationIssue,
-): ValidationResult<never> {
+function failure(issue: ValidationIssue): ValidationResult<never> {
   return Object.freeze({
     ok: false,
-    issues: Object.freeze([issue]) as readonly [
-      ValidationIssue,
-      ...ValidationIssue[],
-    ],
+    issues: Object.freeze([issue]) as readonly [ValidationIssue, ...ValidationIssue[]],
   });
 }

@@ -19,9 +19,7 @@ type MutableComposeVerificationEvidenceInput = {
 
 afterEach(async () => {
   await Promise.all(
-    fixtureRoots.splice(0).map((root) =>
-      rm(root, { recursive: true, force: true }),
-    ),
+    fixtureRoots.splice(0).map((root) => rm(root, { recursive: true, force: true }))
   );
 });
 
@@ -33,11 +31,9 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
 
     expect(result.result).toBe('pass');
     expect(result.accessibilityReviewSubject.digest).toBe(
-      fixture.accessibilityReviewSubject.digest,
+      fixture.accessibilityReviewSubject.digest
     );
-    expect(result.groups.browser.completedMatrix).toEqual(
-      verificationEvidenceSchema.browserMatrix,
-    );
+    expect(result.groups.browser.completedMatrix).toEqual(verificationEvidenceSchema.browserMatrix);
   });
 
   test('requires sixteen manual states with closed and open disclosures on both routes', () => {
@@ -47,36 +43,34 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
         for (const theme of ['light', 'dark']) {
           for (const details of ['closed', 'all-open']) {
             expect(verificationEvidenceSchema.manualMatrix).toContain(
-              `${route}|chromium|${viewport}|${theme}|${details}`,
+              `${route}|chromium|${viewport}|${theme}|${details}`
             );
           }
         }
       }
     }
     expect(
-      verificationEvidenceSchema.manualMatrix.some((key) =>
-        key.endsWith('|not-applicable'),
-      ),
+      verificationEvidenceSchema.manualMatrix.some((key) => key.endsWith('|not-applicable'))
     ).toBe(false);
   });
 
   test('rejects the historical twelve-state review even with the current subject digest', () => {
     const fixture = createCompleteEvidenceFixture();
-    fixture.manualWebAccessibilityRecord.states =
-      fixture.manualWebAccessibilityRecord.states
-        .filter((state: { route: string; details: string }) =>
-          state.route !== '/portfolio' || state.details === 'closed',
-        )
-        .map((state: { route: string; details: string }) => ({
-          ...state,
-          details: state.route === '/portfolio' ? 'not-applicable' : state.details,
-        }));
+    fixture.manualWebAccessibilityRecord.states = fixture.manualWebAccessibilityRecord.states
+      .filter(
+        (state: { route: string; details: string }) =>
+          state.route !== '/portfolio' || state.details === 'closed'
+      )
+      .map((state: { route: string; details: string }) => ({
+        ...state,
+        details: state.route === '/portfolio' ? 'not-applicable' : state.details,
+      }));
 
     expect(fixture.manualWebAccessibilityRecord.states).toHaveLength(12);
     expect(() => composeVerificationEvidence(fixture)).toThrow(
       expect.objectContaining({
         code: 'MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE',
-      }),
+      })
     );
   });
 
@@ -84,7 +78,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     const fixture = createCompleteEvidenceFixture();
     const opened = fixture.manualWebAccessibilityRecord.states.find(
       (state: { route: string; details: string }) =>
-        state.route === '/portfolio' && state.details === 'all-open',
+        state.route === '/portfolio' && state.details === 'all-open'
     );
     expect(opened).toBeDefined();
     opened.details = 'closed';
@@ -93,7 +87,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(() => composeVerificationEvidence(fixture)).toThrow(
       expect.objectContaining({
         code: 'MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE',
-      }),
+      })
     );
   });
 
@@ -108,7 +102,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     };
 
     expect(() => composeVerificationEvidence(fixture)).toThrow(
-      expect.objectContaining({ code: 'BROWSER_EVIDENCE_INCOMPLETE' }),
+      expect.objectContaining({ code: 'BROWSER_EVIDENCE_INCOMPLETE' })
     );
   });
 
@@ -119,7 +113,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(() => composeVerificationEvidence(fixture)).toThrow(
       expect.objectContaining({
         code: 'LINK_METADATA_EVIDENCE_INCOMPLETE',
-      }),
+      })
     );
   });
 
@@ -140,7 +134,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(() => composeVerificationEvidence(fixture)).toThrow(
       expect.objectContaining({
         code: 'ASSET_BUDGET_EVIDENCE_INCOMPLETE',
-      }),
+      })
     );
   });
 
@@ -153,7 +147,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(() => composeVerificationEvidence(fixture)).toThrow(
       expect.objectContaining({
         code: 'REQUEST_LEDGER_EVIDENCE_INCOMPLETE',
-      }),
+      })
     );
   });
 
@@ -173,7 +167,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(() => composeVerificationEvidence(fixture)).toThrow(
       expect.objectContaining({
         code: 'MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE',
-      }),
+      })
     );
   });
 
@@ -181,7 +175,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     const commandFixture = createCompleteEvidenceFixture();
     commandFixture.command = '';
     expect(() => composeVerificationEvidence(commandFixture)).toThrow(
-      expect.objectContaining({ code: 'VERIFICATION_COMMAND_INVALID' }),
+      expect.objectContaining({ code: 'VERIFICATION_COMMAND_INVALID' })
     );
 
     const linkFixture = createCompleteEvidenceFixture();
@@ -190,29 +184,27 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(() => composeVerificationEvidence(linkFixture)).toThrow(
       expect.objectContaining({
         code: 'LINK_METADATA_EVIDENCE_INCOMPLETE',
-      }),
+      })
     );
   });
 
   test('binds request observations to the exact clean manifest digest and outputs', () => {
     const digestFixture = createCompleteEvidenceFixture();
-    digestFixture.requestLedgerEvidence.staticAssetEvidence.manifestSha256 =
-      '0'.repeat(64);
+    digestFixture.requestLedgerEvidence.staticAssetEvidence.manifestSha256 = '0'.repeat(64);
     expect(() => composeVerificationEvidence(digestFixture)).toThrow(
       expect.objectContaining({
         code: 'REQUEST_LEDGER_EVIDENCE_INCOMPLETE',
-      }),
+      })
     );
 
     const outputFixture = createCompleteEvidenceFixture();
-    outputFixture.buildManifest.outputFiles =
-      outputFixture.buildManifest.outputFiles.filter(
-        ({ path }: { path: string }) => path !== '_astro/profile.woff2',
-      );
+    outputFixture.buildManifest.outputFiles = outputFixture.buildManifest.outputFiles.filter(
+      ({ path }: { path: string }) => path !== '_astro/profile.woff2'
+    );
     expect(() => composeVerificationEvidence(outputFixture)).toThrow(
       expect.objectContaining({
         code: 'VERIFICATION_BUILD_MANIFEST_IDENTITY_MISMATCH',
-      }),
+      })
     );
   });
 
@@ -224,7 +216,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     // changes what a reviewer sees, so prior reviews have to go stale.
     await writeFile(
       join(fixture.siteRoot, 'src/styles/global.css'),
-      ':root { --c-accent: #0f766e; }\n',
+      ':root { --c-accent: #0f766e; }\n'
     );
     const afterStyleChange = await computeAccessibilityReviewSubject(fixture);
 
@@ -235,7 +227,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     // single rendered pixel.
     await writeFile(
       join(fixture.siteRoot, 'playwright.config.ts'),
-      'export default { retries: 0 };\n',
+      'export default { retries: 0 };\n'
     );
     const afterRunnerChange = await computeAccessibilityReviewSubject(fixture);
 
@@ -244,11 +236,9 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     expect(afterRunnerChange.digest).toBe(afterStyleChange.digest);
     // The provider must never again be its own review subject.
     expect(verificationEvidenceSchema.reviewSubjectSourceFiles).not.toContain(
-      'scripts/profile/verification-provider.mjs',
+      'scripts/profile/verification-provider.mjs'
     );
-    expect(first.authoredFiles.map(({ path }) => path)).toContain(
-      'package-lock.json',
-    );
+    expect(first.authoredFiles.map(({ path }) => path)).toContain('package-lock.json');
     expect(first.buildAssets).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -259,7 +249,7 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
           route: '/portfolio',
           kind: 'route-js',
         }),
-      ]),
+      ])
     );
   });
 
@@ -273,12 +263,9 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
     // point is that a *legitimately different build* must not restage human
     // review work.
     const changed = '.profile{display:flex}';
-    await writeFile(
-      join(fixture.siteRoot, 'dist/_astro/profile.css'),
-      changed,
-    );
+    await writeFile(join(fixture.siteRoot, 'dist/_astro/profile.css'), changed);
     const entry = fixture.manifest.outputFiles.find(
-      ({ path }: { path: string }) => path === '_astro/profile.css',
+      ({ path }: { path: string }) => path === '_astro/profile.css'
     );
     if (entry === undefined) {
       throw new Error('fixture is missing the profile stylesheet');
@@ -294,11 +281,9 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
   });
 
   test('never reclassifies a mixed or semantic Playwright failure as startup-retryable', () => {
-    const classify =
-      verificationProviderTesting
-        .isEligibleIsolatedBrowserLaunchFailure as (
-          input: Record<string, unknown>,
-        ) => boolean;
+    const classify = verificationProviderTesting.isEligibleIsolatedBrowserLaunchFailure as (
+      input: Record<string, unknown>
+    ) => boolean;
     const launchFailure = {
       stage: 'startup.browser.launch',
       result: 'fail',
@@ -311,14 +296,14 @@ describe('LC-U1-18 fail-closed verification evidence', () => {
         executionPhase: 'playwright-verification',
         processEvidence: failedProcess,
         launchFailure,
-      }),
+      })
     ).toBe(false);
     expect(
       classify({
         executionPhase: 'browser-preflight',
         processEvidence: failedProcess,
         launchFailure,
-      }),
+      })
     ).toBe(true);
   });
 });
@@ -373,12 +358,7 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
     initialRollupGraphs: {},
     rollupGraphs: {},
     viteManifest: {},
-    outputFiles: [
-      resumeDocument,
-      portfolioDocument,
-      stylesheet,
-      font,
-    ],
+    outputFiles: [resumeDocument, portfolioDocument, stylesheet, font],
   };
   buildIdentity.sourceGraphSha256 = digest(
     JSON.stringify({
@@ -387,17 +367,15 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
       initialRollupGraphs: buildManifest.initialRollupGraphs,
       rollupGraphs: buildManifest.rollupGraphs,
       viteManifest: buildManifest.viteManifest,
-    }),
+    })
   );
-  buildIdentity.outputSha256 = digest(
-    JSON.stringify(buildManifest.outputFiles),
-  );
+  buildIdentity.outputSha256 = digest(JSON.stringify(buildManifest.outputFiles));
   buildIdentity.id = digest(
     JSON.stringify({
       sourceGraphSha256: buildIdentity.sourceGraphSha256,
       outputSha256: buildIdentity.outputSha256,
       builtRoutes: buildIdentity.routes,
-    }),
+    })
   );
   Object.assign(buildManifest.buildIdentity, {
     id: buildIdentity.id,
@@ -409,51 +387,21 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
     url: string,
     resourceType: string,
     logicalRoute: '/resume' | '/portfolio' | null,
-    emittedAssetIdentity:
-      | typeof stylesheet
-      | typeof resumeDocument
-      | null,
+    emittedAssetIdentity: typeof stylesheet | typeof resumeDocument | null
   ) => ({
     id,
     url,
     resourceType,
-    initiator:
-      logicalRoute === null
-        ? null
-        : `http://127.0.0.1:41731${logicalRoute}`,
+    initiator: logicalRoute === null ? null : `http://127.0.0.1:41731${logicalRoute}`,
     logicalRoute,
     sameOrigin: true,
     emittedAssetIdentity,
   });
   const attempted = [
-    request(
-      1,
-      'http://127.0.0.1:41731/resume',
-      'document',
-      '/resume',
-      resumeDocument,
-    ),
-    request(
-      2,
-      'http://127.0.0.1:41731/portfolio',
-      'document',
-      '/portfolio',
-      portfolioDocument,
-    ),
-    request(
-      3,
-      'http://127.0.0.1:41731/_astro/profile.css',
-      'stylesheet',
-      '/resume',
-      stylesheet,
-    ),
-    request(
-      4,
-      'http://127.0.0.1:41731/_astro/profile.woff2',
-      'font',
-      '/resume',
-      font,
-    ),
+    request(1, 'http://127.0.0.1:41731/resume', 'document', '/resume', resumeDocument),
+    request(2, 'http://127.0.0.1:41731/portfolio', 'document', '/portfolio', portfolioDocument),
+    request(3, 'http://127.0.0.1:41731/_astro/profile.css', 'stylesheet', '/resume', stylesheet),
+    request(4, 'http://127.0.0.1:41731/_astro/profile.woff2', 'font', '/resume', font),
   ];
   const manualStates = verificationEvidenceSchema.manualMatrix.map((key) => {
     const [route, engine, viewport, theme, details] = key.split('|');
@@ -464,10 +412,7 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
       theme,
       details,
       checks: Object.fromEntries(
-        verificationEvidenceSchema.manualChecks.map((check) => [
-          check,
-          'pass',
-        ]),
+        verificationEvidenceSchema.manualChecks.map((check) => [check, 'pass'])
       ),
     };
   });
@@ -487,10 +432,7 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
       specFiles: [...verificationEvidenceSchema.browserSpecFiles],
       completedMatrix: [...verificationEvidenceSchema.browserMatrix],
       obligations: Object.fromEntries(
-        verificationEvidenceSchema.browserObligations.map((obligation) => [
-          obligation,
-          'pass',
-        ]),
+        verificationEvidenceSchema.browserObligations.map((obligation) => [obligation, 'pass'])
       ),
       skippedReasons: [],
       summary: {
@@ -516,7 +458,7 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
       reviewSubjectSchemaVersion: 1,
       reviewSubjectDigest: accessibilityReviewSubject.digest,
       checks: Object.fromEntries(
-        verificationEvidenceSchema.linkChecks.map((check) => [check, 'pass']),
+        verificationEvidenceSchema.linkChecks.map((check) => [check, 'pass'])
       ),
       routes: ['/resume', '/portfolio'].map((route) => ({
         route,
@@ -551,10 +493,7 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
         component: `src/pages/${route.slice(1)}.astro`,
         document: {
           path: `${route.slice(1)}/index.html`,
-          sha256:
-            route === '/resume'
-              ? resumeDocument.sha256
-              : portfolioDocument.sha256,
+          sha256: route === '/resume' ? resumeDocument.sha256 : portfolioDocument.sha256,
           rawBytes: 500,
           externalStyles: [stylesheet.path],
           inlineStyles: [],
@@ -644,12 +583,7 @@ function createCompleteEvidenceFixture(): MutableComposeVerificationEvidenceInpu
         schemaVersion: 1,
         buildId: buildIdentity.id,
         manifestSha256: 'a'.repeat(64),
-        observedAssets: [
-          resumeDocument,
-          portfolioDocument,
-          stylesheet,
-          font,
-        ],
+        observedAssets: [resumeDocument, portfolioDocument, stylesheet, font],
       },
     },
     manualWebAccessibilityRecord: {
@@ -670,7 +604,7 @@ function createReviewSubject(): AccessibilityReviewSubject {
   const authoredFiles = [
     ...verificationEvidenceSchema.reviewSubjectSourceFiles,
     ...verificationEvidenceSchema.reviewSubjectSourceDirectories.map(
-      (directory) => `${directory}/fixture.ts`,
+      (directory) => `${directory}/fixture.ts`
     ),
   ]
     .sort()
@@ -724,7 +658,7 @@ function createReviewSubject(): AccessibilityReviewSubject {
   };
   const digest = (
     verificationProviderTesting.digestAccessibilityReviewSubject as (
-      value: typeof subject,
+      value: typeof subject
     ) => string
   )(subject);
   return { ...subject, digest };
@@ -733,19 +667,9 @@ function createReviewSubject(): AccessibilityReviewSubject {
 async function createReviewSubjectFixture() {
   const siteRoot = await mkdtemp(join(tmpdir(), 'review-subject-'));
   fixtureRoots.push(siteRoot);
-  const fixedFiles = [
-    ...verificationEvidenceSchema.reviewSubjectSourceFiles,
-  ];
-  for (const directory of [
-    'src/components/profile',
-    'src/lib/layout',
-    'src/styles/profile',
-  ]) {
-    await writeFixtureFile(
-      siteRoot,
-      `${directory}/fixture.ts`,
-      `${directory}\n`,
-    );
+  const fixedFiles = [...verificationEvidenceSchema.reviewSubjectSourceFiles];
+  for (const directory of ['src/components/profile', 'src/lib/layout', 'src/styles/profile']) {
+    await writeFixtureFile(siteRoot, `${directory}/fixture.ts`, `${directory}\n`);
   }
   for (const path of fixedFiles) {
     await writeFixtureFile(siteRoot, path, `${path}\n`);
@@ -756,11 +680,7 @@ async function createReviewSubjectFixture() {
       'node_modules/@axe-core/playwright': { version: '4.12.1' },
     },
   };
-  await writeFixtureFile(
-    siteRoot,
-    'package-lock.json',
-    `${JSON.stringify(packageLock)}\n`,
-  );
+  await writeFixtureFile(siteRoot, 'package-lock.json', `${JSON.stringify(packageLock)}\n`);
 
   const outputContents = new Map([
     [
@@ -809,11 +729,7 @@ async function createReviewSubjectFixture() {
   return { siteRoot, manifest };
 }
 
-async function writeFixtureFile(
-  root: string,
-  path: string,
-  content: string,
-) {
+async function writeFixtureFile(root: string, path: string, content: string) {
   const target = join(root, path);
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, content);

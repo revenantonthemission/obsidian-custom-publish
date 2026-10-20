@@ -1,19 +1,8 @@
-import {
-  createValidationIssue,
-  sortAndDedupeIssues,
-} from './issues.js';
+import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
 import { hasVerifiedFactApprovalCapability } from './fact-approval.js';
-import {
-  getPortfolioRole,
-  PORTFOLIO_ROLES,
-  selectPortfolioForRole,
-} from './portfolio-roles.js';
+import { getPortfolioRole, PORTFOLIO_ROLES, selectPortfolioForRole } from './portfolio-roles.js';
 import type { PortfolioRoleId } from './portfolio-roles.js';
-import {
-  selectHomepageProfile,
-  selectPortfolioProfile,
-  selectResumeProfile,
-} from './selectors.js';
+import { selectHomepageProfile, selectPortfolioProfile, selectResumeProfile } from './selectors.js';
 import type {
   FactApprovedProfile,
   NonEmptyReadonlyArray,
@@ -28,23 +17,13 @@ import type {
 
 declare const jsonLdDocumentBrand: unique symbol;
 
-export type JsonValue =
-  | null
-  | boolean
-  | number
-  | string
-  | readonly JsonValue[]
-  | JsonObject;
+export type JsonValue = null | boolean | number | string | readonly JsonValue[] | JsonObject;
 
 export interface JsonObject {
   readonly [key: string]: JsonValue;
 }
 
-export type JsonLdSchemaType =
-  | 'ProfilePage'
-  | 'Person'
-  | 'CollectionPage'
-  | 'ItemList';
+export type JsonLdSchemaType = 'ProfilePage' | 'Person' | 'CollectionPage' | 'ItemList';
 
 /**
  * C04 serializes only `payload`. `schemaType` is the typed host discriminator
@@ -61,9 +40,7 @@ export interface SiteIdentity {
 }
 
 export type ProfileRoute = 'resume' | 'portfolio';
-export type ProfilePathname =
-  | '/resume'
-  | ReturnType<typeof getPortfolioRole>['pathname'];
+export type ProfilePathname = '/resume' | ReturnType<typeof getPortfolioRole>['pathname'];
 
 export interface SocialMetadata {
   readonly title: string;
@@ -99,9 +76,7 @@ interface JsonDifference {
   readonly path: string;
 }
 
-type DataSnapshot =
-  | Readonly<{ ok: true; value: unknown }>
-  | Readonly<{ ok: false; path: string }>;
+type DataSnapshot = Readonly<{ ok: true; value: unknown }> | Readonly<{ ok: false; path: string }>;
 
 type ApprovedSourceInspection =
   | Readonly<{ ok: true; profile: ValidatedProfile }>
@@ -129,7 +104,7 @@ const SOCIAL_KEYS = ['title', 'description', 'url'] as const;
 
 export function buildApprovedResumeMetadata(
   site: SiteIdentity,
-  source: FactApprovedProfile,
+  source: FactApprovedProfile
 ): ValidationResult<ProfilePageMetadata> {
   const inspected = inspectApprovedSource(source);
   if (!inspected.ok) {
@@ -137,10 +112,7 @@ export function buildApprovedResumeMetadata(
   }
 
   try {
-    return buildResumeMetadataForTest(
-      site,
-      selectResumeProfile(inspected.profile),
-    );
+    return buildResumeMetadataForTest(site, selectResumeProfile(inspected.profile));
   } catch {
     return invalidApprovedSource();
   }
@@ -149,7 +121,7 @@ export function buildApprovedResumeMetadata(
 export function buildApprovedPortfolioMetadata(
   site: SiteIdentity,
   source: FactApprovedProfile,
-  roleId: PortfolioRoleId = 'data-engineer-ai',
+  roleId: PortfolioRoleId = 'data-engineer-ai'
 ): ValidationResult<ProfilePageMetadata> {
   const inspected = inspectApprovedSource(source);
   if (!inspected.ok) {
@@ -162,7 +134,7 @@ export function buildApprovedPortfolioMetadata(
       site,
       homepage.name,
       selectPortfolioForRole(selectPortfolioProfile(inspected.profile), roleId),
-      roleId,
+      roleId
     );
   } catch {
     return invalidApprovedSource();
@@ -177,7 +149,7 @@ export function buildApprovedPortfolioMetadata(
  */
 export function buildResumeMetadataForTest(
   site: SiteIdentity,
-  profile: ResumeProfile,
+  profile: ResumeProfile
 ): ValidationResult<ProfilePageMetadata> {
   try {
     const source: MetadataProjectionSource = Object.freeze({
@@ -205,7 +177,7 @@ export function buildPortfolioMetadataForTest(
   site: SiteIdentity,
   name: PublicFact<SingleLineText>,
   profile: PortfolioProfile,
-  roleId: PortfolioRoleId = 'data-engineer-ai',
+  roleId: PortfolioRoleId = 'data-engineer-ai'
 ): ValidationResult<ProfilePageMetadata> {
   try {
     const source: MetadataProjectionSource = Object.freeze({
@@ -233,7 +205,7 @@ export function validateMetadataConsistency(
   site: SiteIdentity,
   source: FactApprovedProfile,
   route: ProfileRoute,
-  candidate: unknown,
+  candidate: unknown
 ): ValidationResult<ProfilePageMetadata> {
   const inspected = inspectApprovedSource(source);
   if (!inspected.ok) {
@@ -241,12 +213,7 @@ export function validateMetadataConsistency(
   }
 
   if (route !== 'resume' && route !== 'portfolio') {
-    return failure([
-      createValidationIssue(
-        'metadata.route.invalid',
-        'profile.metadata',
-      ),
-    ]);
+    return failure([createValidationIssue('metadata.route.invalid', 'profile.metadata')]);
   }
 
   try {
@@ -257,7 +224,7 @@ export function validateMetadataConsistency(
           route: 'resume',
           profile: selectResumeProfile(inspected.profile),
         }),
-        candidate,
+        candidate
       );
     }
 
@@ -265,18 +232,11 @@ export function validateMetadataConsistency(
     if (!snapshot.ok) {
       return invalidCandidateSnapshot(route, snapshot.path);
     }
-    const candidatePathname = isObject(snapshot.value)
-      ? snapshot.value.pathname
-      : undefined;
-    const role = PORTFOLIO_ROLES.find(
-      ({ pathname }) => pathname === candidatePathname,
-    );
+    const candidatePathname = isObject(snapshot.value) ? snapshot.value.pathname : undefined;
+    const role = PORTFOLIO_ROLES.find(({ pathname }) => pathname === candidatePathname);
     if (role === undefined) {
       return failure([
-        createValidationIssue(
-          'metadata.route.invalid',
-          'profile.metadata.portfolio.canonical',
-        ),
+        createValidationIssue('metadata.route.invalid', 'profile.metadata.portfolio.canonical'),
       ]);
     }
 
@@ -287,12 +247,9 @@ export function validateMetadataConsistency(
         route: 'portfolio',
         roleId: role.id,
         name: homepage.name,
-        profile: selectPortfolioForRole(
-          selectPortfolioProfile(inspected.profile),
-          role.id,
-        ),
+        profile: selectPortfolioForRole(selectPortfolioProfile(inspected.profile), role.id),
       }),
-      snapshot.value,
+      snapshot.value
     );
   } catch {
     return invalidApprovedSource();
@@ -307,16 +264,11 @@ export function validateMetadataConsistency(
 export function validateMetadataConsistencyForTest(
   site: SiteIdentity,
   source: MetadataProjectionSource,
-  candidate: unknown,
+  candidate: unknown
 ): ValidationResult<ProfilePageMetadata> {
   try {
     if (source.route !== 'resume' && source.route !== 'portfolio') {
-      return failure([
-        createValidationIssue(
-          'metadata.route.invalid',
-          'profile.metadata',
-        ),
-      ]);
+      return failure([createValidationIssue('metadata.route.invalid', 'profile.metadata')]);
     }
 
     const expected = buildExpectedMetadata(site, source);
@@ -350,35 +302,27 @@ export function validateMetadataConsistencyForTest(
 
 function buildExpectedMetadata(
   site: SiteIdentity,
-  source: MetadataProjectionSource,
+  source: MetadataProjectionSource
 ): ValidationResult<ProfilePageMetadata> {
-  const role = source.route === 'portfolio'
-    ? getPortfolioRole(source.roleId ?? 'data-engineer-ai')
-    : undefined;
+  const role =
+    source.route === 'portfolio'
+      ? getPortfolioRole(source.roleId ?? 'data-engineer-ai')
+      : undefined;
   const pathname: ProfilePathname = role?.pathname ?? '/resume';
   const siteOrigin = validatedSiteOrigin(site);
   if (siteOrigin === undefined) {
     return failure([
-      createValidationIssue(
-        'metadata.route.invalid',
-        `profile.metadata.${source.route}.canonical`,
-      ),
+      createValidationIssue('metadata.route.invalid', `profile.metadata.${source.route}.canonical`),
     ]);
   }
 
   const canonical = `${siteOrigin}${pathname}`;
-  const name =
-    source.route === 'resume'
-      ? source.profile.identity.name.value
-      : source.name.value;
-  const title =
-    source.route === 'resume'
-      ? `${name} — Résumé`
-      : `${name} — ${role!.title}`;
+  const name = source.route === 'resume' ? source.profile.identity.name.value : source.name.value;
+  const title = source.route === 'resume' ? `${name} — Résumé` : `${name} — ${role!.title}`;
   const description =
     source.route === 'resume'
       ? source.profile.resumeSummary.value
-      : role!.introduction ?? source.profile.portfolioSummary.value;
+      : (role!.introduction ?? source.profile.portfolioSummary.value);
   const social = (): SocialMetadata =>
     Object.freeze({
       title,
@@ -397,13 +341,7 @@ function buildExpectedMetadata(
     jsonLd:
       source.route === 'resume'
         ? buildResumeJsonLd(canonical, title, source.profile)
-        : buildPortfolioJsonLd(
-            siteOrigin,
-            canonical,
-            title,
-            description,
-            source.profile,
-          ),
+        : buildPortfolioJsonLd(siteOrigin, canonical, title, description, source.profile),
   };
 
   return Object.freeze({
@@ -415,36 +353,30 @@ function buildExpectedMetadata(
 function buildResumeJsonLd(
   canonical: string,
   title: string,
-  profile: ResumeProfile,
+  profile: ResumeProfile
 ): readonly JsonLdDocument[] {
   const personId = `${canonical}#person`;
 
   return frozenArray([
-    jsonLdDocument(
-      'ProfilePage',
-      {
-        '@context': 'https://schema.org',
-        '@type': 'ProfilePage',
-        '@id': `${canonical}#profile-page`,
-        url: canonical,
-        name: title,
-        description: profile.resumeSummary.value,
-        mainEntity: {
-          '@id': personId,
-        },
-      },
-    ),
-    jsonLdDocument(
-      'Person',
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Person',
+    jsonLdDocument('ProfilePage', {
+      '@context': 'https://schema.org',
+      '@type': 'ProfilePage',
+      '@id': `${canonical}#profile-page`,
+      url: canonical,
+      name: title,
+      description: profile.resumeSummary.value,
+      mainEntity: {
         '@id': personId,
-        name: profile.identity.name.value,
-        email: profile.contactActions.email.value,
-        sameAs: [profile.contactActions.github.value],
       },
-    ),
+    }),
+    jsonLdDocument('Person', {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      '@id': personId,
+      name: profile.identity.name.value,
+      email: profile.contactActions.email.value,
+      sameAs: [profile.contactActions.github.value],
+    }),
   ]);
 }
 
@@ -453,76 +385,62 @@ function buildPortfolioJsonLd(
   canonical: string,
   title: string,
   description: string,
-  profile: PortfolioProfile,
+  profile: PortfolioProfile
 ): readonly JsonLdDocument[] {
   const itemListId = `${canonical}#projects`;
 
   return frozenArray([
-    jsonLdDocument(
-      'CollectionPage',
-      {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        '@id': `${canonical}#collection-page`,
-        url: canonical,
-        name: title,
-        description,
-        mainEntity: {
-          '@id': itemListId,
-        },
-      },
-    ),
-    jsonLdDocument(
-      'ItemList',
-      {
-        '@context': 'https://schema.org',
-        '@type': 'ItemList',
+    jsonLdDocument('CollectionPage', {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      '@id': `${canonical}#collection-page`,
+      url: canonical,
+      name: title,
+      description,
+      mainEntity: {
         '@id': itemListId,
-        itemListOrder: 'https://schema.org/ItemListOrderAscending',
-        numberOfItems: profile.projects.length,
-        itemListElement: profile.projects.map((project, index) => {
-          const projectUrl =
-            `${canonical}#project-${project.id}`;
-          const evidenceUrls = project.evidence.map((evidence) =>
-            evidence.destination.value.tag === 'external'
-              ? evidence.destination.value.value
-              : `${siteOrigin}${evidence.destination.value.value}`,
-          );
-
-          return {
-            '@type': 'ListItem',
-            position: index + 1,
-            url: projectUrl,
-            item: {
-              '@type': 'CreativeWork',
-              '@id': projectUrl,
-              url: projectUrl,
-              name: project.title.value,
-              description: project.outcomeSummary.value,
-              ...(evidenceUrls.length === 0
-                ? {}
-                : { citation: evidenceUrls }),
-            },
-          };
-        }),
       },
-    ),
+    }),
+    jsonLdDocument('ItemList', {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': itemListId,
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: profile.projects.length,
+      itemListElement: profile.projects.map((project, index) => {
+        const projectUrl = `${canonical}#project-${project.id}`;
+        const evidenceUrls = project.evidence.map((evidence) =>
+          evidence.destination.value.tag === 'external'
+            ? evidence.destination.value.value
+            : `${siteOrigin}${evidence.destination.value.value}`
+        );
+
+        return {
+          '@type': 'ListItem',
+          position: index + 1,
+          url: projectUrl,
+          item: {
+            '@type': 'CreativeWork',
+            '@id': projectUrl,
+            url: projectUrl,
+            name: project.title.value,
+            description: project.outcomeSummary.value,
+            ...(evidenceUrls.length === 0 ? {} : { citation: evidenceUrls }),
+          },
+        };
+      }),
+    }),
   ]);
 }
 
-function jsonLdDocument(
-  schemaType: JsonLdSchemaType,
-  payload: JsonObject,
-): JsonLdDocument {
+function jsonLdDocument(schemaType: JsonLdSchemaType, payload: JsonObject): JsonLdDocument {
   return Object.freeze({
     schemaType,
     payload: deepFreezeOwned(payload),
   }) as JsonLdDocument;
 }
 
-function inspectApprovedSource(
-  source: FactApprovedProfile,
-): ApprovedSourceInspection {
+function inspectApprovedSource(source: FactApprovedProfile): ApprovedSourceInspection {
   try {
     if (!hasVerifiedFactApprovalCapability(source)) {
       return invalidApprovedSourceInspection();
@@ -566,39 +484,22 @@ function inspectApprovedSource(
 function validateMetadataCandidate(
   expected: ProfilePageMetadata,
   candidate: unknown,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const basePath = `profile.metadata.${expected.route}`;
 
   if (!isObject(candidate)) {
     issues.push(
-      createValidationIssue(
-        'metadata.title.mismatch',
-        `${basePath}.title`,
-      ),
-      createValidationIssue(
-        'metadata.description.mismatch',
-        `${basePath}.description`,
-      ),
-      createValidationIssue(
-        'metadata.route.invalid',
-        `${basePath}.canonical`,
-      ),
-      createValidationIssue(
-        'metadata.structured-data.invalid',
-        `${basePath}.jsonLd`,
-      ),
+      createValidationIssue('metadata.title.mismatch', `${basePath}.title`),
+      createValidationIssue('metadata.description.mismatch', `${basePath}.description`),
+      createValidationIssue('metadata.route.invalid', `${basePath}.canonical`),
+      createValidationIssue('metadata.structured-data.invalid', `${basePath}.jsonLd`)
     );
     return;
   }
 
   if (!hasOnlyKeys(candidate, METADATA_KEYS)) {
-    issues.push(
-      createValidationIssue(
-        'metadata.claim.unsupported',
-        basePath,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.claim.unsupported', basePath));
   }
 
   if (
@@ -606,109 +507,49 @@ function validateMetadataCandidate(
     candidate.pathname !== expected.pathname ||
     candidate.canonical !== expected.canonical
   ) {
-    issues.push(
-      createValidationIssue(
-        'metadata.route.invalid',
-        `${basePath}.canonical`,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.route.invalid', `${basePath}.canonical`));
   }
 
   if (candidate.title !== expected.title) {
-    issues.push(
-      createValidationIssue(
-        'metadata.title.mismatch',
-        `${basePath}.title`,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.title.mismatch', `${basePath}.title`));
   }
 
   if (candidate.description !== expected.description) {
-    issues.push(
-      createValidationIssue(
-        'metadata.description.mismatch',
-        `${basePath}.description`,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.description.mismatch', `${basePath}.description`));
   }
 
-  validateSocialMetadata(
-    expected.openGraph,
-    candidate.openGraph,
-    `${basePath}.openGraph`,
-    issues,
-  );
-  validateSocialMetadata(
-    expected.twitter,
-    candidate.twitter,
-    `${basePath}.twitter`,
-    issues,
-  );
-  validateJsonLd(
-    expected.route,
-    expected.jsonLd,
-    candidate.jsonLd,
-    `${basePath}.jsonLd`,
-    issues,
-  );
+  validateSocialMetadata(expected.openGraph, candidate.openGraph, `${basePath}.openGraph`, issues);
+  validateSocialMetadata(expected.twitter, candidate.twitter, `${basePath}.twitter`, issues);
+  validateJsonLd(expected.route, expected.jsonLd, candidate.jsonLd, `${basePath}.jsonLd`, issues);
 }
 
 function validateSocialMetadata(
   expected: SocialMetadata,
   candidate: unknown,
   basePath: string,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (!isObject(candidate)) {
     issues.push(
-      createValidationIssue(
-        'metadata.title.mismatch',
-        `${basePath}.title`,
-      ),
-      createValidationIssue(
-        'metadata.description.mismatch',
-        `${basePath}.description`,
-      ),
-      createValidationIssue(
-        'metadata.route.invalid',
-        `${basePath}.url`,
-      ),
+      createValidationIssue('metadata.title.mismatch', `${basePath}.title`),
+      createValidationIssue('metadata.description.mismatch', `${basePath}.description`),
+      createValidationIssue('metadata.route.invalid', `${basePath}.url`)
     );
     return;
   }
 
   if (!hasOnlyKeys(candidate, SOCIAL_KEYS)) {
-    issues.push(
-      createValidationIssue(
-        'metadata.claim.unsupported',
-        basePath,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.claim.unsupported', basePath));
   }
 
   if (candidate.title !== expected.title) {
-    issues.push(
-      createValidationIssue(
-        'metadata.title.mismatch',
-        `${basePath}.title`,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.title.mismatch', `${basePath}.title`));
   }
   if (candidate.description !== expected.description) {
-    issues.push(
-      createValidationIssue(
-        'metadata.description.mismatch',
-        `${basePath}.description`,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.description.mismatch', `${basePath}.description`));
   }
   if (candidate.url !== expected.url) {
-    issues.push(
-      createValidationIssue(
-        'metadata.route.invalid',
-        `${basePath}.url`,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.route.invalid', `${basePath}.url`));
   }
 }
 
@@ -717,7 +558,7 @@ function validateJsonLd(
   expected: readonly JsonLdDocument[],
   candidate: unknown,
   issuePath: string,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const differences: JsonDifference[] = [];
   collectJsonDifferences(expected, candidate, 'jsonLd', differences);
@@ -726,18 +567,12 @@ function validateJsonLd(
   let hasUnsupportedClaim = false;
 
   for (const difference of differences) {
-    if (
-      difference.kind === 'extra' &&
-      !isStructuralCollectionPath(difference.path)
-    ) {
+    if (difference.kind === 'extra' && !isStructuralCollectionPath(difference.path)) {
       hasUnsupportedClaim = true;
       continue;
     }
 
-    if (
-      difference.kind === 'value' &&
-      isFactClaimPath(route, difference.path)
-    ) {
+    if (difference.kind === 'value' && isFactClaimPath(route, difference.path)) {
       hasUnsupportedClaim = true;
       continue;
     }
@@ -746,20 +581,10 @@ function validateJsonLd(
   }
 
   if (hasStructuralDifference) {
-    issues.push(
-      createValidationIssue(
-        'metadata.structured-data.invalid',
-        issuePath,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.structured-data.invalid', issuePath));
   }
   if (hasUnsupportedClaim) {
-    issues.push(
-      createValidationIssue(
-        'metadata.claim.unsupported',
-        issuePath,
-      ),
-    );
+    issues.push(createValidationIssue('metadata.claim.unsupported', issuePath));
   }
 }
 
@@ -767,7 +592,7 @@ function collectJsonDifferences(
   expected: unknown,
   candidate: unknown,
   path: string,
-  differences: JsonDifference[],
+  differences: JsonDifference[]
 ): void {
   if (Array.isArray(expected)) {
     if (!Array.isArray(candidate)) {
@@ -783,12 +608,7 @@ function collectJsonDifferences(
       } else if (index >= candidate.length) {
         differences.push({ kind: 'missing', path: itemPath });
       } else {
-        collectJsonDifferences(
-          expected[index],
-          candidate[index],
-          itemPath,
-          differences,
-        );
+        collectJsonDifferences(expected[index], candidate[index], itemPath, differences);
       }
     }
     return;
@@ -805,12 +625,7 @@ function collectJsonDifferences(
       if (!Object.prototype.hasOwnProperty.call(candidate, key)) {
         differences.push({ kind: 'missing', path: childPath });
       } else {
-        collectJsonDifferences(
-          expected[key],
-          candidate[key],
-          childPath,
-          differences,
-        );
+        collectJsonDifferences(expected[key], candidate[key], childPath, differences);
       }
     }
 
@@ -830,10 +645,7 @@ function collectJsonDifferences(
   }
 }
 
-function isFactClaimPath(
-  route: ProfileRoute,
-  path: string,
-): boolean {
+function isFactClaimPath(route: ProfileRoute, path: string): boolean {
   if (route === 'resume') {
     return (
       /^jsonLd\[0\]\.payload\.(?:name|description)$/.test(path) ||
@@ -844,19 +656,14 @@ function isFactClaimPath(
 
   return (
     /^jsonLd\[0\]\.payload\.(?:name|description)$/.test(path) ||
-    /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]\.item\.(?:name|description)$/.test(
-      path,
-    ) ||
-    /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]\.item\.citation\[\d+\]$/.test(
-      path,
-    )
+    /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]\.item\.(?:name|description)$/.test(path) ||
+    /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]\.item\.citation\[\d+\]$/.test(path)
   );
 }
 
 function isStructuralCollectionPath(path: string): boolean {
   return (
-    /^jsonLd\[\d+\]$/.test(path) ||
-    /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]$/.test(path)
+    /^jsonLd\[\d+\]$/.test(path) || /^jsonLd\[1\]\.payload\.itemListElement\[\d+\]$/.test(path)
   );
 }
 
@@ -873,12 +680,10 @@ function validatedSiteOrigin(value: unknown): string | undefined {
 
   try {
     const parsed = new URL(snapshot.value.origin);
-    return (
-      parsed.protocol === 'https:' &&
+    return parsed.protocol === 'https:' &&
       parsed.origin === snapshot.value.origin &&
       parsed.username === '' &&
       parsed.password === ''
-    )
       ? snapshot.value.origin
       : undefined;
   } catch {
@@ -886,17 +691,12 @@ function validatedSiteOrigin(value: unknown): string | undefined {
   }
 }
 
-function hasOnlyKeys(
-  value: Record<PropertyKey, unknown>,
-  expected: readonly string[],
-): boolean {
+function hasOnlyKeys(value: Record<PropertyKey, unknown>, expected: readonly string[]): boolean {
   const allowed = new Set(expected);
   return Object.keys(value).every((key) => allowed.has(key));
 }
 
-function isObject(
-  value: unknown,
-): value is Record<PropertyKey, unknown> {
+function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
@@ -904,20 +704,14 @@ function isObjectLike(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
-function ownDataRecord(
-  value: unknown,
-  expectedKeys: readonly string[],
-): OwnDataRecord {
+function ownDataRecord(value: unknown, expectedKeys: readonly string[]): OwnDataRecord {
   try {
     if (!isObjectLike(value) || Array.isArray(value)) {
       return Object.freeze({ ok: false });
     }
 
     const keys = Reflect.ownKeys(value);
-    if (
-      keys.some((key) => typeof key !== 'string') ||
-      keys.length !== expectedKeys.length
-    ) {
+    if (keys.some((key) => typeof key !== 'string') || keys.length !== expectedKeys.length) {
       return Object.freeze({ ok: false });
     }
 
@@ -948,10 +742,7 @@ function ownDataRecord(
   }
 }
 
-function snapshotOwnedData(
-  value: unknown,
-  path: string,
-): DataSnapshot {
+function snapshotOwnedData(value: unknown, path: string): DataSnapshot {
   try {
     return snapshotOwnedDataInternal(value, path, new WeakSet<object>());
   } catch {
@@ -962,13 +753,9 @@ function snapshotOwnedData(
 function snapshotOwnedDataInternal(
   value: unknown,
   path: string,
-  ancestors: WeakSet<object>,
+  ancestors: WeakSet<object>
 ): DataSnapshot {
-  if (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'boolean'
-  ) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return Object.freeze({ ok: true, value });
   }
 
@@ -996,7 +783,7 @@ function snapshotOwnedDataInternal(
 function snapshotArray(
   value: readonly unknown[],
   path: string,
-  ancestors: WeakSet<object>,
+  ancestors: WeakSet<object>
 ): DataSnapshot {
   const lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
   if (
@@ -1014,9 +801,7 @@ function snapshotArray(
   if (
     keys.length !== length + 1 ||
     keys.some(
-      (key) =>
-        typeof key !== 'string' ||
-        (key !== 'length' && !/^(?:0|[1-9]\d*)$/.test(key)),
+      (key) => typeof key !== 'string' || (key !== 'length' && !/^(?:0|[1-9]\d*)$/.test(key))
     )
   ) {
     return Object.freeze({ ok: false, path });
@@ -1024,10 +809,7 @@ function snapshotArray(
 
   const output: unknown[] = [];
   for (let index = 0; index < length; index += 1) {
-    const descriptor = Object.getOwnPropertyDescriptor(
-      value,
-      String(index),
-    );
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
     if (
       descriptor === undefined ||
       !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
@@ -1039,11 +821,7 @@ function snapshotArray(
       });
     }
 
-    const child = snapshotOwnedDataInternal(
-      descriptor.value,
-      `${path}[${index}]`,
-      ancestors,
-    );
+    const child = snapshotOwnedDataInternal(descriptor.value, `${path}[${index}]`, ancestors);
     if (!child.ok) {
       return child;
     }
@@ -1056,21 +834,14 @@ function snapshotArray(
   });
 }
 
-function snapshotRecord(
-  value: object,
-  path: string,
-  ancestors: WeakSet<object>,
-): DataSnapshot {
+function snapshotRecord(value: object, path: string, ancestors: WeakSet<object>): DataSnapshot {
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) {
     return Object.freeze({ ok: false, path });
   }
 
   const keys = Reflect.ownKeys(value);
-  if (
-    keys.length > 1_000 ||
-    keys.some((key) => typeof key !== 'string')
-  ) {
+  if (keys.length > 1_000 || keys.some((key) => typeof key !== 'string')) {
     return Object.freeze({ ok: false, path });
   }
 
@@ -1092,11 +863,7 @@ function snapshotRecord(
       });
     }
 
-    const child = snapshotOwnedDataInternal(
-      descriptor.value,
-      `${path}.${key}`,
-      ancestors,
-    );
+    const child = snapshotOwnedDataInternal(descriptor.value, `${path}.${key}`, ancestors);
     if (!child.ok) {
       return child;
     }
@@ -1109,9 +876,7 @@ function snapshotRecord(
   });
 }
 
-function frozenArray<Value>(
-  values: readonly Value[],
-): readonly Value[] {
+function frozenArray<Value>(values: readonly Value[]): readonly Value[] {
   return Object.freeze([...values]);
 }
 
@@ -1129,34 +894,26 @@ function deepFreezeOwned<Value>(value: Value): Value {
 function invalidApprovedSourceInspection(): ApprovedSourceInspection {
   return Object.freeze({
     ok: false,
-    issues: Object.freeze([
-      createValidationIssue('approval.status', 'profile.facts'),
-    ]),
+    issues: Object.freeze([createValidationIssue('approval.status', 'profile.facts')]),
   });
 }
 
 function invalidApprovedSource<Value>(): ValidationResult<Value> {
-  return failure([
-    createValidationIssue('approval.status', 'profile.facts'),
-  ]);
+  return failure([createValidationIssue('approval.status', 'profile.facts')]);
 }
 
-function invalidProjectionSource<Value>(
-  route?: ProfileRoute,
-): ValidationResult<Value> {
+function invalidProjectionSource<Value>(route?: ProfileRoute): ValidationResult<Value> {
   return failure([
     createValidationIssue(
       'metadata.claim.unsupported',
-      route === undefined
-        ? 'profile.metadata'
-        : `profile.metadata.${route}`,
+      route === undefined ? 'profile.metadata' : `profile.metadata.${route}`
     ),
   ]);
 }
 
 function invalidCandidateSnapshot<Value>(
   route: ProfileRoute,
-  snapshotPath: string,
+  snapshotPath: string
 ): ValidationResult<Value> {
   const basePath = `profile.metadata.${route}`;
   return failure([
@@ -1164,16 +921,12 @@ function invalidCandidateSnapshot<Value>(
       snapshotPath.startsWith('metadata.jsonLd')
         ? 'metadata.structured-data.invalid'
         : 'metadata.claim.unsupported',
-      snapshotPath.startsWith('metadata.jsonLd')
-        ? `${basePath}.jsonLd`
-        : basePath,
+      snapshotPath.startsWith('metadata.jsonLd') ? `${basePath}.jsonLd` : basePath
     ),
   ]);
 }
 
-function failure<Value>(
-  issues: readonly ValidationIssue[],
-): ValidationResult<Value> {
+function failure<Value>(issues: readonly ValidationIssue[]): ValidationResult<Value> {
   const canonical = sortAndDedupeIssues(issues);
   return Object.freeze({
     ok: false,

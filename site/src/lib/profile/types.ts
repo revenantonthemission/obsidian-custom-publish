@@ -130,9 +130,7 @@ export interface InternalLinkDestination {
   readonly value: InternalEvidencePath;
 }
 
-export type LinkDestination =
-  | ExternalLinkDestination
-  | InternalLinkDestination;
+export type LinkDestination = ExternalLinkDestination | InternalLinkDestination;
 
 export type ProfileEntityReference =
   | Readonly<{
@@ -301,12 +299,7 @@ export interface ResumeProjectSummary {
 }
 
 export type ProjectDimensionKey =
-  | 'problem'
-  | 'role'
-  | 'keyDecisions'
-  | 'architecture'
-  | 'outcomes'
-  | 'lessons';
+  'problem' | 'role' | 'keyDecisions' | 'architecture' | 'outcomes' | 'lessons';
 
 export interface ProjectDimension<Key extends ProjectDimensionKey> {
   readonly key: Key;

@@ -26,49 +26,39 @@ import {
  * deterministic; enumerating the legal edges by hand from the NFR Design state
  * table is what makes the equivalence a real check on the implementation.
  */
-const REFERENCE_EDGES: readonly (readonly [
-  ReleaseState,
-  ReleaseCommand,
-  ReleaseState,
-])[] = Object.freeze([
-  [RELEASE_STATE_ABSENT, 'open', 'PREPARED'],
-  ['PREPARED', 'validatePromotion', 'PROMOTION_VALIDATED'],
-  ['PROMOTION_VALIDATED', 'snapshotRecovery', 'RECOVERY_SNAPSHOTTED'],
-  ['RECOVERY_SNAPSHOTTED', 'promoteReceipt', 'RECEIPT_PROMOTED'],
-  ['RECEIPT_PROMOTED', 'commitPdf', 'PDF_COMMITTED'],
-  ['PDF_COMMITTED', 'verifyFinal', 'FINAL_VERIFIED'],
-  ['FINAL_VERIFIED', 'finalize', RELEASE_STATE_ABSENT],
-  ['PREPARED', 'requireRollback', 'ROLLBACK_REQUIRED'],
-  ['PROMOTION_VALIDATED', 'requireRollback', 'ROLLBACK_REQUIRED'],
-  ['RECOVERY_SNAPSHOTTED', 'requireRollback', 'ROLLBACK_REQUIRED'],
-  ['RECEIPT_PROMOTED', 'requireRollback', 'ROLLBACK_REQUIRED'],
-  ['PDF_COMMITTED', 'requireRollback', 'ROLLBACK_REQUIRED'],
-  ['ROLLBACK_REQUIRED', 'restorePdf', 'ROLLBACK_PDF_RESTORED'],
-  ['ROLLBACK_PDF_RESTORED', 'restoreReceipt', 'ROLLBACK_RECEIPT_RESTORED'],
-  ['ROLLBACK_RECEIPT_RESTORED', 'completeRollback', 'ROLLED_BACK'],
-  ['ROLLED_BACK', 'cleanup', RELEASE_STATE_ABSENT],
-] as const);
+const REFERENCE_EDGES: readonly (readonly [ReleaseState, ReleaseCommand, ReleaseState])[] =
+  Object.freeze([
+    [RELEASE_STATE_ABSENT, 'open', 'PREPARED'],
+    ['PREPARED', 'validatePromotion', 'PROMOTION_VALIDATED'],
+    ['PROMOTION_VALIDATED', 'snapshotRecovery', 'RECOVERY_SNAPSHOTTED'],
+    ['RECOVERY_SNAPSHOTTED', 'promoteReceipt', 'RECEIPT_PROMOTED'],
+    ['RECEIPT_PROMOTED', 'commitPdf', 'PDF_COMMITTED'],
+    ['PDF_COMMITTED', 'verifyFinal', 'FINAL_VERIFIED'],
+    ['FINAL_VERIFIED', 'finalize', RELEASE_STATE_ABSENT],
+    ['PREPARED', 'requireRollback', 'ROLLBACK_REQUIRED'],
+    ['PROMOTION_VALIDATED', 'requireRollback', 'ROLLBACK_REQUIRED'],
+    ['RECOVERY_SNAPSHOTTED', 'requireRollback', 'ROLLBACK_REQUIRED'],
+    ['RECEIPT_PROMOTED', 'requireRollback', 'ROLLBACK_REQUIRED'],
+    ['PDF_COMMITTED', 'requireRollback', 'ROLLBACK_REQUIRED'],
+    ['ROLLBACK_REQUIRED', 'restorePdf', 'ROLLBACK_PDF_RESTORED'],
+    ['ROLLBACK_PDF_RESTORED', 'restoreReceipt', 'ROLLBACK_RECEIPT_RESTORED'],
+    ['ROLLBACK_RECEIPT_RESTORED', 'completeRollback', 'ROLLED_BACK'],
+    ['ROLLED_BACK', 'cleanup', RELEASE_STATE_ABSENT],
+  ] as const);
 
 interface ReferenceDecision {
   readonly ok: boolean;
   readonly state: ReleaseState;
 }
 
-function referenceNext(
-  state: ReleaseState,
-  command: ReleaseCommand,
-): ReferenceDecision {
+function referenceNext(state: ReleaseState, command: ReleaseCommand): ReferenceDecision {
   // Neither ending the process nor re-reading the journal changes durable
   // state, so both are accepted everywhere and move nothing.
   if (command === 'crash' || command === 'resume') {
     return { ok: true, state };
   }
-  const edge = REFERENCE_EDGES.find(
-    ([from, via]) => from === state && via === command,
-  );
-  return edge === undefined
-    ? { ok: false, state }
-    : { ok: true, state: edge[2] };
+  const edge = REFERENCE_EDGES.find(([from, via]) => from === state && via === command);
+  return edge === undefined ? { ok: false, state } : { ok: true, state: edge[2] };
 }
 
 const ROLLBACK_ARM: readonly ReleaseState[] = Object.freeze([
@@ -139,7 +129,7 @@ test.prop([releaseCommandSequenceArbitrary])(
       expect(modelState).toBe(referenceState);
       assertInvariants(modelState);
     }
-  },
+  }
 );
 
 test.prop([releaseProtocolSequenceArbitrary])(
@@ -190,7 +180,7 @@ test.prop([releaseProtocolSequenceArbitrary])(
         expect(rollbackTo).toBe(rollbackFrom + 1);
       }
     }
-  },
+  }
 );
 
 test.prop([releaseStateArbitrary, releaseCommandArbitrary])(
@@ -210,7 +200,7 @@ test.prop([releaseStateArbitrary, releaseCommandArbitrary])(
     // The advertised legal set and the transition function must agree; a
     // command the store offers but refuses would be a trap for the caller.
     expect(legalReleaseCommands(state).includes(command)).toBe(true);
-  },
+  }
 );
 
 test.prop([releaseStateArbitrary])(
@@ -232,7 +222,7 @@ test.prop([releaseStateArbitrary])(
       expect(nextReleaseState(state, 'cleanup').ok).toBe(false);
       expect(nextReleaseState(state, 'finalize').ok).toBe(false);
     }
-  },
+  }
 );
 
 test.prop([releaseStateArbitrary, fc.integer({ min: 1, max: 6 })])(
@@ -248,10 +238,8 @@ test.prop([releaseStateArbitrary, fc.integer({ min: 1, max: 6 })])(
       crashed = resumed.state as ReleaseState;
     }
     expect(crashed).toBe(state);
-    expect(releaseStateInvariants(crashed)).toStrictEqual(
-      releaseStateInvariants(state),
-    );
-  },
+    expect(releaseStateInvariants(crashed)).toStrictEqual(releaseStateInvariants(state));
+  }
 );
 
 test.prop([releaseStateArbitrary])(
@@ -270,5 +258,5 @@ test.prop([releaseStateArbitrary])(
       ok: false,
       reason: 'command.unknown',
     });
-  },
+  }
 );

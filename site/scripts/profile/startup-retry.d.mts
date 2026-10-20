@@ -29,45 +29,51 @@ export class StartupRetryError extends Error {
 export function isRetryEligibleStartupStage(stage: string): boolean;
 export function assertFreshStartupIdentity(
   previousIdentity: Record<string, unknown> | null | undefined,
-  nextIdentity: Record<string, unknown>,
+  nextIdentity: Record<string, unknown>
 ): Readonly<Record<string, unknown>>;
 
 export function runWithStartupRetry<T>(input: {
-  createAttempt(context: Readonly<{
-    attempt: number;
-    maxAttempts: number;
-    previousIdentity: Readonly<Record<string, unknown>> | null;
-    rule: string;
-  }>): {
-    identity: Record<string, unknown>;
-    getRuntimeIdentity?():
-      | Record<string, unknown>
-      | Promise<Record<string, unknown>>;
-    run(context: Readonly<Record<string, unknown>>): Promise<T> | T;
-    teardown(context: Readonly<{
+  createAttempt(
+    context: Readonly<{
       attempt: number;
-      identity: Record<string, unknown>;
-      failure: Record<string, unknown>;
+      maxAttempts: number;
+      previousIdentity: Readonly<Record<string, unknown>> | null;
       rule: string;
-    }>): Promise<Record<string, unknown>> | Record<string, unknown>;
-  } | Promise<{
-    identity: Record<string, unknown>;
-    getRuntimeIdentity?():
-      | Record<string, unknown>
-      | Promise<Record<string, unknown>>;
-    run(context: Readonly<Record<string, unknown>>): Promise<T> | T;
-    teardown(context: Readonly<{
-      attempt: number;
-      identity: Record<string, unknown>;
-      failure: Record<string, unknown>;
-      rule: string;
-    }>): Promise<Record<string, unknown>> | Record<string, unknown>;
-  }>;
-}): Promise<Readonly<{
-  value: T;
-  evidence: Readonly<{
-    attemptCount: number;
-    retried: boolean;
-    attempts: readonly unknown[];
-  }>;
-}>>;
+    }>
+  ):
+    | {
+        identity: Record<string, unknown>;
+        getRuntimeIdentity?(): Record<string, unknown> | Promise<Record<string, unknown>>;
+        run(context: Readonly<Record<string, unknown>>): Promise<T> | T;
+        teardown(
+          context: Readonly<{
+            attempt: number;
+            identity: Record<string, unknown>;
+            failure: Record<string, unknown>;
+            rule: string;
+          }>
+        ): Promise<Record<string, unknown>> | Record<string, unknown>;
+      }
+    | Promise<{
+        identity: Record<string, unknown>;
+        getRuntimeIdentity?(): Record<string, unknown> | Promise<Record<string, unknown>>;
+        run(context: Readonly<Record<string, unknown>>): Promise<T> | T;
+        teardown(
+          context: Readonly<{
+            attempt: number;
+            identity: Record<string, unknown>;
+            failure: Record<string, unknown>;
+            rule: string;
+          }>
+        ): Promise<Record<string, unknown>> | Record<string, unknown>;
+      }>;
+}): Promise<
+  Readonly<{
+    value: T;
+    evidence: Readonly<{
+      attemptCount: number;
+      retried: boolean;
+      attempts: readonly unknown[];
+    }>;
+  }>
+>;

@@ -30,7 +30,7 @@ export function isComposing(event: SearchKey): boolean {
 export function searchKeyAction(
   event: SearchKey,
   selected: number,
-  resultCount: number,
+  resultCount: number
 ): SearchKeyAction {
   if (isComposing(event)) return NONE;
   if (event.key === 'Escape') return CLOSE;

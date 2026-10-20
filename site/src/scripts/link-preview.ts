@@ -21,16 +21,16 @@ type PreviewIndex = ReadonlyMap<string, PreviewEntry>;
 
 /** A lookup either finds the post, learns it has no preview, or cannot load the index. */
 type Lookup =
-  | { readonly kind: "found"; readonly entry: PreviewEntry }
-  | { readonly kind: "missing" }
-  | { readonly kind: "failed" };
+  | { readonly kind: 'found'; readonly entry: PreviewEntry }
+  | { readonly kind: 'missing' }
+  | { readonly kind: 'failed' };
 
 const HOVER_DELAY_MS = 300;
 const HIDE_DELAY_MS = 120;
-const CARD_ID = "link-preview";
+const CARD_ID = 'link-preview';
 const GAP = 8;
 const EDGE = 16;
-const LOAD_ERROR = "미리보기를 불러오지 못했습니다";
+const LOAD_ERROR = '미리보기를 불러오지 못했습니다';
 const POST_HREF = /^\/posts\/([^#?]+)/;
 
 let indexRequest: Promise<PreviewIndex> | null = null;
@@ -44,21 +44,21 @@ let focusFromPointer = false;
 // ── Data ──
 
 function toEntry(value: unknown): PreviewEntry | null {
-  if (typeof value !== "object" || value === null) return null;
+  if (typeof value !== 'object' || value === null) return null;
   const { title, tags, summary } = value as Record<string, unknown>;
-  if (typeof title !== "string") return null;
+  if (typeof title !== 'string') return null;
   return {
     title,
-    tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === "string") : [],
-    summary: typeof summary === "string" ? summary : "",
+    tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [],
+    summary: typeof summary === 'string' ? summary : '',
   };
 }
 
 async function fetchIndex(): Promise<PreviewIndex> {
-  const response = await fetch("/previews.json");
+  const response = await fetch('/previews.json');
   if (!response.ok) throw new Error(`previews.json answered ${response.status}`);
   const data: unknown = await response.json();
-  if (typeof data !== "object" || data === null) throw new Error("previews.json is not an object");
+  if (typeof data !== 'object' || data === null) throw new Error('previews.json is not an object');
   const entries = Object.entries(data as Record<string, unknown>).flatMap(([slug, value]) => {
     const entry = toEntry(value);
     return entry === null ? [] : [[slug, entry] as const];
@@ -78,14 +78,14 @@ function loadIndex(): Promise<PreviewIndex> {
 async function lookup(slug: string): Promise<Lookup> {
   try {
     const entry = (await loadIndex()).get(slug);
-    return entry === undefined ? { kind: "missing" } : { kind: "found", entry };
+    return entry === undefined ? { kind: 'missing' } : { kind: 'found', entry };
   } catch {
-    return { kind: "failed" };
+    return { kind: 'failed' };
   }
 }
 
 function slugOf(anchor: HTMLAnchorElement): string | null {
-  const match = POST_HREF.exec(anchor.getAttribute("href") ?? "");
+  const match = POST_HREF.exec(anchor.getAttribute('href') ?? '');
   if (!match?.[1]) return null;
   try {
     return decodeURIComponent(match[1]);
@@ -97,7 +97,7 @@ function slugOf(anchor: HTMLAnchorElement): string | null {
 // ── Card ──
 
 function paragraph(className: string, text: string): HTMLParagraphElement {
-  const element = document.createElement("p");
+  const element = document.createElement('p');
   element.className = className;
   element.textContent = text;
   return element;
@@ -105,14 +105,14 @@ function paragraph(className: string, text: string): HTMLParagraphElement {
 
 function ensureCard(): HTMLElement {
   if (card) return card;
-  const element = document.createElement("div");
+  const element = document.createElement('div');
   element.id = CARD_ID;
-  element.className = "link-preview";
-  element.setAttribute("role", "tooltip");
-  element.dataset.material = "thick";
+  element.className = 'link-preview';
+  element.setAttribute('role', 'tooltip');
+  element.dataset.material = 'thick';
   element.hidden = true;
-  element.addEventListener("pointerenter", cancelClose);
-  element.addEventListener("pointerleave", scheduleClose);
+  element.addEventListener('pointerenter', cancelClose);
+  element.addEventListener('pointerleave', scheduleClose);
   document.body.append(element);
   card = element;
   return element;
@@ -121,14 +121,14 @@ function ensureCard(): HTMLElement {
 /** Text only, set through textContent; null shows the load error instead. */
 function fill(target: HTMLElement, entry: PreviewEntry | null): void {
   if (entry === null) {
-    target.replaceChildren(paragraph("link-preview-summary", LOAD_ERROR));
+    target.replaceChildren(paragraph('link-preview-summary', LOAD_ERROR));
     return;
   }
-  const parts = [paragraph("link-preview-title", entry.title)];
+  const parts = [paragraph('link-preview-title', entry.title)];
   if (entry.tags.length > 0) {
-    parts.push(paragraph("link-preview-tags", entry.tags.map((tag) => `#${tag}`).join(" ")));
+    parts.push(paragraph('link-preview-tags', entry.tags.map((tag) => `#${tag}`).join(' ')));
   }
-  if (entry.summary !== "") parts.push(paragraph("link-preview-summary", entry.summary));
+  if (entry.summary !== '') parts.push(paragraph('link-preview-summary', entry.summary));
   target.replaceChildren(...parts);
 }
 
@@ -140,7 +140,8 @@ function place(target: HTMLElement, anchor: HTMLAnchorElement): void {
   const maxLeft = document.documentElement.clientWidth - width - EDGE;
   const left = Math.max(EDGE, Math.min(link.left, maxLeft));
   const below = link.bottom + GAP;
-  const top = below + height <= window.innerHeight - EDGE ? below : Math.max(EDGE, link.top - GAP - height);
+  const top =
+    below + height <= window.innerHeight - EDGE ? below : Math.max(EDGE, link.top - GAP - height);
   target.style.left = `${left + window.scrollX}px`;
   target.style.top = `${top + window.scrollY}px`;
 }
@@ -154,7 +155,7 @@ function clearTimers(): void {
 
 function close(): void {
   clearTimers();
-  current?.removeAttribute("aria-describedby");
+  current?.removeAttribute('aria-describedby');
   current = null;
   if (card) card.hidden = true;
 }
@@ -173,21 +174,21 @@ async function open(anchor: HTMLAnchorElement): Promise<void> {
   const slug = slugOf(anchor);
   if (slug === null) return;
   clearTimers();
-  if (current !== anchor) current?.removeAttribute("aria-describedby");
+  if (current !== anchor) current?.removeAttribute('aria-describedby');
   current = anchor;
   const result = await lookup(slug);
   // Another link, a blur or Escape may have taken over while the index loaded.
   if (current !== anchor) return;
   // A post without a preview gets no card at all.
-  if (result.kind === "missing") {
+  if (result.kind === 'missing') {
     close();
     return;
   }
   const target = ensureCard();
-  fill(target, result.kind === "found" ? result.entry : null);
+  fill(target, result.kind === 'found' ? result.entry : null);
   target.hidden = false;
   place(target, anchor);
-  anchor.setAttribute("aria-describedby", CARD_ID);
+  anchor.setAttribute('aria-describedby', CARD_ID);
 }
 
 function scheduleOpen(anchor: HTMLAnchorElement): void {
@@ -200,33 +201,35 @@ function scheduleOpen(anchor: HTMLAnchorElement): void {
 // ── Wiring ──
 
 function wire(anchor: HTMLAnchorElement): void {
-  anchor.addEventListener("pointerenter", (event) => {
-    if (event.pointerType === "touch") return;
+  anchor.addEventListener('pointerenter', (event) => {
+    if (event.pointerType === 'touch') return;
     if (current === anchor) cancelClose();
     else scheduleOpen(anchor);
   });
-  anchor.addEventListener("pointerleave", (event) => {
-    if (event.pointerType !== "touch") scheduleClose();
+  anchor.addEventListener('pointerleave', (event) => {
+    if (event.pointerType !== 'touch') scheduleClose();
   });
-  anchor.addEventListener("pointerdown", () => {
+  anchor.addEventListener('pointerdown', () => {
     focusFromPointer = true;
     window.setTimeout(() => {
       focusFromPointer = false;
     }, 0);
   });
-  anchor.addEventListener("focus", () => {
+  anchor.addEventListener('focus', () => {
     if (focusFromPointer) return;
     void open(anchor);
   });
-  anchor.addEventListener("blur", () => {
+  anchor.addEventListener('blur', () => {
     if (current === anchor) close();
   });
 }
 
-for (const anchor of document.querySelectorAll<HTMLAnchorElement>('.post-content a[href^="/posts/"]')) {
+for (const anchor of document.querySelectorAll<HTMLAnchorElement>(
+  '.post-content a[href^="/posts/"]'
+)) {
   wire(anchor);
 }
 
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && card && !card.hidden) close();
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && card && !card.hidden) close();
 });

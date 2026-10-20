@@ -27,19 +27,12 @@ const PROFILE_ROUTES = Object.freeze({
   portfolio: '/portfolio' as const,
 });
 
-export function selectResumeProfile(
-  profile: ValidatedProfile,
-): ResumeProfile {
+export function selectResumeProfile(profile: ValidatedProfile): ResumeProfile {
   const source = profile as unknown as ProfileData;
-  const education = frozenArray(
-    numericOrder(source.education).map(copyEducation),
-  );
-  const certifications = frozenArray(
-    numericOrder(source.certifications).map(copyCertification),
-  );
-  const resumeProjectIds = source.resumeProjectIds === undefined
-    ? undefined
-    : new Set(source.resumeProjectIds);
+  const education = frozenArray(numericOrder(source.education).map(copyEducation));
+  const certifications = frozenArray(numericOrder(source.certifications).map(copyCertification));
+  const resumeProjectIds =
+    source.resumeProjectIds === undefined ? undefined : new Set(source.resumeProjectIds);
 
   const projection: ResumeProfile = {
     identity: Object.freeze({
@@ -49,54 +42,40 @@ export function selectResumeProfile(
     resumeSummary: source.narrative.resumeSummary,
     detailedIntro: copyRequiredBlocks(source.narrative.detailedIntro),
     contactActions: copyContactActions(source),
-    skillGroups: frozenArray(
-      numericOrder(source.skillGroups).map(copySkillGroup),
-    ),
-    experiences: frozenArray(
-      numericOrder(source.experiences).map(copyExperience),
-    ),
-    achievements: frozenArray(
-      numericOrder(source.achievements).map(copyAchievement),
-    ),
+    skillGroups: frozenArray(numericOrder(source.skillGroups).map(copySkillGroup)),
+    experiences: frozenArray(numericOrder(source.experiences).map(copyExperience)),
+    achievements: frozenArray(numericOrder(source.achievements).map(copyAchievement)),
     projectSummaries: frozenArray(
       numericOrder(source.projects)
         .filter((project) => resumeProjectIds === undefined || resumeProjectIds.has(project.id))
-        .map(copyProjectSummary),
+        .map(copyProjectSummary)
     ),
     ...(education.length === 0
       ? {}
       : {
-          education:
-            education as NonEmptyReadonlyArray<Education>,
+          education: education as NonEmptyReadonlyArray<Education>,
         }),
     ...(certifications.length === 0
       ? {}
       : {
-          certifications:
-            certifications as NonEmptyReadonlyArray<Certification>,
+          certifications: certifications as NonEmptyReadonlyArray<Certification>,
         }),
   };
 
   return Object.freeze(projection);
 }
 
-export function selectPortfolioProfile(
-  profile: ValidatedProfile,
-): PortfolioProfile {
+export function selectPortfolioProfile(profile: ValidatedProfile): PortfolioProfile {
   const source = profile as unknown as ProfileData;
 
   return Object.freeze({
     portfolioSummary: source.narrative.portfolioSummary,
     contactActions: copyContactActions(source),
-    projects: frozenArray(
-      numericOrder(source.projects).map(copyPortfolioProject),
-    ),
+    projects: frozenArray(numericOrder(source.projects).map(copyPortfolioProject)),
   });
 }
 
-export function selectHomepageProfile(
-  profile: ValidatedProfile,
-): HomepageProfile {
+export function selectHomepageProfile(profile: ValidatedProfile): HomepageProfile {
   const source = profile as unknown as ProfileData;
 
   return Object.freeze({
@@ -120,9 +99,7 @@ function copySkillGroup(group: SkillGroup): SkillGroup {
     id: group.id,
     order: group.order,
     title: group.title,
-    skills: frozenArray(
-      numericOrder(group.skills).map(copySkill),
-    ) as NonEmptyReadonlyArray<Skill>,
+    skills: frozenArray(numericOrder(group.skills).map(copySkill)) as NonEmptyReadonlyArray<Skill>,
   });
 }
 
@@ -152,9 +129,7 @@ function copyAchievement(achievement: Achievement): Achievement {
     id: achievement.id,
     order: achievement.order,
     title: achievement.title,
-    ...(achievement.period === undefined
-      ? {}
-      : { period: achievement.period }),
+    ...(achievement.period === undefined ? {} : { period: achievement.period }),
     summary: achievement.summary,
     details: copyRequiredBlocks(achievement.details),
     evidence: copyEvidenceLinks(achievement.evidence),
@@ -186,9 +161,7 @@ function copyPortfolioProject(project: Project): PortfolioProject {
     ...(project.relatedProfileEntity === undefined
       ? {}
       : {
-          relatedProfileEntity: copyReference(
-            project.relatedProfileEntity,
-          ),
+          relatedProfileEntity: copyReference(project.relatedProfileEntity),
         }),
   });
 }
@@ -227,36 +200,26 @@ function copyEducation(education: Education): Education {
     id: education.id,
     order: education.order,
     title: education.title,
-    ...(education.subtitle === undefined
-      ? {}
-      : { subtitle: education.subtitle }),
+    ...(education.subtitle === undefined ? {} : { subtitle: education.subtitle }),
     ...(education.period === undefined ? {} : { period: education.period }),
     details: frozenArray(education.details),
     evidence: copyEvidenceLinks(education.evidence),
   });
 }
 
-function copyCertification(
-  certification: Certification,
-): Certification {
+function copyCertification(certification: Certification): Certification {
   return Object.freeze({
     id: certification.id,
     order: certification.order,
     title: certification.title,
-    ...(certification.issuer === undefined
-      ? {}
-      : { issuer: certification.issuer }),
-    ...(certification.period === undefined
-      ? {}
-      : { period: certification.period }),
+    ...(certification.issuer === undefined ? {} : { issuer: certification.issuer }),
+    ...(certification.period === undefined ? {} : { period: certification.period }),
     details: frozenArray(certification.details),
     evidence: copyEvidenceLinks(certification.evidence),
   });
 }
 
-function copyEvidenceLinks(
-  links: readonly EvidenceLink[],
-): readonly EvidenceLink[] {
+function copyEvidenceLinks(links: readonly EvidenceLink[]): readonly EvidenceLink[] {
   return frozenArray(
     numericOrder(links).map((link) =>
       Object.freeze({
@@ -264,20 +227,16 @@ function copyEvidenceLinks(
         order: link.order,
         label: link.label,
         destination: link.destination,
-      }),
-    ),
+      })
+    )
   );
 }
 
-function copyRequiredBlocks(
-  blocks: readonly ContentBlock[],
-): ContentBlocks {
+function copyRequiredBlocks(blocks: readonly ContentBlock[]): ContentBlocks {
   return frozenArray(blocks) as ContentBlocks;
 }
 
-function copyReference(
-  reference: ProfileEntityReference,
-): ProfileEntityReference {
+function copyReference(reference: ProfileEntityReference): ProfileEntityReference {
   if (reference.tag === 'experience') {
     return Object.freeze({
       tag: 'experience',
@@ -292,15 +251,11 @@ function copyReference(
 }
 
 function numericOrder<Value extends Readonly<{ order: number }>>(
-  values: readonly Value[],
+  values: readonly Value[]
 ): Value[] {
-  return [...values].sort(
-    (left, right) => left.order - right.order,
-  );
+  return [...values].sort((left, right) => left.order - right.order);
 }
 
-function frozenArray<Value>(
-  values: readonly Value[],
-): readonly Value[] {
+function frozenArray<Value>(values: readonly Value[]): readonly Value[] {
   return Object.freeze([...values]);
 }

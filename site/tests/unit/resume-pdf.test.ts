@@ -46,8 +46,7 @@ function hrefFor(entry: AnyRecord): string | null {
 
 function sectionOrdinalOf(entry: AnyRecord): number {
   return manifest.sectionOrder.findIndex(
-    (section: AnyRecord) =>
-      section.key === entry.sectionKey && section.order === entry.sectionOrder,
+    (section: AnyRecord) => section.key === entry.sectionKey && section.order === entry.sectionOrder
   );
 }
 
@@ -59,7 +58,7 @@ function entityOrdinalOf(entry: AnyRecord): number | null {
       entity.sectionOrder === entry.sectionOrder &&
       entity.kind === entry.entity.kind &&
       entity.id === entry.entity.id &&
-      entity.order === entry.entity.order,
+      entity.order === entry.entity.order
   );
 }
 
@@ -72,8 +71,7 @@ function buildSkeleton(): AnyRecord {
       entityOrdinal: index,
       sectionOrdinal: manifest.sectionOrder.findIndex(
         (section: AnyRecord) =>
-          section.key === entity.sectionKey &&
-          section.order === entity.sectionOrder,
+          section.key === entity.sectionKey && section.order === entity.sectionOrder
       ),
       parentEntityOrdinal:
         entity.parent === null
@@ -83,7 +81,7 @@ function buildSkeleton(): AnyRecord {
                 candidate.sectionKey === entity.sectionKey &&
                 candidate.sectionOrder === entity.sectionOrder &&
                 candidate.kind === entity.parent.kind &&
-                candidate.id === entity.parent.id,
+                candidate.id === entity.parent.id
             ),
     })),
     facts: manifest.entries.map((entry: AnyRecord, index: number) => ({
@@ -99,47 +97,39 @@ function buildSkeleton(): AnyRecord {
 }
 
 function buildSnapshot(): AnyRecord {
-  const structure = resumePdfInspectorTesting.buildStructureTree(
-    skeleton as never,
-  ) as AnyRecord;
-  const factNodes = structure.nodes.filter(
-    (node: AnyRecord) => node.role === 'fact',
-  );
+  const structure = resumePdfInspectorTesting.buildStructureTree(skeleton as never) as AnyRecord;
+  const factNodes = structure.nodes.filter((node: AnyRecord) => node.role === 'fact');
   let annotationIndex = 0;
 
-  const occurrences = manifest.entries.map(
-    (entry: AnyRecord, index: number) => {
-      const href = hrefFor(entry);
-      const node = factNodes.find(
-        (candidate: AnyRecord) => candidate.occurrenceOrder === index + 1,
-      );
-      return {
-        occurrenceOrder: index + 1,
-        sectionOrdinal: sectionOrdinalOf(entry),
-        entityOrdinal: entityOrdinalOf(entry),
-        valueKind: entry.valueKind,
-        fragments: [
-          {
-            pageNumber: 1,
-            itemIndex: index,
-            text: displayTextFor(entry),
-            lineWrapBefore: false,
-          },
-        ],
-        urlAnnotations:
-          href === null
-            ? []
-            : [
-                {
-                  pageNumber: 1,
-                  annotationIndex: annotationIndex++,
-                  destination: href,
-                },
-              ],
-        structurePath: [...(node?.path ?? [0])],
-      };
-    },
-  );
+  const occurrences = manifest.entries.map((entry: AnyRecord, index: number) => {
+    const href = hrefFor(entry);
+    const node = factNodes.find((candidate: AnyRecord) => candidate.occurrenceOrder === index + 1);
+    return {
+      occurrenceOrder: index + 1,
+      sectionOrdinal: sectionOrdinalOf(entry),
+      entityOrdinal: entityOrdinalOf(entry),
+      valueKind: entry.valueKind,
+      fragments: [
+        {
+          pageNumber: 1,
+          itemIndex: index,
+          text: displayTextFor(entry),
+          lineWrapBefore: false,
+        },
+      ],
+      urlAnnotations:
+        href === null
+          ? []
+          : [
+              {
+                pageNumber: 1,
+                annotationIndex: annotationIndex++,
+                destination: href,
+              },
+            ],
+      structurePath: [...(node?.path ?? [0])],
+    };
+  });
 
   return {
     schemaVersion: 1,
@@ -179,9 +169,7 @@ function expectRejected(snapshot: AnyRecord, because: string): void {
 }
 
 beforeAll(async () => {
-  const built = await buildResumeManifestForTest(
-    getProductionProfileAssembly().resume,
-  );
+  const built = await buildResumeManifestForTest(getProductionProfileAssembly().resume);
   if (!built.ok) throw new Error('the approved manifest must build');
   manifest = built.value as unknown as AnyRecord;
   skeleton = buildSkeleton();
@@ -190,9 +178,7 @@ beforeAll(async () => {
 
 describe('pdf inspector structure', () => {
   test('normalizes one document, its sections, entities and facts', () => {
-    const structure = resumePdfInspectorTesting.buildStructureTree(
-      skeleton as never,
-    ) as AnyRecord;
+    const structure = resumePdfInspectorTesting.buildStructureTree(skeleton as never) as AnyRecord;
     const roles = (role: string) =>
       structure.nodes.filter((node: AnyRecord) => node.role === role).length;
 
@@ -204,10 +190,10 @@ describe('pdf inspector structure', () => {
     // Depth-first order is what makes the filtered arrays line up with the
     // ordinals the mapper indexes by.
     expect(structure.entityOrder).toEqual(
-      manifest.entityOrder.map((_: unknown, index: number) => index),
+      manifest.entityOrder.map((_: unknown, index: number) => index)
     );
     expect(structure.readingOrder).toEqual(
-      manifest.entries.map((_: unknown, index: number) => index + 1),
+      manifest.entries.map((_: unknown, index: number) => index + 1)
     );
     expect(structure.nodes[0].path).toEqual([0]);
     expect(structure.nodes[0].parentPath).toBeNull();
@@ -216,9 +202,7 @@ describe('pdf inspector structure', () => {
   test('reads a value kind from the observation alone', () => {
     const kind = resumePdfInspectorTesting.inferValueKind;
     expect(kind({ text: '이메일', href: 'mailto:a@b.c' })).toBe('email');
-    expect(kind({ text: 'GitHub', href: 'https://github.com/someone' })).toBe(
-      'github-url',
-    );
+    expect(kind({ text: 'GitHub', href: 'https://github.com/someone' })).toBe('github-url');
     expect(kind({ text: '2023-07 – 2023-08', href: null })).toBe('period');
     expect(kind({ text: '2019 – 현재', href: null })).toBe('period');
     expect(kind({ text: 'Rust', href: null })).toBe('text');
@@ -234,15 +218,9 @@ describe('pdf inspector structure', () => {
     expect(run).not.toBeNull();
     expect(run?.wraps.has(1)).toBe(false);
 
-    const spaced = resumePdfInspectorTesting.findTextRun(
-      stream,
-      0,
-      '프로그래밍 과',
-    );
+    const spaced = resumePdfInspectorTesting.findTextRun(stream, 0, '프로그래밍 과');
     expect(spaced?.wraps.has(1)).toBe(true);
-    expect(
-      resumePdfInspectorTesting.findTextRun(stream, 0, '없는 값'),
-    ).toBeNull();
+    expect(resumePdfInspectorTesting.findTextRun(stream, 0, '없는 값')).toBeNull();
   });
 });
 
@@ -260,7 +238,7 @@ describe('pdf evidence mapping', () => {
       mutated((snapshot) => {
         snapshot.occurrences.pop();
       }),
-      'a missing occurrence must fail',
+      'a missing occurrence must fail'
     );
   });
 
@@ -272,7 +250,7 @@ describe('pdf evidence mapping', () => {
         last.fragments[0].itemIndex += 1000;
         snapshot.occurrences.push(last);
       }),
-      'an extra occurrence must fail',
+      'an extra occurrence must fail'
     );
   });
 
@@ -281,7 +259,7 @@ describe('pdf evidence mapping', () => {
       mutated((snapshot) => {
         snapshot.occurrences[0].fragments[0].text = '다른 이름';
       }),
-      'a changed value must fail',
+      'a changed value must fail'
     );
   });
 
@@ -293,7 +271,7 @@ describe('pdf evidence mapping', () => {
         snapshot.occurrences[0] = { ...second, occurrenceOrder: 1 };
         snapshot.occurrences[1] = { ...first, occurrenceOrder: 2 };
       }),
-      'reordered occurrences must fail',
+      'reordered occurrences must fail'
     );
   });
 
@@ -307,7 +285,7 @@ describe('pdf evidence mapping', () => {
         twin.structurePath = [...twin.structurePath, 99];
         snapshot.occurrences.push(twin);
       }),
-      'an ambiguous occurrence must fail',
+      'an ambiguous occurrence must fail'
     );
   });
 
@@ -315,11 +293,11 @@ describe('pdf evidence mapping', () => {
     expectRejected(
       mutated((snapshot) => {
         const link = snapshot.occurrences.find(
-          (occurrence: AnyRecord) => occurrence.urlAnnotations.length === 1,
+          (occurrence: AnyRecord) => occurrence.urlAnnotations.length === 1
         );
         link.urlAnnotations[0].destination = 'https://example.invalid/';
       }),
-      'a redirected link must fail',
+      'a redirected link must fail'
     );
   });
 
@@ -328,7 +306,7 @@ describe('pdf evidence mapping', () => {
       mutated((snapshot) => {
         snapshot.structure.nodes.pop();
       }),
-      'a truncated structure must fail',
+      'a truncated structure must fail'
     );
   });
 
@@ -337,7 +315,7 @@ describe('pdf evidence mapping', () => {
       mutated((snapshot) => {
         snapshot.outline.entries.pop();
       }),
-      'an incomplete outline must fail',
+      'an incomplete outline must fail'
     );
   });
 
@@ -349,7 +327,7 @@ describe('pdf evidence mapping', () => {
           value: 'f'.repeat(64),
         };
       }),
-      'a stale source identity must fail',
+      'a stale source identity must fail'
     );
   });
 
@@ -358,7 +336,7 @@ describe('pdf evidence mapping', () => {
       mutated((snapshot) => {
         snapshot.pageCount = 0;
       }),
-      'a candidate with no pages must fail',
+      'a candidate with no pages must fail'
     );
   });
 });

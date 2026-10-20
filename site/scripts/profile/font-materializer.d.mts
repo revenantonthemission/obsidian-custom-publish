@@ -18,7 +18,5 @@ export class ProfileFontMaterializationError extends Error {
 export function materializeProfileFont(): Promise<ProfileFontMaterializationResult>;
 
 export const fontMaterializerTesting: Readonly<{
-  materializeAtSiteRoot(
-    siteRoot: string,
-  ): Promise<ProfileFontMaterializationResult>;
+  materializeAtSiteRoot(siteRoot: string): Promise<ProfileFontMaterializationResult>;
 }>;

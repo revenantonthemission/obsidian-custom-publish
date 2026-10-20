@@ -5,27 +5,27 @@
  * from data-category, so they follow the appearance with no repaint. */
 
 /* ── Category paint, shared by nodes, legend chips and the list ── */
-[data-category="os"] {
+[data-category='os'] {
   --node-color: var(--c-graph-os);
 }
 
-[data-category="web"] {
+[data-category='web'] {
   --node-color: var(--c-graph-web);
 }
 
-[data-category="db"] {
+[data-category='db'] {
   --node-color: var(--c-graph-db);
 }
 
-[data-category="network"] {
+[data-category='network'] {
   --node-color: var(--c-graph-network);
 }
 
-[data-category="hub"] {
+[data-category='hub'] {
   --node-color: var(--c-graph-hub);
 }
 
-[data-category="etc"] {
+[data-category='etc'] {
   --node-color: var(--c-graph-etc);
 }
 
@@ -35,8 +35,8 @@
   stroke: none;
 }
 
-.graph-node-shape[data-shape="ring"],
-.graph-legend-shape[data-shape="ring"] path {
+.graph-node-shape[data-shape='ring'],
+.graph-legend-shape[data-shape='ring'] path {
   fill: none;
   stroke: var(--node-color);
   stroke-width: 2px;
@@ -227,7 +227,7 @@
 }
 
 /* The pressed filter: weight and a --c-text ring, never tinted text on glass (R-02). */
-.graph-legend-chip[aria-pressed="true"] {
+.graph-legend-chip[aria-pressed='true'] {
   box-shadow: inset 0 0 0 2px var(--c-text);
   font-weight: 700;
 }

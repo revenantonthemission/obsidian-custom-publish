@@ -1,8 +1,8 @@
 ---
-import ContactActions from "./ContactActions.astro";
-import ContentBlocks from "./ContentBlocks.astro";
-import ResumeEntry from "./ResumeEntry.astro";
-import type { ResumePresentation } from "./presentation.js";
+import ContactActions from './ContactActions.astro';
+import ContentBlocks from './ContentBlocks.astro';
+import ResumeEntry from './ResumeEntry.astro';
+import type { ResumePresentation } from './presentation.js';
 
 interface Props {
   presentation: ResumePresentation;
@@ -12,43 +12,24 @@ const { presentation } = Astro.props;
 ---
 
 <div class="resume-content" data-testid="resume-content">
-  {presentation.sections.map((section) => (
-    section.kind === "intro" ? (
-      <section
-        class="profile-section resume-intro"
-        data-profile-section="intro"
-      >
+  {presentation.sections.map((section) =>
+    section.kind === 'intro' ? (
+      <section class="profile-section resume-intro" data-profile-section="intro">
         <h2>{section.heading}</h2>
-        <p
-          class="resume-name"
-          data-profile-fact-id={section.name.factId}
-        >
+        <p class="resume-name" data-profile-fact-id={section.name.factId}>
           {section.name.value}
         </p>
-        <p
-          class="resume-headline"
-          data-profile-fact-id={section.headline.factId}
-        >
+        <p class="resume-headline" data-profile-fact-id={section.headline.factId}>
           {section.headline.value}
         </p>
-        <p
-          class="resume-summary"
-          data-profile-fact-id={section.summary.factId}
-        >
+        <p class="resume-summary" data-profile-fact-id={section.summary.factId}>
           {section.summary.value}
         </p>
         <ContentBlocks blocks={section.details} />
-        <ContactActions
-          actions={section.actions}
-          label="연락처"
-          variant="contact-actions"
-        />
+        <ContactActions actions={section.actions} label="연락처" variant="contact-actions" />
       </section>
-    ) : section.kind === "skills" ? (
-      <section
-        class="profile-section resume-skills"
-        data-profile-section="skills"
-      >
+    ) : section.kind === 'skills' ? (
+      <section class="profile-section resume-skills" data-profile-section="skills">
         <h2>{section.heading}</h2>
         {section.groups.map((group) => (
           <section
@@ -58,9 +39,7 @@ const { presentation } = Astro.props;
             data-profile-entity-order={group.order}
             data-testid={`resume-content-skill-group-${group.id}`}
           >
-            <h3 data-profile-fact-id={group.title.factId}>
-              {group.title.value}
-            </h3>
+            <h3 data-profile-fact-id={group.title.factId}>{group.title.value}</h3>
             <ul>
               {group.skills.map((skill) => (
                 <li
@@ -77,11 +56,8 @@ const { presentation } = Astro.props;
           </section>
         ))}
       </section>
-    ) : section.kind === "highlights" ? (
-      <section
-        class="profile-section resume-highlights"
-        data-profile-section="highlights"
-      >
+    ) : section.kind === 'highlights' ? (
+      <section class="profile-section resume-highlights" data-profile-section="highlights">
         <h2>{section.heading}</h2>
         {section.groups.map((group) => (
           <section
@@ -95,11 +71,8 @@ const { presentation } = Astro.props;
           </section>
         ))}
       </section>
-    ) : section.kind === "projects" ? (
-      <section
-        class="profile-section resume-projects"
-        data-profile-section="projects"
-      >
+    ) : section.kind === 'projects' ? (
+      <section class="profile-section resume-projects" data-profile-section="projects">
         <h2>{section.heading}</h2>
         {section.projects.map((project) => (
           <article
@@ -109,14 +82,9 @@ const { presentation } = Astro.props;
             data-profile-entity-order={project.order}
             data-testid={`resume-content-project-${project.id}`}
           >
-            <h3 data-profile-fact-id={project.title.factId}>
-              {project.title.value}
-            </h3>
+            <h3 data-profile-fact-id={project.title.factId}>{project.title.value}</h3>
             {project.period !== undefined && (
-              <p
-                class="profile-period"
-                data-profile-fact-id={project.period.factId}
-              >
+              <p class="profile-period" data-profile-fact-id={project.period.factId}>
                 {project.period.text}
               </p>
             )}
@@ -140,11 +108,8 @@ const { presentation } = Astro.props;
           </article>
         ))}
       </section>
-    ) : section.kind === "education" ? (
-      <section
-        class="profile-section resume-education"
-        data-profile-section="education"
-      >
+    ) : section.kind === 'education' ? (
+      <section class="profile-section resume-education" data-profile-section="education">
         <h2>{section.heading}</h2>
         {section.entries.map((entry) => (
           <article
@@ -154,25 +119,16 @@ const { presentation } = Astro.props;
             data-profile-entity-order={entry.order}
             data-testid={`resume-content-education-${entry.id}`}
           >
-            <h3 data-profile-fact-id={entry.title.factId}>
-              {entry.title.value}
-            </h3>
+            <h3 data-profile-fact-id={entry.title.factId}>{entry.title.value}</h3>
             {entry.subtitle !== undefined && (
-              <p data-profile-fact-id={entry.subtitle.factId}>
-                {entry.subtitle.value}
-              </p>
+              <p data-profile-fact-id={entry.subtitle.factId}>{entry.subtitle.value}</p>
             )}
             {entry.period !== undefined && (
-              <p
-                class="profile-period"
-                data-profile-fact-id={entry.period.factId}
-              >
+              <p class="profile-period" data-profile-fact-id={entry.period.factId}>
                 {entry.period.text}
               </p>
             )}
-            {entry.details.length > 0 && (
-              <ContentBlocks blocks={entry.details} />
-            )}
+            {entry.details.length > 0 && <ContentBlocks blocks={entry.details} />}
             {entry.evidence.length > 0 && (
               <ContactActions
                 actions={entry.evidence}
@@ -184,10 +140,7 @@ const { presentation } = Astro.props;
         ))}
       </section>
     ) : (
-      <section
-        class="profile-section resume-certifications"
-        data-profile-section="certifications"
-      >
+      <section class="profile-section resume-certifications" data-profile-section="certifications">
         <h2>{section.heading}</h2>
         {section.entries.map((entry) => (
           <article
@@ -197,25 +150,16 @@ const { presentation } = Astro.props;
             data-profile-entity-order={entry.order}
             data-testid={`resume-content-certification-${entry.id}`}
           >
-            <h3 data-profile-fact-id={entry.title.factId}>
-              {entry.title.value}
-            </h3>
+            <h3 data-profile-fact-id={entry.title.factId}>{entry.title.value}</h3>
             {entry.issuer !== undefined && (
-              <p data-profile-fact-id={entry.issuer.factId}>
-                {entry.issuer.value}
-              </p>
+              <p data-profile-fact-id={entry.issuer.factId}>{entry.issuer.value}</p>
             )}
             {entry.period !== undefined && (
-              <p
-                class="profile-period"
-                data-profile-fact-id={entry.period.factId}
-              >
+              <p class="profile-period" data-profile-fact-id={entry.period.factId}>
                 {entry.period.text}
               </p>
             )}
-            {entry.details.length > 0 && (
-              <ContentBlocks blocks={entry.details} />
-            )}
+            {entry.details.length > 0 && <ContentBlocks blocks={entry.details} />}
             {entry.evidence.length > 0 && (
               <ContactActions
                 actions={entry.evidence}
@@ -227,5 +171,5 @@ const { presentation } = Astro.props;
         ))}
       </section>
     )
-  ))}
+  )}
 </div>
