@@ -157,41 +157,65 @@ export interface OverflowReport {
 }
 
 /**
- * The document must never scroll sideways. Offenders are elements that reach
- * past the viewport while no ancestor scrolls them horizontally.
+ * The document must never scroll sideways, and no content may be cut off
+ * sideways (C-14, AC4.1; review finding R-08). Offenders are:
+ * - elements that reach past the viewport, unless an ancestor scrolls them
+ *   horizontally (overflow-x auto or scroll). A hidden or clip ancestor does
+ *   not excuse them: it cuts them off;
+ * - boxes with overflow-x hidden or clip whose content is wider than they are
+ *   (scrollWidth past clientWidth), so part of it is cut off.
+ * Content that is not rendered shows nothing to cut off, and neither does a
+ * visually hidden box (1 × 1 px with its overflow hidden: the
+ * screen-reader-only pattern of .visually-hidden and KaTeX's MathML copy) or
+ * anything inside one; those clip on purpose.
  */
 export async function horizontalOverflow(page: Page): Promise<OverflowReport> {
   return page.evaluate(() => {
     const root = document.documentElement;
     const limit = root.clientWidth + 1;
     const offenders: string[] = [];
-    const scrollsSideways = (element: Element | null): boolean => {
+    const describe = (element: Element): string =>
+      `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 60)}`;
+    const clipsSideways = (element: Element): boolean => {
+      const overflowX = window.getComputedStyle(element).overflowX;
+      return overflowX === 'hidden' || overflowX === 'clip';
+    };
+    const isVisuallyHidden = (element: Element): boolean =>
+      clipsSideways(element) && element.clientWidth <= 1 && element.clientHeight <= 1;
+    /** True when the element or one of its ancestors meets the test. */
+    const withinAny = (element: Element | null, test: (node: Element) => boolean): boolean => {
       for (let node = element; node !== null && node !== root; node = node.parentElement) {
-        const overflowX = window.getComputedStyle(node).overflowX;
-        if (
-          overflowX === 'auto' ||
-          overflowX === 'scroll' ||
-          overflowX === 'hidden' ||
-          overflowX === 'clip'
-        ) {
-          return true;
-        }
+        if (test(node)) return true;
       }
       return false;
     };
+    const isNeverShown = (element: Element): boolean => withinAny(element, isVisuallyHidden);
+    const isScrolledIntoReach = (element: Element): boolean =>
+      withinAny(element.parentElement, (node) => {
+        const overflowX = window.getComputedStyle(node).overflowX;
+        return overflowX === 'auto' || overflowX === 'scroll';
+      });
     for (const element of document.body.querySelectorAll('*')) {
-      const rect = element.getBoundingClientRect();
-      if (rect.width === 0 || rect.right <= limit) continue;
+      if (offenders.length >= 8) break;
       // Content that is not rendered (display: none, or inside a closed
       // details, whose content-visibility: hidden slot still reports a box)
       // cannot overflow the page.
       if (!element.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true }))
         continue;
-      if (scrollsSideways(element.parentElement)) continue;
-      offenders.push(
-        `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 60)} right=${Math.round(rect.right)}`
-      );
-      if (offenders.length >= 8) break;
+      if (
+        clipsSideways(element) &&
+        element.scrollWidth > element.clientWidth + 1 &&
+        !isNeverShown(element)
+      ) {
+        offenders.push(
+          `${describe(element)} cuts off content: scrollWidth=${element.scrollWidth} clientWidth=${element.clientWidth}`
+        );
+        continue;
+      }
+      const rect = element.getBoundingClientRect();
+      if (rect.width === 0 || rect.right <= limit) continue;
+      if (isScrolledIntoReach(element) || isNeverShown(element)) continue;
+      offenders.push(`${describe(element)} right=${Math.round(rect.right)}`);
     }
     return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, offenders };
   });

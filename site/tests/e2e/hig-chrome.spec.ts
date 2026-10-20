@@ -303,6 +303,40 @@ test.describe('reduced motion', () => {
   });
 });
 
+// AC4.1 (loop-back 1; review finding R-08): every route at the six widths the
+// criterion names, in both appearances, neither scrolls sideways nor cuts off
+// content. The matrix runs in Chromium; C-14 below checks 320 px with doubled
+// text in all three engines.
+const AC41_WIDTHS = Object.freeze([320, 375, 768, 1024, 1440, 1920] as const);
+
+test.describe('no sideways overflow or cut-off content at six widths (AC4.1)', () => {
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'the six-width matrix runs in Chromium; C-14 covers every engine at 320 px'
+  );
+  for (const route of HIG_ROUTES) {
+    test(`${route.path} at ${AC41_WIDTHS.join(', ')} px, light and dark`, async ({ page }) => {
+      const problems: string[] = [];
+      for (const appearance of HIG_APPEARANCES) {
+        await page.emulateMedia({ colorScheme: appearance });
+        for (const width of AC41_WIDTHS) {
+          await page.setViewportSize(viewportFor(width));
+          await gotoSettled(page, route.path);
+          const report = await horizontalOverflow(page);
+          const cell = `${width} px ${appearance}`;
+          problems.push(...report.offenders.map((offender) => `${cell}: ${offender}`));
+          if (report.scrollWidth > report.clientWidth + 1) {
+            problems.push(
+              `${cell}: page scrollWidth ${report.scrollWidth} > ${report.clientWidth}`
+            );
+          }
+        }
+      }
+      expect(problems).toEqual([]);
+    });
+  }
+});
+
 // C-14: at 320 px with the text doubled, nothing overflows sideways.
 test.describe('200 % text at 320 px', () => {
   test.use({ viewport: viewportFor(320) });
