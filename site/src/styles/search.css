@@ -169,12 +169,19 @@ html:has(.search-dialog[open]) {
   overflow-wrap: anywhere;
 }
 
+/* Up to two lines that wrap anywhere, as .grouped-row-summary does. A single
+   nowrap line cut every snippet off sideways at 200% text and at every width
+   (NFR1-e, AC4.1; review finding R-18). The clamp hides only lines after the
+   second; no line is cut off sideways. */
 .search-option-snippet {
+  display: -webkit-box;
   overflow: hidden;
   color: var(--c-text-secondary);
   font-size: var(--text-footnote);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* On the selection fill over thick glass, --c-text-secondary drops to 3.81:1
