@@ -1,4 +1,9 @@
-import type { PortfolioProfile, PortfolioProject, ProjectDimension, ProjectDimensionKey } from './types.js';
+import type {
+  PortfolioProfile,
+  PortfolioProject,
+  ProjectDimension,
+  ProjectDimensionKey,
+} from './types.js';
 
 export type PortfolioRoleId = 'data-engineer-ai' | 'product-engineer' | 'infra-engineer';
 
@@ -60,42 +65,22 @@ type DimensionSelection = Readonly<Record<ProjectDimensionKey, readonly string[]
 // Keep the incident, personal/team scope and measurement limits together.
 // The data-engineering page retains the full case study.
 const PRODUCT_DOCSURI_SELECTION = {
-  problem: [
-    'project-docsuri-problem-0-text',
-    'project-docsuri-problem-backfill-contention',
-  ],
-  role: [
-    'project-docsuri-role-0-text',
-    'project-docsuri-role-contract-collaboration',
-  ],
-  keyDecisions: [
-    'project-docsuri-key-decisions-0-text',
-    'project-docsuri-decision-cost-quotas',
-  ],
+  problem: ['project-docsuri-problem-0-text', 'project-docsuri-problem-backfill-contention'],
+  role: ['project-docsuri-role-0-text', 'project-docsuri-role-contract-collaboration'],
+  keyDecisions: ['project-docsuri-key-decisions-0-text', 'project-docsuri-decision-cost-quotas'],
   architecture: [
     'project-docsuri-architecture-0-text',
     'project-docsuri-architecture-docmodel-contract',
   ],
-  outcomes: [
-    'project-docsuri-outcomes-0-text',
-    'project-docsuri-outcomes-mixed-load',
-  ],
-  lessons: [
-    'project-docsuri-lessons-0-text',
-    'project-docsuri-lessons-current-quality',
-  ],
+  outcomes: ['project-docsuri-outcomes-0-text', 'project-docsuri-outcomes-mixed-load'],
+  lessons: ['project-docsuri-lessons-0-text', 'project-docsuri-lessons-current-quality'],
 } as const satisfies DimensionSelection;
 
 // Keep historical AWS incidents, the later single-host runtime and the scope
 // of recovery checks together. Each paragraph retains its approved fact ID.
 const INFRA_DOCSURI_SELECTION = {
-  problem: [
-    'project-docsuri-problem-0-text',
-    'project-docsuri-problem-backfill-contention',
-  ],
-  role: [
-    'project-docsuri-role-0-text',
-  ],
+  problem: ['project-docsuri-problem-0-text', 'project-docsuri-problem-backfill-contention'],
+  role: ['project-docsuri-role-0-text'],
   keyDecisions: [
     'project-docsuri-key-decisions-0-text',
     'project-docsuri-decision-index-cutover',
@@ -124,10 +109,9 @@ interface CuratedProject {
   readonly dimensions?: DimensionSelection;
 }
 
-const CURATED_PROJECTS: Readonly<Record<
-  Exclude<PortfolioRoleId, 'data-engineer-ai'>,
-  readonly CuratedProject[]
->> = {
+const CURATED_PROJECTS: Readonly<
+  Record<Exclude<PortfolioRoleId, 'data-engineer-ai'>, readonly CuratedProject[]>
+> = {
   'product-engineer': [{ id: 'docsuri', dimensions: PRODUCT_DOCSURI_SELECTION }],
   'infra-engineer': [
     { id: 'docsuri', dimensions: INFRA_DOCSURI_SELECTION },
@@ -138,7 +122,7 @@ const CURATED_PROJECTS: Readonly<Record<
 /** Select and order existing facts; never rewrite or mint approved facts. */
 export function selectPortfolioForRole(
   profile: PortfolioProfile,
-  roleId: PortfolioRoleId,
+  roleId: PortfolioRoleId
 ): PortfolioProfile {
   getPortfolioRole(roleId);
   if (roleId === 'data-engineer-ai') return profile;
@@ -155,12 +139,15 @@ export function selectPortfolioForRole(
   return Object.freeze({ ...profile, projects: Object.freeze(projects) });
 }
 
-function selectDimensions(project: PortfolioProject, selection: DimensionSelection): PortfolioProject {
+function selectDimensions(
+  project: PortfolioProject,
+  selection: DimensionSelection
+): PortfolioProject {
   function dimension<Key extends ProjectDimensionKey>(key: Key): ProjectDimension<Key> {
     const source = project.dimensions.find((candidate) => candidate.key === key);
     const blocks = selection[key].map((factId) => {
-      const block = source?.blocks.find((candidate) =>
-        candidate.tag === 'paragraph' && candidate.text.factId === factId,
+      const block = source?.blocks.find(
+        (candidate) => candidate.tag === 'paragraph' && candidate.text.factId === factId
       );
       if (block === undefined) {
         throw new TypeError(`Missing portfolio source fact: ${factId}.`);

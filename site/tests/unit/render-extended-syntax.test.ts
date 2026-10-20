@@ -32,16 +32,14 @@ describe('tilde handling matches Obsidian', () => {
 
 describe('abbreviations', () => {
   test('definition line disappears and occurrences become abbr with tooltip', async () => {
-    const html = await renderMarkdown(
-      'AMD는 CPU를 만든다.\n\n*[AMD]: Advanced Micro Devices\n',
-    );
+    const html = await renderMarkdown('AMD는 CPU를 만든다.\n\n*[AMD]: Advanced Micro Devices\n');
     expect(html).toContain('<abbr title="Advanced Micro Devices">AMD</abbr>');
     expect(html).not.toContain('*[AMD]');
   });
 
   test('multiple definitions on consecutive lines all apply', async () => {
     const html = await renderMarkdown(
-      'TLB와 ASID 설명.\n\n*[TLB]: Translation Lookaside Buffer\n*[ASID]: Address Space Identifier\n',
+      'TLB와 ASID 설명.\n\n*[TLB]: Translation Lookaside Buffer\n*[ASID]: Address Space Identifier\n'
     );
     expect(html).toContain('<abbr title="Translation Lookaside Buffer">TLB</abbr>');
     expect(html).toContain('<abbr title="Address Space Identifier">ASID</abbr>');
@@ -49,7 +47,7 @@ describe('abbreviations', () => {
 
   test('definition titles leave no leftover text in the output', async () => {
     const html = await renderMarkdown(
-      'TLB 설명.\n\n*[TLB]: Translation Lookaside Buffer\n*[ASID]: Address Space Identifier\n',
+      'TLB 설명.\n\n*[TLB]: Translation Lookaside Buffer\n*[ASID]: Address Space Identifier\n'
     );
     // Title text may appear only inside title attributes, never as body text.
     const withoutAttributes = html.replace(/title="[^"]*"/g, '');

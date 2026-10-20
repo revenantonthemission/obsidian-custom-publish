@@ -1,10 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { recordEvidenceFragment } from './support/evidence.js';
-import {
-  PROFILE_ROUTES,
-  RESPONSIVE_VIEWPORTS,
-  responsiveKey,
-} from './support/matrix.js';
+import { PROFILE_ROUTES, RESPONSIVE_VIEWPORTS, responsiveKey } from './support/matrix.js';
 import {
   PROFILE_SHELL,
   expectNoHorizontalOverflow,
@@ -21,9 +17,7 @@ const completed: string[] = [];
 test.describe('responsive boundaries', () => {
   for (const route of PROFILE_ROUTES) {
     for (const viewport of RESPONSIVE_VIEWPORTS) {
-      test(`${route} at ${viewport} reads without overflow or clipping`, async ({
-        page,
-      }) => {
+      test(`${route} at ${viewport} reads without overflow or clipping`, async ({ page }) => {
         await setViewport(page, viewport);
         await gotoRoute(page, route);
 
@@ -31,9 +25,7 @@ test.describe('responsive boundaries', () => {
         await expectNoHorizontalOverflow(page, label);
 
         const clipped = await findClippedContent(page);
-        expect(clipped, `${label} hides or truncates profile content`).toEqual(
-          [],
-        );
+        expect(clipped, `${label} hides or truncates profile content`).toEqual([]);
 
         // The content itself must still be laid out, not collapsed to nothing.
         const shell = page.locator(PROFILE_SHELL);

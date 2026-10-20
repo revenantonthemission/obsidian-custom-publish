@@ -44,9 +44,7 @@ const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost']);
 function requireEnvironmentValue(name: string): string {
   const value = process.env[name];
   if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(
-      `${name} is required; run this suite through "npm run test:e2e".`,
-    );
+    throw new Error(`${name} is required; run this suite through "npm run test:e2e".`);
   }
   return value;
 }
@@ -70,9 +68,7 @@ export function profileEnvironment(): ProfileE2EEnvironment {
     throw new Error('PROFILE_BASE_URL must use the supervised loopback host.');
   }
 
-  const browserEvidencePath = requireAbsolutePath(
-    'PROFILE_BROWSER_EVIDENCE_PATH',
-  );
+  const browserEvidencePath = requireAbsolutePath('PROFILE_BROWSER_EVIDENCE_PATH');
 
   cachedEnvironment = Object.freeze({
     baseURL: baseURL.href,
@@ -80,18 +76,11 @@ export function profileEnvironment(): ProfileE2EEnvironment {
     buildManifestPath: requireAbsolutePath('PROFILE_BUILD_MANIFEST_PATH'),
     assetBudgetPath: requireAbsolutePath('PROFILE_ASSET_BUDGET_PATH'),
     browserEvidencePath,
-    linkMetadataEvidencePath: requireAbsolutePath(
-      'PROFILE_LINK_METADATA_EVIDENCE_PATH',
-    ),
-    requestLedgerEvidencePath: requireAbsolutePath(
-      'PROFILE_REQUEST_LEDGER_EVIDENCE_PATH',
-    ),
+    linkMetadataEvidencePath: requireAbsolutePath('PROFILE_LINK_METADATA_EVIDENCE_PATH'),
+    requestLedgerEvidencePath: requireAbsolutePath('PROFILE_REQUEST_LEDGER_EVIDENCE_PATH'),
     // Fragments are private run state, so they live beside the evidence the
     // provider already treats as private and clears between runs.
-    fragmentDirectory: resolve(
-      dirname(browserEvidencePath),
-      'browser-fragments',
-    ),
+    fragmentDirectory: resolve(dirname(browserEvidencePath), 'browser-fragments'),
   });
   return cachedEnvironment;
 }
@@ -119,20 +108,16 @@ export async function readBuildManifest(): Promise<CleanBuildManifest> {
   if (cachedManifest !== undefined) return cachedManifest;
   const environment = profileEnvironment();
   const manifest = JSON.parse(
-    await readFile(environment.buildManifestPath, 'utf8'),
+    await readFile(environment.buildManifestPath, 'utf8')
   ) as CleanBuildManifest;
   if (manifest.buildIdentity?.id !== environment.buildId) {
-    throw new Error(
-      'The build manifest does not describe the build under verification.',
-    );
+    throw new Error('The build manifest does not describe the build under verification.');
   }
   cachedManifest = manifest;
   return manifest;
 }
 
-export async function readEmittedAssets(): Promise<
-  readonly EmittedAssetIdentity[]
-> {
+export async function readEmittedAssets(): Promise<readonly EmittedAssetIdentity[]> {
   return (await readBuildManifest()).outputFiles;
 }
 

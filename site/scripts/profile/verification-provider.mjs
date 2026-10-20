@@ -1,14 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import {
-  lstat,
-  mkdir,
-  readFile,
-  readdir,
-  rename,
-  unlink,
-  writeFile,
-} from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { analyzeProfileAssets } from './asset-budget.mjs';
@@ -117,38 +109,29 @@ export function composeVerificationEvidence({
       'VERIFICATION_COMMAND_INVALID',
       'The verification composition command must be exactly test:e2e.',
       'verification.compose',
-      { command },
+      { command }
     );
   }
   const build = requireBuildIdentity(buildIdentity);
   const manifestEvidence = requireBuildManifest(buildManifest, build);
-  const reviewSubject = requireAccessibilityReviewSubject(
-    accessibilityReviewSubject,
-  );
-  const browser = requireBrowserEvidence(
-    browserEvidence,
-    build.id,
-    reviewSubject.digest,
-  );
+  const reviewSubject = requireAccessibilityReviewSubject(accessibilityReviewSubject);
+  const browser = requireBrowserEvidence(browserEvidence, build.id, reviewSubject.digest);
   const linkMetadata = requireLinkMetadataEvidence(
     linkMetadataEvidence,
     build.id,
-    reviewSubject.digest,
+    reviewSubject.digest
   );
   const assetBudget = requireAssetBudget(
     assetBudgetEvidence,
     build.id,
-    manifestEvidence.routeDocuments,
+    manifestEvidence.routeDocuments
   );
   const requestLedger = requireRequestLedger(
     requestLedgerEvidence,
     build,
-    manifestEvidence.outputs,
+    manifestEvidence.outputs
   );
-  const manual = requireManualRecord(
-    manualWebAccessibilityRecord,
-    reviewSubject.digest,
-  );
+  const manual = requireManualRecord(manualWebAccessibilityRecord, reviewSubject.digest);
 
   return deepFreeze({
     schemaVersion: 1,
@@ -181,13 +164,10 @@ export async function runE2EVerification({
   await ensureHomepageFixtureContent();
   const buildIdentity = await cleanProfileBuild();
   const assetBudgetEvidence = await analyzeProfileAssets();
-  await writePrivateJson(
-    PROFILE_PATHS.assetBudgetEvidencePath,
-    assetBudgetEvidence,
-  );
+  await writePrivateJson(PROFILE_PATHS.assetBudgetEvidencePath, assetBudgetEvidence);
   const manifest = await readJsonFile(
     PROFILE_PATHS.buildManifestPath,
-    'PROFILE_BUILD_MANIFEST_MISSING',
+    'PROFILE_BUILD_MANIFEST_MISSING'
   );
 
   let successfulLease;
@@ -219,9 +199,7 @@ export async function runE2EVerification({
             return runtimeIdentity;
           },
           async run() {
-            await removeFixedPrivateFile(
-              PROFILE_PATHS.browserStartupFailurePath,
-            );
+            await removeFixedPrivateFile(PROFILE_PATHS.browserStartupFailurePath);
             try {
               previewLaunchStarted = true;
               lease = await startStaticPreview({
@@ -230,8 +208,7 @@ export async function runE2EVerification({
                 requiredRoutes: REQUIRED_PREVIEW_ROUTES,
               });
               Object.assign(runtimeIdentity, {
-                previewInstanceId:
-                  lease.processIdentity.instanceId,
+                previewInstanceId: lease.processIdentity.instanceId,
                 previewPid: lease.processIdentity.pid,
                 previewPort: lease.processIdentity.port,
               });
@@ -240,13 +217,9 @@ export async function runE2EVerification({
                 ...runtimeIdentity,
               });
             } catch (error) {
-              previewFailureCleanup =
-                readPreviewFailureCleanup(error);
+              previewFailureCleanup = readPreviewFailureCleanup(error);
               if (previewFailureCleanup !== null) {
-                Object.assign(
-                  runtimeIdentity,
-                  previewRuntimeIdentity(previewFailureCleanup),
-                );
+                Object.assign(runtimeIdentity, previewRuntimeIdentity(previewFailureCleanup));
               }
               throw error;
             }
@@ -267,31 +240,27 @@ export async function runE2EVerification({
                 },
               });
             } catch (error) {
-              browserPreflight = readOwnedProcessFailure(error) ??
-                undefined;
+              browserPreflight = readOwnedProcessFailure(error) ?? undefined;
               if (browserPreflight !== undefined) {
-                runtimeIdentity.browserProcessId =
-                  browserPreflight.pid;
+                runtimeIdentity.browserProcessId = browserPreflight.pid;
               }
               throw error;
             }
-            runtimeIdentity.browserProcessId =
-              browserPreflight.pid;
+            runtimeIdentity.browserProcessId = browserPreflight.pid;
 
-            if (
-              browserPreflight.exitCode !== 0 ||
-              browserPreflight.signal !== null
-            ) {
+            if (browserPreflight.exitCode !== 0 || browserPreflight.signal !== null) {
               const launchFailure = await readBrowserLaunchFailure({
                 attempt,
                 buildId: buildIdentity.id,
               });
               if (launchFailure !== null) {
-                if (!isEligibleIsolatedBrowserLaunchFailure({
-                  executionPhase: 'browser-preflight',
-                  processEvidence: browserPreflight,
-                  launchFailure,
-                })) {
+                if (
+                  !isEligibleIsolatedBrowserLaunchFailure({
+                    executionPhase: 'browser-preflight',
+                    processEvidence: browserPreflight,
+                    launchFailure,
+                  })
+                ) {
                   throw providerError(
                     'BROWSER_STARTUP_CLASSIFICATION_INVALID',
                     'A startup marker may classify only an isolated preflight exit code 1 without a signal.',
@@ -299,11 +268,10 @@ export async function runE2EVerification({
                     {
                       exitCode: browserPreflight.exitCode,
                       signal: browserPreflight.signal,
-                    },
+                    }
                   );
                 }
-                runtimeIdentity.browserContextIds =
-                  launchFailure.createdContextIds;
+                runtimeIdentity.browserContextIds = launchFailure.createdContextIds;
                 throw new StartupStageError({
                   stage: 'startup.browser.launch',
                   errorCode: launchFailure.errorCode,
@@ -315,7 +283,7 @@ export async function runE2EVerification({
                 'BROWSER_PREFLIGHT_FAILED_UNCLASSIFIED',
                 'The isolated browser-launch preflight failed without an exact startup-only classification.',
                 'startup.browser.preflight',
-                browserPreflight,
+                browserPreflight
               );
             }
 
@@ -324,10 +292,9 @@ export async function runE2EVerification({
               attempt,
               buildId: buildIdentity.id,
             });
-            runtimeIdentity.browserContextIds =
-              browserPreflightResult.engines.map(
-                ({ contextId }) => contextId,
-              );
+            runtimeIdentity.browserContextIds = browserPreflightResult.engines.map(
+              ({ contextId }) => contextId
+            );
             assertFreshStartupIdentity(previousIdentity, {
               ...identity,
               ...runtimeIdentity,
@@ -352,8 +319,7 @@ export async function runE2EVerification({
             } catch (error) {
               playwright = readOwnedProcessFailure(error) ?? undefined;
               if (playwright !== undefined) {
-                runtimeIdentity.playwrightProcessId =
-                  playwright.pid;
+                runtimeIdentity.playwrightProcessId = playwright.pid;
               }
               throw error;
             }
@@ -363,7 +329,7 @@ export async function runE2EVerification({
                 'PLAYWRIGHT_VERIFICATION_FAILED',
                 'The Playwright verification process failed; test, assertion, accessibility, network, and budget failures are never startup-retried.',
                 'test.e2e',
-                playwright,
+                playwright
               );
             }
             return {
@@ -382,9 +348,7 @@ export async function runE2EVerification({
             };
           },
           async teardown({ attempt: failedAttempt, identity: failedIdentity }) {
-            const cleanup = lease === undefined
-              ? previewFailureCleanup
-              : await lease.cleanup();
+            const cleanup = lease === undefined ? previewFailureCleanup : await lease.cleanup();
             requireReleasedAttemptResources({
               cleanup,
               previewCleanupRequired: previewLaunchStarted,
@@ -400,8 +364,7 @@ export async function runE2EVerification({
               residualResources: 0,
               cleanup: {
                 preview: cleanup,
-                browserPreflight:
-                  processCleanupEvidence(browserPreflight),
+                browserPreflight: processCleanupEvidence(browserPreflight),
                 playwright: processCleanupEvidence(playwright),
               },
             };
@@ -426,28 +389,18 @@ export async function runE2EVerification({
     requestLedgerEvidence,
     manualWebAccessibilityRecord,
   ] = await Promise.all([
-    readJsonFile(
-      PROFILE_PATHS.browserEvidencePath,
-      'BROWSER_EVIDENCE_MISSING',
-    ),
-    readJsonFile(
-      PROFILE_PATHS.linkMetadataEvidencePath,
-      'LINK_METADATA_EVIDENCE_MISSING',
-    ),
-    readJsonFile(
-      PROFILE_PATHS.requestLedgerEvidencePath,
-      'REQUEST_LEDGER_EVIDENCE_MISSING',
-    ),
+    readJsonFile(PROFILE_PATHS.browserEvidencePath, 'BROWSER_EVIDENCE_MISSING'),
+    readJsonFile(PROFILE_PATHS.linkMetadataEvidencePath, 'LINK_METADATA_EVIDENCE_MISSING'),
+    readJsonFile(PROFILE_PATHS.requestLedgerEvidencePath, 'REQUEST_LEDGER_EVIDENCE_MISSING'),
     readJsonFile(
       PROFILE_PATHS.manualWebAccessibilityPath,
-      'MANUAL_WEB_ACCESSIBILITY_RECORD_MISSING',
+      'MANUAL_WEB_ACCESSIBILITY_RECORD_MISSING'
     ),
   ]);
-  const accessibilityReviewSubject =
-    await computeAccessibilityReviewSubject({
-      manifest,
-      siteRoot: PROFILE_PATHS.siteRoot,
-    });
+  const accessibilityReviewSubject = await computeAccessibilityReviewSubject({
+    manifest,
+    siteRoot: PROFILE_PATHS.siteRoot,
+  });
 
   const evidence = composeVerificationEvidence({
     buildIdentity,
@@ -468,15 +421,11 @@ export async function runE2EVerification({
       playwright: playwrightEvidence,
       cleanup: {
         preview: successfulPreviewCleanup,
-        browserPreflight:
-          processCleanupEvidence(browserPreflightEvidence),
+        browserPreflight: processCleanupEvidence(browserPreflightEvidence),
         playwright: processCleanupEvidence(playwrightEvidence),
       },
       staticManifest: {
-        path: relative(
-          PROFILE_PATHS.siteRoot,
-          PROFILE_PATHS.buildManifestPath,
-        ),
+        path: relative(PROFILE_PATHS.siteRoot, PROFILE_PATHS.buildManifestPath),
         outputCount: manifest.outputFiles.length,
       },
     },
@@ -494,22 +443,15 @@ async function runPlaywright({
   onStarted,
 }) {
   const processEvidence = await runOwnedNodeProcess({
-    arguments: [
-      PROFILE_PATHS.playwrightCliPath,
-      'test',
-      '--config',
-      'playwright.config.ts',
-    ],
+    arguments: [PROFILE_PATHS.playwrightCliPath, 'test', '--config', 'playwright.config.ts'],
     environment: {
       PROFILE_BASE_URL: baseURL,
       PROFILE_BUILD_ID: buildIdentity.id,
       PROFILE_BUILD_MANIFEST_PATH: PROFILE_PATHS.buildManifestPath,
       PROFILE_ASSET_BUDGET_PATH: PROFILE_PATHS.assetBudgetEvidencePath,
       PROFILE_BROWSER_EVIDENCE_PATH: PROFILE_PATHS.browserEvidencePath,
-      PROFILE_LINK_METADATA_EVIDENCE_PATH:
-        PROFILE_PATHS.linkMetadataEvidencePath,
-      PROFILE_REQUEST_LEDGER_EVIDENCE_PATH:
-        PROFILE_PATHS.requestLedgerEvidencePath,
+      PROFILE_LINK_METADATA_EVIDENCE_PATH: PROFILE_PATHS.linkMetadataEvidencePath,
+      PROFILE_REQUEST_LEDGER_EVIDENCE_PATH: PROFILE_PATHS.requestLedgerEvidencePath,
       PROFILE_STARTUP_ATTEMPT: String(attempt),
     },
     timeoutMs: playwrightTimeoutMs,
@@ -526,10 +468,7 @@ async function runPlaywright({
     ...processEvidence,
     command: Object.freeze([
       process.execPath,
-      relative(
-        PROFILE_PATHS.siteRoot,
-        PROFILE_PATHS.playwrightCliPath,
-      ),
+      relative(PROFILE_PATHS.siteRoot, PROFILE_PATHS.playwrightCliPath),
       'test',
       '--config',
       'playwright.config.ts',
@@ -564,10 +503,7 @@ async function runBrowserLaunchPreflight({
     ...processEvidence,
     command: Object.freeze([
       process.execPath,
-      relative(
-        PROFILE_PATHS.siteRoot,
-        PROFILE_PATHS.browserLaunchPreflightPath,
-      ),
+      relative(PROFILE_PATHS.siteRoot, PROFILE_PATHS.browserLaunchPreflightPath),
     ]),
   });
 }
@@ -597,10 +533,7 @@ async function runOwnedNodeProcess({
   let descendantMonitor;
   let bootstrapReady;
   try {
-    child = spawn(
-      process.execPath,
-      [PROFILE_PATHS.ownedNodeBootstrapPath, ...childArguments],
-      {
+    child = spawn(process.execPath, [PROFILE_PATHS.ownedNodeBootstrapPath, ...childArguments], {
       cwd: PROFILE_PATHS.siteRoot,
       detached: process.platform !== 'win32',
       env: {
@@ -610,20 +543,13 @@ async function runOwnedNodeProcess({
         PROFILE_OWNED_BOOTSTRAP_TOKEN: bootstrapToken,
       },
       stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-      },
-    );
-    bootstrapReady = waitForOwnedBootstrap(
-      child,
-      bootstrapToken,
-      2_000,
-    );
+    });
+    bootstrapReady = waitForOwnedBootstrap(child, bootstrapToken, 2_000);
     ownership = spawnGuard.adopt(child);
     descendantMonitor = monitorOwnedDescendants({
       rootPid: child.pid,
       label: ownershipLabel,
-      isRootHandleCurrent: () =>
-        child.exitCode === null &&
-        child.signalCode === null,
+      isRootHandleCurrent: () => child.exitCode === null && child.signalCode === null,
     });
   } catch (cause) {
     spawnGuard.cancel();
@@ -642,7 +568,7 @@ async function runOwnedNodeProcess({
           processTreeReleased: true,
         },
       },
-      cause,
+      cause
     );
   }
   output.capture('stdout', child.stdout);
@@ -656,16 +582,12 @@ async function runOwnedNodeProcess({
         Object.freeze({
           pid: child.pid,
           processGroupId: child.pid,
-        }),
+        })
       );
     }
     await startOwnedBootstrap(child, bootstrapToken);
   } catch (cause) {
-    const cleanup = await releaseProcessTree(
-      child,
-      descendantMonitor,
-      ownedScope,
-    );
+    const cleanup = await releaseProcessTree(child, descendantMonitor, ownedScope);
     if (cleanup.ownershipReleaseSafe) {
       ownership.release();
     }
@@ -679,7 +601,7 @@ async function runOwnedNodeProcess({
         failure: serializeProviderFailure(cause),
         output: output.snapshot(),
       },
-      cause,
+      cause
     );
   }
 
@@ -691,11 +613,7 @@ async function runOwnedNodeProcess({
       errorPrefix,
     });
   } catch (cause) {
-    const cleanup = await releaseProcessTree(
-      child,
-      descendantMonitor,
-      ownedScope,
-    );
+    const cleanup = await releaseProcessTree(child, descendantMonitor, ownedScope);
     if (cleanup.ownershipReleaseSafe) {
       ownership.release();
     }
@@ -709,7 +627,7 @@ async function runOwnedNodeProcess({
           cleanup,
           output: output.snapshot(),
         },
-        cause,
+        cause
       );
     }
     throw providerError(
@@ -722,15 +640,11 @@ async function runOwnedNodeProcess({
         failure: serializeProviderFailure(cause),
         output: output.snapshot(),
       },
-      cause,
+      cause
     );
   }
 
-  const cleanup = await releaseProcessTree(
-      child,
-      descendantMonitor,
-      ownedScope,
-    );
+  const cleanup = await releaseProcessTree(child, descendantMonitor, ownedScope);
   if (cleanup.ownershipReleaseSafe) {
     ownership.release();
   }
@@ -743,14 +657,13 @@ async function runOwnedNodeProcess({
         pid: child.pid ?? null,
         cleanup,
         output: output.snapshot(),
-      },
+      }
     );
   }
   if (
     processResult.code === 0 &&
     processResult.signal === null &&
-    cleanup.descendantProcessTree.observedProcessGroupIds.length <
-      minimumSuccessfulDescendantGroups
+    cleanup.descendantProcessTree.observedProcessGroupIds.length < minimumSuccessfulDescendantGroups
   ) {
     throw providerError(
       `${errorPrefix}_DESCENDANT_OBSERVATION_INCOMPLETE`,
@@ -760,7 +673,7 @@ async function runOwnedNodeProcess({
         minimumSuccessfulDescendantGroups,
         cleanup,
         output: output.snapshot(),
-      },
+      }
     );
   }
   if (processResult.timedOut) {
@@ -775,7 +688,7 @@ async function runOwnedNodeProcess({
         signal: processResult.signal,
         cleanup,
         output: output.snapshot(),
-      },
+      }
     );
   }
 
@@ -794,9 +707,7 @@ function waitForOwnedBootstrap(child, token, timeoutMs) {
   return new Promise((resolvePromise, rejectPromise) => {
     let settled = false;
     const timeout = setTimeout(() => {
-      settleReject(
-        new Error('owned node bootstrap readiness timed out'),
-      );
+      settleReject(new Error('owned node bootstrap readiness timed out'));
     }, timeoutMs);
 
     function cleanup() {
@@ -832,15 +743,11 @@ function waitForOwnedBootstrap(child, token, timeoutMs) {
     }
     function onExit(code, signal) {
       settleReject(
-        new Error(
-          `owned node bootstrap exited before readiness (${code ?? signal ?? 'unknown'})`,
-        ),
+        new Error(`owned node bootstrap exited before readiness (${code ?? signal ?? 'unknown'})`)
       );
     }
     function onDisconnect() {
-      settleReject(
-        new Error('owned node bootstrap disconnected before readiness'),
-      );
+      settleReject(new Error('owned node bootstrap disconnected before readiness'));
     }
 
     child.on('message', onMessage);
@@ -853,9 +760,7 @@ function waitForOwnedBootstrap(child, token, timeoutMs) {
 function startOwnedBootstrap(child, token) {
   return new Promise((resolvePromise, rejectPromise) => {
     if (!child.connected) {
-      rejectPromise(
-        new Error('owned node bootstrap IPC channel is not connected'),
-      );
+      rejectPromise(new Error('owned node bootstrap IPC channel is not connected'));
       return;
     }
     child.send(
@@ -866,16 +771,12 @@ function startOwnedBootstrap(child, token) {
       (error) => {
         if (error) rejectPromise(error);
         else resolvePromise();
-      },
+      }
     );
   });
 }
 
-async function waitForProcess(
-  child,
-  timeoutMs,
-  { operation, stage, errorPrefix },
-) {
+async function waitForProcess(child, timeoutMs, { operation, stage, errorPrefix }) {
   if (child.exitCode !== null || child.signalCode !== null) {
     return {
       code: child.exitCode,
@@ -919,8 +820,8 @@ async function waitForProcess(
           `The local ${operation} process could not be launched.`,
           stage,
           { executable: process.execPath },
-          cause,
-        ),
+          cause
+        )
       );
     }
     function onExit(code, signal) {
@@ -957,64 +858,49 @@ async function releaseProcessTree(child, descendantMonitor, ownedScope) {
     });
   }
 
-  const childActive =
-    child.exitCode === null && child.signalCode === null;
+  const childActive = child.exitCode === null && child.signalCode === null;
   if (childActive && isProcessGroupAlive(pid)) {
     signalProcessTree(child, 'SIGSTOP');
   }
   const descendantProcessTree = await descendantMonitor.stop();
-  const rootProcessGroupIds = new Set(
-    descendantProcessTree.activeProcessGroupIds,
-  );
+  const rootProcessGroupIds = new Set(descendantProcessTree.activeProcessGroupIds);
   if (childActive || descendantProcessTree.activeRootProcessGroup) {
     rootProcessGroupIds.add(pid);
   }
-  const frozen = rootProcessGroupIds.size === 0
-    ? null
-    : await freezeOwnedProcessTree({
-        rootProcessGroupIds: [...rootProcessGroupIds],
-        label: 'profile-browser-process-tree',
-      });
+  const frozen =
+    rootProcessGroupIds.size === 0
+      ? null
+      : await freezeOwnedProcessTree({
+          rootProcessGroupIds: [...rootProcessGroupIds],
+          label: 'profile-browser-process-tree',
+        });
   const frozenProcessTree = frozen?.evidence ?? {
     processIds: [],
     processGroupIds: [],
   };
   const processIds = childActive ? [pid] : [];
   const processGroupIds = [...frozenProcessTree.processGroupIds];
-  let pidReleased =
-    !childActive ||
-    processIds.every((processId) => !isProcessAlive(processId));
+  let pidReleased = !childActive || processIds.every((processId) => !isProcessAlive(processId));
   let processGroupsReleased = processGroupIds.every(
-    (processGroupId) => !isProcessGroupAlive(processGroupId),
+    (processGroupId) => !isProcessGroupAlive(processGroupId)
   );
 
   if (!pidReleased || !processGroupsReleased) {
     signalProcessGroups(processGroupIds, 'SIGKILL');
-    await waitForProcessTreeRelease(
-      processIds,
-      processGroupIds,
-      1_000,
-    );
-    pidReleased = processIds.every(
-      (processId) => !isProcessAlive(processId),
-    );
+    await waitForProcessTreeRelease(processIds, processGroupIds, 1_000);
+    pidReleased = processIds.every((processId) => !isProcessAlive(processId));
     processGroupsReleased = processGroupIds.every(
-      (processGroupId) => !isProcessGroupAlive(processGroupId),
+      (processGroupId) => !isProcessGroupAlive(processGroupId)
     );
   }
 
   // Ancestry can only prove what it can still reach. The token sweep closes
   // the double-detach gap before any ownership lease is released. Callers that
   // never opened a scope keep their previous behaviour.
-  const ownershipResiduals =
-    ownedScope === undefined ? null : await ownedScope.reapResiduals();
-  const residualsCleared =
-    ownershipResiduals === null || ownershipResiduals.verified;
-  const ownershipReleaseSafe =
-    pidReleased && processGroupsReleased && residualsCleared;
-  const processTreeReleased =
-    ownershipReleaseSafe &&
-    descendantProcessTree.failures.length === 0;
+  const ownershipResiduals = ownedScope === undefined ? null : await ownedScope.reapResiduals();
+  const residualsCleared = ownershipResiduals === null || ownershipResiduals.verified;
+  const ownershipReleaseSafe = pidReleased && processGroupsReleased && residualsCleared;
+  const processTreeReleased = ownershipReleaseSafe && descendantProcessTree.failures.length === 0;
   if (ownershipReleaseSafe) {
     frozen?.releaseVerified();
     descendantMonitor.releaseVerified();
@@ -1030,19 +916,11 @@ async function releaseProcessTree(child, descendantMonitor, ownedScope) {
   });
 }
 
-async function waitForProcessTreeRelease(
-  processIds,
-  processGroupIds,
-  timeoutMs,
-) {
+async function waitForProcessTreeRelease(processIds, processGroupIds, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const pidsReleased = processIds.every(
-      (pid) => !isProcessAlive(pid),
-    );
-    const groupsReleased = processGroupIds.every(
-      (pgid) => !isProcessGroupAlive(pgid),
-    );
+    const pidsReleased = processIds.every((pid) => !isProcessAlive(pid));
+    const groupsReleased = processGroupIds.every((pgid) => !isProcessGroupAlive(pgid));
     if (pidsReleased && groupsReleased) return;
     await delay(Math.min(25, Math.max(1, deadline - Date.now())));
   }
@@ -1077,9 +955,7 @@ function isProcessGroupAlive(processGroupId) {
 }
 
 function delay(milliseconds) {
-  return new Promise((resolvePromise) =>
-    setTimeout(resolvePromise, milliseconds)
-  );
+  return new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 }
 
 function readPreviewFailureCleanup(error) {
@@ -1088,18 +964,9 @@ function readPreviewFailureCleanup(error) {
   if (
     typeof cleanup.instanceId !== 'string' ||
     cleanup.instanceId.length === 0 ||
-    (
-      cleanup.pid !== null &&
-      (!Number.isSafeInteger(cleanup.pid) || cleanup.pid < 1)
-    ) ||
-    (
-      cleanup.port !== null &&
-      (
-        !Number.isSafeInteger(cleanup.port) ||
-        cleanup.port < 1 ||
-        cleanup.port > 65_535
-      )
-    ) ||
+    (cleanup.pid !== null && (!Number.isSafeInteger(cleanup.pid) || cleanup.pid < 1)) ||
+    (cleanup.port !== null &&
+      (!Number.isSafeInteger(cleanup.port) || cleanup.port < 1 || cleanup.port > 65_535)) ||
     cleanup.processExited !== true ||
     cleanup.processTreeReleased !== true ||
     ![true, null].includes(cleanup.portReleased)
@@ -1107,7 +974,7 @@ function readPreviewFailureCleanup(error) {
     throw providerError(
       'PREVIEW_FAILURE_CLEANUP_EVIDENCE_INVALID',
       'A failed preview startup returned incomplete cleanup evidence.',
-      'cleanup.preview',
+      'cleanup.preview'
     );
   }
   return deepFreeze(structuredClone(cleanup));
@@ -1126,19 +993,12 @@ function processCleanupEvidence(value) {
   const pid = value.pid ?? null;
   const pidReleased = value.pidReleased;
   const processTreeReleased = value.processTreeReleased;
-  const descendantProcessTree =
-    value.descendantProcessTree ?? null;
+  const descendantProcessTree = value.descendantProcessTree ?? null;
   if (
-    (
-      pid !== null &&
-      (!Number.isSafeInteger(pid) || pid < 1)
-    ) ||
+    (pid !== null && (!Number.isSafeInteger(pid) || pid < 1)) ||
     typeof pidReleased !== 'boolean' ||
     typeof processTreeReleased !== 'boolean' ||
-    (
-      pid !== null &&
-      !isDescendantProcessTreeEvidence(descendantProcessTree)
-    )
+    (pid !== null && !isDescendantProcessTreeEvidence(descendantProcessTree))
   ) {
     return null;
   }
@@ -1165,20 +1025,13 @@ function serializeProviderFailure(error) {
 function readOwnedProcessFailure(error) {
   const cleanup = error?.details?.cleanup;
   const pid = error?.details?.pid ?? cleanup?.pid ?? null;
-  const descendantProcessTree =
-    cleanup?.descendantProcessTree ?? null;
+  const descendantProcessTree = cleanup?.descendantProcessTree ?? null;
   if (
     !isPlainRecord(cleanup) ||
-    (
-      pid !== null &&
-      (!Number.isSafeInteger(pid) || pid < 1)
-    ) ||
+    (pid !== null && (!Number.isSafeInteger(pid) || pid < 1)) ||
     typeof cleanup.pidReleased !== 'boolean' ||
     typeof cleanup.processTreeReleased !== 'boolean' ||
-    (
-      pid !== null &&
-      !isDescendantProcessTreeEvidence(descendantProcessTree)
-    )
+    (pid !== null && !isDescendantProcessTreeEvidence(descendantProcessTree))
   ) {
     return null;
   }
@@ -1207,13 +1060,7 @@ function isDescendantProcessTreeEvidence(value) {
     Number.isSafeInteger(value.rootPid) &&
     value.rootPid > 0 &&
     isPlainRecord(value.rootProcessIdentity) &&
-    hasExactKeys(value.rootProcessIdentity, [
-      'pgid',
-      'pid',
-      'ppid',
-      'sessionId',
-      'startedAt',
-    ]) &&
+    hasExactKeys(value.rootProcessIdentity, ['pgid', 'pid', 'ppid', 'sessionId', 'startedAt']) &&
     value.rootProcessIdentity.pid === value.rootPid &&
     Number.isSafeInteger(value.rootProcessIdentity.ppid) &&
     value.rootProcessIdentity.ppid > 0 &&
@@ -1229,8 +1076,7 @@ function isDescendantProcessTreeEvidence(value) {
     isUniquePositiveIntegerArray(value.activeProcessGroupIds) &&
     typeof value.activeRootProcessGroup === 'boolean' &&
     Array.isArray(value.failures) &&
-    (
-      value.failures.length === 0 ||
+    (value.failures.length === 0 ||
       value.failures.every(
         (failure) =>
           hasExactKeys(failure, ['message', 'name']) &&
@@ -1238,17 +1084,14 @@ function isDescendantProcessTreeEvidence(value) {
           failure.name.length > 0 &&
           typeof failure.message === 'string' &&
           failure.message.length > 0
-      )
-    )
+      ))
   );
 }
 
 function isUniquePositiveIntegerArray(value) {
   return (
     Array.isArray(value) &&
-    value.every(
-      (entry) => Number.isSafeInteger(entry) && entry > 0,
-    ) &&
+    value.every((entry) => Number.isSafeInteger(entry) && entry > 0) &&
     new Set(value).size === value.length
   );
 }
@@ -1265,53 +1108,39 @@ function requireReleasedAttemptResources({
     throw providerError(
       'PREVIEW_CLEANUP_EVIDENCE_MISSING',
       'The failed startup scope cannot prove whether its preview resources were released.',
-      'cleanup.preview',
+      'cleanup.preview'
     );
   }
   if (
     cleanup !== null &&
-    (
-      cleanup.processExited !== true ||
+    (cleanup.processExited !== true ||
       cleanup.processTreeReleased !== true ||
-      ![true, null].includes(cleanup.portReleased)
-    )
+      ![true, null].includes(cleanup.portReleased))
   ) {
     throw providerError(
       'PREVIEW_CLEANUP_EVIDENCE_INVALID',
       'The failed startup scope did not release its preview resources.',
-      'cleanup.preview',
+      'cleanup.preview'
     );
   }
   for (const [name, evidence, required] of [
-    [
-      'browserPreflight',
-      browserPreflight,
-      browserPreflightRequired,
-    ],
+    ['browserPreflight', browserPreflight, browserPreflightRequired],
     ['playwright', playwright, playwrightRequired],
   ]) {
     if (evidence === undefined && !required) continue;
     const proof = processCleanupEvidence(evidence);
-    if (
-      proof === null ||
-      proof.pidReleased !== true ||
-      proof.processTreeReleased !== true
-    ) {
+    if (proof === null || proof.pidReleased !== true || proof.processTreeReleased !== true) {
       throw providerError(
         'BROWSER_PROCESS_CLEANUP_EVIDENCE_INVALID',
         'The failed startup scope did not release every owned browser process tree.',
         'cleanup.browser',
-        { name },
+        { name }
       );
     }
   }
 }
 
-function parseBrowserPreflightPass({
-  processEvidence,
-  attempt,
-  buildId,
-}) {
+function parseBrowserPreflightPass({ processEvidence, attempt, buildId }) {
   const lines = processEvidence.output?.stdout?.text
     ?.split(/\r?\n/u)
     .filter((line) => line.length > 0);
@@ -1320,7 +1149,7 @@ function parseBrowserPreflightPass({
       'BROWSER_PREFLIGHT_EVIDENCE_INVALID',
       'The browser launch preflight did not emit one exact evidence record.',
       'startup.browser.preflight',
-      { lineCount: Array.isArray(lines) ? lines.length : null },
+      { lineCount: Array.isArray(lines) ? lines.length : null }
     );
   }
   let evidence;
@@ -1332,7 +1161,7 @@ function parseBrowserPreflightPass({
       'The browser launch preflight evidence is not valid JSON.',
       'startup.browser.preflight',
       {},
-      cause,
+      cause
     );
   }
 
@@ -1356,30 +1185,29 @@ function parseBrowserPreflightPass({
     !isUuid(evidence.invocationId) ||
     !Array.isArray(evidence.engines) ||
     evidence.engines.length !== expectedEngines.length ||
-    !evidence.engines.every((engine, index) =>
-      isPlainRecord(engine) &&
-      hasExactKeys(engine, [
-        'browserClosed',
-        'contextClosed',
-        'contextCreated',
-        'contextId',
-        'engine',
-      ]) &&
-      engine.engine === expectedEngines[index] &&
-      engine.browserClosed === true &&
-      engine.contextClosed === true &&
-      engine.contextCreated === true &&
-      isUuid(engine.contextId)
+    !evidence.engines.every(
+      (engine, index) =>
+        isPlainRecord(engine) &&
+        hasExactKeys(engine, [
+          'browserClosed',
+          'contextClosed',
+          'contextCreated',
+          'contextId',
+          'engine',
+        ]) &&
+        engine.engine === expectedEngines[index] &&
+        engine.browserClosed === true &&
+        engine.contextClosed === true &&
+        engine.contextCreated === true &&
+        isUuid(engine.contextId)
     ) ||
-    new Set(
-      evidence.engines.map(({ contextId }) => contextId),
-    ).size !== expectedEngines.length
+    new Set(evidence.engines.map(({ contextId }) => contextId)).size !== expectedEngines.length
   ) {
     throw providerError(
       'BROWSER_PREFLIGHT_EVIDENCE_INVALID',
       'The browser launch preflight evidence is incomplete or stale.',
       'startup.browser.preflight',
-      { attempt, buildId },
+      { attempt, buildId }
     );
   }
   return deepFreeze(evidence);
@@ -1403,9 +1231,7 @@ function isEligibleIsolatedBrowserLaunchFailure({
 }
 
 async function readBrowserLaunchFailure({ attempt, buildId }) {
-  const failure = await readOptionalJsonFile(
-    PROFILE_PATHS.browserStartupFailurePath,
-  );
+  const failure = await readOptionalJsonFile(PROFILE_PATHS.browserStartupFailurePath);
   if (failure === null) return null;
   if (
     !isPlainRecord(failure) ||
@@ -1436,7 +1262,7 @@ async function readBrowserLaunchFailure({ attempt, buildId }) {
       'BROWSER_STARTUP_CLASSIFICATION_INVALID',
       'The browser startup failure marker is invalid or stale.',
       'test.e2e',
-      { attempt, buildId },
+      { attempt, buildId }
     );
   }
   return deepFreeze(failure);
@@ -1453,7 +1279,7 @@ function requireBuildIdentity(value) {
     throw providerError(
       'VERIFICATION_BUILD_IDENTITY_INVALID',
       'Verification evidence requires one complete clean-build identity.',
-      'verification.compose',
+      'verification.compose'
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1474,7 +1300,7 @@ function requireBuildManifest(value, buildIdentity) {
     throw providerError(
       'VERIFICATION_BUILD_MANIFEST_INVALID',
       'Verification evidence requires the exact clean-build output inventory.',
-      'verification.compose',
+      'verification.compose'
     );
   }
   const outputs = indexManifestOutputs(value.outputFiles);
@@ -1486,20 +1312,18 @@ function requireBuildManifest(value, buildIdentity) {
         initialRollupGraphs: value.initialRollupGraphs,
         rollupGraphs: value.rollupGraphs,
         viteManifest: value.viteManifest,
-      }),
-    ),
+      })
+    )
   );
-  const outputSha256 = sha256(
-    Buffer.from(JSON.stringify(value.outputFiles)),
-  );
+  const outputSha256 = sha256(Buffer.from(JSON.stringify(value.outputFiles)));
   const id = sha256(
     Buffer.from(
       JSON.stringify({
         sourceGraphSha256,
         outputSha256,
         builtRoutes: value.buildIdentity.routes,
-      }),
-    ),
+      })
+    )
   );
   if (
     value.buildIdentity.sourceGraphSha256 !== sourceGraphSha256 ||
@@ -1511,18 +1335,14 @@ function requireBuildManifest(value, buildIdentity) {
     throw providerError(
       'VERIFICATION_BUILD_MANIFEST_IDENTITY_MISMATCH',
       'The verification build manifest does not match its clean-build identity.',
-      'verification.compose',
+      'verification.compose'
     );
   }
   const routeDocuments = new Map(
     REQUIRED_PREVIEW_ROUTES.map((route) => [
       route,
-      resolveManifestRouteDocumentPath(
-        value.routeOutputs,
-        outputs,
-        route,
-      ),
-    ]),
+      resolveManifestRouteDocumentPath(value.routeOutputs, outputs, route),
+    ])
   );
   return { outputs, routeDocuments };
 }
@@ -1553,7 +1373,7 @@ function requireAccessibilityReviewSubject(value) {
     throw providerError(
       'ACCESSIBILITY_REVIEW_SUBJECT_INVALID',
       'The accessibility review subject is incomplete or does not match its field-ordered digest.',
-      'verification.compose',
+      'verification.compose'
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1580,8 +1400,7 @@ function requireBrowserEvidence(value, buildId, reviewSubjectDigest) {
     value.group !== 'browser' ||
     value.result !== 'pass' ||
     value.buildId !== buildId ||
-    value.reviewSubjectSchemaVersion !==
-      ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION ||
+    value.reviewSubjectSchemaVersion !== ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION ||
     value.reviewSubjectDigest !== reviewSubjectDigest ||
     !isExactStringArray(value.specFiles, REQUIRED_BROWSER_SPEC_FILES) ||
     !isExactStringArray(value.completedMatrix, REQUIRED_BROWSER_MATRIX) ||
@@ -1594,7 +1413,7 @@ function requireBrowserEvidence(value, buildId, reviewSubjectDigest) {
       'BROWSER_EVIDENCE_INCOMPLETE',
       'Browser evidence is missing, stale, skipped, failed, or does not close the required matrix.',
       'verification.compose',
-      { buildId, reviewSubjectDigest },
+      { buildId, reviewSubjectDigest }
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1619,8 +1438,7 @@ function requireLinkMetadataEvidence(value, buildId, reviewSubjectDigest) {
     value.group !== 'link-metadata' ||
     value.result !== 'pass' ||
     value.buildId !== buildId ||
-    value.reviewSubjectSchemaVersion !==
-      ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION ||
+    value.reviewSubjectSchemaVersion !== ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION ||
     value.reviewSubjectDigest !== reviewSubjectDigest ||
     !isPassMap(value.checks, REQUIRED_LINK_CHECKS) ||
     !isLinkRouteEvidence(value.routes) ||
@@ -1631,7 +1449,7 @@ function requireLinkMetadataEvidence(value, buildId, reviewSubjectDigest) {
       'LINK_METADATA_EVIDENCE_INCOMPLETE',
       'Link and metadata evidence is missing, stale, skipped, failed, or incomplete.',
       'verification.compose',
-      { buildId, reviewSubjectDigest },
+      { buildId, reviewSubjectDigest }
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1661,7 +1479,7 @@ function requireAssetBudget(value, buildId, routeDocuments) {
       'ASSET_BUDGET_EVIDENCE_INCOMPLETE',
       'Asset budget evidence is missing, stale, or failed.',
       'verification.compose',
-      { buildId },
+      { buildId }
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1689,20 +1507,15 @@ function requireRequestLedger(value, buildIdentity, manifestOutputs) {
     value.schemaVersion !== 1 ||
     value.rule !== 'PERF-02/LC-U1-06' ||
     value.buildIdentity?.id !== buildId ||
-    value.buildIdentity?.manifestSha256 !==
-      buildIdentity.manifestSha256 ||
+    value.buildIdentity?.manifestSha256 !== buildIdentity.manifestSha256 ||
     !isSupervisedOrigin(value.supervisedOrigin) ||
-    !isCompleteRequestLedger(
-      value,
-      buildIdentity,
-      manifestOutputs,
-    )
+    !isCompleteRequestLedger(value, buildIdentity, manifestOutputs)
   ) {
     throw providerError(
       'REQUEST_LEDGER_EVIDENCE_INCOMPLETE',
       'Request ledger evidence is missing, stale, or records an external or unobserved route.',
       'verification.compose',
-      { buildId },
+      { buildId }
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1724,8 +1537,7 @@ function requireManualRecord(value, reviewSubjectDigest) {
     ]) ||
     value.schemaVersion !== 1 ||
     value.result !== 'pass' ||
-    value.reviewSubjectSchemaVersion !==
-      ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION ||
+    value.reviewSubjectSchemaVersion !== ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION ||
     value.reviewSubjectDigest !== reviewSubjectDigest ||
     typeof value.reviewer !== 'string' ||
     value.reviewer.trim().length === 0 ||
@@ -1738,7 +1550,7 @@ function requireManualRecord(value, reviewSubjectDigest) {
       'MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE',
       'Manual web accessibility evidence is missing, stale, or failed.',
       'verification.compose',
-      { reviewSubjectDigest },
+      { reviewSubjectDigest }
     );
   }
   return deepFreeze(structuredClone(value));
@@ -1758,14 +1570,10 @@ export async function computeAccessibilityReviewSubject({
     throw providerError(
       'ACCESSIBILITY_REVIEW_MANIFEST_INVALID',
       'The clean-build manifest cannot define an accessibility review subject.',
-      'verification.subject',
+      'verification.subject'
     );
   }
-  if (
-    typeof siteRoot !== 'string' ||
-    siteRoot.length === 0 ||
-    resolve(siteRoot) !== siteRoot
-  ) {
+  if (typeof siteRoot !== 'string' || siteRoot.length === 0 || resolve(siteRoot) !== siteRoot) {
     throw new TypeError('siteRoot must be one fixed absolute path');
   }
 
@@ -1777,9 +1585,7 @@ export async function computeAccessibilityReviewSubject({
   }
   const authoredFiles = [];
   for (const path of [...sourcePaths].sort()) {
-    authoredFiles.push(
-      await readFixedFileIdentity(siteRoot, path, 'authored-source'),
-    );
+    authoredFiles.push(await readFixedFileIdentity(siteRoot, path, 'authored-source'));
   }
 
   const outputIndex = indexManifestOutputs(manifest.outputFiles);
@@ -1791,16 +1597,12 @@ export async function computeAccessibilityReviewSubject({
     throw providerError(
       'ACCESSIBILITY_REVIEW_ROUTE_GRAPH_INVALID',
       'The clean-build route graph is missing from the review subject.',
-      'verification.subject',
+      'verification.subject'
     );
   }
 
   for (const route of REQUIRED_PREVIEW_ROUTES) {
-    const outputPath = resolveManifestRouteDocumentPath(
-      manifest.routeOutputs,
-      outputIndex,
-      route,
-    );
+    const outputPath = resolveManifestRouteDocumentPath(manifest.routeOutputs, outputIndex, route);
     const htmlIdentity = await requireCurrentBuildAsset({
       siteRoot,
       outputIndex,
@@ -1819,21 +1621,19 @@ export async function computeAccessibilityReviewSubject({
           path: referencedPath,
           kind: referencedPath.endsWith('.css') ? 'route-css' : 'route-js',
           route,
-        }),
+        })
       );
     }
 
     const page = pageEntries.find(
-      (entry) =>
-        isPlainRecord(entry) &&
-        (entry.route?.pathname ?? entry.route?.route) === route,
+      (entry) => isPlainRecord(entry) && (entry.route?.pathname ?? entry.route?.route) === route
     );
     if (!isPlainRecord(page) || !Array.isArray(page.styles)) {
       throw providerError(
         'ACCESSIBILITY_REVIEW_ROUTE_GRAPH_INVALID',
         'A required profile route lacks style reachability evidence.',
         'verification.subject',
-        { route },
+        { route }
       );
     }
     for (const style of page.styles) {
@@ -1845,7 +1645,7 @@ export async function computeAccessibilityReviewSubject({
             path: style.sheet.src,
             kind: 'route-css',
             route,
-          }),
+          })
         );
       } else if (
         style?.sheet?.type === 'inline' &&
@@ -1855,15 +1655,12 @@ export async function computeAccessibilityReviewSubject({
         typeof style.sheet.contentBase64 === 'string'
       ) {
         const bytes = Buffer.from(style.sheet.contentBase64, 'base64');
-        if (
-          bytes.byteLength !== style.sheet.bytes ||
-          sha256(bytes) !== style.sheet.sha256
-        ) {
+        if (bytes.byteLength !== style.sheet.bytes || sha256(bytes) !== style.sheet.sha256) {
           throw providerError(
             'ACCESSIBILITY_REVIEW_INLINE_STYLE_INVALID',
             'An inline profile style does not match its build identity.',
             'verification.subject',
-            { route },
+            { route }
           );
         }
         buildAssets.push({
@@ -1878,34 +1675,26 @@ export async function computeAccessibilityReviewSubject({
           'ACCESSIBILITY_REVIEW_ROUTE_GRAPH_INVALID',
           'A profile style lacks a traceable external or inline identity.',
           'verification.subject',
-          { route },
+          { route }
         );
       }
     }
   }
 
-  const packageLock = JSON.parse(
-    await readFile(resolve(siteRoot, 'package-lock.json'), 'utf8'),
-  );
+  const packageLock = JSON.parse(await readFile(resolve(siteRoot, 'package-lock.json'), 'utf8'));
   const tools = {
     node: requireToolVersion(manifest.tools.node, 'node'),
     astro: requireToolVersion(manifest.tools.astro, 'astro'),
     vite: requireToolVersion(manifest.tools.vite, 'vite'),
-    playwright: requireLockedToolVersion(
-      packageLock,
-      'node_modules/@playwright/test',
-    ),
-    axe: requireLockedToolVersion(
-      packageLock,
-      'node_modules/@axe-core/playwright',
-    ),
+    playwright: requireLockedToolVersion(packageLock, 'node_modules/@playwright/test'),
+    axe: requireLockedToolVersion(packageLock, 'node_modules/@axe-core/playwright'),
   };
   if (tools.node !== process.versions.node) {
     throw providerError(
       'ACCESSIBILITY_REVIEW_TOOL_STALE',
       'The clean-build Node version differs from the current verifier.',
       'verification.subject',
-      { build: tools.node, verifier: process.versions.node },
+      { build: tools.node, verifier: process.versions.node }
     );
   }
 
@@ -1969,7 +1758,7 @@ async function listReviewSourceFiles(siteRoot, relativeDirectory) {
           'ACCESSIBILITY_REVIEW_SOURCE_SYMLINK',
           'A review-subject source path is a symbolic link.',
           'verification.subject',
-          { path },
+          { path }
         );
       }
       if (entry.isDirectory()) {
@@ -1981,7 +1770,7 @@ async function listReviewSourceFiles(siteRoot, relativeDirectory) {
           'ACCESSIBILITY_REVIEW_SOURCE_NOT_REGULAR',
           'A review-subject source path is not a regular file.',
           'verification.subject',
-          { path },
+          { path }
         );
       }
     }
@@ -1996,7 +1785,7 @@ async function readFixedFileIdentity(siteRoot, path, kind) {
       'A required review-subject source file is missing.',
       'verification.subject',
       { path, kind },
-      cause,
+      cause
     );
   });
   if (fileStat.isSymbolicLink() || !fileStat.isFile()) {
@@ -2004,7 +1793,7 @@ async function readFixedFileIdentity(siteRoot, path, kind) {
       'ACCESSIBILITY_REVIEW_SOURCE_NOT_REGULAR',
       'A required review-subject source is not a regular file.',
       'verification.subject',
-      { path, kind },
+      { path, kind }
     );
   }
   const bytes = await readFile(absolutePath);
@@ -2028,47 +1817,31 @@ function resolveFixedPath(siteRoot, path) {
   }
   const absolutePath = resolve(siteRoot, ...path.split('/'));
   const fromRoot = relative(siteRoot, absolutePath);
-  if (
-    fromRoot === '' ||
-    fromRoot === '..' ||
-    fromRoot.startsWith(`..${sep}`)
-  ) {
+  if (fromRoot === '' || fromRoot === '..' || fromRoot.startsWith(`..${sep}`)) {
     throw new TypeError('review-subject path must stay inside siteRoot');
   }
   return absolutePath;
 }
 
-function resolveManifestRouteDocumentPath(
-  routeOutputs,
-  outputIndex,
-  route,
-) {
-  const matches = routeOutputs.filter(
-    (entry) => isPlainRecord(entry) && entry.route === route,
-  );
-  if (
-    matches.length !== 1 ||
-    !Array.isArray(matches[0].outputs)
-  ) {
+function resolveManifestRouteDocumentPath(routeOutputs, outputIndex, route) {
+  const matches = routeOutputs.filter((entry) => isPlainRecord(entry) && entry.route === route);
+  if (matches.length !== 1 || !Array.isArray(matches[0].outputs)) {
     throw providerError(
       'ACCESSIBILITY_REVIEW_ROUTE_OUTPUT_AMBIGUOUS',
       'A required route does not map to one exact output set.',
       'verification.subject',
-      { route, matches: matches.length },
+      { route, matches: matches.length }
     );
   }
   const documents = matches[0].outputs.filter(
-    (path) =>
-      isNormalizedRelativePath(path) &&
-      path.endsWith('.html') &&
-      outputIndex.has(path),
+    (path) => isNormalizedRelativePath(path) && path.endsWith('.html') && outputIndex.has(path)
   );
   if (documents.length !== 1) {
     throw providerError(
       'ACCESSIBILITY_REVIEW_ROUTE_OUTPUT_AMBIGUOUS',
       'A required route must map to exactly one emitted HTML document.',
       'verification.subject',
-      { route, documents },
+      { route, documents }
     );
   }
   return documents[0];
@@ -2088,7 +1861,7 @@ function indexManifestOutputs(outputs) {
       throw providerError(
         'ACCESSIBILITY_REVIEW_OUTPUT_IDENTITY_INVALID',
         'The build output identity set is incomplete or ambiguous.',
-        'verification.subject',
+        'verification.subject'
       );
     }
     index.set(output.path, output);
@@ -2096,36 +1869,23 @@ function indexManifestOutputs(outputs) {
   return index;
 }
 
-async function requireCurrentBuildAsset({
-  siteRoot,
-  outputIndex,
-  path,
-  kind,
-  route,
-}) {
+async function requireCurrentBuildAsset({ siteRoot, outputIndex, path, kind, route }) {
   const expected = outputIndex.get(path);
   if (expected === undefined) {
     throw providerError(
       'ACCESSIBILITY_REVIEW_OUTPUT_UNTRACEABLE',
       'A route-reachable build asset is absent from the output manifest.',
       'verification.subject',
-      { route, path },
+      { route, path }
     );
   }
-  const current = await readFixedFileIdentity(
-    siteRoot,
-    `dist/${path}`,
-    kind,
-  );
-  if (
-    current.bytes !== expected.bytes ||
-    current.sha256 !== expected.sha256
-  ) {
+  const current = await readFixedFileIdentity(siteRoot, `dist/${path}`, kind);
+  if (current.bytes !== expected.bytes || current.sha256 !== expected.sha256) {
     throw providerError(
       'ACCESSIBILITY_REVIEW_OUTPUT_STALE',
       'A route-reachable build asset differs from its clean-build identity.',
       'verification.subject',
-      { route, path },
+      { route, path }
     );
   }
   return deepFreeze({
@@ -2139,8 +1899,7 @@ async function requireCurrentBuildAsset({
 
 function extractRouteAssetPaths(html) {
   const paths = [];
-  const pattern =
-    /(?:href|src)=["']\/([^"'?#]+\.(?:css|js|mjs))(?:[?#][^"']*)?["']/gu;
+  const pattern = /(?:href|src)=["']\/([^"'?#]+\.(?:css|js|mjs))(?:[?#][^"']*)?["']/gu;
   for (const match of html.matchAll(pattern)) {
     paths.push(match[1]);
   }
@@ -2153,7 +1912,7 @@ function requireToolVersion(value, name) {
       'ACCESSIBILITY_REVIEW_TOOL_MISSING',
       'A required accessibility review tool version is missing.',
       'verification.subject',
-      { name },
+      { name }
     );
   }
   return value;
@@ -2168,15 +1927,12 @@ function deduplicateBuildAssets(assets) {
   for (const asset of assets) {
     const key = `${asset.route}\0${asset.kind}\0${asset.path}`;
     const prior = result.get(key);
-    if (
-      prior !== undefined &&
-      (prior.bytes !== asset.bytes || prior.sha256 !== asset.sha256)
-    ) {
+    if (prior !== undefined && (prior.bytes !== asset.bytes || prior.sha256 !== asset.sha256)) {
       throw providerError(
         'ACCESSIBILITY_REVIEW_OUTPUT_AMBIGUOUS',
         'One route asset has multiple build identities.',
         'verification.subject',
-        { route: asset.route, path: asset.path },
+        { route: asset.route, path: asset.path }
       );
     }
     result.set(key, asset);
@@ -2221,7 +1977,7 @@ async function removeFixedPrivateFile(path) {
       'PRIVATE_EVIDENCE_TARGET_INVALID',
       'A fixed private evidence target is not a regular file.',
       'verification.prepare',
-      { path },
+      { path }
     );
   }
   await unlink(path);
@@ -2234,7 +1990,7 @@ async function readJsonFile(path, missingCode) {
       missingCode,
       'A required verification evidence file is missing.',
       'verification.compose',
-      { path },
+      { path }
     );
   }
   return value;
@@ -2251,7 +2007,7 @@ async function readOptionalJsonFile(path) {
       'VERIFICATION_EVIDENCE_FILE_INVALID',
       'A verification evidence path is not a regular file.',
       'verification.compose',
-      { path },
+      { path }
     );
   }
   try {
@@ -2262,7 +2018,7 @@ async function readOptionalJsonFile(path) {
       'A verification evidence file is not valid JSON.',
       'verification.compose',
       { path },
-      cause,
+      cause
     );
   }
 }
@@ -2273,23 +2029,19 @@ async function writePrivateJson(path, value) {
     if (error?.code === 'ENOENT') return undefined;
     throw error;
   });
-  if (
-    existing !== undefined &&
-    (existing.isSymbolicLink() || !existing.isFile())
-  ) {
+  if (existing !== undefined && (existing.isSymbolicLink() || !existing.isFile())) {
     throw providerError(
       'PRIVATE_EVIDENCE_TARGET_INVALID',
       'A fixed private evidence target is not a regular file.',
       'verification.persist',
-      { path },
+      { path }
     );
   }
   const temporaryPath = `${path}.tmp-${process.pid}-${randomUUID()}`;
-  await writeFile(
-    temporaryPath,
-    `${JSON.stringify(value, null, 2)}\n`,
-    { flag: 'wx', mode: 0o600 },
-  );
+  await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, {
+    flag: 'wx',
+    mode: 0o600,
+  });
   try {
     await rename(temporaryPath, path);
   } catch (error) {
@@ -2385,18 +2137,14 @@ function createRequiredBrowserMatrix() {
     for (const engine of ['firefox', 'webkit']) {
       for (const viewport of ['320x800', '1280x800']) {
         for (const javaScript of ['enabled', 'disabled']) {
-          keys.push(
-            `compatibility|${engine}|${route}|${viewport}|js-${javaScript}`,
-          );
+          keys.push(`compatibility|${engine}|${route}|${viewport}|js-${javaScript}`);
         }
       }
     }
     for (const viewport of ['320x800', '1440x900']) {
       for (const theme of ['light', 'dark']) {
         for (const details of ['closed', 'all-open']) {
-          keys.push(
-            `axe|chromium|${route}|${viewport}|${theme}|${details}`,
-          );
+          keys.push(`axe|chromium|${route}|${viewport}|${theme}|${details}`);
         }
       }
     }
@@ -2410,10 +2158,7 @@ function hasExactKeys(value, keys) {
   if (!isPlainRecord(value)) return false;
   const actual = Object.keys(value).sort();
   const expected = [...keys].sort();
-  return (
-    actual.length === expected.length &&
-    actual.every((key, index) => key === expected[index])
-  );
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 
 function isExactStringArray(value, expected) {
@@ -2429,21 +2174,12 @@ function isEmptyArray(value) {
 }
 
 function isPassMap(value, requiredKeys) {
-  return (
-    hasExactKeys(value, requiredKeys) &&
-    requiredKeys.every((key) => value[key] === 'pass')
-  );
+  return hasExactKeys(value, requiredKeys) && requiredKeys.every((key) => value[key] === 'pass');
 }
 
 function isCompleteBrowserSummary(value) {
   return (
-    hasExactKeys(value, [
-      'didNotRun',
-      'discovered',
-      'failed',
-      'passed',
-      'skipped',
-    ]) &&
+    hasExactKeys(value, ['didNotRun', 'discovered', 'failed', 'passed', 'skipped']) &&
     Number.isSafeInteger(value.discovered) &&
     value.discovered >= REQUIRED_BROWSER_SPEC_FILES.length &&
     value.passed === value.discovered &&
@@ -2455,16 +2191,9 @@ function isCompleteBrowserSummary(value) {
 
 function isBrowserToolRecord(value) {
   return (
-    hasExactKeys(value, [
-      'axe',
-      'chromium',
-      'firefox',
-      'playwright',
-      'webkit',
-    ]) &&
+    hasExactKeys(value, ['axe', 'chromium', 'firefox', 'playwright', 'webkit']) &&
     Object.values(value).every(
-      (version) =>
-        typeof version === 'string' && version.trim().length > 0,
+      (version) => typeof version === 'string' && version.trim().length > 0
     )
   );
 }
@@ -2516,12 +2245,7 @@ function isExternalUrlEvidence(value) {
   const urls = new Set();
   for (const destination of value.destinations) {
     if (
-      !hasExactKeys(destination, [
-        'checkedAt',
-        'result',
-        'url',
-        'verifier',
-      ]) ||
+      !hasExactKeys(destination, ['checkedAt', 'result', 'url', 'verifier']) ||
       destination.result !== 'approved' ||
       typeof destination.verifier !== 'string' ||
       destination.verifier.trim().length === 0 ||
@@ -2594,32 +2318,20 @@ function isCompleteAssetCssEvidence(value) {
       !isNonEmptyUniqueStrings(asset.provenanceChunks) ||
       !isProfileRouteSubset(asset.routes) ||
       !isCssFinalLocationList(asset.finalLocations, asset) ||
-      !isUniqueNormalizedPathList(
-        asset.sourceRollupAssetPaths,
-        asset.kind === 'inline',
-      ) ||
-      (
-        asset.kind === 'external' &&
-        (
-          asset.finalLocations.length !== 0 ||
+      !isUniqueNormalizedPathList(asset.sourceRollupAssetPaths, asset.kind === 'inline') ||
+      (asset.kind === 'external' &&
+        (asset.finalLocations.length !== 0 ||
           asset.sourceRollupAssetPaths.length !== 0 ||
-          !asset.emittedAssetPaths.includes(asset.path)
-        )
-      ) ||
-      (
-        asset.kind === 'inline' &&
-        (
-          asset.finalLocations.length === 0 ||
+          !asset.emittedAssetPaths.includes(asset.path))) ||
+      (asset.kind === 'inline' &&
+        (asset.finalLocations.length === 0 ||
           asset.sourceRollupAssetPaths.length === 0 ||
           !asset.finalLocations.every(({ documentPath }) =>
             asset.emittedAssetPaths.includes(documentPath)
           ) ||
           !asset.finalLocations.some(
-            ({ documentPath, styleIndex }) =>
-              asset.path === `${documentPath}#style-${styleIndex}`,
-          )
-        )
-      ) ||
+            ({ documentPath, styleIndex }) => asset.path === `${documentPath}#style-${styleIndex}`
+          ))) ||
       identities.has(asset.sha256)
     ) {
       return false;
@@ -2695,10 +2407,7 @@ function isCompleteAssetJavaScriptEvidence(value, routeDocuments) {
     value.profileOwnedNewClientChunks !== 0 ||
     !Number.isSafeInteger(value.inheritedClientChunkCount) ||
     value.inheritedClientChunkCount < 0 ||
-    !isExactStringArray(
-      value.inheritedEntryAllowlist,
-      REQUIRED_INHERITED_CLIENT_ENTRIES,
-    ) ||
+    !isExactStringArray(value.inheritedEntryAllowlist, REQUIRED_INHERITED_CLIENT_ENTRIES) ||
     !isEmptyArray(value.unknownReachableEntries) ||
     !isEmptyArray(value.profileEntries) ||
     !isEmptyArray(value.profileChunks) ||
@@ -2712,14 +2421,7 @@ function isCompleteAssetJavaScriptEvidence(value, routeDocuments) {
   const chunkFiles = new Set();
   for (const chunk of value.reachableChunks) {
     if (
-      !hasExactKeys(chunk, [
-        'file',
-        'manifestKeys',
-        'modules',
-        'rawBytes',
-        'routes',
-        'sha256',
-      ]) ||
+      !hasExactKeys(chunk, ['file', 'manifestKeys', 'modules', 'rawBytes', 'routes', 'sha256']) ||
       !isNormalizedRelativePath(chunk.file) ||
       chunkFiles.has(chunk.file) ||
       !isSha256(chunk.sha256) ||
@@ -2736,19 +2438,10 @@ function isCompleteAssetJavaScriptEvidence(value, routeDocuments) {
 
   for (const entry of value.reachableEntries) {
     if (
-      !hasExactKeys(entry, [
-        'documentPath',
-        'manifestKey',
-        'path',
-        'role',
-        'route',
-        'source',
-      ]) ||
+      !hasExactKeys(entry, ['documentPath', 'manifestKey', 'path', 'role', 'route', 'source']) ||
       !REQUIRED_PREVIEW_ROUTES.includes(entry.route) ||
       entry.documentPath !== routeDocuments?.get(entry.route) ||
-      !['component', 'modulepreload', 'renderer', 'script'].includes(
-        entry.role,
-      ) ||
+      !['component', 'modulepreload', 'renderer', 'script'].includes(entry.role) ||
       !isNormalizedRelativePath(entry.path) ||
       !chunkFiles.has(entry.path) ||
       typeof entry.manifestKey !== 'string' ||
@@ -2780,13 +2473,7 @@ function isProfileRouteDocumentEvidence(value, expectedDocumentPath) {
     Array.isArray(value.inlineStyles) &&
     value.inlineStyles.every(
       (style) =>
-        hasExactKeys(style, [
-          'endByte',
-          'rawBytes',
-          'sha256',
-          'startByte',
-          'styleIndex',
-        ]) &&
+        hasExactKeys(style, ['endByte', 'rawBytes', 'sha256', 'startByte', 'styleIndex']) &&
         Number.isSafeInteger(style.styleIndex) &&
         style.styleIndex >= 0 &&
         Number.isSafeInteger(style.startByte) &&
@@ -2831,9 +2518,7 @@ function isProfileRouteDocumentEvidence(value, expectedDocumentPath) {
     value.clientRoots.every(
       (root) =>
         hasExactKeys(root, ['path', 'role']) &&
-        ['component', 'modulepreload', 'renderer', 'script'].includes(
-          root.role,
-        ) &&
+        ['component', 'modulepreload', 'renderer', 'script'].includes(root.role) &&
         isNormalizedRelativePath(root.path)
     )
   );
@@ -2860,10 +2545,7 @@ function isProfileRouteStyleEvidence(style) {
     'sourceRollupAssetPath',
   ];
   if (
-    !hasExactKeys(
-      style,
-      style.kind === 'inline' ? inlineKeys : commonKeys,
-    ) ||
+    !hasExactKeys(style, style.kind === 'inline' ? inlineKeys : commonKeys) ||
     !['external', 'inline'].includes(style.kind) ||
     !Number.isSafeInteger(style.depth) ||
     style.depth < 0 ||
@@ -2876,17 +2558,9 @@ function isProfileRouteStyleEvidence(style) {
     !Number.isSafeInteger(style.rawBytes) ||
     style.rawBytes < 1 ||
     !Array.isArray(style.profileStyleRoots) ||
-    !style.profileStyleRoots.every(
-      (root) => typeof root === 'string' && root.length > 0,
-    ) ||
-    (
-      style.ownership === 'profile' &&
-      style.profileStyleRoots.length === 0
-    ) ||
-    (
-      style.ownership === 'baseline' &&
-      style.profileStyleRoots.length !== 0
-    ) ||
+    !style.profileStyleRoots.every((root) => typeof root === 'string' && root.length > 0) ||
+    (style.ownership === 'profile' && style.profileStyleRoots.length === 0) ||
+    (style.ownership === 'baseline' && style.profileStyleRoots.length !== 0) ||
     !isNonEmptyUniqueStrings(style.provenanceChunks)
   ) {
     return false;
@@ -2901,12 +2575,11 @@ function isProfileRouteStyleEvidence(style) {
     Number.isSafeInteger(style.preInlineAssetIdentity.rawBytes) &&
     style.preInlineAssetIdentity.rawBytes > 0 &&
     isSha256(style.preInlineAssetIdentity.sha256) &&
-    isCssFinalLocationList(
-      [style.finalLocation],
-      { rawBytes: style.rawBytes, sha256: style.sha256 },
-    ) &&
-    style.path ===
-      `${style.finalLocation.documentPath}#style-${style.finalLocation.styleIndex}` &&
+    isCssFinalLocationList([style.finalLocation], {
+      rawBytes: style.rawBytes,
+      sha256: style.sha256,
+    }) &&
+    style.path === `${style.finalLocation.documentPath}#style-${style.finalLocation.styleIndex}` &&
     style.emittedAssetPath === style.finalLocation.documentPath
   );
 }
@@ -2918,26 +2591,17 @@ function isAssetRouteEvidence(value, routeDocuments) {
   const routes = new Set();
   for (const entry of value) {
     if (
-      !hasExactKeys(entry, [
-        'component',
-        'document',
-        'route',
-        'styles',
-      ]) ||
+      !hasExactKeys(entry, ['component', 'document', 'route', 'styles']) ||
       !REQUIRED_PREVIEW_ROUTES.includes(entry.route) ||
       routes.has(entry.route) ||
       typeof entry.component !== 'string' ||
       entry.component.length === 0 ||
-      !isProfileRouteDocumentEvidence(
-        entry.document,
-        routeDocuments?.get(entry.route),
-      ) ||
+      !isProfileRouteDocumentEvidence(entry.document, routeDocuments?.get(entry.route)) ||
       !Array.isArray(entry.styles) ||
       !entry.styles.every(isProfileRouteStyleEvidence) ||
       !entry.styles.some(
         (style) =>
-          style?.ownership === 'profile' &&
-          isNonEmptyUniqueStrings(style.profileStyleRoots),
+          style?.ownership === 'profile' && isNonEmptyUniqueStrings(style.profileStyleRoots)
       )
     ) {
       return false;
@@ -2952,18 +2616,12 @@ function isReviewToolSubset(value) {
     isPlainRecord(value) &&
     hasExactKeys(value, ['astro', 'gzip', 'node', 'vite']) &&
     ['node', 'astro', 'vite', 'gzip'].every(
-      (name) =>
-        typeof value[name] === 'string' &&
-        value[name].trim().length > 0,
+      (name) => typeof value[name] === 'string' && value[name].trim().length > 0
     )
   );
 }
 
-function isCompleteRequestLedger(
-  value,
-  buildIdentity,
-  manifestOutputs,
-) {
+function isCompleteRequestLedger(value, buildIdentity, manifestOutputs) {
   const buildId = buildIdentity.id;
   if (
     !Array.isArray(value.attempted) ||
@@ -2979,10 +2637,7 @@ function isCompleteRequestLedger(
     value.external.blocked !== 0 ||
     value.external.successful !== 0 ||
     !isEmptyArray(value.missingProfileRoutes) ||
-    !isStaticAssetEvidence(
-      value.staticAssetEvidence,
-      buildIdentity,
-    )
+    !isStaticAssetEvidence(value.staticAssetEvidence, buildIdentity)
   ) {
     return false;
   }
@@ -3013,7 +2668,7 @@ function isCompleteRequestLedger(
       record.emittedAssetIdentity === null ||
       !sameAssetIdentity(
         record.emittedAssetIdentity,
-        manifestOutputs.get(record.emittedAssetIdentity.path),
+        manifestOutputs.get(record.emittedAssetIdentity.path)
       ) ||
       record.status < 200 ||
       record.status >= 400
@@ -3030,10 +2685,7 @@ function isCompleteRequestLedger(
       profileDocuments.add(record.logicalRoute);
     }
     if (record.emittedAssetIdentity !== null) {
-      observedAssets.set(
-        record.emittedAssetIdentity.path,
-        record.emittedAssetIdentity,
-      );
+      observedAssets.set(record.emittedAssetIdentity.path, record.emittedAssetIdentity);
       observedCss ||= record.emittedAssetIdentity.path.endsWith('.css');
       observedWoff2 ||= record.emittedAssetIdentity.path.endsWith('.woff2');
     }
@@ -3064,15 +2716,8 @@ function isCompleteRequestLedger(
 
 function isRequestGuardEvidence(value) {
   return (
-    hasExactKeys(value, [
-      'inFlightRequests',
-      'pages',
-      'pendingHandlers',
-      'routeRegistration',
-    ]) &&
-    ['context-unroute-fallback', 'playwright-disposable'].includes(
-      value.routeRegistration,
-    ) &&
+    hasExactKeys(value, ['inFlightRequests', 'pages', 'pendingHandlers', 'routeRegistration']) &&
+    ['context-unroute-fallback', 'playwright-disposable'].includes(value.routeRegistration) &&
     value.pendingHandlers === 0 &&
     value.inFlightRequests === 0 &&
     value.pages === 0
@@ -3088,12 +2733,8 @@ function sameRequestObservation(response, attempted) {
     response.initiator === attempted.initiator &&
     response.logicalRoute === attempted.logicalRoute &&
     response.sameOrigin === attempted.sameOrigin &&
-    ((response.emittedAssetIdentity === null &&
-      attempted.emittedAssetIdentity === null) ||
-      sameAssetIdentity(
-        response.emittedAssetIdentity,
-        attempted.emittedAssetIdentity,
-      ))
+    ((response.emittedAssetIdentity === null && attempted.emittedAssetIdentity === null) ||
+      sameAssetIdentity(response.emittedAssetIdentity, attempted.emittedAssetIdentity))
   );
 }
 
@@ -3120,20 +2761,16 @@ function isRequestRecord(record, kind, supervisedOrigin) {
     typeof record.resourceType !== 'string' ||
     record.resourceType.length === 0 ||
     (record.initiator !== null && typeof record.initiator !== 'string') ||
-    (record.logicalRoute !== null &&
-      !REQUIRED_PREVIEW_ROUTES.includes(record.logicalRoute)) ||
+    (record.logicalRoute !== null && !REQUIRED_PREVIEW_ROUTES.includes(record.logicalRoute)) ||
     record.sameOrigin !== true ||
     !sameOrigin(record.url, supervisedOrigin) ||
-    (record.emittedAssetIdentity !== null &&
-      !isEmittedAssetIdentity(record.emittedAssetIdentity))
+    (record.emittedAssetIdentity !== null && !isEmittedAssetIdentity(record.emittedAssetIdentity))
   ) {
     return false;
   }
   if (
     kind === 'successful' &&
-    (!Number.isSafeInteger(record.status) ||
-      record.status < 100 ||
-      record.status > 599)
+    (!Number.isSafeInteger(record.status) || record.status < 100 || record.status > 599)
   ) {
     return false;
   }
@@ -3142,12 +2779,7 @@ function isRequestRecord(record, kind, supervisedOrigin) {
 
 function isStaticAssetEvidence(value, buildIdentity) {
   return (
-    hasExactKeys(value, [
-      'buildId',
-      'manifestSha256',
-      'observedAssets',
-      'schemaVersion',
-    ]) &&
+    hasExactKeys(value, ['buildId', 'manifestSha256', 'observedAssets', 'schemaVersion']) &&
     value.schemaVersion === 1 &&
     value.buildId === buildIdentity.id &&
     value.manifestSha256 === buildIdentity.manifestSha256 &&
@@ -3178,23 +2810,13 @@ function sameAssetIdentity(left, right) {
 }
 
 function isManualStateEvidence(value) {
-  if (
-    !Array.isArray(value) ||
-    value.length !== REQUIRED_MANUAL_MATRIX.length
-  ) {
+  if (!Array.isArray(value) || value.length !== REQUIRED_MANUAL_MATRIX.length) {
     return false;
   }
   const keys = [];
   for (const state of value) {
     if (
-      !hasExactKeys(state, [
-        'checks',
-        'details',
-        'engine',
-        'route',
-        'theme',
-        'viewport',
-      ]) ||
+      !hasExactKeys(state, ['checks', 'details', 'engine', 'route', 'theme', 'viewport']) ||
       !REQUIRED_PREVIEW_ROUTES.includes(state.route) ||
       state.engine !== 'chromium' ||
       !['320x800', '1440x900'].includes(state.viewport) ||
@@ -3204,15 +2826,7 @@ function isManualStateEvidence(value) {
     ) {
       return false;
     }
-    keys.push(
-      [
-        state.route,
-        state.engine,
-        state.viewport,
-        state.theme,
-        state.details,
-      ].join('|'),
-    );
+    keys.push([state.route, state.engine, state.viewport, state.theme, state.details].join('|'));
   }
   return isExactStringArray(keys.sort(), REQUIRED_MANUAL_MATRIX);
 }
@@ -3223,9 +2837,8 @@ function isTargetSizeExceptionEvidence(value) {
     (entry) =>
       hasExactKeys(entry, ['element', 'rationale', 'wcagException']) &&
       [entry.element, entry.rationale, entry.wcagException].every(
-        (field) =>
-          typeof field === 'string' && field.trim().length > 0,
-      ),
+        (field) => typeof field === 'string' && field.trim().length > 0
+      )
   );
 }
 
@@ -3242,10 +2855,9 @@ function isReviewAuthoredFileList(value) {
       !paths.has(entry.path) &&
       (REVIEW_SUBJECT_SOURCE_FILES.includes(entry.path) ||
         REVIEW_SUBJECT_SOURCE_DIRECTORIES.some((directory) =>
-          entry.path.startsWith(`${directory}/`),
+          entry.path.startsWith(`${directory}/`)
         )) &&
-      (index === 0 ||
-        compareIdentity(value[index - 1], entry) < 0);
+      (index === 0 || compareIdentity(value[index - 1], entry) < 0);
     paths.add(entry.path);
     return valid;
   });
@@ -3253,7 +2865,7 @@ function isReviewAuthoredFileList(value) {
     valid &&
     REVIEW_SUBJECT_SOURCE_FILES.every((path) => paths.has(path)) &&
     REVIEW_SUBJECT_SOURCE_DIRECTORIES.every((directory) =>
-      [...paths].some((path) => path.startsWith(`${directory}/`)),
+      [...paths].some((path) => path.startsWith(`${directory}/`))
     )
   );
 }
@@ -3267,20 +2879,15 @@ function isBuildAssetIdentityList(value) {
       hasExactKeys(entry, ['bytes', 'kind', 'path', 'route', 'sha256']) &&
       REQUIRED_PREVIEW_ROUTES.includes(entry.route) &&
       ['route-css', 'route-html', 'route-js'].includes(entry.kind) &&
-      (
-        isNormalizedRelativePath(entry.path) ||
-        (
-          entry.kind === 'route-css' &&
+      (isNormalizedRelativePath(entry.path) ||
+        (entry.kind === 'route-css' &&
           typeof entry.path === 'string' &&
-          entry.path.startsWith('inline:')
-        )
-      ) &&
+          entry.path.startsWith('inline:'))) &&
       Number.isSafeInteger(entry.bytes) &&
       entry.bytes >= 0 &&
       isSha256(entry.sha256) &&
       !identities.has(key) &&
-      (index === 0 ||
-        compareBuildAsset(value[index - 1], entry) < 0);
+      (index === 0 || compareBuildAsset(value[index - 1], entry) < 0);
     identities.add(key);
     return valid;
   });
@@ -3288,16 +2895,8 @@ function isBuildAssetIdentityList(value) {
     valid &&
     REQUIRED_PREVIEW_ROUTES.every(
       (route) =>
-        value.filter(
-          (entry) =>
-            entry.route === route &&
-            entry.kind === 'route-html',
-        ).length === 1 &&
-        value.some(
-          (entry) =>
-            entry.route === route &&
-            entry.kind === 'route-css',
-        ),
+        value.filter((entry) => entry.route === route && entry.kind === 'route-html').length ===
+          1 && value.some((entry) => entry.route === route && entry.kind === 'route-css')
     )
   );
 }
@@ -3309,9 +2908,7 @@ function isNormalizedRelativePath(value) {
     !value.startsWith('/') &&
     !value.includes('\\') &&
     !value.includes('\0') &&
-    value
-      .split('/')
-      .every((segment) => !['', '.', '..'].includes(segment))
+    value.split('/').every((segment) => !['', '.', '..'].includes(segment))
   );
 }
 
@@ -3319,8 +2916,7 @@ function isReviewToolRecord(value) {
   return (
     hasExactKeys(value, ['astro', 'axe', 'node', 'playwright', 'vite']) &&
     Object.values(value).every(
-      (version) =>
-        typeof version === 'string' && version.trim().length > 0,
+      (version) => typeof version === 'string' && version.trim().length > 0
     )
   );
 }
@@ -3336,9 +2932,7 @@ function isNonEmptyUniqueStrings(value) {
   return (
     Array.isArray(value) &&
     value.length > 0 &&
-    value.every(
-      (entry) => typeof entry === 'string' && entry.length > 0,
-    ) &&
+    value.every((entry) => typeof entry === 'string' && entry.length > 0) &&
     new Set(value).size === value.length
   );
 }
@@ -3397,8 +2991,7 @@ function isIsoTimestamp(value) {
 function isUuid(value) {
   return (
     typeof value === 'string' &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
-      .test(value)
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value)
   );
 }
 
@@ -3432,8 +3025,7 @@ function isPlainRecord(value) {
     value !== null &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
-    (Object.getPrototypeOf(value) === Object.prototype ||
-      Object.getPrototypeOf(value) === null)
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
   );
 }
 
@@ -3457,7 +3049,7 @@ async function main() {
     throw providerError(
       'U1_COMMAND_INVALID',
       'Usage: node scripts/profile/verification-provider.mjs e2e',
-      'command.route',
+      'command.route'
     );
   }
   const result = await runE2EVerification();
@@ -3466,11 +3058,8 @@ async function main() {
       command: result.command,
       result: result.result,
       buildId: result.buildIdentity.id,
-      evidencePath: relative(
-        PROFILE_PATHS.siteRoot,
-        PROFILE_PATHS.e2eVerificationPath,
-      ),
-    })}\n`,
+      evidencePath: relative(PROFILE_PATHS.siteRoot, PROFILE_PATHS.e2eVerificationPath),
+    })}\n`
   );
 }
 
@@ -3478,16 +3067,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   main().catch((error) => {
     const diagnostic = {
       name: error?.name ?? typeof error,
-      errorCode:
-        error?.errorCode ?? error?.code ?? 'U1_COMMAND_FAILED',
+      errorCode: error?.errorCode ?? error?.code ?? 'U1_COMMAND_FAILED',
       stage: error?.stage ?? 'command.unknown',
       rule: error?.rule ?? null,
-      attempt:
-        Number.isSafeInteger(error?.attempt) ? error.attempt : null,
-      identities:
-        Array.isArray(error?.identities) ? error.identities : [],
-      details:
-        isPlainRecord(error?.details) ? error.details : {},
+      attempt: Number.isSafeInteger(error?.attempt) ? error.attempt : null,
+      identities: Array.isArray(error?.identities) ? error.identities : [],
+      details: isPlainRecord(error?.details) ? error.details : {},
     };
     process.stderr.write(`${JSON.stringify(diagnostic)}\n`);
     process.exitCode = 1;
@@ -3496,8 +3081,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
 
 export const verificationEvidenceSchema = deepFreeze({
   schemaVersion: 1,
-  accessibilityReviewSubjectSchemaVersion:
-    ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION,
+  accessibilityReviewSubjectSchemaVersion: ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION,
   browserSpecFiles: [...REQUIRED_BROWSER_SPEC_FILES],
   browserObligations: [...REQUIRED_BROWSER_OBLIGATIONS],
   browserMatrix: [...REQUIRED_BROWSER_MATRIX],
@@ -3505,9 +3089,7 @@ export const verificationEvidenceSchema = deepFreeze({
   manualChecks: [...REQUIRED_MANUAL_CHECKS],
   manualMatrix: [...REQUIRED_MANUAL_MATRIX],
   reviewSubjectSourceFiles: [...REVIEW_SUBJECT_SOURCE_FILES],
-  reviewSubjectSourceDirectories: [
-    ...REVIEW_SUBJECT_SOURCE_DIRECTORIES,
-  ],
+  reviewSubjectSourceDirectories: [...REVIEW_SUBJECT_SOURCE_DIRECTORIES],
 });
 
 /**
@@ -3518,13 +3100,8 @@ export const verificationEvidenceSchema = deepFreeze({
  * not an option it could take even if that looked helpful — an incomplete
  * release reported as current is exactly what this exists to prevent.
  */
-export async function verifyCurrentRelease({
-  buildTimeoutMs,
-  renderTimeoutMs,
-} = {}) {
-  const { inspectReleaseState, readCurrentReleasePair } = await import(
-    './release-store.mjs'
-  );
+export async function verifyCurrentRelease({ buildTimeoutMs, renderTimeoutMs } = {}) {
+  const { inspectReleaseState, readCurrentReleasePair } = await import('./release-store.mjs');
   const state = await inspectReleaseState();
   // A lock with no journal is not an interrupted transaction. The journal is
   // removed only at finalize, so this is a release that completed and then
@@ -3536,7 +3113,7 @@ export async function verifyCurrentRelease({
       'RELEASE_LOCK_ORPHANED',
       'A release lock remains with no journal: the last release completed but could not remove its lock. Remove the lock file to unblock further releases; no rollback is required.',
       'verification.release.current',
-      { lockPresent: true, journalPresent: false, state: state.state },
+      { lockPresent: true, journalPresent: false, state: state.state }
     );
   }
   if (state.active) {
@@ -3548,7 +3125,7 @@ export async function verifyCurrentRelease({
         state: state.state,
         lockPresent: state.lockPresent,
         journalPresent: state.journalPresent,
-      },
+      }
     );
   }
 
@@ -3558,13 +3135,11 @@ export async function verifyCurrentRelease({
       'RELEASE_ABSENT',
       'No tracked résumé release exists yet.',
       'verification.release.current',
-      {},
+      {}
     );
   }
 
-  const { loadProfileReleaseTools } = await import(
-    './compile-profile-tools.mjs'
-  );
+  const { loadProfileReleaseTools } = await import('./compile-profile-tools.mjs');
   const tools = await loadProfileReleaseTools();
   const manifest = await tools.buildCurrentResumeManifest();
   const receipt = pair.receipt.value;
@@ -3577,7 +3152,7 @@ export async function verifyCurrentRelease({
       'RELEASE_PAIR_MISMATCH',
       'The tracked receipt does not name the public PDF on disk.',
       'verification.release.current',
-      {},
+      {}
     );
   }
   if (
@@ -3588,7 +3163,7 @@ export async function verifyCurrentRelease({
       'RELEASE_STALE',
       'The tracked release was approved against a different source or manifest.',
       'verification.release.current',
-      {},
+      {}
     );
   }
 
@@ -3639,7 +3214,7 @@ function requireReinspectionValue(result, what) {
     'RELEASE_REINSPECTION_INVALID',
     `The tracked release failed reinspection at the ${what} stage.`,
     'verification.release.reinspect',
-    { what, issues: result?.issues ?? null },
+    { what, issues: result?.issues ?? null }
   );
 }
 
@@ -3657,19 +3232,13 @@ function requireReinspectionValue(result, what) {
  * This mutates nothing tracked. The build writes gitignored `dist/`, the
  * preview is a local loopback process, and the inspector only reads.
  */
-async function reinspectTrackedRelease({
-  pair,
-  manifest,
-  tools,
-  buildTimeoutMs,
-  renderTimeoutMs,
-}) {
+async function reinspectTrackedRelease({ pair, manifest, tools, buildTimeoutMs, renderTimeoutMs }) {
   const { renderResumePdfCandidate } = await import('./pdf-renderer.mjs');
   const { inspectResumePdfCandidate } = await import('./pdf-inspector.mjs');
 
   await ensureHomepageFixtureContent();
   const buildIdentity = await cleanProfileBuild(
-    buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs },
+    buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs }
   );
 
   let lease;
@@ -3683,9 +3252,7 @@ async function reinspectTrackedRelease({
     // The ledger maps each response back to a file the build emitted, so the
     // identities must come from the build manifest. An empty list does not
     // disable the check; it makes every response unmappable.
-    const buildManifest = JSON.parse(
-      await readFile(buildIdentity.manifestPath, 'utf8'),
-    );
+    const buildManifest = JSON.parse(await readFile(buildIdentity.manifestPath, 'utf8'));
 
     const observed = await renderResumePdfCandidate({
       baseURL: lease.baseURL,
@@ -3714,15 +3281,15 @@ async function reinspectTrackedRelease({
 
     const web = requireReinspectionValue(
       tools.compareRenderedManifest(manifest, observed.webSurface),
-      'web surface',
+      'web surface'
     );
     const print = requireReinspectionValue(
       tools.compareRenderedManifest(manifest, observed.printSurface),
-      'print surface',
+      'print surface'
     );
     const pdfEvidence = requireReinspectionValue(
       tools.mapPdfEvidence(manifest, snapshot),
-      'PDF evidence',
+      'PDF evidence'
     );
     requireReinspectionValue(
       tools.compareResumeSurfaces({
@@ -3731,7 +3298,7 @@ async function reinspectTrackedRelease({
         print,
         pdf: pdfEvidence,
       }),
-      'cross-surface comparison',
+      'cross-surface comparison'
     );
 
     return Object.freeze({
@@ -3760,16 +3327,14 @@ async function reinspectTrackedRelease({
  * `finalize` or `rollback`.
  */
 export async function verifyPendingRelease(capability, secondBuildIdentity) {
-  const { describePendingRelease, readCurrentReleasePair } = await import(
-    './release-store.mjs'
-  );
+  const { describePendingRelease, readCurrentReleasePair } = await import('./release-store.mjs');
   const pending = describePendingRelease(capability);
   if (pending.state !== 'PDF_COMMITTED') {
     throw providerError(
       'RELEASE_PENDING_STATE_INVALID',
       'A pending release may only be observed at the public commit point.',
       'verification.release.pending',
-      { state: pending.state },
+      { state: pending.state }
     );
   }
   if (typeof secondBuildIdentity?.id !== 'string') {
@@ -3777,7 +3342,7 @@ export async function verifyPendingRelease(capability, secondBuildIdentity) {
       'RELEASE_SECOND_BUILD_INVALID',
       'A pending release verification requires the clean second build identity.',
       'verification.release.pending',
-      {},
+      {}
     );
   }
 
@@ -3791,7 +3356,7 @@ export async function verifyPendingRelease(capability, secondBuildIdentity) {
       'RELEASE_PENDING_PAIR_MISMATCH',
       'The tracked pair is not the exact pair this transaction committed.',
       'verification.release.pending',
-      {},
+      {}
     );
   }
 
@@ -3809,7 +3374,7 @@ export async function verifyPendingRelease(capability, secondBuildIdentity) {
       'RELEASE_SECOND_BUILD_MISSING_PDF',
       'The clean second build did not materialize the promoted résumé PDF.',
       'verification.release.pending',
-      { distPdf },
+      { distPdf }
     );
   }
   if (distSha256 !== pending.pdfSha256) {
@@ -3817,7 +3382,7 @@ export async function verifyPendingRelease(capability, secondBuildIdentity) {
       'RELEASE_SECOND_BUILD_PDF_MISMATCH',
       'The second build emitted different résumé PDF bytes than were promoted.',
       'verification.release.pending',
-      {},
+      {}
     );
   }
 

@@ -27,9 +27,7 @@ interface LedgerSnapshot {
 let localResourcePolicyHeld = false;
 
 test.describe('local resource policy', () => {
-  test('both routes load entirely from emitted build output', async ({
-    browser,
-  }) => {
+  test('both routes load entirely from emitted build output', async ({ browser }) => {
     const environment = profileEnvironment();
     const manifest = await readBuildManifest();
     const buildIdentity = await readBuildIdentity();
@@ -61,15 +59,9 @@ test.describe('local resource policy', () => {
       const observed = new Map<string, ObservedAsset>();
       for (const record of snapshot.successful) {
         if (record.emittedAssetIdentity === null) continue;
-        observed.set(
-          record.emittedAssetIdentity.path,
-          record.emittedAssetIdentity,
-        );
+        observed.set(record.emittedAssetIdentity.path, record.emittedAssetIdentity);
       }
-      expect(
-        observed.size,
-        'the routes must load at least one emitted asset',
-      ).toBeGreaterThan(0);
+      expect(observed.size, 'the routes must load at least one emitted asset').toBeGreaterThan(0);
 
       const evidence = await ledger.finalize({
         requireProfileRoutes: true,
@@ -78,7 +70,7 @@ test.describe('local resource policy', () => {
           buildId: buildIdentity.id,
           manifestSha256: buildIdentity.manifestSha256,
           observedAssets: [...observed.values()].sort((left, right) =>
-            left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+            left.path < right.path ? -1 : left.path > right.path ? 1 : 0
           ),
         },
       });

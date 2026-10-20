@@ -29,7 +29,12 @@ describe('prepareSearchIndex', () => {
   test('drops hits that point at no document', () => {
     const index = prepareSearchIndex({
       documents: [{ slug: 'a', title: 'A', snippet: '' }],
-      inverted_index: { word: [{ doc_idx: 0, count: 1 }, { doc_idx: 7, count: 1 }] },
+      inverted_index: {
+        word: [
+          { doc_idx: 0, count: 1 },
+          { doc_idx: 7, count: 1 },
+        ],
+      },
     });
     expect(searchIndex(index, 'word').map(({ slug }) => slug)).toEqual(['a']);
   });
@@ -72,7 +77,11 @@ describe('searchIndex', () => {
 
   test(`results stop at ${SEARCH_RESULT_LIMIT}`, () => {
     const many = prepareSearchIndex({
-      documents: Array.from({ length: 15 }, (_, i) => ({ slug: `p${i}`, title: `Post ${i}`, snippet: '' })),
+      documents: Array.from({ length: 15 }, (_, i) => ({
+        slug: `p${i}`,
+        title: `Post ${i}`,
+        snippet: '',
+      })),
       inverted_index: {},
     });
     expect(searchIndex(many, 'post')).toHaveLength(SEARCH_RESULT_LIMIT);

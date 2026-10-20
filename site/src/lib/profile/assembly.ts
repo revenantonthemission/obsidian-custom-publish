@@ -1,9 +1,5 @@
 import { hasVerifiedFactApprovalCapability } from './fact-approval.js';
-import {
-  selectHomepageProfile,
-  selectPortfolioProfile,
-  selectResumeProfile,
-} from './selectors.js';
+import { selectHomepageProfile, selectPortfolioProfile, selectResumeProfile } from './selectors.js';
 import type {
   FactApprovedProfile,
   FactApprovedProfileAssembly,
@@ -21,9 +17,7 @@ import type {
  *
  * @internal
  */
-export function assembleValidatedProfile(
-  source: ValidatedProfile,
-): ValidatedProfileAssembly {
+export function assembleValidatedProfile(source: ValidatedProfile): ValidatedProfileAssembly {
   return Object.freeze({
     source,
     ...selectProfileViews(source),
@@ -35,12 +29,10 @@ export function assembleValidatedProfile(
  * aggregate validation and exact fact-approval correspondence succeed.
  */
 export function assembleFactApprovedProfile(
-  source: FactApprovedProfile,
+  source: FactApprovedProfile
 ): FactApprovedProfileAssembly {
   if (!hasVerifiedFactApprovalCapability(source)) {
-    throw new TypeError(
-      'A verified fact-approval capability is required for production assembly.',
-    );
+    throw new TypeError('A verified fact-approval capability is required for production assembly.');
   }
 
   return Object.freeze({
@@ -49,9 +41,7 @@ export function assembleFactApprovedProfile(
   });
 }
 
-function selectProfileViews(
-  profile: ValidatedProfile,
-): Readonly<{
+function selectProfileViews(profile: ValidatedProfile): Readonly<{
   resume: ResumeProfile;
   portfolio: PortfolioProfile;
   homepage: HomepageProfile;

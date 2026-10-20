@@ -1,13 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { recordEvidenceFragment } from './support/evidence.js';
-import {
-  AXE_VIEWPORTS,
-  DETAILS_STATES,
-  PROFILE_ROUTES,
-  THEMES,
-  axeKey,
-} from './support/matrix.js';
+import { AXE_VIEWPORTS, DETAILS_STATES, PROFILE_ROUTES, THEMES, axeKey } from './support/matrix.js';
 import {
   PROFILE_SHELL,
   applyDetailsState,
@@ -42,9 +36,7 @@ test.describe('accessibility', () => {
     for (const viewport of AXE_VIEWPORTS) {
       for (const theme of THEMES) {
         for (const details of DETAILS_STATES) {
-          test(`axe ${route} ${viewport} ${theme} ${details}`, async ({
-            page,
-          }) => {
+          test(`axe ${route} ${viewport} ${theme} ${details}`, async ({ page }) => {
             await applyTheme(page, theme);
             await setViewport(page, viewport);
             await gotoRoute(page, route);
@@ -52,21 +44,15 @@ test.describe('accessibility', () => {
 
             // The theme must actually be the one under test, otherwise the
             // contrast findings describe a state nobody asked for.
-            await expect(page.locator('html')).toHaveAttribute(
-              'data-theme',
-              theme,
-            );
+            await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
 
-            chromiumVersion =
-              page.context().browser()?.version() ?? chromiumVersion;
+            chromiumVersion = page.context().browser()?.version() ?? chromiumVersion;
 
             // @playwright/test and @axe-core/playwright resolve different
             // playwright-core installs, so the structurally identical Page
             // types are nominally distinct. The value passed is the real page.
             const results = await new AxeBuilder({
-              page: page as unknown as ConstructorParameters<
-                typeof AxeBuilder
-              >[0]['page'],
+              page: page as unknown as ConstructorParameters<typeof AxeBuilder>[0]['page'],
             })
               .withTags([...WCAG_TAGS])
               .analyze();
@@ -77,7 +63,7 @@ test.describe('accessibility', () => {
                 impact: violation.impact,
                 nodes: violation.nodes.map((node) => node.target),
               })),
-              `${route} ${viewport} ${theme} ${details} must have no WCAG violations`,
+              `${route} ${viewport} ${theme} ${details} must have no WCAG violations`
             ).toEqual([]);
 
             completed.push(axeKey(route, viewport, theme, details));
@@ -90,10 +76,7 @@ test.describe('accessibility', () => {
   test('native disclosures answer the keyboard', async ({ page }) => {
     await gotoRoute(page, '/resume');
     const detailsCount = await countProfileDetails(page);
-    expect(
-      detailsCount,
-      '/resume must own native disclosures',
-    ).toBeGreaterThan(0);
+    expect(detailsCount, '/resume must own native disclosures').toBeGreaterThan(0);
 
     const summary = page.locator(`${PROFILE_SHELL} details > summary`).first();
     const disclosure = page.locator(`${PROFILE_SHELL} details`).first();
@@ -109,9 +92,7 @@ test.describe('accessibility', () => {
     await expect(disclosure).toHaveAttribute('open', '');
   });
 
-  test('the skip link reaches main content by keyboard alone', async ({
-    page,
-  }) => {
+  test('the skip link reaches main content by keyboard alone', async ({ page }) => {
     await gotoRoute(page, '/resume');
     await page.keyboard.press('Tab');
 
@@ -144,18 +125,13 @@ test.describe('accessibility', () => {
       });
       if (focused === null) continue;
 
-      expect(
-        focused.visible,
-        `a focused ${focused.tag} must occupy space on screen`,
-      ).toBe(true);
+      expect(focused.visible, `a focused ${focused.tag} must occupy space on screen`).toBe(true);
       const hasIndicator =
-        (focused.outlineStyle !== 'none' &&
-          Number.parseFloat(focused.outlineWidth) > 0) ||
+        (focused.outlineStyle !== 'none' && Number.parseFloat(focused.outlineWidth) > 0) ||
         focused.boxShadow !== 'none';
-      expect(
-        hasIndicator,
-        `a focused ${focused.tag} must carry a visible focus indicator`,
-      ).toBe(true);
+      expect(hasIndicator, `a focused ${focused.tag} must carry a visible focus indicator`).toBe(
+        true
+      );
     }
   });
 
@@ -170,9 +146,7 @@ test.describe('accessibility', () => {
         const duration = Number.parseFloat(style.transitionDuration) || 0;
         const animation = Number.parseFloat(style.animationDuration) || 0;
         if (duration > 0.1 || animation > 0.1) {
-          offending.push(
-            `${element.tagName.toLowerCase()}.${element.className}`,
-          );
+          offending.push(`${element.tagName.toLowerCase()}.${element.className}`);
         }
       }
       return offending;
@@ -180,17 +154,14 @@ test.describe('accessibility', () => {
 
     expect(
       animated,
-      'no element may animate for longer than a moment under reduced motion',
+      'no element may animate for longer than a moment under reduced motion'
     ).toEqual([]);
     await page.emulateMedia({ reducedMotion: null });
   });
 
   test.afterAll(async () => {
     const expected =
-      PROFILE_ROUTES.length *
-      AXE_VIEWPORTS.length *
-      THEMES.length *
-      DETAILS_STATES.length;
+      PROFILE_ROUTES.length * AXE_VIEWPORTS.length * THEMES.length * DETAILS_STATES.length;
     if (completed.length !== expected) return;
     await recordEvidenceFragment({
       specFile: SPEC_FILE,

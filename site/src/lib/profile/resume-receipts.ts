@@ -3,10 +3,7 @@ import {
   RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
   validateCanonicalDigest,
 } from './canonical-digest.js';
-import type {
-  ProfileSourceDigest,
-  ResumeFactManifestDigest,
-} from './canonical-digest.js';
+import type { ProfileSourceDigest, ResumeFactManifestDigest } from './canonical-digest.js';
 import {
   RESUME_DOCUMENT_PUBLIC_HREF,
   RESUME_DOCUMENT_REPOSITORY_PATH,
@@ -26,17 +23,9 @@ import type {
   ResumeToolVersions,
   SurfaceManifestComparison,
 } from './resume-evidence.js';
-import {
-  compareResumeFactManifests,
-} from './resume-manifest.js';
-import type {
-  ResumeFactManifest,
-  ResumeManifestEntry,
-} from './resume-manifest.js';
-import {
-  createValidationIssue,
-  sortAndDedupeIssues,
-} from './issues.js';
+import { compareResumeFactManifests } from './resume-manifest.js';
+import type { ResumeFactManifest, ResumeManifestEntry } from './resume-manifest.js';
+import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
 import type {
   NonEmptyReadonlyArray,
   ProfilePath,
@@ -62,8 +51,7 @@ export const RESUME_MANUAL_REVIEW_ITEMS = Object.freeze([
   'heading-first-block-keep',
 ] as const);
 
-export type ResumeManualReviewItem =
-  (typeof RESUME_MANUAL_REVIEW_ITEMS)[number];
+export type ResumeManualReviewItem = (typeof RESUME_MANUAL_REVIEW_ITEMS)[number];
 
 export interface ResumeCandidateIdentity {
   readonly candidateId: string;
@@ -190,10 +178,9 @@ export interface ResumeHumanReviewRecord {
   readonly note: string;
 }
 
-export type ValidatedResumeHumanReview =
-  ResumeHumanReviewRecord & {
-    readonly [validatedResumeHumanReviewBrand]: 'ValidatedResumeHumanReview';
-  };
+export type ValidatedResumeHumanReview = ResumeHumanReviewRecord & {
+  readonly [validatedResumeHumanReviewBrand]: 'ValidatedResumeHumanReview';
+};
 
 export interface ResumeMachineReceiptIdentity {
   readonly schemaVersion: typeof RESUME_RECEIPT_SCHEMA_VERSION;
@@ -299,7 +286,7 @@ const RELEASE_RECEIPT_KEYS = [
  */
 export function assembleDraftResumeInspectionReceipt(
   inputCandidate: ResumeDraftReceiptInput,
-  currentManifest: ResumeFactManifest,
+  currentManifest: ResumeFactManifest
 ): ResumeEvidenceResult<ResumeInspectionReceipt> {
   try {
     const snapshot = snapshotResumeDocumentData(inputCandidate);
@@ -323,7 +310,7 @@ export function assembleDraftResumeInspectionReceipt(
     }
     const manifestDigest = validateCanonicalDigest(
       input.manifestDigest,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
+      RESUME_FACT_MANIFEST_DIGEST_DOMAIN
     );
     if (!manifestDigest.ok) {
       issues.push(issue('document.source.invalid', 'profile.document.receipt.manifestDigest'));
@@ -372,7 +359,7 @@ export function assembleDraftResumeInspectionReceipt(
         pdfEvidence,
         machineChecks: input.machineChecks,
         tools: input.tools,
-      }) as unknown as ResumeInspectionReceipt,
+      }) as unknown as ResumeInspectionReceipt
     );
   } catch {
     return receiptFailure('document.generation.failed', 'profile.document.receipt');
@@ -383,7 +370,7 @@ export function assembleDraftResumeInspectionReceipt(
 export function validateResumeInspectionReceipt(
   candidate: unknown,
   expectedCandidate: ResumeReceiptSubject,
-  currentManifest: ResumeFactManifest,
+  currentManifest: ResumeFactManifest
 ): ResumeEvidenceResult<ResumeInspectionReceipt> {
   try {
     const receiptSnapshot = snapshotResumeDocumentData(candidate);
@@ -410,9 +397,7 @@ export function validateResumeInspectionReceipt(
       return failure(issues);
     }
 
-    return success(
-      deepFreezeResumeDocumentData(receipt) as unknown as ResumeInspectionReceipt,
-    );
+    return success(deepFreezeResumeDocumentData(receipt) as unknown as ResumeInspectionReceipt);
   } catch {
     return receiptFailure('document.stale', 'profile.document.receipt');
   }
@@ -427,7 +412,7 @@ export function validateResumeHumanReview(
   draftCandidate: ResumeInspectionReceipt,
   currentCandidate: ResumeReceiptSubject,
   reviewCandidate: unknown,
-  currentManifest: ResumeFactManifest,
+  currentManifest: ResumeFactManifest
 ): ResumeEvidenceResult<ValidatedResumeHumanReview> {
   try {
     const draftSnapshot = snapshotResumeDocumentData(draftCandidate);
@@ -451,24 +436,20 @@ export function validateResumeHumanReview(
     }
 
     const issues = validateDraftReceiptShape(draftSnapshot.value, manifest);
-    validateReceiptCurrentness(
-      draftSnapshot.value,
-      currentSnapshot.value,
-      issues,
-    );
+    validateReceiptCurrentness(draftSnapshot.value, currentSnapshot.value, issues);
     validateHumanReviewShape(reviewSnapshot.value, issues);
     validateHumanReviewCurrentness(
       draftSnapshot.value,
       currentSnapshot.value,
       reviewSnapshot.value,
-      issues,
+      issues
     );
     if (issues.length > 0) {
       return failure(issues);
     }
 
     return success(
-      deepFreezeResumeDocumentData(reviewSnapshot.value) as unknown as ValidatedResumeHumanReview,
+      deepFreezeResumeDocumentData(reviewSnapshot.value) as unknown as ValidatedResumeHumanReview
     );
   } catch {
     return receiptFailure('document.generation.failed', 'profile.document.review');
@@ -484,13 +465,13 @@ export function assembleResumeReleaseReceipt(
   reviewCandidate: ValidatedResumeHumanReview,
   currentCandidate: ResumeReceiptSubject,
   currentManifest: ResumeFactManifest,
-  assembledAt: string,
+  assembledAt: string
 ): ResumeEvidenceResult<ResumeReleaseReceipt> {
   try {
     const draftValidation = validateResumeInspectionReceipt(
       draftCandidate,
       currentCandidate,
-      currentManifest,
+      currentManifest
     );
     if (!draftValidation.ok) {
       return draftValidation;
@@ -499,7 +480,7 @@ export function assembleResumeReleaseReceipt(
       draftValidation.value,
       currentCandidate,
       reviewCandidate,
-      currentManifest,
+      currentManifest
     );
     if (!reviewValidation.ok) {
       return reviewValidation;
@@ -537,7 +518,7 @@ export function assembleResumeReleaseReceipt(
         comparison: draft.comparison,
         manualReview: review,
         tools: draft.tools,
-      }) as unknown as ResumeReleaseReceipt,
+      }) as unknown as ResumeReleaseReceipt
     );
   } catch {
     return receiptFailure('document.generation.failed', 'profile.document.release');
@@ -549,7 +530,7 @@ export function validateResumeReleaseReceipt(
   candidate: unknown,
   currentCandidate: ResumeReceiptSubject,
   currentManifest: ResumeFactManifest,
-  currentEvidence: MappedResumeEvidence,
+  currentEvidence: MappedResumeEvidence
 ): ResumeEvidenceResult<ResumeReleaseReceipt> {
   try {
     const receiptSnapshot = snapshotResumeDocumentData(candidate);
@@ -603,11 +584,7 @@ export function validateResumeReleaseReceipt(
     }
     if (
       !Array.isArray(receipt.fullMapping) ||
-      !isComparisonAgainstManifest(
-        receipt.comparison,
-        manifest,
-        current.candidate,
-      )
+      !isComparisonAgainstManifest(receipt.comparison, manifest, current.candidate)
     ) {
       issues.push(issue('document.parity', 'profile.document.release.fullMapping'));
     } else {
@@ -632,20 +609,13 @@ export function validateResumeReleaseReceipt(
       issues.push(issue('field.type', 'profile.document.release.manualReview'));
     } else {
       validateHumanReviewShape(receipt.manualReview, issues);
-      validateHumanReviewCurrentness(
-        syntheticDraft,
-        current,
-        receipt.manualReview,
-        issues,
-      );
+      validateHumanReviewCurrentness(syntheticDraft, current, receipt.manualReview, issues);
     }
     if (issues.length > 0) {
       return failure(issues);
     }
 
-    return success(
-      deepFreezeResumeDocumentData(receipt) as unknown as ResumeReleaseReceipt,
-    );
+    return success(deepFreezeResumeDocumentData(receipt) as unknown as ResumeReleaseReceipt);
   } catch {
     return receiptFailure('document.stale', 'profile.document.release');
   }
@@ -655,20 +625,14 @@ function validateReleaseEvidenceBinding(
   receipt: OwnRecord,
   current: OwnRecord,
   evidence: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (
     !resumeDocumentDataEqual(evidence.candidate, current.candidate) ||
     !resumeDocumentDataEqual(evidence.sourceIdentity, current.sourceIdentity) ||
-    !resumeDocumentDataEqual(
-      evidence.fingerprint,
-      current.manifestFingerprint,
-    ) ||
+    !resumeDocumentDataEqual(evidence.fingerprint, current.manifestFingerprint) ||
     !resumeDocumentDataEqual(evidence.sourceIdentity, receipt.sourceIdentity) ||
-    !resumeDocumentDataEqual(
-      evidence.fingerprint,
-      receipt.manifestFingerprint,
-    ) ||
+    !resumeDocumentDataEqual(evidence.fingerprint, receipt.manifestFingerprint) ||
     !resumeDocumentDataEqual(evidence.tools, receipt.tools)
   ) {
     issues.push(issue('document.stale', 'profile.document.release.currentEvidence'));
@@ -678,7 +642,7 @@ function validateReleaseEvidenceBinding(
 function validateDraftCorrespondence(
   input: OwnRecord,
   currentManifest: ResumeFactManifest,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const comparison = input.comparison as OwnRecord;
   const pdf = input.pdfEvidence as OwnRecord;
@@ -687,14 +651,8 @@ function validateDraftCorrespondence(
     !resumeDocumentDataEqual(comparison.sourceIdentity, pdf.sourceIdentity) ||
     !resumeDocumentDataEqual(comparison.fingerprint, pdf.fingerprint) ||
     !resumeDocumentDataEqual(input.manifestDigest, comparison.fingerprint) ||
-    !resumeDocumentDataEqual(
-      comparison.sourceIdentity,
-      currentManifest.sourceIdentity,
-    ) ||
-    !resumeDocumentDataEqual(
-      comparison.fingerprint,
-      currentManifest.fingerprint,
-    ) ||
+    !resumeDocumentDataEqual(comparison.sourceIdentity, currentManifest.sourceIdentity) ||
+    !resumeDocumentDataEqual(comparison.fingerprint, currentManifest.fingerprint) ||
     !resumeDocumentDataEqual(input.tools, pdf.tools)
   ) {
     issues.push(issue('document.stale', 'profile.document.receipt'));
@@ -706,10 +664,7 @@ function validateDraftCorrespondence(
     !resumeDocumentDataEqual(comparison.pdf.fingerprint, pdf.fingerprint) ||
     !Array.isArray(pdf.mappings) ||
     comparison.pdf.mappedEntryCount !== pdf.mappings.length ||
-    !resumeDocumentDataEqual(
-      comparison.pdf.entries,
-      currentManifest.entries,
-    ) ||
+    !resumeDocumentDataEqual(comparison.pdf.entries, currentManifest.entries) ||
     !validateFullMapping(pdf.mappings, currentManifest)
   ) {
     issues.push(issue('document.parity', 'profile.document.receipt.comparison'));
@@ -718,7 +673,7 @@ function validateDraftCorrespondence(
 
 function validateDraftReceiptShape(
   receipt: OwnRecord,
-  currentManifest: ResumeFactManifest,
+  currentManifest: ResumeFactManifest
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   if (
@@ -736,23 +691,13 @@ function validateDraftReceiptShape(
     issues.push(issue('field.type', 'profile.document.receipt.candidate'));
   }
   if (
-    !validateCanonicalDigest(
-      receipt.manifestDigest,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-    ).ok ||
-    !resumeDocumentDataEqual(
-      receipt.manifestFingerprint,
-      receipt.manifestDigest,
-    )
+    !validateCanonicalDigest(receipt.manifestDigest, RESUME_FACT_MANIFEST_DIGEST_DOMAIN).ok ||
+    !resumeDocumentDataEqual(receipt.manifestFingerprint, receipt.manifestDigest)
   ) {
     issues.push(issue('document.source.invalid', 'profile.document.receipt.manifestDigest'));
   }
   if (
-    !isComparisonAgainstManifest(
-      receipt.comparison,
-      currentManifest,
-      receipt.candidate,
-    ) ||
+    !isComparisonAgainstManifest(receipt.comparison, currentManifest, receipt.candidate) ||
     !isMappedEvidence(receipt.pdfEvidence, currentManifest)
   ) {
     issues.push(issue('document.parity', 'profile.document.receipt.comparison'));
@@ -763,10 +708,7 @@ function validateDraftReceiptShape(
   if (!isToolVersions(receipt.tools)) {
     issues.push(issue('field.type', 'profile.document.receipt.tools'));
   }
-  if (
-    isOwnRecord(receipt.comparison) &&
-    isOwnRecord(receipt.pdfEvidence)
-  ) {
+  if (isOwnRecord(receipt.comparison) && isOwnRecord(receipt.pdfEvidence)) {
     validateDraftCorrespondence(receipt, currentManifest, issues);
   }
   return issues;
@@ -775,25 +717,19 @@ function validateDraftReceiptShape(
 function validateReceiptCurrentness(
   receipt: OwnRecord,
   subject: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   if (
     !resumeDocumentDataEqual(receipt.candidate, subject.candidate) ||
     !resumeDocumentDataEqual(receipt.sourceIdentity, subject.sourceIdentity) ||
-    !resumeDocumentDataEqual(
-      receipt.manifestFingerprint,
-      subject.manifestFingerprint,
-    ) ||
+    !resumeDocumentDataEqual(receipt.manifestFingerprint, subject.manifestFingerprint) ||
     !resumeDocumentDataEqual(receipt.manifestDigest, subject.manifestDigest)
   ) {
     issues.push(issue('document.stale', 'profile.document.receipt'));
   }
 }
 
-function validateHumanReviewShape(
-  review: OwnRecord,
-  issues: ValidationIssue[],
-): void {
+function validateHumanReviewShape(review: OwnRecord, issues: ValidationIssue[]): void {
   if (
     !hasExactKeys(review, HUMAN_REVIEW_KEYS) ||
     review.schemaVersion !== RESUME_RECEIPT_SCHEMA_VERSION ||
@@ -809,14 +745,8 @@ function validateHumanReviewShape(
     issues.push(issue('document.generation.failed', 'profile.document.review'));
   }
   if (
-    !validateCanonicalDigest(
-      review.manifestFingerprint,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-    ).ok ||
-    !validateCanonicalDigest(
-      review.manifestDigest,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-    ).ok
+    !validateCanonicalDigest(review.manifestFingerprint, RESUME_FACT_MANIFEST_DIGEST_DOMAIN).ok ||
+    !validateCanonicalDigest(review.manifestDigest, RESUME_FACT_MANIFEST_DIGEST_DOMAIN).ok
   ) {
     issues.push(issue('document.source.invalid', 'profile.document.review.manifestDigest'));
   }
@@ -838,7 +768,7 @@ function validateHumanReviewShape(
       item.note.normalize('NFC') !== item.note
     ) {
       issues.push(
-        issue('document.generation.failed', `profile.document.review.checklist[${index}]`),
+        issue('document.generation.failed', `profile.document.review.checklist[${index}]`)
       );
     }
   }
@@ -848,7 +778,7 @@ function validateHumanReviewCurrentness(
   draft: OwnRecord,
   current: OwnRecord,
   review: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const candidate = draft.candidate;
   if (
@@ -856,18 +786,12 @@ function validateHumanReviewCurrentness(
     review.candidateId !== candidate.candidateId ||
     review.pdfSha256 !== candidate.pdfSha256 ||
     !resumeDocumentDataEqual(review.sourceIdentity, draft.sourceIdentity) ||
-    !resumeDocumentDataEqual(
-      review.manifestFingerprint,
-      draft.manifestFingerprint,
-    ) ||
+    !resumeDocumentDataEqual(review.manifestFingerprint, draft.manifestFingerprint) ||
     !resumeDocumentDataEqual(review.manifestDigest, draft.manifestDigest) ||
     !resumeDocumentDataEqual(review.candidateId, (current.candidate as OwnRecord).candidateId) ||
     !resumeDocumentDataEqual(review.pdfSha256, (current.candidate as OwnRecord).pdfSha256) ||
     !resumeDocumentDataEqual(review.sourceIdentity, current.sourceIdentity) ||
-    !resumeDocumentDataEqual(
-      review.manifestFingerprint,
-      current.manifestFingerprint,
-    ) ||
+    !resumeDocumentDataEqual(review.manifestFingerprint, current.manifestFingerprint) ||
     !resumeDocumentDataEqual(review.manifestDigest, current.manifestDigest)
   ) {
     issues.push(issue('document.stale', 'profile.document.review'));
@@ -877,17 +801,14 @@ function validateHumanReviewCurrentness(
 function validateReleaseIdentity(
   receipt: OwnRecord,
   current: OwnRecord,
-  issues: ValidationIssue[],
+  issues: ValidationIssue[]
 ): void {
   const candidate = current.candidate as OwnRecord;
   if (
     receipt.candidateId !== candidate.candidateId ||
     receipt.pdfSha256 !== candidate.pdfSha256 ||
     !resumeDocumentDataEqual(receipt.sourceIdentity, current.sourceIdentity) ||
-    !resumeDocumentDataEqual(
-      receipt.manifestFingerprint,
-      current.manifestFingerprint,
-    ) ||
+    !resumeDocumentDataEqual(receipt.manifestFingerprint, current.manifestFingerprint) ||
     !resumeDocumentDataEqual(receipt.manifestDigest, current.manifestDigest)
   ) {
     issues.push(issue('document.stale', 'profile.document.release'));
@@ -898,42 +819,22 @@ function isReceiptSubject(value: OwnRecord): boolean {
   return (
     hasExactKeys(value, SUBJECT_KEYS) &&
     isCandidate(value.candidate) &&
-    validateCanonicalDigest(
-      value.sourceIdentity,
-      PROFILE_SOURCE_DIGEST_DOMAIN,
-    ).ok &&
-    validateCanonicalDigest(
-      value.manifestFingerprint,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-    ).ok &&
-    validateCanonicalDigest(
-      value.manifestDigest,
-      RESUME_FACT_MANIFEST_DIGEST_DOMAIN,
-    ).ok &&
-    resumeDocumentDataEqual(
-      value.manifestFingerprint,
-      value.manifestDigest,
-    )
+    validateCanonicalDigest(value.sourceIdentity, PROFILE_SOURCE_DIGEST_DOMAIN).ok &&
+    validateCanonicalDigest(value.manifestFingerprint, RESUME_FACT_MANIFEST_DIGEST_DOMAIN).ok &&
+    validateCanonicalDigest(value.manifestDigest, RESUME_FACT_MANIFEST_DIGEST_DOMAIN).ok &&
+    resumeDocumentDataEqual(value.manifestFingerprint, value.manifestDigest)
   );
 }
 
-function inspectCurrentManifest(
-  candidate: ResumeFactManifest,
-): ResumeFactManifest | null {
+function inspectCurrentManifest(candidate: ResumeFactManifest): ResumeFactManifest | null {
   const comparison = compareResumeFactManifests(candidate, candidate);
   return comparison.ok ? comparison.value : null;
 }
 
-function receiptSubjectMatchesManifest(
-  subject: OwnRecord,
-  manifest: ResumeFactManifest,
-): boolean {
+function receiptSubjectMatchesManifest(subject: OwnRecord, manifest: ResumeFactManifest): boolean {
   return (
     resumeDocumentDataEqual(subject.sourceIdentity, manifest.sourceIdentity) &&
-    resumeDocumentDataEqual(
-      subject.manifestFingerprint,
-      manifest.fingerprint,
-    ) &&
+    resumeDocumentDataEqual(subject.manifestFingerprint, manifest.fingerprint) &&
     // U1 currently defines manifestFingerprint and manifestDigest as aliases.
     resumeDocumentDataEqual(subject.manifestDigest, manifest.fingerprint)
   );
@@ -1034,7 +935,7 @@ function isComparison(value: unknown): boolean {
 function isComparisonAgainstManifest(
   value: unknown,
   manifest: ResumeFactManifest,
-  expectedCandidate?: unknown,
+  expectedCandidate?: unknown
 ): boolean {
   if (!isComparison(value) || !isOwnRecord(value)) {
     return false;
@@ -1069,39 +970,35 @@ function isComparisonAgainstManifest(
     resumeDocumentDataEqual(web.entries, manifest.entries) &&
     resumeDocumentDataEqual(print.entries, manifest.entries) &&
     resumeDocumentDataEqual(pdf.entries, manifest.entries) &&
-    (expectedCandidate === undefined ||
-      resumeDocumentDataEqual(pdf.candidate, expectedCandidate))
+    (expectedCandidate === undefined || resumeDocumentDataEqual(pdf.candidate, expectedCandidate))
   );
 }
 
-function isMappedEvidence(
-  value: unknown,
-  currentManifest: ResumeFactManifest,
-): boolean {
+function isMappedEvidence(value: unknown, currentManifest: ResumeFactManifest): boolean {
   if (
     !isOwnRecord(value) ||
     !(
-    hasExactKeys(value, [
-      'schemaVersion',
-      'candidate',
-      'sourceIdentity',
-      'fingerprint',
-      'sectionOrder',
-      'entityOrder',
-      'mappings',
-      'structure',
-      'outline',
-      'renderedPages',
-      'tools',
-    ]) &&
-    value.schemaVersion === RESUME_EVIDENCE_SCHEMA_VERSION &&
-    isCandidate(value.candidate) &&
-    Array.isArray(value.sectionOrder) &&
-    Array.isArray(value.entityOrder) &&
-    Array.isArray(value.mappings) &&
-    validateFullMapping(value.mappings, currentManifest) &&
-    Array.isArray(value.renderedPages) &&
-    isToolVersions(value.tools)
+      hasExactKeys(value, [
+        'schemaVersion',
+        'candidate',
+        'sourceIdentity',
+        'fingerprint',
+        'sectionOrder',
+        'entityOrder',
+        'mappings',
+        'structure',
+        'outline',
+        'renderedPages',
+        'tools',
+      ]) &&
+      value.schemaVersion === RESUME_EVIDENCE_SCHEMA_VERSION &&
+      isCandidate(value.candidate) &&
+      Array.isArray(value.sectionOrder) &&
+      Array.isArray(value.entityOrder) &&
+      Array.isArray(value.mappings) &&
+      validateFullMapping(value.mappings, currentManifest) &&
+      Array.isArray(value.renderedPages) &&
+      isToolVersions(value.tools)
     )
   ) {
     return false;
@@ -1110,10 +1007,7 @@ function isMappedEvidence(
   return validateMappedResumeEvidence(currentManifest, value).ok;
 }
 
-function validateFullMapping(
-  value: readonly unknown[],
-  manifest: ResumeFactManifest,
-): boolean {
+function validateFullMapping(value: readonly unknown[], manifest: ResumeFactManifest): boolean {
   if (value.length !== manifest.entries.length) {
     return false;
   }
@@ -1132,12 +1026,10 @@ function validateFullMapping(
         : manifest.sectionOrder.findIndex(
             (section) =>
               section.key === expectedEntry.sectionKey &&
-              section.order === expectedEntry.sectionOrder,
+              section.order === expectedEntry.sectionOrder
           );
     const expectedEntityOrdinal =
-      expectedEntry === undefined
-        ? undefined
-        : manifestEntityOrdinal(manifest, expectedEntry);
+      expectedEntry === undefined ? undefined : manifestEntityOrdinal(manifest, expectedEntry);
     if (
       expectedEntry === undefined ||
       !isOwnRecord(mapping) ||
@@ -1176,12 +1068,12 @@ function validateFullMapping(
       !addUniqueMappingReferences(
         mapping.fragmentReferences as readonly OwnRecord[],
         false,
-        fragmentReferences,
+        fragmentReferences
       ) ||
       !addUniqueMappingReferences(
         mapping.urlAnnotationReferences as readonly OwnRecord[],
         true,
-        annotationReferences,
+        annotationReferences
       )
     ) {
       return false;
@@ -1192,7 +1084,7 @@ function validateFullMapping(
 
 function manifestEntityOrdinal(
   manifest: ResumeFactManifest,
-  entry: ResumeManifestEntry,
+  entry: ResumeManifestEntry
 ): number | null | undefined {
   if (entry.entity === null) {
     return null;
@@ -1217,7 +1109,7 @@ function manifestEntityOrdinal(
 
 function isMappingReferenceArray(
   value: unknown,
-  includesDestination: boolean,
+  includesDestination: boolean
 ): value is readonly OwnRecord[] {
   if (!Array.isArray(value)) {
     return false;
@@ -1240,9 +1132,7 @@ function isMappingReferenceArray(
       return false;
     }
 
-    const referenceIndex = includesDestination
-      ? reference.annotationIndex
-      : reference.itemIndex;
+    const referenceIndex = includesDestination ? reference.annotationIndex : reference.itemIndex;
     const key = `${reference.pageNumber}:${referenceIndex}`;
     if (seen.has(key)) {
       return false;
@@ -1252,20 +1142,11 @@ function isMappingReferenceArray(
   return true;
 }
 
-function isNonEmptyNonNegativeIntegerArray(
-  value: unknown,
-): value is readonly number[] {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every(isNonNegativeInteger)
-  );
+function isNonEmptyNonNegativeIntegerArray(value: unknown): value is readonly number[] {
+  return Array.isArray(value) && value.length > 0 && value.every(isNonNegativeInteger);
 }
 
-function mappingReferencesMatchExpected(
-  mapping: OwnRecord,
-  entry: ResumeManifestEntry,
-): boolean {
+function mappingReferencesMatchExpected(mapping: OwnRecord, entry: ResumeManifestEntry): boolean {
   const fragments = mapping.fragmentReferences as readonly OwnRecord[];
   const annotations = mapping.urlAnnotationReferences as readonly OwnRecord[];
   if (!isLinkValueKind(entry.valueKind)) {
@@ -1276,9 +1157,7 @@ function mappingReferencesMatchExpected(
   }
 
   const expectedDestination =
-    entry.valueKind === 'email'
-      ? `mailto:${entry.normalizedValue}`
-      : entry.normalizedValue;
+    entry.valueKind === 'email' ? `mailto:${entry.normalizedValue}` : entry.normalizedValue;
   return annotations[0]?.destination === expectedDestination;
 }
 
@@ -1294,12 +1173,10 @@ function isLinkValueKind(value: ResumeManifestEntry['valueKind']): boolean {
 function addUniqueMappingReferences(
   references: readonly OwnRecord[],
   annotation: boolean,
-  seen: Set<string>,
+  seen: Set<string>
 ): boolean {
   for (const reference of references) {
-    const referenceIndex = annotation
-      ? reference.annotationIndex
-      : reference.itemIndex;
+    const referenceIndex = annotation ? reference.annotationIndex : reference.itemIndex;
     const key = `${reference.pageNumber}:${referenceIndex}`;
     if (seen.has(key)) {
       return false;
@@ -1325,52 +1202,33 @@ function isMachineChecks(value: unknown, pdfEvidence: unknown): boolean {
   ) {
     return false;
   }
-  const mappings = Array.isArray(pdfEvidence.mappings)
-    ? pdfEvidence.mappings
-    : [];
-  const renderedPages = Array.isArray(pdfEvidence.renderedPages)
-    ? pdfEvidence.renderedPages
-    : [];
-  const sectionOrder = Array.isArray(pdfEvidence.sectionOrder)
-    ? pdfEvidence.sectionOrder
-    : [];
+  const mappings = Array.isArray(pdfEvidence.mappings) ? pdfEvidence.mappings : [];
+  const renderedPages = Array.isArray(pdfEvidence.renderedPages) ? pdfEvidence.renderedPages : [];
+  const sectionOrder = Array.isArray(pdfEvidence.sectionOrder) ? pdfEvidence.sectionOrder : [];
   const annotationCount = mappings.reduce(
     (count, mapping) =>
       count +
       (isOwnRecord(mapping) && Array.isArray(mapping.urlAnnotationReferences)
         ? mapping.urlAnnotationReferences.length
         : 0),
-    0,
+    0
   );
 
   return (
     isOwnRecord(value.pdf) &&
-    hasExactKeys(value.pdf, [
-      'readable',
-      'nonEmpty',
-      'pageCount',
-      'renderedPageCount',
-    ]) &&
+    hasExactKeys(value.pdf, ['readable', 'nonEmpty', 'pageCount', 'renderedPageCount']) &&
     value.pdf.readable === true &&
     value.pdf.nonEmpty === true &&
     isPositiveInteger(value.pdf.pageCount) &&
     value.pdf.renderedPageCount === renderedPages.length &&
     value.pdf.pageCount === renderedPages.length &&
     isOwnRecord(value.annotations) &&
-    hasExactKeys(value.annotations, [
-      'expectedCount',
-      'observedCount',
-      'mappedCount',
-    ]) &&
+    hasExactKeys(value.annotations, ['expectedCount', 'observedCount', 'mappedCount']) &&
     value.annotations.expectedCount === annotationCount &&
     value.annotations.observedCount === annotationCount &&
     value.annotations.mappedCount === annotationCount &&
     isOwnRecord(value.structure) &&
-    hasExactKeys(value.structure, [
-      'tagged',
-      'occurrenceCount',
-      'readingOrderCount',
-    ]) &&
+    hasExactKeys(value.structure, ['tagged', 'occurrenceCount', 'readingOrderCount']) &&
     value.structure.tagged === true &&
     value.structure.occurrenceCount === mappings.length &&
     value.structure.readingOrderCount === mappings.length &&
@@ -1387,13 +1245,7 @@ function isMachineChecks(value: unknown, pdfEvidence: unknown): boolean {
 function isValidFontCheck(value: unknown): boolean {
   return (
     isOwnRecord(value) &&
-    hasExactKeys(value, [
-      'family',
-      'responseOk',
-      'mime',
-      'fontsReady',
-      'fontsCheck',
-    ]) &&
+    hasExactKeys(value, ['family', 'responseOk', 'mime', 'fontsReady', 'fontsCheck']) &&
     isCanonicalNonEmptyString(value.family) &&
     value.responseOk === true &&
     value.mime === 'font/woff2' &&
@@ -1405,10 +1257,7 @@ function isValidFontCheck(value: unknown): boolean {
 function isValidNetworkCheck(value: unknown): boolean {
   return (
     isOwnRecord(value) &&
-    hasExactKeys(value, [
-      'loopbackOnly',
-      'successfulNonLoopbackRequests',
-    ]) &&
+    hasExactKeys(value, ['loopbackOnly', 'successfulNonLoopbackRequests']) &&
     value.loopbackOnly === true &&
     value.successfulNonLoopbackRequests === 0
   );
@@ -1454,10 +1303,7 @@ function isValidPrintCheck(value: unknown): boolean {
   );
 }
 
-function isMachineReceiptIdentity(
-  value: unknown,
-  current: OwnRecord,
-): boolean {
+function isMachineReceiptIdentity(value: unknown, current: OwnRecord): boolean {
   if (
     !isOwnRecord(value) ||
     !hasExactKeys(value, [
@@ -1477,10 +1323,7 @@ function isMachineReceiptIdentity(
     value.candidateId === candidate.candidateId &&
     value.pdfSha256 === candidate.pdfSha256 &&
     resumeDocumentDataEqual(value.sourceIdentity, current.sourceIdentity) &&
-    resumeDocumentDataEqual(
-      value.manifestFingerprint,
-      current.manifestFingerprint,
-    ) &&
+    resumeDocumentDataEqual(value.manifestFingerprint, current.manifestFingerprint) &&
     resumeDocumentDataEqual(value.manifestDigest, current.manifestDigest)
   );
 }
@@ -1512,13 +1355,7 @@ function isCandidate(value: unknown): value is ResumeCandidateIdentity {
 function isToolVersions(value: unknown): value is ResumeToolVersions {
   return (
     isOwnRecord(value) &&
-    hasExactKeys(value, [
-      'node',
-      'playwright',
-      'chromium',
-      'pdfjs',
-      'pretendard',
-    ]) &&
+    hasExactKeys(value, ['node', 'playwright', 'chromium', 'pdfjs', 'pretendard']) &&
     isCanonicalNonEmptyString(value.node) &&
     value.playwright === RESUME_TOOL_VERSIONS.playwright &&
     isCanonicalNonEmptyString(value.chromium) &&
@@ -1569,10 +1406,7 @@ function isOwnRecord(value: unknown): value is OwnRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function hasExactKeys(
-  value: OwnRecord,
-  expected: readonly string[],
-): boolean {
+function hasExactKeys(value: OwnRecord, expected: readonly string[]): boolean {
   const keys = Object.keys(value);
   return (
     keys.length === expected.length &&
@@ -1584,30 +1418,20 @@ function success<Value>(value: Value): ValidationResult<Value> {
   return Object.freeze({ ok: true, value });
 }
 
-function receiptFailure(
-  code: ValidationIssue['code'],
-  path: string,
-): ValidationResult<never> {
+function receiptFailure(code: ValidationIssue['code'], path: string): ValidationResult<never> {
   return failure([issue(code, path)]);
 }
 
-function failure(
-  issues: readonly ValidationIssue[],
-): ValidationResult<never> {
+function failure(issues: readonly ValidationIssue[]): ValidationResult<never> {
   const sorted = sortAndDedupeIssues(issues);
   const nonEmpty =
-    sorted.length > 0
-      ? sorted
-      : [issue('document.generation.failed', 'profile.document')];
+    sorted.length > 0 ? sorted : [issue('document.generation.failed', 'profile.document')];
   return Object.freeze({
     ok: false,
     issues: Object.freeze(nonEmpty) as NonEmptyReadonlyArray<ValidationIssue>,
   });
 }
 
-function issue(
-  code: ValidationIssue['code'],
-  path: string,
-): ValidationIssue {
+function issue(code: ValidationIssue['code'], path: string): ValidationIssue {
   return createValidationIssue(code, path as ProfilePath);
 }

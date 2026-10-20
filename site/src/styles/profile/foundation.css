@@ -18,7 +18,7 @@
 
 /* A disclosure chevron at the end of a summary row, turned by transform. */
 .profile-shell :is(details.resume-entry, .case-study-details) > summary::after {
-  content: "";
+  content: '';
   position: absolute;
   inset-block-start: 50%;
   inset-inline-end: var(--space-4);
@@ -89,10 +89,12 @@
   text-decoration: none;
 }
 
-.profile-local-navigation a[aria-current="page"],
-.portfolio-role-navigation a[aria-current="page"] {
+.profile-local-navigation a[aria-current='page'],
+.portfolio-role-navigation a[aria-current='page'] {
   background: var(--c-surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
   font-weight: 600;
 }
 
@@ -102,8 +104,8 @@
 }
 
 @media (prefers-contrast: more) {
-  .profile-local-navigation a[aria-current="page"],
-  .portfolio-role-navigation a[aria-current="page"] {
+  .profile-local-navigation a[aria-current='page'],
+  .portfolio-role-navigation a[aria-current='page'] {
     box-shadow: inset 0 0 0 1px var(--c-control-border);
   }
 }

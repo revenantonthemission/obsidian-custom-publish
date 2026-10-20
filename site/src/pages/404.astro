@@ -1,12 +1,14 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import PostCard from "../components/PostCard.astro";
-import { getAllPostMeta, getPreviewSummary } from "../lib/data";
-import "../styles/grouped.css";
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { getAllPostMeta, getPreviewSummary } from '../lib/data';
+import '../styles/grouped.css';
 
 // Not found (mockups W11; FR4.3): what happened, the two ways on (search is
 // the filled primary action and opens the search dialog), and recent posts.
-const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 5);
+const recentPosts = getAllPostMeta()
+  .filter((p) => !p.is_hub)
+  .slice(0, 5);
 ---
 
 <BaseLayout title="페이지를 찾을 수 없습니다">
@@ -14,8 +16,12 @@ const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 5);
     <h1>페이지를 찾을 수 없습니다</h1>
     <p class="not-found-lead">주소가 바뀌었을 수 있습니다.</p>
     <div class="not-found-actions">
-      <button type="button" class="capsule capsule-filled" data-search-open>사이트 검색</button>
-      <a href="/" class="capsule">홈으로</a>
+      <button type="button" class="capsule capsule-filled" data-search-open>
+        사이트 검색
+      </button>
+      <a href="/" class="capsule">
+        홈으로
+      </a>
     </div>
     {recentPosts.length > 0 && (
       <section class="not-found-recent" aria-labelledby="not-found-recent-heading">

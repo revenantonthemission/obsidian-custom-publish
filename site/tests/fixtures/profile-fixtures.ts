@@ -24,8 +24,7 @@ export const validProfileFixture = {
         tag: 'paragraph',
         text: {
           factId: 'narrative-detailed-intro',
-          value:
-            '한국어·Unicode·긴 기술 이름을 자르지 않고 전달하는 테스트 전용 소개입니다.',
+          value: '한국어·Unicode·긴 기술 이름을 자르지 않고 전달하는 테스트 전용 소개입니다.',
         },
       },
     ],
@@ -113,37 +112,29 @@ export const validProfileFixture = {
       problem: [
         paragraph(
           'project-alpha-problem',
-          '서로 다른 입력 규칙 때문에 결과를 예측하기 어려웠습니다.',
+          '서로 다른 입력 규칙 때문에 결과를 예측하기 어려웠습니다.'
         ),
       ],
-      role: [
-        paragraph(
-          'project-alpha-role',
-          '도메인 계약과 검증 파이프라인을 설계했습니다.',
-        ),
-      ],
+      role: [paragraph('project-alpha-role', '도메인 계약과 검증 파이프라인을 설계했습니다.')],
       keyDecisions: [
         paragraph(
           'project-alpha-decision',
-          '한 canonical source와 fail-closed validation을 선택했습니다.',
+          '한 canonical source와 fail-closed validation을 선택했습니다.'
         ),
       ],
       architecture: [
         paragraph(
           'project-alpha-architecture',
-          '순수 변환과 filesystem side effect를 분리했습니다.',
+          '순수 변환과 filesystem side effect를 분리했습니다.'
         ),
       ],
       outcomes: [
-        paragraph(
-          'project-alpha-outcome',
-          '동일한 입력에서 동일한 사용자 결과를 생성했습니다.',
-        ),
+        paragraph('project-alpha-outcome', '동일한 입력에서 동일한 사용자 결과를 생성했습니다.'),
       ],
       lessons: [
         paragraph(
           'project-alpha-lesson',
-          '명시적 경계가 회귀 분석 비용을 줄인다는 점을 배웠습니다.',
+          '명시적 경계가 회귀 분석 비용을 줄인다는 점을 배웠습니다.'
         ),
       ],
       evidence: [],
@@ -161,8 +152,7 @@ export const validProfileFixture = {
 
 export const nonNfcTextFixture = '  Cafe\u0301\r\n한글  ';
 export const normalizedNonNfcTextFixture = 'Café\n한글';
-export const longUnicodeFixture =
-  '초장문-URL-기술명-조합-테스트-'.repeat(20) + '끝';
+export const longUnicodeFixture = '초장문-URL-기술명-조합-테스트-'.repeat(20) + '끝';
 
 export function cloneProfileFixture(): ProfileData {
   return structuredClone(validProfileFixture);
@@ -173,7 +163,7 @@ export function profileWithProjectCount(count: number): ProfileData {
     projects: unknown[];
   };
   candidate.projects = Array.from({ length: count }, (_, index) =>
-    projectFixture(`boundary-project-${index + 1}`, (index + 1) * 10, `${index + 1}`),
+    projectFixture(`boundary-project-${index + 1}`, (index + 1) * 10, `${index + 1}`)
   );
   return candidate as unknown as ProfileData;
 }
@@ -215,15 +205,9 @@ function projectFixture(id: string, order: number, suffix: string) {
     keyDecisions: [
       paragraph(`${id}-decision`, '가장 중요한 기술 결정을 근거와 함께 선택했습니다.'),
     ],
-    architecture: [
-      paragraph(`${id}-architecture`, '구성 요소와 데이터 흐름을 분리했습니다.'),
-    ],
-    outcomes: [
-      paragraph(`${id}-outcome`, '확인 가능한 사용자 결과를 만들었습니다.'),
-    ],
-    lessons: [
-      paragraph(`${id}-lesson`, '후속 작업에 적용할 배움을 정리했습니다.'),
-    ],
+    architecture: [paragraph(`${id}-architecture`, '구성 요소와 데이터 흐름을 분리했습니다.')],
+    outcomes: [paragraph(`${id}-outcome`, '확인 가능한 사용자 결과를 만들었습니다.')],
+    lessons: [paragraph(`${id}-lesson`, '후속 작업에 적용할 배움을 정리했습니다.')],
     evidence: [],
   };
 }

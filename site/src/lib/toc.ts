@@ -13,7 +13,7 @@ export function extractToc(html: string): TocEntry[] {
     entries.push({
       depth: parseInt(match[1]),
       id: match[2],
-      text: match[3].replace(/<[^>]+>/g, ""),
+      text: match[3].replace(/<[^>]+>/g, ''),
     });
   }
   return entries;

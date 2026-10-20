@@ -6,12 +6,10 @@ import { verificationEvidenceSchema } from '../../../scripts/profile/verificatio
  * are checked against the imported set, so a drifted dimension fails loudly
  * here instead of silently producing an evidence record the provider rejects.
  */
-export const REQUIRED_MATRIX: readonly string[] =
-  verificationEvidenceSchema.browserMatrix;
+export const REQUIRED_MATRIX: readonly string[] = verificationEvidenceSchema.browserMatrix;
 export const REQUIRED_OBLIGATIONS: readonly string[] =
   verificationEvidenceSchema.browserObligations;
-export const REQUIRED_SPEC_FILES: readonly string[] =
-  verificationEvidenceSchema.browserSpecFiles;
+export const REQUIRED_SPEC_FILES: readonly string[] = verificationEvidenceSchema.browserSpecFiles;
 
 const REQUIRED_MATRIX_SET = new Set(REQUIRED_MATRIX);
 
@@ -21,10 +19,7 @@ export type DetailsState = 'closed' | 'all-open';
 export type JavaScriptState = 'enabled' | 'disabled';
 export type FocusedEngine = 'firefox' | 'webkit';
 
-export const PROFILE_ROUTES: readonly ProfileRoute[] = Object.freeze([
-  '/resume',
-  '/portfolio',
-]);
+export const PROFILE_ROUTES: readonly ProfileRoute[] = Object.freeze(['/resume', '/portfolio']);
 
 /**
  * 479/480 and 767/768 straddle the two CSS breakpoints so each boundary is
@@ -41,29 +36,14 @@ export const RESPONSIVE_VIEWPORTS: readonly string[] = Object.freeze([
   '390x844',
 ]);
 
-export const COMPATIBILITY_VIEWPORTS: readonly string[] = Object.freeze([
-  '320x800',
-  '1280x800',
-]);
+export const COMPATIBILITY_VIEWPORTS: readonly string[] = Object.freeze(['320x800', '1280x800']);
 
-export const AXE_VIEWPORTS: readonly string[] = Object.freeze([
-  '320x800',
-  '1440x900',
-]);
+export const AXE_VIEWPORTS: readonly string[] = Object.freeze(['320x800', '1440x900']);
 
 export const THEMES: readonly ThemeName[] = Object.freeze(['light', 'dark']);
-export const DETAILS_STATES: readonly DetailsState[] = Object.freeze([
-  'closed',
-  'all-open',
-]);
-export const JAVASCRIPT_STATES: readonly JavaScriptState[] = Object.freeze([
-  'enabled',
-  'disabled',
-]);
-export const PRINT_PAPER_FORMATS: readonly string[] = Object.freeze([
-  'A4',
-  'Letter',
-]);
+export const DETAILS_STATES: readonly DetailsState[] = Object.freeze(['closed', 'all-open']);
+export const JAVASCRIPT_STATES: readonly JavaScriptState[] = Object.freeze(['enabled', 'disabled']);
+export const PRINT_PAPER_FORMATS: readonly string[] = Object.freeze(['A4', 'Letter']);
 
 export interface Viewport {
   readonly width: number;
@@ -80,9 +60,7 @@ export function parseViewport(viewport: string): Viewport {
 
 function requireMatrixKey(key: string): string {
   if (!REQUIRED_MATRIX_SET.has(key)) {
-    throw new Error(
-      `"${key}" is not part of the required browser completion matrix.`,
-    );
+    throw new Error(`"${key}" is not part of the required browser completion matrix.`);
   }
   return key;
 }
@@ -95,22 +73,18 @@ export function compatibilityKey(
   engine: FocusedEngine,
   route: ProfileRoute,
   viewport: string,
-  javaScript: JavaScriptState,
+  javaScript: JavaScriptState
 ): string {
-  return requireMatrixKey(
-    `compatibility|${engine}|${route}|${viewport}|js-${javaScript}`,
-  );
+  return requireMatrixKey(`compatibility|${engine}|${route}|${viewport}|js-${javaScript}`);
 }
 
 export function axeKey(
   route: ProfileRoute,
   viewport: string,
   theme: ThemeName,
-  details: DetailsState,
+  details: DetailsState
 ): string {
-  return requireMatrixKey(
-    `axe|chromium|${route}|${viewport}|${theme}|${details}`,
-  );
+  return requireMatrixKey(`axe|chromium|${route}|${viewport}|${theme}|${details}`);
 }
 
 export function printKey(paperFormat: string): string {

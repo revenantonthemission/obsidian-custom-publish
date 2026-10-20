@@ -7,8 +7,8 @@
  * (callouts, diagrams, post content) load only on routes that render notes,
  * which keeps them out of the profile CSS budget.
  */
-@import "./tokens.css";
-@import "./fonts.css";
-@import "./base.css";
-@import "./chrome.css";
-@import "./search.css";
+@import './tokens.css';
+@import './fonts.css';
+@import './base.css';
+@import './chrome.css';
+@import './search.css';

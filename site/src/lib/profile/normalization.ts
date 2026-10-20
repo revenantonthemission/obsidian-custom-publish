@@ -60,12 +60,8 @@ export function normalizeProfile(input: ProfileData): NormalizedProfile {
         ContentBlock,
         ...ContentBlock[],
       ],
-      resumeSummary: normalizeKoreanSingleLineFact(
-        input.narrative.resumeSummary,
-      ),
-      portfolioSummary: normalizeKoreanSingleLineFact(
-        input.narrative.portfolioSummary,
-      ),
+      resumeSummary: normalizeKoreanSingleLineFact(input.narrative.resumeSummary),
+      portfolioSummary: normalizeKoreanSingleLineFact(input.narrative.portfolioSummary),
     },
     contact: normalizeContact(input.contact),
     skillGroups: input.skillGroups.map(normalizeSkillGroup),
@@ -88,7 +84,9 @@ function copyResumeProjectIds(input: unknown): readonly EntityId<'project'>[] {
   }
   const length = Object.getOwnPropertyDescriptor(input, 'length')?.value;
   if (
-    !Number.isSafeInteger(length) || length < 1 || length > 6 ||
+    !Number.isSafeInteger(length) ||
+    length < 1 ||
+    length > 6 ||
     Reflect.ownKeys(input).length !== length + 1
   ) {
     throw new TypeError('Résumé project selection must contain one to six owned values.');
@@ -97,8 +95,10 @@ function copyResumeProjectIds(input: unknown): readonly EntityId<'project'>[] {
   for (let index = 0; index < length; index += 1) {
     const item = Object.getOwnPropertyDescriptor(input, String(index));
     if (
-      item === undefined || !Object.prototype.hasOwnProperty.call(item, 'value') ||
-      item.enumerable !== true || typeof item.value !== 'string'
+      item === undefined ||
+      !Object.prototype.hasOwnProperty.call(item, 'value') ||
+      item.enumerable !== true ||
+      typeof item.value !== 'string'
     ) {
       throw new TypeError('Résumé project IDs must be owned string values.');
     }
@@ -140,10 +140,7 @@ function normalizeExperience(experience: Experience): Experience {
     role: normalizeSingleLineFact(experience.role),
     period: normalizePeriodFact(experience.period),
     summary: normalizeKoreanSingleLineFact(experience.summary),
-    details: experience.details.map(normalizeContentBlock) as [
-      ContentBlock,
-      ...ContentBlock[],
-    ],
+    details: experience.details.map(normalizeContentBlock) as [ContentBlock, ...ContentBlock[]],
     evidence: experience.evidence.map(normalizeEvidenceLink),
   };
 }
@@ -155,10 +152,7 @@ function normalizeAchievement(achievement: Achievement): Achievement {
     title: normalizeSingleLineFact(achievement.title),
     ...normalizeOptionalPeriod(achievement),
     summary: normalizeKoreanSingleLineFact(achievement.summary),
-    details: achievement.details.map(normalizeContentBlock) as [
-      ContentBlock,
-      ...ContentBlock[],
-    ],
+    details: achievement.details.map(normalizeContentBlock) as [ContentBlock, ...ContentBlock[]],
     evidence: achievement.evidence.map(normalizeEvidenceLink),
   };
 }
@@ -218,7 +212,7 @@ function normalizeCertification(certification: Certification): Certification {
 }
 
 function normalizeRequiredBlocks(
-  blocks: readonly ContentBlock[],
+  blocks: readonly ContentBlock[]
 ): [ContentBlock, ...ContentBlock[]] {
   return blocks.map(normalizeContentBlock) as [ContentBlock, ...ContentBlock[]];
 }
@@ -255,23 +249,19 @@ function normalizeEvidenceLink(link: EvidenceLink): EvidenceLink {
 }
 
 function normalizeLinkDestinationFact(
-  fact: PublicFact<LinkDestination>,
+  fact: PublicFact<LinkDestination>
 ): PublicFact<LinkDestination> {
   let value: LinkDestination;
 
   if (fact.value.tag === 'external') {
     value = {
       tag: 'external',
-      value: normalizeText(
-        fact.value.value,
-      ) as unknown as ExternalEvidenceUrl,
+      value: normalizeText(fact.value.value) as unknown as ExternalEvidenceUrl,
     };
   } else if (fact.value.tag === 'internal') {
     value = {
       tag: 'internal',
-      value: normalizeText(
-        fact.value.value,
-      ) as unknown as InternalEvidencePath,
+      value: normalizeText(fact.value.value) as unknown as InternalEvidencePath,
     };
   } else {
     value = cloneUnknownValue(fact.value) as LinkDestination;
@@ -283,9 +273,7 @@ function normalizeLinkDestinationFact(
   };
 }
 
-function normalizePeriodFact(
-  fact: PublicFact<Period>,
-): PublicFact<Period> {
+function normalizePeriodFact(fact: PublicFact<Period>): PublicFact<Period> {
   return {
     factId: fact.factId,
     value: normalizePeriod(fact.value),
@@ -295,10 +283,7 @@ function normalizePeriodFact(
 function normalizePeriod(period: Period): Period {
   return {
     start: cloneDatePoint(period.start),
-    end:
-      period.end.tag === 'present'
-        ? { tag: 'present' }
-        : cloneDatePoint(period.end),
+    end: period.end.tag === 'present' ? { tag: 'present' } : cloneDatePoint(period.end),
   };
 }
 
@@ -309,51 +294,37 @@ function cloneDatePoint(point: DatePoint): DatePoint {
   } as DatePoint;
 }
 
-function normalizeSingleLineFact(
-  fact: PublicFact<SingleLineText>,
-): PublicFact<SingleLineText> {
+function normalizeSingleLineFact(fact: PublicFact<SingleLineText>): PublicFact<SingleLineText> {
   return normalizeStringFact(fact, (value) => value as SingleLineText);
 }
 
-function normalizeBodyFact(
-  fact: PublicFact<BodyText>,
-): PublicFact<BodyText> {
+function normalizeBodyFact(fact: PublicFact<BodyText>): PublicFact<BodyText> {
   return normalizeStringFact(fact, (value) => value as BodyText);
 }
 
 function normalizeKoreanNarrativeFact(
-  fact: PublicFact<KoreanNarrativeText>,
+  fact: PublicFact<KoreanNarrativeText>
 ): PublicFact<KoreanNarrativeText> {
   return normalizeStringFact(fact, (value) => value as KoreanNarrativeText);
 }
 
 function normalizeKoreanSingleLineFact(
-  fact: PublicFact<KoreanSingleLineText>,
+  fact: PublicFact<KoreanSingleLineText>
 ): PublicFact<KoreanSingleLineText> {
   return normalizeStringFact(fact, (value) => value as KoreanSingleLineText);
 }
 
-function normalizeEmailFact(
-  fact: PublicFact<EmailAddress>,
-): PublicFact<EmailAddress> {
-  return normalizeStringFact(
-    fact,
-    (value) => value as unknown as EmailAddress,
-  );
+function normalizeEmailFact(fact: PublicFact<EmailAddress>): PublicFact<EmailAddress> {
+  return normalizeStringFact(fact, (value) => value as unknown as EmailAddress);
 }
 
-function normalizeGitHubFact(
-  fact: PublicFact<GitHubProfileUrl>,
-): PublicFact<GitHubProfileUrl> {
-  return normalizeStringFact(
-    fact,
-    (value) => value as unknown as GitHubProfileUrl,
-  );
+function normalizeGitHubFact(fact: PublicFact<GitHubProfileUrl>): PublicFact<GitHubProfileUrl> {
+  return normalizeStringFact(fact, (value) => value as unknown as GitHubProfileUrl);
 }
 
 function normalizeStringFact<Value extends string>(
   fact: PublicFact<Value>,
-  brand: (value: string) => Value,
+  brand: (value: string) => Value
 ): PublicFact<Value> {
   return {
     factId: fact.factId as FactId,
@@ -362,25 +333,20 @@ function normalizeStringFact<Value extends string>(
 }
 
 function normalizeOptionalPeriod(
-  source: Readonly<{ period?: PublicFact<Period> }>,
+  source: Readonly<{ period?: PublicFact<Period> }>
 ): Readonly<{ period?: PublicFact<Period> }> {
   if (!hasOwn(source, 'period')) {
     return {};
   }
 
   return {
-    period:
-      source.period === undefined
-        ? source.period
-        : normalizePeriodFact(source.period),
+    period: source.period === undefined ? source.period : normalizePeriodFact(source.period),
   };
 }
 
-function normalizeOptionalSingleLineFact<
-  Key extends 'subtitle' | 'issuer',
->(
+function normalizeOptionalSingleLineFact<Key extends 'subtitle' | 'issuer'>(
   source: Readonly<Partial<Record<Key, PublicFact<SingleLineText>>>>,
-  key: Key,
+  key: Key
 ): Readonly<Partial<Record<Key, PublicFact<SingleLineText>>>> {
   if (!hasOwn(source, key)) {
     return {} as Partial<Record<Key, PublicFact<SingleLineText>>>;
@@ -393,7 +359,7 @@ function normalizeOptionalSingleLineFact<
 }
 
 function normalizeOptionalReference(
-  project: Project,
+  project: Project
 ): Readonly<{ relatedProfileEntity?: ProfileEntityReference }> {
   if (!hasOwn(project, 'relatedProfileEntity')) {
     return {};
@@ -423,16 +389,11 @@ function normalizeOptionalReference(
   }
 
   return {
-    relatedProfileEntity: cloneUnknownValue(
-      reference,
-    ) as ProfileEntityReference,
+    relatedProfileEntity: cloneUnknownValue(reference) as ProfileEntityReference,
   };
 }
 
-function hasOwn(
-  value: object,
-  key: PropertyKey,
-): boolean {
+function hasOwn(value: object, key: PropertyKey): boolean {
   return Object.prototype.hasOwnProperty.call(value, key);
 }
 
@@ -443,10 +404,7 @@ function cloneUnknownValue(value: unknown): unknown {
 
   if (value !== null && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value).map(([key, child]) => [
-        key,
-        cloneUnknownValue(child),
-      ]),
+      Object.entries(value).map(([key, child]) => [key, cloneUnknownValue(child)])
     );
   }
 

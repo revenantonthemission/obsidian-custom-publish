@@ -10,11 +10,11 @@
  * Following a link into a folded section, from the table of contents or a
  * footnote, unfolds it first.
  */
-import { ICON_CHEVRON_RIGHT, svgIcon } from "./svg-icon";
+import { ICON_CHEVRON_RIGHT, svgIcon } from './svg-icon';
 
-const FOLDABLE = new Set(["H2", "H3"]);
-const ROW_CLASS = "heading-fold";
-const HIDDEN_CLASS = "heading-fold-hidden";
+const FOLDABLE = new Set(['H2', 'H3']);
+const ROW_CLASS = 'heading-fold';
+const HIDDEN_CLASS = 'heading-fold-hidden';
 const ICON_SIZE = 20;
 
 interface OpenSection {
@@ -29,24 +29,27 @@ function isRow(element: Element): element is HTMLElement {
 /** The heading level an element opens or closes sections at; 0 closes them all. */
 function boundaryLevel(element: Element): number | null {
   if (isRow(element)) return Number(element.dataset.level);
-  if (element.matches("section[data-footnotes], .footnotes")) return 0;
+  if (element.matches('section[data-footnotes], .footnotes')) return 0;
   const match = /^H([1-6])$/.exec(element.tagName);
   return match?.[1] ? Number(match[1]) : null;
 }
 
 function toggleOf(row: HTMLElement): HTMLButtonElement | null {
-  return row.querySelector<HTMLButtonElement>(":scope > .heading-fold-toggle");
+  return row.querySelector<HTMLButtonElement>(':scope > .heading-fold-toggle');
 }
 
 function isExpanded(row: HTMLElement): boolean {
-  return toggleOf(row)?.getAttribute("aria-expanded") !== "false";
+  return toggleOf(row)?.getAttribute('aria-expanded') !== 'false';
 }
 
 function setExpanded(row: HTMLElement, expanded: boolean): void {
   const toggle = toggleOf(row);
   if (!toggle) return;
-  toggle.setAttribute("aria-expanded", String(expanded));
-  toggle.setAttribute("aria-label", `‘${row.dataset.title ?? ""}’ 섹션 ${expanded ? "접기" : "펼치기"}`);
+  toggle.setAttribute('aria-expanded', String(expanded));
+  toggle.setAttribute(
+    'aria-label',
+    `‘${row.dataset.title ?? ''}’ 섹션 ${expanded ? '접기' : '펼치기'}`
+  );
 }
 
 /** The sections that enclose each direct child of the article, in order. */
@@ -64,7 +67,10 @@ function enclosingSections(content: HTMLElement): Map<Element, readonly OpenSect
 
 function render(content: HTMLElement): void {
   for (const [child, enclosing] of enclosingSections(content)) {
-    child.classList.toggle(HIDDEN_CLASS, enclosing.some((section) => !isExpanded(section.row)));
+    child.classList.toggle(
+      HIDDEN_CLASS,
+      enclosing.some((section) => !isExpanded(section.row))
+    );
   }
 }
 
@@ -73,23 +79,25 @@ function reveal(content: HTMLElement, target: Element): void {
   let child: Element | null = target;
   while (child && child.parentElement !== content) child = child.parentElement;
   if (!child) return;
-  const folded = (enclosingSections(content).get(child) ?? []).filter((section) => !isExpanded(section.row));
+  const folded = (enclosingSections(content).get(child) ?? []).filter(
+    (section) => !isExpanded(section.row)
+  );
   if (folded.length === 0) return;
   for (const section of folded) setExpanded(section.row, true);
   render(content);
 }
 
 function wrap(content: HTMLElement, heading: HTMLElement): void {
-  const title = heading.textContent?.trim() ?? "";
-  const row = document.createElement("div");
+  const title = heading.textContent?.trim() ?? '';
+  const row = document.createElement('div');
   row.className = ROW_CLASS;
   row.dataset.level = heading.tagName.slice(1);
   row.dataset.title = title;
-  const toggle = document.createElement("button");
-  toggle.type = "button";
-  toggle.className = "heading-fold-toggle";
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'heading-fold-toggle';
   toggle.append(svgIcon(ICON_CHEVRON_RIGHT, ICON_SIZE));
-  toggle.addEventListener("click", () => {
+  toggle.addEventListener('click', () => {
     setExpanded(row, !isExpanded(row));
     render(content);
   });
@@ -108,7 +116,7 @@ function targetOf(hash: string): Element | null {
   }
 }
 
-const content = document.querySelector<HTMLElement>(".post-content");
+const content = document.querySelector<HTMLElement>('.post-content');
 
 if (content) {
   for (const child of [...content.children]) {
@@ -120,15 +128,15 @@ if (content) {
 
   // Capture runs before the link's own handlers and before it scrolls.
   document.addEventListener(
-    "click",
+    'click',
     (event) => {
       const link = (event.target as Element | null)?.closest?.('a[href^="#"]');
-      const target = link ? targetOf(link.getAttribute("href") ?? "") : null;
+      const target = link ? targetOf(link.getAttribute('href') ?? '') : null;
       if (target && content.contains(target)) reveal(content, target);
     },
-    true,
+    true
   );
-  window.addEventListener("hashchange", () => {
+  window.addEventListener('hashchange', () => {
     const target = targetOf(window.location.hash);
     if (target && content.contains(target)) reveal(content, target);
   });

@@ -11,8 +11,11 @@ describe('résumé project selection', () => {
   test('preserves all projects when the optional selection is absent', () => {
     const source = success(validateProfile(cloneProfileFixture()));
     expect(Object.hasOwn(source, 'resumeProjectIds')).toBe(false);
-    expect(selectResumeProfile(source).projectSummaries.map(({ id }) => id))
-      .toEqual(['project-beta', 'project-gamma', 'project-alpha']);
+    expect(selectResumeProfile(source).projectSummaries.map(({ id }) => id)).toEqual([
+      'project-beta',
+      'project-gamma',
+      'project-alpha',
+    ]);
   });
 
   test('copies and freezes selection while preserving canonical project order and the full portfolio', () => {
@@ -25,10 +28,15 @@ describe('résumé project selection', () => {
     expect(Object.isFrozen(normalized.resumeProjectIds)).toBe(true);
     selection.reverse();
     expect(source.resumeProjectIds).toEqual(['project-alpha', 'project-beta']);
-    expect(selectResumeProfile(source).projectSummaries.map(({ id }) => id))
-      .toEqual(['project-beta', 'project-alpha']);
-    expect(selectPortfolioProfile(source).projects.map(({ id }) => id))
-      .toEqual(['project-beta', 'project-gamma', 'project-alpha']);
+    expect(selectResumeProfile(source).projectSummaries.map(({ id }) => id)).toEqual([
+      'project-beta',
+      'project-alpha',
+    ]);
+    expect(selectPortfolioProfile(source).projects.map(({ id }) => id)).toEqual([
+      'project-beta',
+      'project-gamma',
+      'project-alpha',
+    ]);
   });
 
   test('builds a current one-project manifest with only selected project facts', async () => {
@@ -39,31 +47,43 @@ describe('résumé project selection', () => {
     const complete = success(await buildResumeManifestForTest(selectResumeProfile(all)));
 
     expect(selectedProfile.projectSummaries).toHaveLength(1);
-    expect(manifest.entityOrder.filter(({ kind }) => kind === 'project').map(({ id }) => id))
-      .toEqual(['project-beta']);
-    expect(manifest.entries.filter(({ path }) => path.startsWith('profile.projects['))
-      .map(({ factId }) => factId))
-      .toEqual(['project-beta-title', 'project-beta-summary']);
+    expect(
+      manifest.entityOrder.filter(({ kind }) => kind === 'project').map(({ id }) => id)
+    ).toEqual(['project-beta']);
+    expect(
+      manifest.entries
+        .filter(({ path }) => path.startsWith('profile.projects['))
+        .map(({ factId }) => factId)
+    ).toEqual(['project-beta-title', 'project-beta-summary']);
     expect(manifest.sourceIdentity.digest).not.toBe(complete.sourceIdentity.digest);
     expect(manifest.fingerprint.digest).not.toBe(complete.fingerprint.digest);
-    expect((await buildResumeManifestForTest({ ...selectedProfile, projectSummaries: [] })).ok)
-      .toBe(false);
+    expect(
+      (await buildResumeManifestForTest({ ...selectedProfile, projectSummaries: [] })).ok
+    ).toBe(false);
   });
 
   test('allows a selection containing all six source projects', async () => {
     const fixture = profileWithProjectCount(6);
-    const source = success(validateProfile({
-      ...fixture,
-      resumeProjectIds: fixture.projects.map(({ id }) => id).reverse(),
-    }));
+    const source = success(
+      validateProfile({
+        ...fixture,
+        resumeProjectIds: fixture.projects.map(({ id }) => id).reverse(),
+      })
+    );
     const profile = selectResumeProfile(source);
-    expect(profile.projectSummaries.map(({ id }) => id)).toEqual(fixture.projects.map(({ id }) => id));
+    expect(profile.projectSummaries.map(({ id }) => id)).toEqual(
+      fixture.projects.map(({ id }) => id)
+    );
     expect((await buildResumeManifestForTest(profile)).ok).toBe(true);
   });
 
   test.each([
     ['empty selection', [], 'collection.range'],
-    ['too many projects', Array.from({ length: 7 }, (_, index) => `project-${index}`), 'collection.range'],
+    [
+      'too many projects',
+      Array.from({ length: 7 }, (_, index) => `project-${index}`),
+      'collection.range',
+    ],
     ['unknown project', ['missing-project'], 'reference.missing'],
     ['malformed ID', [' project-beta '], 'identifier.format'],
     ['duplicate ID', ['project-beta', 'project-beta'], 'identifier.duplicate'],
@@ -77,30 +97,49 @@ describe('résumé project selection', () => {
     const result = validateProfile(withSelection(selection));
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('Expected an invalid résumé selection.');
-    expect(result.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code, path: expect.stringMatching(/^profile\.resumeProjectIds/) }),
-    ]));
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code,
+          path: expect.stringMatching(/^profile\.resumeProjectIds/),
+        }),
+      ])
+    );
   });
 
   test('rejects selection and array accessors without invoking them', () => {
     let reads = 0;
-    const read = () => { reads += 1; return ['project-beta']; };
+    const read = () => {
+      reads += 1;
+      return ['project-beta'];
+    };
     const ownAccessor = cloneProfileFixture();
     Object.defineProperty(ownAccessor, 'resumeProjectIds', { enumerable: true, get: read });
     const inherited = Object.assign(
       Object.create(Object.defineProperty({}, 'resumeProjectIds', { get: read })),
-      cloneProfileFixture(),
+      cloneProfileFixture()
     ) as ProfileData;
     const itemAccessor = ['project-beta'];
     Object.defineProperty(itemAccessor, '0', {
       enumerable: true,
-      get() { reads += 1; return 'project-beta'; },
+      get() {
+        reads += 1;
+        return 'project-beta';
+      },
     });
     const iteratorAccessor = ['project-beta'];
     Object.defineProperty(iteratorAccessor, Symbol.iterator, {
-      get() { reads += 1; return Array.prototype[Symbol.iterator]; },
+      get() {
+        reads += 1;
+        return Array.prototype[Symbol.iterator];
+      },
     });
-    for (const input of [ownAccessor, inherited, withSelection(itemAccessor), withSelection(iteratorAccessor)]) {
+    for (const input of [
+      ownAccessor,
+      inherited,
+      withSelection(itemAccessor),
+      withSelection(iteratorAccessor),
+    ]) {
       expect(validateProfile(input).ok).toBe(false);
       expect(() => normalizeProfile(input)).toThrow(TypeError);
     }
@@ -111,12 +150,19 @@ describe('résumé project selection', () => {
 describe('résumé project details', () => {
   test('preserves absent fields and projects supported details only into the résumé', async () => {
     const original = success(validateProfile(cloneProfileFixture()));
-    expect(selectResumeProfile(original).projectSummaries.every((project) => !Object.hasOwn(project, 'details')))
-      .toBe(true);
+    expect(
+      selectResumeProfile(original).projectSummaries.every(
+        (project) => !Object.hasOwn(project, 'details')
+      )
+    ).toBe(true);
 
     const source = success(validateProfile(withResumeDetails(detailBlocks())));
-    const project = selectResumeProfile(source).projectSummaries.find(({ id }) => id === 'project-beta')!;
-    const sourceDetails = source.projects.find(({ id }) => String(id) === 'project-beta')!.resumeDetails!;
+    const project = selectResumeProfile(source).projectSummaries.find(
+      ({ id }) => id === 'project-beta'
+    )!;
+    const sourceDetails = source.projects.find(
+      ({ id }) => String(id) === 'project-beta'
+    )!.resumeDetails!;
     expect(project.details).toEqual(sourceDetails);
     expect(project.details).not.toBe(sourceDetails);
     expect(Object.isFrozen(project.details)).toBe(true);
@@ -124,30 +170,46 @@ describe('résumé project details', () => {
     expect(JSON.stringify(project.details)).not.toContain('  팀에서');
     expect(selectPortfolioProfile(source)).toEqual(selectPortfolioProfile(original));
 
-    const details = collectMaterializedFacts(source).filter(({ canonicalPath }) => canonicalPath.includes('.resumeDetails['));
-    expect(details.map(({ factId, canonicalPath, targetSurfaces }) => ({ factId, canonicalPath, targetSurfaces })))
-      .toEqual([
-        {
-          factId: 'project-beta-resume-role',
-          canonicalPath: 'profile.projects[id=project-beta].resumeDetails[0].text',
-          targetSurfaces: ['resume', 'pdf'],
-        },
-        {
-          factId: 'project-beta-resume-contribution',
-          canonicalPath: 'profile.projects[id=project-beta].resumeDetails[1].items[0]',
-          targetSurfaces: ['resume', 'pdf'],
-        },
-      ]);
+    const details = collectMaterializedFacts(source).filter(({ canonicalPath }) =>
+      canonicalPath.includes('.resumeDetails[')
+    );
+    expect(
+      details.map(({ factId, canonicalPath, targetSurfaces }) => ({
+        factId,
+        canonicalPath,
+        targetSurfaces,
+      }))
+    ).toEqual([
+      {
+        factId: 'project-beta-resume-role',
+        canonicalPath: 'profile.projects[id=project-beta].resumeDetails[0].text',
+        targetSurfaces: ['resume', 'pdf'],
+      },
+      {
+        factId: 'project-beta-resume-contribution',
+        canonicalPath: 'profile.projects[id=project-beta].resumeDetails[1].items[0]',
+        targetSurfaces: ['resume', 'pdf'],
+      },
+    ]);
 
     const manifest = success(await buildResumeManifestForTest(selectResumeProfile(source)));
-    expect(manifest.entries.filter(({ path }) => path.includes('.resumeDetails[')).map(({ factId, path, sectionKey, entity }) => ({
-      factId, path, sectionKey, entityId: entity?.id,
-    }))).toEqual(details.map(({ factId, canonicalPath }) => ({
-      factId,
-      path: canonicalPath,
-      sectionKey: 'project-summaries',
-      entityId: 'project-beta',
-    })));
+    expect(
+      manifest.entries
+        .filter(({ path }) => path.includes('.resumeDetails['))
+        .map(({ factId, path, sectionKey, entity }) => ({
+          factId,
+          path,
+          sectionKey,
+          entityId: entity?.id,
+        }))
+    ).toEqual(
+      details.map(({ factId, canonicalPath }) => ({
+        factId,
+        path: canonicalPath,
+        sectionKey: 'project-summaries',
+        entityId: 'project-beta',
+      }))
+    );
   });
 
   test.each([
@@ -157,8 +219,14 @@ describe('résumé project details', () => {
     ['sparse blocks', new Array(1)],
     ['unknown block', [{ tag: 'unknown' }]],
     ['empty list', [{ tag: 'list', style: 'unordered', items: [] }]],
-    ['empty text', [{ tag: 'paragraph', text: { factId: 'project-beta-resume-role', value: '   ' } }]],
-    ['duplicate fact', [{ tag: 'paragraph', text: { factId: 'identity-name', value: '중복된 사실' } }]],
+    [
+      'empty text',
+      [{ tag: 'paragraph', text: { factId: 'project-beta-resume-role', value: '   ' } }],
+    ],
+    [
+      'duplicate fact',
+      [{ tag: 'paragraph', text: { factId: 'identity-name', value: '중복된 사실' } }],
+    ],
   ])('rejects present résumé details with %s', (_label, blocks) => {
     expect(validateProfile(withResumeDetails(blocks)).ok).toBe(false);
   });
@@ -169,21 +237,35 @@ describe('résumé project details', () => {
     const project = rootAccessor.projects.find(({ id }) => id === 'project-beta')!;
     Object.defineProperty(project, 'resumeDetails', {
       enumerable: true,
-      get() { reads += 1; return detailBlocks(); },
+      get() {
+        reads += 1;
+        return detailBlocks();
+      },
     });
     const arrayAccessor = detailBlocks();
     Object.defineProperty(arrayAccessor, '0', {
       enumerable: true,
-      get() { reads += 1; return detailBlocks()[0]; },
+      get() {
+        reads += 1;
+        return detailBlocks()[0];
+      },
     });
     const textAccessor = detailBlocks();
     Object.defineProperty(textAccessor[0]!.text, 'value', {
       enumerable: true,
-      get() { reads += 1; return '사실'; },
+      get() {
+        reads += 1;
+        return '사실';
+      },
     });
     const cycle: unknown[] = [];
     cycle.push(cycle);
-    for (const input of [rootAccessor, withResumeDetails(arrayAccessor), withResumeDetails(textAccessor), withResumeDetails(cycle)]) {
+    for (const input of [
+      rootAccessor,
+      withResumeDetails(arrayAccessor),
+      withResumeDetails(textAccessor),
+      withResumeDetails(cycle),
+    ]) {
       expect(validateProfile(input).ok).toBe(false);
     }
     expect(reads).toBe(0);
@@ -195,9 +277,9 @@ describe('résumé project details', () => {
     for (const invalidDetails of [undefined, []]) {
       const invalid = {
         ...profile,
-        projectSummaries: profile.projectSummaries.map((project) => project.id === 'project-beta'
-          ? { ...project, details: invalidDetails }
-          : project),
+        projectSummaries: profile.projectSummaries.map((project) =>
+          project.id === 'project-beta' ? { ...project, details: invalidDetails } : project
+        ),
       };
       expect((await buildResumeManifestForTest(invalid as typeof profile)).ok).toBe(false);
     }
@@ -213,7 +295,12 @@ function detailBlocks() {
     {
       tag: 'list',
       style: 'unordered',
-      items: [{ factId: 'project-beta-resume-contribution', value: '지원되는 사실을 프로젝트에 연결했습니다.' }],
+      items: [
+        {
+          factId: 'project-beta-resume-contribution',
+          value: '지원되는 사실을 프로젝트에 연결했습니다.',
+        },
+      ],
     },
   ];
 }
@@ -222,9 +309,9 @@ function withResumeDetails(blocks: unknown): ProfileData {
   const fixture = cloneProfileFixture();
   return {
     ...fixture,
-    projects: fixture.projects.map((project) => project.id === 'project-beta'
-      ? { ...project, resumeDetails: blocks }
-      : project),
+    projects: fixture.projects.map((project) =>
+      project.id === 'project-beta' ? { ...project, resumeDetails: blocks } : project
+    ),
   } as ProfileData;
 }
 

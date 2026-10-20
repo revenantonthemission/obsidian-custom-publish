@@ -1,25 +1,25 @@
 ---
-import BaseLayout from "./BaseLayout.astro";
-import BacklinkList from "../components/BacklinkList.astro";
-import RelatedPosts from "../components/RelatedPosts.astro";
-import HubNav from "../components/HubNav.astro";
-import OutlineTabs from "../components/OutlineTabs.astro";
-import LocalGraph from "../islands/LocalGraph.tsx";
-import { ListTree, X } from "lucide-static";
-import { decorativeIcon } from "../lib/icons";
-import { extractToc } from "../lib/toc";
-import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta, formatDateKo } from "../lib/data";
-import type { PostMeta } from "../lib/types";
+import BaseLayout from './BaseLayout.astro';
+import BacklinkList from '../components/BacklinkList.astro';
+import RelatedPosts from '../components/RelatedPosts.astro';
+import HubNav from '../components/HubNav.astro';
+import OutlineTabs from '../components/OutlineTabs.astro';
+import LocalGraph from '../islands/LocalGraph.tsx';
+import { ListTree, X } from 'lucide-static';
+import { decorativeIcon } from '../lib/icons';
+import { extractToc } from '../lib/toc';
+import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta, formatDateKo } from '../lib/data';
+import type { PostMeta } from '../lib/types';
 // KaTeX's stylesheet and fonts, self-hosted from the installed package (NFR4).
-import "katex/dist/katex.min.css";
-import "../styles/callouts.css";
-import "../styles/diagrams.css";
-import "../styles/segmented.css";
-import "../styles/grouped.css";
-import "../styles/post.css";
-import "../styles/outline.css";
-import "../styles/link-preview.css";
-import "../styles/nav-tree.css";
+import 'katex/dist/katex.min.css';
+import '../styles/callouts.css';
+import '../styles/diagrams.css';
+import '../styles/segmented.css';
+import '../styles/grouped.css';
+import '../styles/post.css';
+import '../styles/outline.css';
+import '../styles/link-preview.css';
+import '../styles/nav-tree.css';
 
 interface Props {
   meta: PostMeta;
@@ -54,21 +54,21 @@ if (meta.hub_parent) {
 
 <BaseLayout
   title={meta.title}
-  description={meta.description || `${meta.title} — ${meta.tags.join(", ")}`}
+  description={meta.description || `${meta.title} — ${meta.tags.join(', ')}`}
   ogType="article"
   canonicalUrl={`/posts/${meta.slug}`}
 >
   <div class="post-layout">
     <article class="post-article">
-      {parentHub && (
-        <HubNav hub={parentHub} current={meta} children={hubChildren} />
-      )}
+      {parentHub && <HubNav hub={parentHub} current={meta} children={hubChildren} />}
       <header class="post-header">
         <h1 class="post-title">{meta.title}</h1>
         <p class="post-meta">
           {meta.published && <time datetime={meta.published}>{formatDateKo(meta.published)}</time>}
           {meta.updated && meta.updated !== meta.published && (
-            <span>수정: <time datetime={meta.updated}>{formatDateKo(meta.updated)}</time></span>
+            <span>
+              수정: <time datetime={meta.updated}>{formatDateKo(meta.updated)}</time>
+            </span>
           )}
           <span>{meta.reading_time_min}분 읽기</span>
         </p>
@@ -76,7 +76,12 @@ if (meta.hub_parent) {
           <ul class="tag-chips" aria-label="태그">
             {meta.tags.map((tag) => (
               <li>
-                <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip"><span class="tag-chip-mark" aria-hidden="true">#</span>{tag}</a>
+                <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip">
+                  <span class="tag-chip-mark" aria-hidden="true">
+                    #
+                  </span>
+                  {tag}
+                </a>
               </li>
             ))}
           </ul>
@@ -113,7 +118,13 @@ if (meta.hub_parent) {
     <Fragment set:html={decorativeIcon(ListTree, 20)} />
     <span aria-hidden="true">목차</span>
   </button>
-  <dialog id="outline-sheet" class="outline-sheet" aria-modal="true" aria-label="목차와 탐색" data-material="thick">
+  <dialog
+    id="outline-sheet"
+    class="outline-sheet"
+    aria-modal="true"
+    aria-label="목차와 탐색"
+    data-material="thick"
+  >
     <div class="outline-sheet-header">
       <span class="outline-grabber" aria-hidden="true"></span>
       <button type="button" class="outline-close" aria-label="목차 닫기">
@@ -126,21 +137,21 @@ if (meta.hub_parent) {
   </dialog>
 
   <script>
-    import "../scripts/outline";
+    import '../scripts/outline';
   </script>
   <script>
-    import "../scripts/copy-button";
+    import '../scripts/copy-button';
   </script>
   <script>
-    import "../scripts/scroll-regions";
+    import '../scripts/scroll-regions';
   </script>
   <script>
-    import "../scripts/link-preview";
+    import '../scripts/link-preview';
   </script>
   <script>
-    import "../scripts/toc-highlight";
+    import '../scripts/toc-highlight';
   </script>
   <script>
-    import "../scripts/heading-fold";
+    import '../scripts/heading-fold';
   </script>
 </BaseLayout>

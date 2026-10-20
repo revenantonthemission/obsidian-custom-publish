@@ -4,14 +4,8 @@ import {
   requireValidProfile,
   validateProfile,
 } from '../../src/lib/profile/validation.js';
-import {
-  normalizeProfile,
-  normalizeText,
-} from '../../src/lib/profile/normalization.js';
-import type {
-  ProfileData,
-  ValidationIssue,
-} from '../../src/lib/profile/types.js';
+import { normalizeProfile, normalizeText } from '../../src/lib/profile/normalization.js';
+import type { ProfileData, ValidationIssue } from '../../src/lib/profile/types.js';
 import {
   cloneProfileFixture,
   nonNfcTextFixture,
@@ -40,7 +34,7 @@ describe('profile domain normalization', () => {
         once.narrative.detailedIntro[0] as unknown as {
           text: { value: string };
         }
-      ).text.value,
+      ).text.value
     ).toBe(normalizedNonNfcTextFixture);
     expect(twice).toEqual(once);
     expect(input).toEqual({
@@ -58,19 +52,14 @@ describe('profile domain normalization', () => {
         ],
       },
     });
-    expect(normalizeText(normalizeText(nonNfcTextFixture))).toBe(
-      normalizedNonNfcTextFixture,
-    );
+    expect(normalizeText(normalizeText(nonNfcTextFixture))).toBe(normalizedNonNfcTextFixture);
   });
 
   test('preserves internal whitespace, punctuation and long Unicode content', () => {
-    const value =
-      `  첫 문단  내부 공백\r\n둘째 문단 — ${'한글·Unicode '.repeat(80)}끝  `;
+    const value = `  첫 문단  내부 공백\r\n둘째 문단 — ${'한글·Unicode '.repeat(80)}끝  `;
     const normalized = normalizeText(value);
 
-    expect(normalized).toBe(
-      `첫 문단  내부 공백\n둘째 문단 — ${'한글·Unicode '.repeat(80)}끝`,
-    );
+    expect(normalized).toBe(`첫 문단  내부 공백\n둘째 문단 — ${'한글·Unicode '.repeat(80)}끝`);
     expect(normalized.endsWith('끝')).toBe(true);
   });
 });
@@ -93,11 +82,9 @@ describe('profile aggregate validation', () => {
 
   test('does not accept a structural imitation of ValidatedProfile', () => {
     expect(hasValidatedProfileCapability(validProfileFixture)).toBe(false);
-    expect(
-      hasValidatedProfileCapability(
-        Object.freeze(structuredClone(validProfileFixture)),
-      ),
-    ).toBe(false);
+    expect(hasValidatedProfileCapability(Object.freeze(structuredClone(validProfileFixture)))).toBe(
+      false
+    );
   });
 
   test.each([
@@ -110,17 +97,12 @@ describe('profile aggregate validation', () => {
 
     expect(result.ok).toBe(valid);
     if (!valid) {
-      expect(issueKeys(expectFailure(result))).toContain(
-        'collection.range@profile.projects',
-      );
+      expect(issueKeys(expectFailure(result))).toContain('collection.range@profile.projects');
     }
   });
 
   test('aggregates missing required identity and contact facts without a partial value', () => {
-    const candidate = cloneProfileFixture() as unknown as Record<
-      string,
-      Record<string, unknown>
-    >;
+    const candidate = cloneProfileFixture() as unknown as Record<string, Record<string, unknown>>;
     delete (candidate.identity as Record<string, unknown>).name;
     delete (candidate.contact as Record<string, unknown>).email;
     delete (candidate.contact as Record<string, unknown>).github;
@@ -144,9 +126,7 @@ describe('profile aggregate validation', () => {
     };
     candidate.projects[1]!.id = candidate.projects[0]!.id;
 
-    const issues = expectFailure(
-      validateProfile(candidate as unknown as ProfileData),
-    );
+    const issues = expectFailure(validateProfile(candidate as unknown as ProfileData));
     const keys = issueKeys(issues);
 
     expect(keys).toEqual([
@@ -182,14 +162,8 @@ describe('profile aggregate validation', () => {
     ];
 
     expect(
-      issueKeys(
-        expectFailure(
-          validateProfile(candidate as unknown as ProfileData),
-        ),
-      ),
-    ).toContain(
-      'evidence.url.invalid@profile.contact.additionalLinks[0].destination',
-    );
+      issueKeys(expectFailure(validateProfile(candidate as unknown as ProfileData)))
+    ).toContain('evidence.url.invalid@profile.contact.additionalLinks[0].destination');
   });
 
   test('rejects invalid email, mixed period precision and missing relation targets together', () => {
@@ -214,11 +188,7 @@ describe('profile aggregate validation', () => {
       id: 'missing-experience',
     };
 
-    const keys = issueKeys(
-      expectFailure(
-        validateProfile(candidate as unknown as ProfileData),
-      ),
-    );
+    const keys = issueKeys(expectFailure(validateProfile(candidate as unknown as ProfileData)));
 
     expect(keys).toEqual([
       'contact.email.invalid@profile.contact.email',
@@ -229,14 +199,12 @@ describe('profile aggregate validation', () => {
 
   test('throws a stable diagnostic summary when a valid capability is required', () => {
     expect(() => requireValidProfile(profileWithInvalidEmail())).toThrow(
-      /contact\.email\.invalid@profile\.contact\.email/,
+      /contact\.email\.invalid@profile\.contact\.email/
     );
   });
 });
 
-function expectFailure(
-  result: ReturnType<typeof validateProfile>,
-): readonly ValidationIssue[] {
+function expectFailure(result: ReturnType<typeof validateProfile>): readonly ValidationIssue[] {
   expect(result.ok).toBe(false);
   if (result.ok) throw new Error('expected validation failure');
   return result.issues;

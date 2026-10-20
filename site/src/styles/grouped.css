@@ -32,7 +32,7 @@
   overflow: hidden;
 }
 
-body[data-surface="grouped"] .grouped-list {
+body[data-surface='grouped'] .grouped-list {
   background: var(--c-surface);
 }
 
@@ -42,7 +42,7 @@ body[data-surface="grouped"] .grouped-list {
 }
 
 .grouped-list > li + li::before {
-  content: "";
+  content: '';
   position: absolute;
   inset-block-start: 0;
   inset-inline: var(--space-4) 0;
@@ -157,7 +157,7 @@ body[data-surface="grouped"] .grouped-list {
   overflow-wrap: anywhere;
 }
 
-body[data-surface="grouped"] .tag-chip {
+body[data-surface='grouped'] .tag-chip {
   background: var(--c-surface);
 }
 
@@ -172,7 +172,7 @@ body[data-surface="grouped"] .tag-chip {
   color: var(--c-text-secondary);
 }
 
-.tag-chip[aria-current="page"] {
+.tag-chip[aria-current='page'] {
   background: var(--c-tint-fill);
   color: var(--c-on-tint);
 }

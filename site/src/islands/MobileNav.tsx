@@ -1,5 +1,5 @@
-import { Check, ChevronRight, Menu, X } from "lucide-preact";
-import type { NavigationState } from "../lib/navigation.js";
+import { Check, ChevronRight, Menu, X } from 'lucide-preact';
+import type { NavigationState } from '../lib/navigation.js';
 
 interface Props {
   items: readonly NavigationState[];
@@ -14,7 +14,11 @@ interface Props {
 export default function MobileNav({ items }: Props) {
   return (
     <details class="mobile-nav-disclosure">
-      <summary class="mobile-nav-toggle" aria-label="주요 탐색 메뉴" data-testid="mobile-navigation-toggle">
+      <summary
+        class="mobile-nav-toggle"
+        aria-label="주요 탐색 메뉴"
+        data-testid="mobile-navigation-toggle"
+      >
         <Menu class="mobile-nav-icon-open" size={22} strokeWidth={1.75} aria-hidden="true" />
         <X class="mobile-nav-icon-close" size={22} strokeWidth={1.75} aria-hidden="true" />
       </summary>
@@ -24,7 +28,7 @@ export default function MobileNav({ items }: Props) {
             key={item.href}
             href={item.href}
             class="mobile-nav-link"
-            aria-current={item.current ? "page" : undefined}
+            aria-current={item.current ? 'page' : undefined}
             data-testid={`mobile-navigation-link-${item.href.slice(1)}`}
           >
             <span>{item.label}</span>

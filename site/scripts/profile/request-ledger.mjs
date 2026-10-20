@@ -23,24 +23,20 @@ export class BrowserRequestLedgerError extends Error {
  */
 export async function installRequestLedger(
   context,
-  {
-    baseURL,
-    emittedAssets = [],
-    buildIdentity,
-  } = {},
+  { baseURL, emittedAssets = [], buildIdentity } = {}
 ) {
   validateContext(context);
   if (installedContexts.has(context)) {
     throw ledgerError(
       'REQUEST_LEDGER_ALREADY_INSTALLED',
-      'A request ledger is already installed on this browser context.',
+      'A request ledger is already installed on this browser context.'
     );
   }
   if (context.pages().length !== 0) {
     throw ledgerError(
       'REQUEST_LEDGER_INSTALLED_TOO_LATE',
       'The request ledger must be installed before the first page is created.',
-      { pageCount: context.pages().length },
+      { pageCount: context.pages().length }
     );
   }
 
@@ -64,7 +60,7 @@ export async function installRequestLedger(
     pendingHandlers.add(operation);
     void operation.then(
       () => pendingHandlers.delete(operation),
-      () => pendingHandlers.delete(operation),
+      () => pendingHandlers.delete(operation)
     );
     return operation;
   };
@@ -87,10 +83,8 @@ export async function installRequestLedger(
           ...record,
           blockedBeforeResponse: true,
           abortReason: 'blockedbyclient',
-          blockClass: record.sameOrigin
-            ? 'ledger-finalization-barrier'
-            : 'non-supervised-origin',
-        }),
+          blockClass: record.sameOrigin ? 'ledger-finalization-barrier' : 'non-supervised-origin',
+        })
       );
       await route.abort('blockedbyclient');
       inFlightRequests.delete(request);
@@ -123,7 +117,7 @@ export async function installRequestLedger(
           url: responseURL.href,
           sameOrigin: responseURL.origin === supervisedOrigin,
           status: response.status(),
-        }),
+        })
       );
       inFlightRequests.delete(request);
     } catch (error) {
@@ -150,7 +144,7 @@ export async function installRequestLedger(
     throw ledgerError(
       'REQUEST_LEDGER_INSTALLATION_RACED',
       'A page was created before request interception finished installing.',
-      { pageCount: context.pages().length },
+      { pageCount: context.pages().length }
     );
   }
   installedContexts.add(context);
@@ -167,14 +161,14 @@ export async function installRequestLedger(
       if (phase !== 'active') {
         throw ledgerError(
           'REQUEST_LEDGER_ALREADY_FINALIZED',
-          'The request ledger can only be finalized once.',
+          'The request ledger can only be finalized once.'
         );
       }
       if (context.pages().length !== 0) {
         throw ledgerError(
           'REQUEST_LEDGER_ACTIVE_PAGES',
           'All browser pages must be closed before final request evidence is sealed.',
-          { pageCount: context.pages().length },
+          { pageCount: context.pages().length }
         );
       }
       validateFinalizeTimeout(timeoutMs);
@@ -211,7 +205,7 @@ export async function installRequestLedger(
             pendingHandlers: pendingHandlers.size,
             inFlightRequests: inFlightRequests.size,
           },
-          cause,
+          cause
         );
       }
       if (eventFailure !== null) {
@@ -219,7 +213,7 @@ export async function installRequestLedger(
           'REQUEST_LEDGER_EVENT_FAILED',
           'A browser request event could not be recorded.',
           {},
-          eventFailure,
+          eventFailure
         );
       }
       const evidence = createEvidence({
@@ -237,35 +231,35 @@ export async function installRequestLedger(
         throw ledgerError(
           'REQUEST_INTERCEPTION_BYPASSED',
           'A browser response was observed without passing through the request guard.',
-          evidence,
+          evidence
         );
       }
       if (evidence.external.attempted > 0) {
         throw ledgerError(
           'NON_LOOPBACK_REQUEST_ATTEMPTED',
           'A profile browser attempted a non-loopback request; it was blocked before response.',
-          evidence,
+          evidence
         );
       }
       if (evidence.external.successful > 0) {
         throw ledgerError(
           'NON_LOOPBACK_RESPONSE_OBSERVED',
           'A non-loopback request produced a response despite the guard.',
-          evidence,
+          evidence
         );
       }
       if (requireProfileRoutes && evidence.missingProfileRoutes.length > 0) {
         throw ledgerError(
           'PROFILE_ROUTE_REQUEST_EVIDENCE_MISSING',
           'The request ledger lacks successful document evidence for a required profile route.',
-          evidence,
+          evidence
         );
       }
       if (evidence.missingEmittedAssetIdentities.length > 0) {
         throw ledgerError(
           'EMITTED_ASSET_IDENTITY_MISSING',
           'A successful supervised response cannot be mapped to emitted build output.',
-          evidence,
+          evidence
         );
       }
       return evidence;
@@ -307,27 +301,21 @@ function observeRequest({ id, request, supervisedOrigin, assetIndex }) {
     initiator,
     logicalRoute,
     sameOrigin: url.origin === supervisedOrigin,
-    emittedAssetIdentity:
-      pathname === null ? null : assetIndex.resolve(pathname),
+    emittedAssetIdentity: pathname === null ? null : assetIndex.resolve(pathname),
   });
 }
 
 function observeInitiator(request) {
   try {
     const frameURL = request.frame()?.url();
-    return typeof frameURL === 'string' && frameURL.length > 0
-      ? frameURL
-      : null;
+    return typeof frameURL === 'string' && frameURL.length > 0 ? frameURL : null;
   } catch {
     return null;
   }
 }
 
 function observeLogicalRoute({ request, url, resourceType }) {
-  if (
-    resourceType === 'document' ||
-    safeMethod(request, 'isNavigationRequest', false) === true
-  ) {
+  if (resourceType === 'document' || safeMethod(request, 'isNavigationRequest', false) === true) {
     return normalizeProfileRoute(url.pathname);
   }
   const initiator = observeInitiator(request);
@@ -341,9 +329,7 @@ function observeLogicalRoute({ request, url, resourceType }) {
 
 function normalizeProfileRoute(pathname) {
   const normalized =
-    pathname.length > 1 && pathname.endsWith('/')
-      ? pathname.slice(0, -1)
-      : pathname;
+    pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   return PROFILE_ROUTES.includes(normalized) ? normalized : null;
 }
 
@@ -365,30 +351,19 @@ function createEvidence({
     successfulSnapshot
       .filter(
         ({ logicalRoute, resourceType, sameOrigin, status }) =>
-          logicalRoute !== null &&
-          resourceType === 'document' &&
-          sameOrigin &&
-          status === 200,
+          logicalRoute !== null && resourceType === 'document' && sameOrigin && status === 200
       )
-      .map(({ logicalRoute }) => logicalRoute),
+      .map(({ logicalRoute }) => logicalRoute)
   );
   const missingProfileRoutes = requireProfileRoutes
     ? PROFILE_ROUTES.filter((route) => !successfulProfileDocuments.has(route))
     : [];
-  const externalAttempted = attemptedSnapshot.filter(
-    ({ sameOrigin }) => !sameOrigin,
-  );
-  const externalBlocked = blockedSnapshot.filter(
-    ({ sameOrigin }) => !sameOrigin,
-  );
-  const externalSuccessful = successfulSnapshot.filter(
-    ({ sameOrigin }) => !sameOrigin,
-  );
+  const externalAttempted = attemptedSnapshot.filter(({ sameOrigin }) => !sameOrigin);
+  const externalBlocked = blockedSnapshot.filter(({ sameOrigin }) => !sameOrigin);
+  const externalSuccessful = successfulSnapshot.filter(({ sameOrigin }) => !sameOrigin);
   const missingEmittedAssetIdentities = successfulSnapshot.filter(
     ({ sameOrigin, status, emittedAssetIdentity }) =>
-      sameOrigin &&
-      status === 200 &&
-      emittedAssetIdentity === null,
+      sameOrigin && status === 200 && emittedAssetIdentity === null
   );
 
   return deepFreeze({
@@ -407,9 +382,7 @@ function createEvidence({
     missingProfileRoutes,
     missingEmittedAssetIdentities,
     interceptionBypassed: bypassedRequests.map(cloneFrozen),
-    guard: guardEvidence === null
-      ? null
-      : cloneJson(guardEvidence, 'guardEvidence'),
+    guard: guardEvidence === null ? null : cloneJson(guardEvidence, 'guardEvidence'),
     staticAssetEvidence:
       staticAssetEvidence === undefined
         ? null
@@ -447,9 +420,7 @@ function validateSupervisedOrigin(baseURL) {
     parsed.search !== '' ||
     parsed.hash !== ''
   ) {
-    throw new TypeError(
-      'baseURL must be one exact http loopback origin with an explicit port',
-    );
+    throw new TypeError('baseURL must be one exact http loopback origin with an explicit port');
   }
   return parsed.origin;
 }
@@ -466,9 +437,9 @@ function indexEmittedAssets(assets) {
       asset.path.startsWith('/') ||
       asset.path.includes('\\') ||
       asset.path.includes('\0') ||
-      asset.path.split('/').some(
-        (segment) => segment === '' || segment === '.' || segment === '..',
-      ) ||
+      asset.path
+        .split('/')
+        .some((segment) => segment === '' || segment === '.' || segment === '..') ||
       !/^[a-f0-9]{64}$/u.test(asset.sha256) ||
       !Number.isSafeInteger(asset.bytes) ||
       asset.bytes < 0
@@ -484,7 +455,7 @@ function indexEmittedAssets(assets) {
         path: asset.path,
         sha256: asset.sha256,
         bytes: asset.bytes,
-      }),
+      })
     );
   }
   return Object.freeze({
@@ -519,12 +490,14 @@ function staticOutputCandidates(pathname) {
   }
   const segments = decoded.split('/').filter(Boolean);
   if (
-    decoded.split('/').some(
-      (segment, index, entries) =>
-        segment === '.' ||
-        segment === '..' ||
-        (segment === '' && index !== 0 && index !== entries.length - 1),
-    )
+    decoded
+      .split('/')
+      .some(
+        (segment, index, entries) =>
+          segment === '.' ||
+          segment === '..' ||
+          (segment === '' && index !== 0 && index !== entries.length - 1)
+      )
   ) {
     return [];
   }
@@ -541,11 +514,7 @@ function staticOutputCandidates(pathname) {
   return [segments.join('/')];
 }
 
-async function disposeRouteRegistration({
-  context,
-  routeHandler,
-  routeRegistration,
-}) {
+async function disposeRouteRegistration({ context, routeHandler, routeRegistration }) {
   if (
     routeRegistration !== null &&
     typeof routeRegistration === 'object' &&
@@ -560,15 +529,11 @@ async function disposeRouteRegistration({
   }
   throw ledgerError(
     'REQUEST_LEDGER_ROUTE_DISPOSAL_UNAVAILABLE',
-    'The installed request guard does not expose a disposal operation.',
+    'The installed request guard does not expose a disposal operation.'
   );
 }
 
-async function drainLedger({
-  pendingHandlers,
-  inFlightRequests,
-  timeoutMs,
-}) {
+async function drainLedger({ pendingHandlers, inFlightRequests, timeoutMs }) {
   const deadline = Date.now() + timeoutMs;
   while (pendingHandlers.size > 0 || inFlightRequests.size > 0) {
     const remainingMs = deadline - Date.now();
@@ -580,23 +545,17 @@ async function drainLedger({
           timeoutMs,
           pendingHandlers: pendingHandlers.size,
           inFlightRequests: inFlightRequests.size,
-        },
+        }
       );
     }
-    await new Promise((resolvePromise) =>
-      setTimeout(resolvePromise, Math.min(10, remainingMs))
-    );
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, Math.min(10, remainingMs)));
   }
 }
 
 function validateFinalizeTimeout(value) {
-  if (
-    !Number.isSafeInteger(value) ||
-    value < 1 ||
-    value > MAX_FINALIZE_TIMEOUT_MS
-  ) {
+  if (!Number.isSafeInteger(value) || value < 1 || value > MAX_FINALIZE_TIMEOUT_MS) {
     throw new TypeError(
-      `timeoutMs must be a positive safe integer no greater than ${MAX_FINALIZE_TIMEOUT_MS}`,
+      `timeoutMs must be a positive safe integer no greater than ${MAX_FINALIZE_TIMEOUT_MS}`
     );
   }
 }
@@ -609,7 +568,7 @@ function safeUrl(value) {
       'REQUEST_URL_INVALID',
       'The browser exposed an invalid request URL.',
       { value: String(value) },
-      cause,
+      cause
     );
   }
 }

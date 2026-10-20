@@ -73,7 +73,9 @@ for (const width of [320, 1024] as const) {
 test.describe('navigation sheet and bar on phones', () => {
   test.use({ viewport: viewportFor(320) });
 
-  test('the open sheet lists the four sections at 52 px rows and hides the page behind it', async ({ page }) => {
+  test('the open sheet lists the four sections at 52 px rows and hides the page behind it', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     await page.getByTestId('mobile-navigation-toggle').click();
     const sheet = page.locator('nav.mobile-nav-dropdown');
@@ -86,21 +88,29 @@ test.describe('navigation sheet and bar on phones', () => {
     for (const selector of ['main', 'footer']) {
       expect(
         await page.locator(selector).evaluate((element) => getComputedStyle(element).visibility),
-        `${selector} must be hidden from view and focus`,
+        `${selector} must be hidden from view and focus`
       ).toBe('hidden');
     }
     await page.getByTestId('mobile-navigation-toggle').click();
     await expect(sheet).toBeHidden();
-    expect(await page.locator('main').evaluate((element) => getComputedStyle(element).visibility)).toBe('visible');
+    expect(
+      await page.locator('main').evaluate((element) => getComputedStyle(element).visibility)
+    ).toBe('visible');
   });
 
   test('the sheet opens and navigates without JavaScript (C-10)', async ({ browser, baseURL }) => {
-    const context = await browser.newContext({ baseURL, javaScriptEnabled: false, viewport: viewportFor(320) });
+    const context = await browser.newContext({
+      baseURL,
+      javaScriptEnabled: false,
+      viewport: viewportFor(320),
+    });
     const page = await context.newPage();
     await gotoSettled(page, '/');
     await page.getByTestId('mobile-navigation-toggle').click();
     await expect(page.locator('nav.mobile-nav-dropdown')).toBeVisible();
-    expect(await page.locator('main').evaluate((element) => getComputedStyle(element).visibility)).toBe('hidden');
+    expect(
+      await page.locator('main').evaluate((element) => getComputedStyle(element).visibility)
+    ).toBe('hidden');
     await page.getByTestId('mobile-navigation-link-tags').click();
     await expect(page).toHaveURL(/\/tags\/?$/);
     await context.close();
@@ -111,7 +121,9 @@ test.describe('the floating glass bar', () => {
   test.use({ viewport: viewportFor(1024) });
 
   for (const appearance of HIG_APPEARANCES) {
-    test(`carries primary text only, with a --c-text focus ring (C-03, R-02), ${appearance}`, async ({ page }) => {
+    test(`carries primary text only, with a --c-text focus ring (C-03, R-02), ${appearance}`, async ({
+      page,
+    }) => {
       await page.emulateMedia({ colorScheme: appearance });
       await gotoSettled(page, '/tags');
       const primary = await tokenColor(page, '--c-text');
@@ -119,22 +131,29 @@ test.describe('the floating glass bar', () => {
         const wrong: string[] = [];
         for (const element of bar.querySelectorAll<HTMLElement>('*')) {
           const ownText = [...element.childNodes].some(
-            (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== '',
+            (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== ''
           );
           if (!ownText || element.getClientRects().length === 0) continue;
           const color = getComputedStyle(element).color;
-          if (color !== expected) wrong.push(`${element.tagName.toLowerCase()} "${element.textContent?.trim()}" ${color}`);
+          if (color !== expected)
+            wrong.push(
+              `${element.tagName.toLowerCase()} "${element.textContent?.trim()}" ${color}`
+            );
         }
         return wrong;
       }, primary);
       expect(offenders).toEqual([]);
       const current = page.locator('.desktop-nav a[aria-current="page"]');
       await current.focus();
-      expect(await current.evaluate((element) => getComputedStyle(element).outlineColor)).toBe(primary);
+      expect(await current.evaluate((element) => getComputedStyle(element).outlineColor)).toBe(
+        primary
+      );
     });
   }
 
-  test('the bar and the back-to-top capsule use the glass material by default (FR2.4)', async ({ page }) => {
+  test('the bar and the back-to-top capsule use the glass material by default (FR2.4)', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     const surfaces = await page.locator('[data-material]').evaluateAll((elements) =>
       elements.map((element) => ({
@@ -142,7 +161,7 @@ test.describe('the floating glass bar', () => {
         backdrop:
           getComputedStyle(element).backdropFilter ||
           getComputedStyle(element).getPropertyValue('-webkit-backdrop-filter'),
-      })),
+      }))
     );
     expect(surfaces.length).toBeGreaterThanOrEqual(2);
     for (const surface of surfaces) {
@@ -156,7 +175,10 @@ test.describe('the floating glass bar', () => {
     await expectOpaqueGlass(page);
   });
 
-  test('every glass surface turns opaque under reduced transparency (C-09)', async ({ page, browserName }) => {
+  test('every glass surface turns opaque under reduced transparency (C-09)', async ({
+    page,
+    browserName,
+  }) => {
     test.skip(browserName !== 'chromium', 'only Chromium can emulate prefers-reduced-transparency');
     const session = await page.context().newCDPSession(page);
     await session.send('Emulation.setEmulatedMedia', {
@@ -166,7 +188,10 @@ test.describe('the floating glass bar', () => {
     await expectOpaqueGlass(page);
   });
 
-  test('the shortcut hint reads ⌘K on Apple platforms and Ctrl K elsewhere (C-13)', async ({ browser, baseURL }) => {
+  test('the shortcut hint reads ⌘K on Apple platforms and Ctrl K elsewhere (C-13)', async ({
+    browser,
+    baseURL,
+  }) => {
     for (const [platform, hint] of [
       ['MacIntel', '⌘K'],
       ['Win32', 'Ctrl K'],
@@ -174,8 +199,14 @@ test.describe('the floating glass bar', () => {
       const context = await browser.newContext({ baseURL, viewport: viewportFor(1024) });
       const page = await context.newPage();
       await page.addInitScript((value: string) => {
-        Object.defineProperty(Navigator.prototype, 'platform', { configurable: true, get: () => value });
-        Object.defineProperty(Navigator.prototype, 'userAgentData', { configurable: true, get: () => undefined });
+        Object.defineProperty(Navigator.prototype, 'platform', {
+          configurable: true,
+          get: () => value,
+        });
+        Object.defineProperty(Navigator.prototype, 'userAgentData', {
+          configurable: true,
+          get: () => undefined,
+        });
       }, platform);
       await gotoSettled(page, '/');
       const shown = await page
@@ -186,7 +217,10 @@ test.describe('the floating glass bar', () => {
     }
   });
 
-  test('the skip link is the first stop and moves focus to the main content (C-06)', async ({ page, browserName }) => {
+  test('the skip link is the first stop and moves focus to the main content (C-06)', async ({
+    page,
+    browserName,
+  }) => {
     await gotoSettled(page, '/');
     // WebKit's default Tab skips links, as Safari does; Option-Tab reaches them.
     await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
@@ -204,10 +238,11 @@ async function expectOpaqueGlass(page: Page): Promise<void> {
       const style = getComputedStyle(element);
       return {
         material: element.getAttribute('data-material'),
-        backdrop: style.backdropFilter || style.getPropertyValue('-webkit-backdrop-filter') || 'none',
+        backdrop:
+          style.backdropFilter || style.getPropertyValue('-webkit-backdrop-filter') || 'none',
         background: style.backgroundColor,
       };
-    }),
+    })
   );
   expect(surfaces.length).toBeGreaterThanOrEqual(2);
   for (const surface of surfaces) {
@@ -229,15 +264,23 @@ test.describe('reduced motion', () => {
             0,
             ...value.split(',').map((part) => {
               const trimmed = part.trim();
-              return trimmed.endsWith('ms') ? Number.parseFloat(trimmed) / 1000 : Number.parseFloat(trimmed) || 0;
-            }),
+              return trimmed.endsWith('ms')
+                ? Number.parseFloat(trimmed) / 1000
+                : Number.parseFloat(trimmed) || 0;
+            })
           );
         const found: string[] = [];
         for (const element of document.querySelectorAll('*')) {
           for (const pseudo of [null, '::before', '::after'] as const) {
             const style = getComputedStyle(element, pseudo);
-            const longest = Math.max(seconds(style.transitionDuration), seconds(style.animationDuration));
-            if (longest > 0.1) found.push(`${element.tagName.toLowerCase()}.${element.className}${pseudo ?? ''} ${longest}s`);
+            const longest = Math.max(
+              seconds(style.transitionDuration),
+              seconds(style.animationDuration)
+            );
+            if (longest > 0.1)
+              found.push(
+                `${element.tagName.toLowerCase()}.${element.className}${pseudo ?? ''} ${longest}s`
+              );
           }
         }
         return found.slice(0, 10);

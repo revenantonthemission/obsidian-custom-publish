@@ -6,11 +6,7 @@ import {
   readBuildManifest,
   type ProfileE2EEnvironment,
 } from './environment.js';
-import {
-  REQUIRED_MATRIX,
-  REQUIRED_OBLIGATIONS,
-  REQUIRED_SPEC_FILES,
-} from './matrix.js';
+import { REQUIRED_MATRIX, REQUIRED_OBLIGATIONS, REQUIRED_SPEC_FILES } from './matrix.js';
 
 /**
  * The 48-key matrix is spread across three Playwright projects, and each
@@ -27,12 +23,7 @@ export interface EvidenceFragment {
   readonly tools: Readonly<Record<string, string>>;
 }
 
-export type BrowserToolName =
-  | 'axe'
-  | 'chromium'
-  | 'firefox'
-  | 'playwright'
-  | 'webkit';
+export type BrowserToolName = 'axe' | 'chromium' | 'firefox' | 'playwright' | 'webkit';
 
 const REQUIRED_TOOL_NAMES: readonly BrowserToolName[] = Object.freeze([
   'axe',
@@ -45,18 +36,15 @@ const REQUIRED_TOOL_NAMES: readonly BrowserToolName[] = Object.freeze([
 function fragmentPath(
   environment: ProfileE2EEnvironment,
   specFile: string,
-  project: string,
+  project: string
 ): string {
   return resolve(
     environment.fragmentDirectory,
-    `${specFile}--${project}.json`.replaceAll('/', '_'),
+    `${specFile}--${project}.json`.replaceAll('/', '_')
   );
 }
 
-export async function writeJsonFile(
-  path: string,
-  value: unknown,
-): Promise<void> {
+export async function writeJsonFile(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
@@ -72,17 +60,17 @@ export async function resetEvidenceFragments(): Promise<void> {
 }
 
 export async function recordEvidenceFragment(
-  fragment: Omit<EvidenceFragment, 'buildId'>,
+  fragment: Omit<EvidenceFragment, 'buildId'>
 ): Promise<void> {
   const environment = profileEnvironment();
   if (!REQUIRED_SPEC_FILES.includes(fragment.specFile)) {
     throw new Error(`"${fragment.specFile}" is not a required spec file.`);
   }
   await mkdir(environment.fragmentDirectory, { recursive: true });
-  await writeJsonFile(
-    fragmentPath(environment, fragment.specFile, fragment.project),
-    { ...fragment, buildId: environment.buildId } satisfies EvidenceFragment,
-  );
+  await writeJsonFile(fragmentPath(environment, fragment.specFile, fragment.project), {
+    ...fragment,
+    buildId: environment.buildId,
+  } satisfies EvidenceFragment);
 }
 
 async function readFragments(): Promise<readonly EvidenceFragment[]> {
@@ -97,7 +85,7 @@ async function readFragments(): Promise<readonly EvidenceFragment[]> {
   for (const entry of entries) {
     if (!entry.endsWith('.json')) continue;
     const fragment = JSON.parse(
-      await readFile(resolve(environment.fragmentDirectory, entry), 'utf8'),
+      await readFile(resolve(environment.fragmentDirectory, entry), 'utf8')
     ) as EvidenceFragment;
     // A fragment from a different build describes different bytes; ignoring it
     // keeps a stale cell from closing the matrix for the build under test.
@@ -126,23 +114,15 @@ export async function sealBrowserEvidence(): Promise<SealedBrowserEvidence> {
   const fragments = await readFragments();
 
   const specFiles = REQUIRED_SPEC_FILES.filter((specFile) =>
-    fragments.some((fragment) => fragment.specFile === specFile),
+    fragments.some((fragment) => fragment.specFile === specFile)
   );
-  const missingSpecFiles = REQUIRED_SPEC_FILES.filter(
-    (specFile) => !specFiles.includes(specFile),
-  );
+  const missingSpecFiles = REQUIRED_SPEC_FILES.filter((specFile) => !specFiles.includes(specFile));
 
-  const completedMatrix = [
-    ...new Set(fragments.flatMap((fragment) => fragment.matrixKeys)),
-  ].sort();
+  const completedMatrix = [...new Set(fragments.flatMap((fragment) => fragment.matrixKeys))].sort();
   const completedSet = new Set(completedMatrix);
-  const missingMatrixKeys = REQUIRED_MATRIX.filter(
-    (key) => !completedSet.has(key),
-  );
+  const missingMatrixKeys = REQUIRED_MATRIX.filter((key) => !completedSet.has(key));
   const requiredSet = new Set(REQUIRED_MATRIX);
-  const extraMatrixKeys = completedMatrix.filter(
-    (key) => !requiredSet.has(key),
-  );
+  const extraMatrixKeys = completedMatrix.filter((key) => !requiredSet.has(key));
 
   const obligations: Record<string, 'pass'> = {};
   for (const fragment of fragments) {
@@ -150,9 +130,7 @@ export async function sealBrowserEvidence(): Promise<SealedBrowserEvidence> {
       if (result === 'pass') obligations[name] = 'pass';
     }
   }
-  const missingObligations = REQUIRED_OBLIGATIONS.filter(
-    (name) => obligations[name] !== 'pass',
-  );
+  const missingObligations = REQUIRED_OBLIGATIONS.filter((name) => obligations[name] !== 'pass');
 
   const tools: Record<string, string> = {};
   for (const fragment of fragments) {
@@ -162,9 +140,7 @@ export async function sealBrowserEvidence(): Promise<SealedBrowserEvidence> {
       }
     }
   }
-  const missingTools = REQUIRED_TOOL_NAMES.filter(
-    (name) => tools[name] === undefined,
-  );
+  const missingTools = REQUIRED_TOOL_NAMES.filter((name) => tools[name] === undefined);
 
   const complete =
     missingSpecFiles.length === 0 &&

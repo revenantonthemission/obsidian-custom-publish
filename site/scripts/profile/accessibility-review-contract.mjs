@@ -33,8 +33,7 @@
  * enforce it.
  */
 export const ACCESSIBILITY_REVIEW_SUBJECT_SCHEMA_VERSION = 1;
-export const ACCESSIBILITY_REVIEW_SUBJECT_DOMAIN =
-  'rvnnt.accessibility-review-subject.v1';
+export const ACCESSIBILITY_REVIEW_SUBJECT_DOMAIN = 'rvnnt.accessibility-review-subject.v1';
 
 /** The four judgements a reviewer records for every state. */
 export const REQUIRED_MANUAL_CHECKS = Object.freeze([

@@ -1,7 +1,7 @@
 ---
-import HubLayout from "../../layouts/HubLayout.astro";
-import { getHubs, getPostMeta } from "../../lib/data";
-import type { PostMeta } from "../../lib/types";
+import HubLayout from '../../layouts/HubLayout.astro';
+import { getHubs, getPostMeta } from '../../lib/data';
+import type { PostMeta } from '../../lib/types';
 
 export function getStaticPaths() {
   const hubs = getHubs();
@@ -9,9 +9,9 @@ export function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-if (!slug) return Astro.redirect("/404");
+if (!slug) return Astro.redirect('/404');
 const hub = getPostMeta(slug);
-if (!hub) return Astro.redirect("/404");
+if (!hub) return Astro.redirect('/404');
 
 const childSlugs = hub.forward_links || [];
 const children: PostMeta[] = childSlugs

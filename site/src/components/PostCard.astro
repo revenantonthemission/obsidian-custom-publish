@@ -1,9 +1,9 @@
 ---
-import { ChevronRight } from "lucide-static";
-import { decorativeIcon } from "../lib/icons";
-import { formatDateKo } from "../lib/data";
-import type { PostMeta } from "../lib/types";
-import "../styles/grouped.css";
+import { ChevronRight } from 'lucide-static';
+import { decorativeIcon } from '../lib/icons';
+import { formatDateKo } from '../lib/data';
+import type { PostMeta } from '../lib/types';
+import '../styles/grouped.css';
 
 interface Props {
   post: PostMeta;
@@ -28,6 +28,6 @@ const { post, summary } = Astro.props;
         <span>{post.reading_time_min}분 읽기</span>
       </span>
     </span>
-    <span class="grouped-row-chevron" set:html={decorativeIcon(ChevronRight, 18)}></span>
+    <span class="grouped-row-chevron" set:html={decorativeIcon(ChevronRight, 18)} />
   </a>
 </li>

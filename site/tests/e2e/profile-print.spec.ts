@@ -1,11 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { recordEvidenceFragment } from './support/evidence.js';
 import { PRINT_PAPER_FORMATS, printKey } from './support/matrix.js';
-import {
-  applyDetailsState,
-  gotoRoute,
-  playwrightVersion,
-} from './support/profile-page.js';
+import { applyDetailsState, gotoRoute, playwrightVersion } from './support/profile-page.js';
 
 const SPEC_FILE = 'profile-print.spec.ts';
 const PRINT_ROUTE = '/resume';
@@ -33,9 +29,7 @@ async function countPdfPages(bytes: Uint8Array): Promise<number> {
 }
 
 test.describe('print contract', () => {
-  test('print media expands closed disclosures and drops site chrome', async ({
-    page,
-  }) => {
+  test('print media expands closed disclosures and drops site chrome', async ({ page }) => {
     await gotoRoute(page, PRINT_ROUTE);
     // Deliberately leave every disclosure closed: print must not depend on the
     // reader having expanded anything on screen.
@@ -43,33 +37,19 @@ test.describe('print contract', () => {
     await page.emulateMedia({ media: 'print' });
 
     const printed = await page.evaluate(() => {
-      const entries = [
-        ...document.querySelectorAll<HTMLDetailsElement>(
-          'details.resume-entry',
-        ),
-      ];
+      const entries = [...document.querySelectorAll<HTMLDetailsElement>('details.resume-entry')];
       const header = document.querySelector('header.site-header');
       return {
         entryCount: entries.length,
         openCount: entries.filter((entry) => entry.open).length,
         hiddenDetailContent: entries.filter((entry) => {
-          const content = entry.querySelector<HTMLElement>(
-            '.resume-entry-detail-content',
-          );
-          return (
-            content === null ||
-            window.getComputedStyle(content).display === 'none'
-          );
+          const content = entry.querySelector<HTMLElement>('.resume-entry-detail-content');
+          return content === null || window.getComputedStyle(content).display === 'none';
         }).length,
         breakInsideRespected: entries.every((entry) =>
-          ['avoid-page', 'avoid'].includes(
-            window.getComputedStyle(entry).breakInside,
-          ),
+          ['avoid-page', 'avoid'].includes(window.getComputedStyle(entry).breakInside)
         ),
-        headerDisplay:
-          header === null
-            ? 'none'
-            : window.getComputedStyle(header).display,
+        headerDisplay: header === null ? 'none' : window.getComputedStyle(header).display,
       };
     });
 
@@ -77,12 +57,9 @@ test.describe('print contract', () => {
     expect(printed.openCount, 'the on-screen state stays closed').toBe(0);
     expect(
       printed.hiddenDetailContent,
-      'every closed disclosure must still print its content',
+      'every closed disclosure must still print its content'
     ).toBe(0);
-    expect(
-      printed.breakInsideRespected,
-      'résumé entries must not break across pages',
-    ).toBe(true);
+    expect(printed.breakInsideRespected, 'résumé entries must not break across pages').toBe(true);
     expect(printed.headerDisplay, 'site chrome must not print').toBe('none');
 
     await page.emulateMedia({ media: null });
@@ -98,16 +75,10 @@ test.describe('print contract', () => {
         printBackground: true,
         preferCSSPageSize: true,
       });
-      expect(
-        bytes.byteLength,
-        `${paperFormat} must produce a document`,
-      ).toBeGreaterThan(0);
+      expect(bytes.byteLength, `${paperFormat} must produce a document`).toBeGreaterThan(0);
 
       const pageCount = await countPdfPages(new Uint8Array(bytes));
-      expect(
-        pageCount,
-        `${paperFormat} must paginate to at least one page`,
-      ).toBeGreaterThan(0);
+      expect(pageCount, `${paperFormat} must paginate to at least one page`).toBeGreaterThan(0);
       pageCounts.set(paperFormat, pageCount);
 
       completed.push(printKey(paperFormat));
@@ -124,7 +95,7 @@ test.describe('print contract', () => {
         report: 'print-page-count',
         route: PRINT_ROUTE,
         pages: Object.fromEntries(pageCounts),
-      })}\n`,
+      })}\n`
     );
     await recordEvidenceFragment({
       specFile: SPEC_FILE,

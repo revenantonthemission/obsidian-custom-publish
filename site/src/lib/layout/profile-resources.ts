@@ -1,10 +1,6 @@
 import { createValidationIssue } from '../profile/issues.js';
 import { PORTFOLIO_ROLES } from '../profile/portfolio-roles.js';
-import type {
-  NonEmptyReadonlyArray,
-  ValidationIssue,
-  ValidationResult,
-} from '../profile/types.js';
+import type { NonEmptyReadonlyArray, ValidationIssue, ValidationResult } from '../profile/types.js';
 
 export type ManagedHeadResource =
   | Readonly<{
@@ -33,9 +29,7 @@ export interface ProfileRouteResourcePolicy {
   readonly headResources: readonly [];
 }
 
-export type RouteResourcePolicy =
-  | LegacyRouteResourcePolicy
-  | ProfileRouteResourcePolicy;
+export type RouteResourcePolicy = LegacyRouteResourcePolicy | ProfileRouteResourcePolicy;
 
 const RESOURCE_ISSUE_PATH = 'profile.metadata.resources';
 const INVALID_PATHNAME_PATTERN = /[\u0000-\u0020\u007f\\?#]/;
@@ -47,9 +41,7 @@ const INVALID_DECODED_PATHNAME_PATTERN = /[\u0000-\u001f\u007f\\]/;
  * pages that render math, so the jsDelivr preconnect and stylesheet are gone.
  * The policy keeps its shape, and its validation, for any future resource.
  */
-export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze(
-  [],
-) as readonly ManagedHeadResource[];
+export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze([]) as readonly ManagedHeadResource[];
 
 export const LEGACY_ROUTE_RESOURCE_POLICY = Object.freeze({
   category: 'legacy',
@@ -68,21 +60,18 @@ export const PROFILE_ROUTE_RESOURCE_POLICY = Object.freeze({
  * pathname retains the current BaseLayout resource set unchanged.
  */
 export function resolveRouteResourcePolicy(
-  pathname: string,
+  pathname: string
 ): ValidationResult<RouteResourcePolicy> {
   if (!isValidPathname(pathname)) {
     return resourceFailure();
   }
 
   const normalized =
-    pathname.length > 1 && pathname.endsWith('/')
-      ? pathname.slice(0, -1)
-      : pathname;
+    pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   return success(
-    normalized === '/resume' ||
-      PORTFOLIO_ROLES.some(({ pathname }) => pathname === normalized)
+    normalized === '/resume' || PORTFOLIO_ROLES.some(({ pathname }) => pathname === normalized)
       ? PROFILE_ROUTE_RESOURCE_POLICY
-      : LEGACY_ROUTE_RESOURCE_POLICY,
+      : LEGACY_ROUTE_RESOURCE_POLICY
   );
 }
 
@@ -93,7 +82,7 @@ export function resolveRouteResourcePolicy(
  */
 export function validateRouteResourcePolicy(
   pathname: string,
-  candidate: unknown,
+  candidate: unknown
 ): ValidationResult<RouteResourcePolicy> {
   try {
     const resolved = resolveRouteResourcePolicy(pathname);
@@ -103,11 +92,7 @@ export function validateRouteResourcePolicy(
 
     if (
       !isPlainObject(candidate) ||
-      !hasExactEnumerableDataKeys(candidate, [
-        'category',
-        'fontSource',
-        'headResources',
-      ])
+      !hasExactEnumerableDataKeys(candidate, ['category', 'fontSource', 'headResources'])
     ) {
       return resourceFailure();
     }
@@ -139,26 +124,15 @@ export function validateRouteResourcePolicy(
 }
 
 function hasExactLegacyResources(value: unknown): boolean {
-  if (
-    !hasExactArrayShape(value, LEGACY_BASE_LAYOUT_RESOURCES.length)
-  ) {
+  if (!hasExactArrayShape(value, LEGACY_BASE_LAYOUT_RESOURCES.length)) {
     return false;
   }
 
-  for (
-    let index = 0;
-    index < LEGACY_BASE_LAYOUT_RESOURCES.length;
-    index += 1
-  ) {
+  for (let index = 0; index < LEGACY_BASE_LAYOUT_RESOURCES.length; index += 1) {
     const resource = enumerableDataValue(value, String(index));
     if (
       !isPlainObject(resource) ||
-      !hasExactEnumerableDataKeys(resource, [
-        'id',
-        'rel',
-        'href',
-        'crossorigin',
-      ])
+      !hasExactEnumerableDataKeys(resource, ['id', 'rel', 'href', 'crossorigin'])
     ) {
       return false;
     }
@@ -205,11 +179,7 @@ function isValidPathname(value: unknown): value is string {
 }
 
 function hasValidPercentEncoding(value: string): boolean {
-  for (
-    let index = value.indexOf('%');
-    index >= 0;
-    index = value.indexOf('%', index + 1)
-  ) {
+  for (let index = value.indexOf('%'); index >= 0; index = value.indexOf('%', index + 1)) {
     if (!/^[0-9A-Fa-f]{2}$/.test(value.slice(index + 1, index + 3))) {
       return false;
     }
@@ -218,15 +188,10 @@ function hasValidPercentEncoding(value: string): boolean {
 }
 
 function hasDotSegment(value: string): boolean {
-  return value
-    .split('/')
-    .some((segment) => segment === '.' || segment === '..');
+  return value.split('/').some((segment) => segment === '.' || segment === '..');
 }
 
-function hasExactArrayShape(
-  value: unknown,
-  expectedLength: number,
-): value is readonly unknown[] {
+function hasExactArrayShape(value: unknown, expectedLength: number): value is readonly unknown[] {
   if (!Array.isArray(value)) {
     return false;
   }
@@ -257,10 +222,7 @@ function hasExactArrayShape(
   return true;
 }
 
-function hasExactEnumerableDataKeys(
-  value: object,
-  expected: readonly string[],
-): boolean {
+function hasExactEnumerableDataKeys(value: object, expected: readonly string[]): boolean {
   const actual = Reflect.ownKeys(value).sort(comparePropertyKeys);
   const canonicalExpected = [...expected].sort(compareAscii);
   return (
@@ -268,30 +230,19 @@ function hasExactEnumerableDataKeys(
     actual.every((key, index) => key === canonicalExpected[index]) &&
     canonicalExpected.every((key) => {
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      return (
-        descriptor !== undefined &&
-        descriptor.enumerable === true &&
-        'value' in descriptor
-      );
+      return descriptor !== undefined && descriptor.enumerable === true && 'value' in descriptor;
     })
   );
 }
 
-function enumerableDataValue(
-  owner: object,
-  key: PropertyKey,
-): unknown {
+function enumerableDataValue(owner: object, key: PropertyKey): unknown {
   const descriptor = Object.getOwnPropertyDescriptor(owner, key);
-  return descriptor !== undefined &&
-    descriptor.enumerable === true &&
-    'value' in descriptor
+  return descriptor !== undefined && descriptor.enumerable === true && 'value' in descriptor
     ? descriptor.value
     : undefined;
 }
 
-function isPlainObject(
-  value: unknown,
-): value is Record<string, unknown> {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }
@@ -309,10 +260,7 @@ function compareAscii(left: string, right: string): number {
   return 0;
 }
 
-function comparePropertyKeys(
-  left: PropertyKey,
-  right: PropertyKey,
-): number {
+function comparePropertyKeys(left: PropertyKey, right: PropertyKey): number {
   if (typeof left !== 'string') {
     return typeof right === 'string' ? 1 : 0;
   }
@@ -327,10 +275,7 @@ function success<Value>(value: Value): ValidationResult<Value> {
 }
 
 function resourceFailure<Value>(): ValidationResult<Value> {
-  const issue = createValidationIssue(
-    'metadata.route.invalid',
-    RESOURCE_ISSUE_PATH,
-  );
+  const issue = createValidationIssue('metadata.route.invalid', RESOURCE_ISSUE_PATH);
   return Object.freeze({
     ok: false,
     issues: Object.freeze([issue]) as NonEmptyReadonlyArray<ValidationIssue>,

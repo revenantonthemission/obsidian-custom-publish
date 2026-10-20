@@ -30,7 +30,7 @@ describe('slot token recognition (BR-U2-036~038)', () => {
 
   test('zero tokens throw HP003 with the source path', () => {
     expect(() => assertExactlyOneSlot('본문뿐', 'content/homepage/index.md')).toThrow(
-      /^HP003 content\/homepage\/index\.md:/,
+      /^HP003 content\/homepage\/index\.md:/
     );
   });
 
@@ -88,7 +88,7 @@ describe('build date injection (PD-U2-04, NFR-U2-006)', () => {
 
   test('well-formed override wins', () => {
     expect(resolveBuildDate({ HOMEPAGE_TODAY_OVERRIDE: '2024-03-01' }, fixedNow)).toBe(
-      '2024-03-01',
+      '2024-03-01'
     );
   });
 

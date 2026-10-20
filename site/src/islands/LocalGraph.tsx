@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import type { GraphData, GraphNode as RawGraphNode } from "../lib/types";
-import type { ResolvedLink } from "../lib/graphUtils";
-import { CATEGORY_SHAPES, categoryToken, legendKey, shapePath } from "../lib/graphUtils";
-import { prepareGraphData, createSimulation, observeThemeChange, navigateToNode } from "../lib/graphSim";
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import type { GraphData, GraphNode as RawGraphNode } from '../lib/types';
+import type { ResolvedLink } from '../lib/graphUtils';
+import { CATEGORY_SHAPES, categoryToken, legendKey, shapePath } from '../lib/graphUtils';
+import {
+  prepareGraphData,
+  createSimulation,
+  observeThemeChange,
+  navigateToNode,
+} from '../lib/graphSim';
 
 const CANVAS_SIZE = 240;
 const CURRENT_RADIUS = 6;
@@ -10,11 +15,11 @@ const DEFAULT_RADIUS = 4;
 const LABEL_GAP = 14;
 const HIT_RADIUS_SQ = 144;
 
-type View = "graph" | "list";
+type View = 'graph' | 'list';
 
 const VIEWS: readonly { readonly view: View; readonly label: string }[] = [
-  { view: "graph", label: "그래프" },
-  { view: "list", label: "목록" },
+  { view: 'graph', label: '그래프' },
+  { view: 'list', label: '목록' },
 ];
 
 interface Props {
@@ -36,18 +41,21 @@ function hrefOf(node: RawGraphNode): string {
 export default function LocalGraph({ slug, data }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<View>("graph");
+  const [view, setView] = useState<View>('graph');
 
   const neighbors = useMemo(
-    () => data.nodes.filter((node) => node.slug !== slug).sort((a, b) => a.title.localeCompare(b.title, "ko")),
-    [data, slug],
+    () =>
+      data.nodes
+        .filter((node) => node.slug !== slug)
+        .sort((a, b) => a.title.localeCompare(b.title, 'ko')),
+    [data, slug]
   );
 
   useEffect(() => {
     if (!data || !canvasRef.current || data.nodes.length === 0) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = CANVAS_SIZE * dpr;
@@ -69,18 +77,19 @@ export default function LocalGraph({ slug, data }: Props) {
       const root = getComputedStyle(document.documentElement);
       const own = getComputedStyle(canvas);
       return {
-        current: root.getPropertyValue("--c-tint").trim(),
-        text: root.getPropertyValue("--c-text").trim(),
-        line: root.getPropertyValue("--c-separator").trim(),
+        current: root.getPropertyValue('--c-tint').trim(),
+        text: root.getPropertyValue('--c-text').trim(),
+        line: root.getPropertyValue('--c-separator').trim(),
         font: `${own.fontWeight} ${own.fontSize} ${own.fontFamily}`,
-        category: (node: RawGraphNode) => root.getPropertyValue(categoryToken(legendKey(node))).trim(),
+        category: (node: RawGraphNode) =>
+          root.getPropertyValue(categoryToken(legendKey(node))).trim(),
       };
     }
 
     let paint = readPaint();
     setReady(true);
 
-    sim.on("tick", () => {
+    sim.on('tick', () => {
       ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
       ctx.strokeStyle = paint.line;
@@ -99,7 +108,7 @@ export default function LocalGraph({ slug, data }: Props) {
         const path = new Path2D(shapePath(shape, isCurrent ? CURRENT_RADIUS : DEFAULT_RADIUS));
         ctx.save();
         ctx.translate(node.x!, node.y!);
-        if (shape === "ring" && !isCurrent) {
+        if (shape === 'ring' && !isCurrent) {
           ctx.strokeStyle = color;
           ctx.lineWidth = 2;
           ctx.stroke(path);
@@ -112,7 +121,7 @@ export default function LocalGraph({ slug, data }: Props) {
 
       ctx.fillStyle = paint.text;
       ctx.font = paint.font;
-      ctx.textAlign = "center";
+      ctx.textAlign = 'center';
       for (const node of nodes) {
         ctx.fillText(node.title, node.x!, node.y! + LABEL_GAP);
       }
@@ -136,12 +145,12 @@ export default function LocalGraph({ slug, data }: Props) {
         }
       }
     };
-    canvas.addEventListener("click", handleClick);
+    canvas.addEventListener('click', handleClick);
 
     return () => {
       sim.stop();
       disconnectObserver();
-      canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener('click', handleClick);
     };
   }, [data, slug]);
 
@@ -152,10 +161,10 @@ export default function LocalGraph({ slug, data }: Props) {
 
   const onKeyDown = (event: KeyboardEvent) => {
     const keys: Record<string, View> = {
-      ArrowLeft: view === "graph" ? "list" : "graph",
-      ArrowRight: view === "graph" ? "list" : "graph",
-      Home: "graph",
-      End: "list",
+      ArrowLeft: view === 'graph' ? 'list' : 'graph',
+      ArrowRight: view === 'graph' ? 'list' : 'graph',
+      Home: 'graph',
+      End: 'list',
     };
     const next = keys[event.key];
     if (next === undefined) return;
@@ -165,7 +174,12 @@ export default function LocalGraph({ slug, data }: Props) {
 
   return (
     <div class="local-graph">
-      <div class="local-graph-tabs segmented" role="tablist" aria-label="로컬 그래프 보기 방식" onKeyDown={onKeyDown}>
+      <div
+        class="local-graph-tabs segmented"
+        role="tablist"
+        aria-label="로컬 그래프 보기 방식"
+        onKeyDown={onKeyDown}
+      >
         {VIEWS.map((item) => (
           <button
             key={item.view}
@@ -173,7 +187,7 @@ export default function LocalGraph({ slug, data }: Props) {
             role="tab"
             id={`local-graph-tab-${item.view}`}
             aria-controls={`local-graph-panel-${item.view}`}
-            aria-selected={view === item.view ? "true" : "false"}
+            aria-selected={view === item.view ? 'true' : 'false'}
             tabIndex={view === item.view ? 0 : -1}
             onClick={() => setView(item.view)}
           >
@@ -186,7 +200,7 @@ export default function LocalGraph({ slug, data }: Props) {
         id="local-graph-panel-graph"
         aria-labelledby="local-graph-tab-graph"
         class="local-graph-canvas"
-        hidden={view !== "graph"}
+        hidden={view !== 'graph'}
       >
         {!ready && <div class="skeleton local-graph-skeleton" />}
         <canvas
@@ -196,7 +210,12 @@ export default function LocalGraph({ slug, data }: Props) {
           hidden={!ready}
         />
       </div>
-      <div role="tabpanel" id="local-graph-panel-list" aria-labelledby="local-graph-tab-list" hidden={view !== "list"}>
+      <div
+        role="tabpanel"
+        id="local-graph-panel-list"
+        aria-labelledby="local-graph-tab-list"
+        hidden={view !== 'list'}
+      >
         {neighbors.length > 0 ? (
           <ul class="local-graph-list">
             {neighbors.map((node) => (

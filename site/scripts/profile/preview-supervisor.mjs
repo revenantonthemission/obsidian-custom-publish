@@ -53,13 +53,7 @@ const MIME_TYPES = Object.freeze({
 });
 
 export class PreviewSupervisorError extends Error {
-  constructor(message, {
-    code,
-    stage,
-    retryable = false,
-    details = {},
-    cause,
-  }) {
+  constructor(message, { code, stage, retryable = false, details = {}, cause }) {
     super(message, { cause });
     this.name = 'PreviewSupervisorError';
     this.code = code;
@@ -131,9 +125,7 @@ export async function startStaticPreview({
     descendantMonitor = monitorOwnedDescendants({
       rootPid: child.pid,
       label: 'profile-static-preview',
-      isRootHandleCurrent: () =>
-        child.exitCode === null &&
-        child.signalCode === null,
+      isRootHandleCurrent: () => child.exitCode === null && child.signalCode === null,
     });
   } catch (cause) {
     spawnGuard.cancel();
@@ -141,7 +133,7 @@ export async function startStaticPreview({
       'PREVIEW_CHILD_SPAWN_FAILED',
       'The static preview child process could not be spawned.',
       { distRoot: canonicalDistRoot, instanceId },
-      cause,
+      cause
     );
   }
 
@@ -213,7 +205,7 @@ export async function startStaticPreview({
             cleanupError: serializeError(cleanupError),
           },
           cause: cleanupError,
-        },
+        }
       );
     }
     throw normalizeStartupFailure(error, {
@@ -266,26 +258,18 @@ function createChildOwner({
 
   function assertRunning(message = 'The preview process is not running.') {
     if (exitSnapshot !== null || child.exitCode !== null || child.signalCode !== null) {
-      throw readinessError(
-        'PREVIEW_CHILD_EXITED',
-        message,
-        {
-          instanceId,
-          pid: child.pid ?? null,
-          port,
-          exit: exitSnapshot,
-          output: output.snapshot(),
-        },
-      );
+      throw readinessError('PREVIEW_CHILD_EXITED', message, {
+        instanceId,
+        pid: child.pid ?? null,
+        port,
+        exit: exitSnapshot,
+        output: output.snapshot(),
+      });
     }
   }
 
   async function waitUntilListening(timeoutMs) {
-    if (
-      exitSnapshot !== null ||
-      child.exitCode !== null ||
-      child.signalCode !== null
-    ) {
+    if (exitSnapshot !== null || child.exitCode !== null || child.signalCode !== null) {
       throw startupError(
         'PREVIEW_CHILD_EXITED_DURING_LAUNCH',
         'The static preview child exited before the readiness listener was armed.',
@@ -294,22 +278,24 @@ function createChildOwner({
           pid: child.pid ?? null,
           exit: exitSnapshot,
           output: output.snapshot(),
-        },
+        }
       );
     }
     return new Promise((resolvePromise, rejectPromise) => {
       let settled = false;
       const timeout = setTimeout(() => {
-        settleReject(startupError(
-          'PREVIEW_CHILD_START_TIMEOUT',
-          'The static preview child did not bind its loopback socket before the startup deadline.',
-          {
-            instanceId,
-            pid: child.pid ?? null,
-            timeoutMs,
-            output: output.snapshot(),
-          },
-        ));
+        settleReject(
+          startupError(
+            'PREVIEW_CHILD_START_TIMEOUT',
+            'The static preview child did not bind its loopback socket before the startup deadline.',
+            {
+              instanceId,
+              pid: child.pid ?? null,
+              timeoutMs,
+              output: output.snapshot(),
+            }
+          )
+        );
       }, timeoutMs);
 
       function removeListeners() {
@@ -335,25 +321,23 @@ function createChildOwner({
       }
 
       function onMessage(message) {
-        if (
-          !message ||
-          message.instanceId !== instanceId ||
-          typeof message.type !== 'string'
-        ) {
+        if (!message || message.instanceId !== instanceId || typeof message.type !== 'string') {
           return;
         }
 
         if (message.type === CHILD_ERROR_MESSAGE) {
-          settleReject(startupError(
-            'PREVIEW_CHILD_LAUNCH_FAILED',
-            'The static preview child rejected its startup configuration.',
-            {
-              instanceId,
-              pid: child.pid ?? null,
-              childError: message.error ?? null,
-              output: output.snapshot(),
-            },
-          ));
+          settleReject(
+            startupError(
+              'PREVIEW_CHILD_LAUNCH_FAILED',
+              'The static preview child rejected its startup configuration.',
+              {
+                instanceId,
+                pid: child.pid ?? null,
+                childError: message.error ?? null,
+                output: output.snapshot(),
+              }
+            )
+          );
           return;
         }
 
@@ -366,63 +350,73 @@ function createChildOwner({
           message.port < 1 ||
           message.port > 65_535
         ) {
-          settleReject(startupError(
-            'PREVIEW_CHILD_IDENTITY_INVALID',
-            'The static preview child returned an invalid process or loopback identity.',
-            {
-              instanceId,
-              expectedPid: child.pid ?? null,
-              readyMessage: message,
-            },
-          ));
+          settleReject(
+            startupError(
+              'PREVIEW_CHILD_IDENTITY_INVALID',
+              'The static preview child returned an invalid process or loopback identity.',
+              {
+                instanceId,
+                expectedPid: child.pid ?? null,
+                readyMessage: message,
+              }
+            )
+          );
           return;
         }
 
         port = message.port;
-        settleResolve(Object.freeze({
-          pid: message.pid,
-          host: message.host,
-          port: message.port,
-        }));
+        settleResolve(
+          Object.freeze({
+            pid: message.pid,
+            host: message.host,
+            port: message.port,
+          })
+        );
       }
 
       function onError(error) {
-        settleReject(startupError(
-          'PREVIEW_CHILD_SPAWN_FAILED',
-          'The static preview child emitted a process launch error.',
-          {
-            instanceId,
-            pid: child.pid ?? null,
-            output: output.snapshot(),
-          },
-          error,
-        ));
+        settleReject(
+          startupError(
+            'PREVIEW_CHILD_SPAWN_FAILED',
+            'The static preview child emitted a process launch error.',
+            {
+              instanceId,
+              pid: child.pid ?? null,
+              output: output.snapshot(),
+            },
+            error
+          )
+        );
       }
 
       function onExit(code, signal) {
-        settleReject(startupError(
-          'PREVIEW_CHILD_EXITED_DURING_LAUNCH',
-          'The static preview child exited before binding its loopback socket.',
-          {
-            instanceId,
-            pid: child.pid ?? null,
-            code,
-            signal,
-            output: output.snapshot(),
-          },
-        ));
+        settleReject(
+          startupError(
+            'PREVIEW_CHILD_EXITED_DURING_LAUNCH',
+            'The static preview child exited before binding its loopback socket.',
+            {
+              instanceId,
+              pid: child.pid ?? null,
+              code,
+              signal,
+              output: output.snapshot(),
+            }
+          )
+        );
       }
 
       function onDisconnect() {
-        settleReject(startupError(
-          'PREVIEW_CHILD_IPC_DISCONNECTED',
-          'The static preview child disconnected before reporting its loopback socket.',
-          {
-            instanceId,
-            pid: child.pid ?? null,
-            output: output.snapshot(),
-          },
-        ));
+        settleReject(
+          startupError(
+            'PREVIEW_CHILD_IPC_DISCONNECTED',
+            'The static preview child disconnected before reporting its loopback socket.',
+            {
+              instanceId,
+              pid: child.pid ?? null,
+              output: output.snapshot(),
+            }
+          )
+        );
       }
 
       child.on('message', onMessage);
@@ -449,67 +443,51 @@ function createChildOwner({
     }
 
     const pid = child.pid ?? null;
-    let exited = await waitForChildExit(
-      child,
-      Math.min(500, shutdownTimeoutMs),
-    );
-    const childActive =
-      child.exitCode === null && child.signalCode === null;
+    let exited = await waitForChildExit(child, Math.min(500, shutdownTimeoutMs));
+    const childActive = child.exitCode === null && child.signalCode === null;
     if (childActive && pid !== null && isProcessGroupAlive(pid)) {
       signalOwnedProcess(child, 'SIGSTOP');
     }
     const descendantProcessTree = await descendantMonitor.stop();
-    const rootProcessGroupIds = new Set(
-      descendantProcessTree.activeProcessGroupIds,
-    );
-    if (
-      pid !== null &&
-      (childActive || descendantProcessTree.activeRootProcessGroup)
-    ) {
+    const rootProcessGroupIds = new Set(descendantProcessTree.activeProcessGroupIds);
+    if (pid !== null && (childActive || descendantProcessTree.activeRootProcessGroup)) {
       rootProcessGroupIds.add(pid);
     }
-    const frozen = rootProcessGroupIds.size === 0
-      ? null
-      : await freezeOwnedProcessTree({
-          rootProcessGroupIds: [...rootProcessGroupIds],
-          label: 'profile-static-preview-tree',
-        });
+    const frozen =
+      rootProcessGroupIds.size === 0
+        ? null
+        : await freezeOwnedProcessTree({
+            rootProcessGroupIds: [...rootProcessGroupIds],
+            label: 'profile-static-preview-tree',
+          });
     const frozenProcessTree = frozen?.evidence ?? {
       processIds: [],
       processGroupIds: [],
     };
     const processGroupIds = [...frozenProcessTree.processGroupIds];
     let processGroupsReleased = processGroupIds.every(
-      (processGroupId) => !isProcessGroupAlive(processGroupId),
+      (processGroupId) => !isProcessGroupAlive(processGroupId)
     );
     if (!exited || !processGroupsReleased) {
       signalProcessGroups(processGroupIds, 'SIGKILL');
       await Promise.all([
         waitForChildExit(child, shutdownTimeoutMs),
-        waitForProcessGroupsRelease(
-          processGroupIds,
-          shutdownTimeoutMs,
-        ),
+        waitForProcessGroupsRelease(processGroupIds, shutdownTimeoutMs),
       ]);
       exited = child.exitCode !== null || child.signalCode !== null;
       processGroupsReleased = processGroupIds.every(
-        (processGroupId) => !isProcessGroupAlive(processGroupId),
+        (processGroupId) => !isProcessGroupAlive(processGroupId)
       );
     }
 
-    const pidReleased =
-      !childActive || pid === null || !isProcessAlive(pid);
+    const pidReleased = !childActive || pid === null || !isProcessAlive(pid);
     // Ancestry can only prove what it can still reach. The token sweep closes
     // the double-detach gap before any ownership lease is released.
     const ownershipResiduals = await ownedScope.reapResiduals();
     const ownershipReleaseSafe =
       pidReleased && processGroupsReleased && ownershipResiduals.verified;
-    const processTreeReleased =
-      ownershipReleaseSafe &&
-      descendantProcessTree.failures.length === 0;
-    const portReleased = port === null
-      ? null
-      : await canBindLoopbackPort(port);
+    const processTreeReleased = ownershipReleaseSafe && descendantProcessTree.failures.length === 0;
+    const portReleased = port === null ? null : await canBindLoopbackPort(port);
     if (ownershipReleaseSafe) {
       frozen?.releaseVerified();
       descendantMonitor.releaseVerified();
@@ -532,7 +510,7 @@ function createChildOwner({
             portReleased,
             output: output.snapshot(),
           },
-        },
+        }
       );
     }
 
@@ -562,18 +540,12 @@ function createChildOwner({
 async function waitForProcessGroupsRelease(processGroupIds, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (
-      processGroupIds.every(
-        (processGroupId) => !isProcessGroupAlive(processGroupId),
-      )
-    ) {
+    if (processGroupIds.every((processGroupId) => !isProcessGroupAlive(processGroupId))) {
       return true;
     }
     await delay(Math.min(25, Math.max(1, deadline - Date.now())));
   }
-  return processGroupIds.every(
-    (processGroupId) => !isProcessGroupAlive(processGroupId),
-  );
+  return processGroupIds.every((processGroupId) => !isProcessGroupAlive(processGroupId));
 }
 
 function signalProcessGroups(processGroupIds, signal) {
@@ -620,7 +592,7 @@ async function probeRequiredRoutes({
               route: route.path,
               expectedStatus: 200,
               actualStatus: response.status,
-            },
+            }
           );
         }
 
@@ -634,7 +606,7 @@ async function probeRequiredRoutes({
               route: route.path,
               expectedMime: route.expectedMime,
               actualMime: contentType || null,
-            },
+            }
           );
         }
 
@@ -647,20 +619,20 @@ async function probeRequiredRoutes({
               route: route.path,
               expectedMime: route.expectedMime,
               actualMime: contentType,
-            },
+            }
           );
         }
 
-        observations.push(deepFreeze({
-          path: route.path,
-          expectedMime: route.expectedMime,
-          status: response.status,
-          contentType,
-          observedBodyBytes: body.bytes,
-          declaredContentLength: parseContentLength(
-            response.headers.get('content-length'),
-          ),
-        }));
+        observations.push(
+          deepFreeze({
+            path: route.path,
+            expectedMime: route.expectedMime,
+            status: response.status,
+            contentType,
+            observedBodyBytes: body.bytes,
+            declaredContentLength: parseContentLength(response.headers.get('content-length')),
+          })
+        );
         routeReady = true;
         lastConnectionError = null;
         break;
@@ -681,12 +653,10 @@ async function probeRequiredRoutes({
           route: route.path,
           baseURL,
           readinessTimeoutMs,
-          cause: lastConnectionError === null
-            ? null
-            : serializeError(lastConnectionError),
+          cause: lastConnectionError === null ? null : serializeError(lastConnectionError),
           diagnostics: owner.diagnostics(),
         },
-        lastConnectionError ?? undefined,
+        lastConnectionError ?? undefined
       );
     }
   }
@@ -716,9 +686,8 @@ function normalizeRequiredRoutes(requiredRoutes) {
 
   const seen = new Set();
   const routes = requiredRoutes.map((entry, index) => {
-    const route = typeof entry === 'string'
-      ? { path: entry, expectedMime: inferExpectedMime(entry) }
-      : entry;
+    const route =
+      typeof entry === 'string' ? { path: entry, expectedMime: inferExpectedMime(entry) } : entry;
 
     if (!route || typeof route !== 'object' || Array.isArray(route)) {
       throw new TypeError(`requiredRoutes[${index}] must be a route string or object`);
@@ -727,9 +696,7 @@ function normalizeRequiredRoutes(requiredRoutes) {
     const path = validateExactRoute(route.path, `requiredRoutes[${index}].path`);
     const expectedMime = normalizeMime(route.expectedMime);
     if (!expectedMime || expectedMime.includes('*')) {
-      throw new TypeError(
-        `requiredRoutes[${index}].expectedMime must be one exact MIME type`,
-      );
+      throw new TypeError(`requiredRoutes[${index}].expectedMime must be one exact MIME type`);
     }
     if (seen.has(path)) {
       throw new TypeError(`requiredRoutes contains the duplicate exact path ${path}`);
@@ -871,7 +838,7 @@ function normalizeStartupFailure(error, context) {
       ...context,
       error: serializeError(error),
     },
-    error,
+    error
   );
 }
 
@@ -1110,10 +1077,7 @@ async function runStaticPreviewChild() {
 
       await new Promise((resolvePromise, rejectPromise) => {
         server.once('error', rejectPromise);
-        server.listen(
-          { host: LOOPBACK_HOST, port: 0, exclusive: true },
-          resolvePromise,
-        );
+        server.listen({ host: LOOPBACK_HOST, port: 0, exclusive: true }, resolvePromise);
       });
 
       const address = server.address();
@@ -1127,7 +1091,7 @@ async function runStaticPreviewChild() {
       }
 
       process.stdout.write(
-        `[profile-preview] listening ${LOOPBACK_HOST}:${address.port} ${instanceId}\n`,
+        `[profile-preview] listening ${LOOPBACK_HOST}:${address.port} ${instanceId}\n`
       );
       send({
         type: CHILD_READY_MESSAGE,
@@ -1148,10 +1112,7 @@ async function runStaticPreviewChild() {
   }
 
   process.on('message', (message) => {
-    if (
-      message?.type === CHILD_STOP_MESSAGE &&
-      message.instanceId === instanceId
-    ) {
+    if (message?.type === CHILD_STOP_MESSAGE && message.instanceId === instanceId) {
       void shutdown(0);
       return;
     }
@@ -1168,12 +1129,7 @@ async function runStaticPreviewChild() {
   startupTimer.unref();
 }
 
-async function serveStaticRequest({
-  request,
-  response,
-  distRoot,
-  expectedHost,
-}) {
+async function serveStaticRequest({ request, response, distRoot, expectedHost }) {
   try {
     if (request.headers.host !== expectedHost) {
       sendText(response, 400, 'Invalid Host header.\n');
@@ -1200,8 +1156,8 @@ async function serveStaticRequest({
         return;
       }
 
-      const contentType = MIME_TYPES[extname(resolvedFile.path).toLowerCase()]
-        ?? 'application/octet-stream';
+      const contentType =
+        MIME_TYPES[extname(resolvedFile.path).toLowerCase()] ?? 'application/octet-stream';
       const range = parseByteRange(request.headers.range, fileStat.size);
       if (range === false) {
         response.statusCode = 416;
@@ -1219,10 +1175,7 @@ async function serveStaticRequest({
       sendCommonHeaders(response, contentType, contentLength);
       response.setHeader('Accept-Ranges', 'bytes');
       if (range) {
-        response.setHeader(
-          'Content-Range',
-          `bytes ${start}-${end}/${fileStat.size}`,
-        );
+        response.setHeader('Content-Range', `bytes ${start}-${end}/${fileStat.size}`);
       }
 
       if (request.method === 'HEAD' || fileStat.size === 0) {
@@ -1275,10 +1228,10 @@ async function resolveStaticFile(distRoot, rawUrl) {
   if (segments.length === 0 || decodedPath.endsWith('/')) {
     candidates.push([...segments, 'index.html']);
   } else if (extname(segments.at(-1)) === '') {
-    candidates.push([...segments, 'index.html'], [
-      ...segments.slice(0, -1),
-      `${segments.at(-1)}.html`,
-    ]);
+    candidates.push(
+      [...segments, 'index.html'],
+      [...segments.slice(0, -1), `${segments.at(-1)}.html`]
+    );
   } else {
     candidates.push(segments);
   }
@@ -1286,7 +1239,7 @@ async function resolveStaticFile(distRoot, rawUrl) {
   for (const candidate of candidates) {
     const target = resolve(distRoot, ...candidate);
     if (!isWithinRoot(distRoot, target)) continue;
-    if (!await isRegularNonSymlinkPath(distRoot, candidate)) continue;
+    if (!(await isRegularNonSymlinkPath(distRoot, candidate))) continue;
     const canonicalTarget = await realpath(target);
     if (!isWithinRoot(distRoot, canonicalTarget)) continue;
     return Object.freeze({ path: canonicalTarget });
@@ -1318,7 +1271,7 @@ function hasUnsafePathSegments(pathname) {
     (segment, index) =>
       segment === '.' ||
       segment === '..' ||
-      (segment === '' && index !== 0 && index !== segments.length - 1),
+      (segment === '' && index !== 0 && index !== segments.length - 1)
   );
 }
 
@@ -1369,7 +1322,7 @@ function sendCommonHeaders(response, contentType, contentLength) {
       contentType.endsWith('+xml') ||
       contentType === 'application/xml'
       ? `${contentType}; charset=utf-8`
-      : contentType,
+      : contentType
   );
   response.setHeader('Content-Length', String(contentLength));
   response.setHeader('Cache-Control', 'no-store');

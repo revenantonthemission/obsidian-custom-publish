@@ -20,14 +20,11 @@ const INHERITED_PROFILE_CLIENT_ENTRIES = Object.freeze([
   'src/islands/Search.tsx',
   'src/islands/ThemeToggle.tsx',
 ]);
-const inheritedProfileClientEntries = new Set(
-  INHERITED_PROFILE_CLIENT_ENTRIES,
-);
+const inheritedProfileClientEntries = new Set(INHERITED_PROFILE_CLIENT_ENTRIES);
 const INHERITED_INLINE_STYLE_BASELINES = Object.freeze([
   Object.freeze({
     rawBytes: 59,
-    sha256:
-      'beff48a0aa3b0522db59c507af7b4d99f3559a6e4bffd09f9f61fa2cc93bfe8c',
+    sha256: 'beff48a0aa3b0522db59c507af7b4d99f3559a6e4bffd09f9f61fa2cc93bfe8c',
   }),
 ]);
 // The shared layout's executable inline scripts, byte for byte. The HIG
@@ -36,43 +33,38 @@ const INHERITED_INLINE_STYLE_BASELINES = Object.freeze([
 // [data-search-open] dispatcher (FR5.2: it passes its control so focus can
 // return to it) and the reading progress and back-to-top script (FR5.10:
 // scaleX once per frame, no smooth scroll under reduced motion). The other
-// three are Astro's island loaders, unchanged.
+// three are Astro's island loaders, unchanged. Prettier (FR7.1) then
+// reformatted the bootstrap and the scroll script: same statements, new bytes.
 const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   Object.freeze({
     type: null,
-    rawBytes: 1_470,
-    sha256:
-      '4545842ec6cdc2e3b13c4658517d11406dace2b12ba30c12a869b0f738985600',
+    rawBytes: 1_598,
+    sha256: '4c9847f074d7804afcbfe273936ed4cddab1a776c519673937a96ae462e3d92b',
   }),
   Object.freeze({
     type: null,
     rawBytes: 130,
-    sha256:
-      '433585662f852c8c76ded9e6f52054e1a120c78c7c0ecb8048fd3b99faa897f7',
+    sha256: '433585662f852c8c76ded9e6f52054e1a120c78c7c0ecb8048fd3b99faa897f7',
   }),
   Object.freeze({
     type: null,
     rawBytes: 3_483,
-    sha256:
-      '409643525a3fa9ae40242ac6eaf1f259c6ad8f009e5a27441d07c973ad35973c',
+    sha256: '409643525a3fa9ae40242ac6eaf1f259c6ad8f009e5a27441d07c973ad35973c',
   }),
   Object.freeze({
     type: 'module',
     rawBytes: 170,
-    sha256:
-      'b70631db2e7ab2972387bef5a188b47d56c0cf9b0e017cd15cbc7f4796d5dc85',
+    sha256: 'b70631db2e7ab2972387bef5a188b47d56c0cf9b0e017cd15cbc7f4796d5dc85',
   }),
   Object.freeze({
     type: null,
     rawBytes: 316,
-    sha256:
-      '045d36f74a646f78f142c13bcf4d3147c226a7c5f7e052c2f3c2f4964327ac6c',
+    sha256: '045d36f74a646f78f142c13bcf4d3147c226a7c5f7e052c2f3c2f4964327ac6c',
   }),
   Object.freeze({
     type: null,
-    rawBytes: 1_428,
-    sha256:
-      '2f24e41fb21ad23fcabbded0d4e419bf1a16e30e3ec6915ee68e1839b31581c5',
+    rawBytes: 1_440,
+    sha256: '420432ac656d10a032c7766602da2a9200dbefed9ec2007a137069fd5d7b5ff6',
   }),
 ]);
 
@@ -104,14 +96,14 @@ export async function analyzeProfileAssets({
       'PROFILE_ASSET_MANIFEST_MISSING',
       'The private production build manifest is missing.',
       { manifestPath },
-      cause,
+      cause
     );
   });
   if (fileStat.isSymbolicLink() || !fileStat.isFile()) {
     throw budgetError(
       'PROFILE_ASSET_MANIFEST_INVALID',
       'The private production build manifest is not a regular file.',
-      { manifestPath },
+      { manifestPath }
     );
   }
 
@@ -123,7 +115,7 @@ export async function analyzeProfileAssets({
       'PROFILE_ASSET_MANIFEST_INVALID',
       'The private production build manifest is not valid JSON.',
       { manifestPath },
-      cause,
+      cause
     );
   }
 
@@ -134,14 +126,14 @@ export async function analyzeProfileAssets({
         'PROFILE_ASSET_OUTPUT_MISSING',
         'An emitted asset recorded by the manifest is missing.',
         { path },
-        cause,
+        cause
       );
     });
     if (assetStat.isSymbolicLink() || !assetStat.isFile()) {
       throw budgetError(
         'PROFILE_ASSET_OUTPUT_INVALID',
         'An emitted asset is not a regular non-symlink file.',
-        { path },
+        { path }
       );
     }
     return readFile(absolutePath);
@@ -163,28 +155,21 @@ async function analyzeManifest(manifest, readAsset) {
       bytes: bytes.byteLength,
       sha256: sha256(bytes),
     };
-    if (
-      actual.bytes !== expected.bytes ||
-      actual.sha256 !== expected.sha256
-    ) {
+    if (actual.bytes !== expected.bytes || actual.sha256 !== expected.sha256) {
       throw budgetError(
         'PROFILE_ASSET_OUTPUT_IDENTITY_MISMATCH',
         'An emitted asset no longer matches its build-manifest identity.',
-        { path, expected, actual },
+        { path, expected, actual }
       );
     }
     emittedBytes.set(path, bytes);
   }
 
-  const initialPrerenderOutputs =
-    manifest.initialRollupGraphs.prerender.outputs;
+  const initialPrerenderOutputs = manifest.initialRollupGraphs.prerender.outputs;
   const finalPrerenderOutputs = manifest.rollupGraphs.prerender.outputs;
   const initialCssAssets = indexCssAssets(initialPrerenderOutputs);
   const finalCssAssets = indexCssAssets(finalPrerenderOutputs);
-  const cssProvenance = buildCssProvenance(
-    initialPrerenderOutputs,
-    initialCssAssets,
-  );
+  const cssProvenance = buildCssProvenance(initialPrerenderOutputs, initialCssAssets);
   assertCompleteStyleProvenance(cssProvenance);
 
   const routeEvidence = [];
@@ -238,28 +223,25 @@ async function analyzeManifest(manifest, readAsset) {
         component: page.component,
         document: routeDocument.evidence(),
         styles,
-      }),
+      })
     );
   }
 
   const uniqueProfileAssets = unionProfileAssets(reachableProfileAssets);
   const reachableStyleRoots = new Set(
-    uniqueProfileAssets.flatMap(({ profileStyleRoots }) => profileStyleRoots),
+    uniqueProfileAssets.flatMap(({ profileStyleRoots }) => profileStyleRoots)
   );
   const unreachableStyleRoots = PROFILE_STYLE_ROOTS.filter(
-    (root) => !reachableStyleRoots.has(root),
+    (root) => !reachableStyleRoots.has(root)
   );
   if (unreachableStyleRoots.length > 0) {
     throw budgetError(
       'PROFILE_CSS_REACHABILITY_MISSING',
       'One or more profile style roots are emitted but unreachable from the profile routes.',
-      { missing: unreachableStyleRoots },
+      { missing: unreachableStyleRoots }
     );
   }
-  const totalGzipBytes = uniqueProfileAssets.reduce(
-    (total, asset) => total + asset.gzipBytes,
-    0,
-  );
+  const totalGzipBytes = uniqueProfileAssets.reduce((total, asset) => total + asset.gzipBytes, 0);
   if (totalGzipBytes > PROFILE_CSS_GZIP_LIMIT) {
     throw budgetError(
       'PROFILE_CSS_BUDGET_EXCEEDED',
@@ -268,7 +250,7 @@ async function analyzeManifest(manifest, readAsset) {
         totalGzipBytes,
         limitGzipBytes: PROFILE_CSS_GZIP_LIMIT,
         assets: uniqueProfileAssets,
-      },
+      }
     );
   }
 
@@ -286,7 +268,7 @@ async function analyzeManifest(manifest, readAsset) {
     throw budgetError(
       'PROFILE_CLIENT_JAVASCRIPT_ADDED',
       'A profile route reached an unapproved client entry, or profile-owned source produced client JavaScript.',
-      javaScriptEvidence,
+      javaScriptEvidence
     );
   }
 
@@ -312,42 +294,33 @@ async function analyzeManifest(manifest, readAsset) {
       profileOwnedHydratedComponents: 0,
       profileOwnedNewClientChunks: 0,
       inheritedClientChunkCount: javaScriptEvidence.inheritedChunkCount,
-      inheritedEntryAllowlist:
-        javaScriptEvidence.inheritedEntryAllowlist,
+      inheritedEntryAllowlist: javaScriptEvidence.inheritedEntryAllowlist,
       reachableEntries: javaScriptEvidence.reachableEntries,
       reachableChunks: javaScriptEvidence.reachableChunks,
-      unknownReachableEntries:
-        javaScriptEvidence.unknownReachableEntries,
+      unknownReachableEntries: javaScriptEvidence.unknownReachableEntries,
       profileEntries: javaScriptEvidence.profileEntries,
       profileChunks: javaScriptEvidence.profileChunks,
     },
   });
 }
 
-function resolveProfileRouteDocument({
-  route,
-  routeOutputs,
-  outputFiles,
-  emittedBytes,
-}) {
+function resolveProfileRouteDocument({ route, routeOutputs, outputFiles, emittedBytes }) {
   const matches = routeOutputs.filter((entry) => entry.route === route);
   if (matches.length !== 1 || !Array.isArray(matches[0].outputs)) {
     throw budgetError(
       'PROFILE_ROUTE_OUTPUT_AMBIGUOUS',
       'The build manifest does not map the profile route to one output set.',
-      { route, matches: matches.length },
+      { route, matches: matches.length }
     );
   }
 
-  const outputs = matches[0].outputs.map((path) =>
-    normalizeRelativePath(path, 'route output')
-  );
+  const outputs = matches[0].outputs.map((path) => normalizeRelativePath(path, 'route output'));
   const htmlOutputs = outputs.filter((path) => path.endsWith('.html'));
   if (htmlOutputs.length !== 1) {
     throw budgetError(
       'PROFILE_ROUTE_DOCUMENT_AMBIGUOUS',
       'The profile route must map to exactly one emitted HTML document.',
-      { route, outputs },
+      { route, outputs }
     );
   }
 
@@ -358,17 +331,14 @@ function resolveProfileRouteDocument({
     throw budgetError(
       'PROFILE_ROUTE_DOCUMENT_MISSING',
       'The profile route HTML is absent from the verified output inventory.',
-      { route, documentPath },
+      { route, documentPath }
     );
   }
 
   const html = scanFinalHtml(documentBytes, documentPath);
   const remainingExternalStyles = new Map();
   for (const path of html.externalStyles) {
-    remainingExternalStyles.set(
-      path,
-      (remainingExternalStyles.get(path) ?? 0) + 1,
-    );
+    remainingExternalStyles.set(path, (remainingExternalStyles.get(path) ?? 0) + 1);
   }
   const claimedInlineStyles = new Set();
 
@@ -382,7 +352,7 @@ function resolveProfileRouteDocument({
         throw budgetError(
           'PROFILE_CSS_FINAL_DOCUMENT_MISMATCH',
           'A page-graph stylesheet is absent from the final route HTML.',
-          { route, documentPath, path },
+          { route, documentPath, path }
         );
       }
       remainingExternalStyles.set(path, remaining - 1);
@@ -393,7 +363,7 @@ function resolveProfileRouteDocument({
           !claimedInlineStyles.has(style.styleIndex) &&
           style.rawBytes === expectedBytes.byteLength &&
           style.sha256 === sha256(expectedBytes) &&
-          style.content.equals(expectedBytes),
+          style.content.equals(expectedBytes)
       );
       if (candidates.length !== 1) {
         throw budgetError(
@@ -407,7 +377,7 @@ function resolveProfileRouteDocument({
               sha256: sha256(expectedBytes),
             },
             matches: candidates.map(({ styleIndex }) => styleIndex),
-          },
+          }
         );
       }
       const style = candidates[0];
@@ -432,21 +402,19 @@ function resolveProfileRouteDocument({
         throw budgetError(
           'PROFILE_CSS_FINAL_DOCUMENT_AMBIGUOUS',
           'The final route HTML contains an external stylesheet absent from the page graph.',
-          { route, documentPath, unclaimed },
+          { route, documentPath, unclaimed }
         );
       }
     },
     assertAllInlineStylesClassified() {
       const unclaimed = html.inlineStyles.filter(
-        ({ styleIndex }) => !claimedInlineStyles.has(styleIndex),
+        ({ styleIndex }) => !claimedInlineStyles.has(styleIndex)
       );
       const seenBaselines = new Set();
       const unapproved = [];
       for (const style of unclaimed) {
         const baselineIndex = INHERITED_INLINE_STYLE_BASELINES.findIndex(
-          (baseline) =>
-            baseline.rawBytes === style.rawBytes &&
-            baseline.sha256 === style.sha256,
+          (baseline) => baseline.rawBytes === style.rawBytes && baseline.sha256 === style.sha256
         );
         if (baselineIndex === -1 || seenBaselines.has(baselineIndex)) {
           unapproved.push({
@@ -462,14 +430,12 @@ function resolveProfileRouteDocument({
         throw budgetError(
           'PROFILE_CSS_INLINE_UNCLASSIFIED',
           'The final route HTML contains an unclassified or duplicate inline stylesheet.',
-          { route, documentPath, unapproved },
+          { route, documentPath, unapproved }
         );
       }
     },
     assertInlineScriptsApproved() {
-      const executable = html.inlineScripts.filter(
-        ({ executable: isExecutable }) => isExecutable,
-      );
+      const executable = html.inlineScripts.filter(({ executable: isExecutable }) => isExecutable);
       if (executable.length === 0) return;
 
       const seenBaselines = new Set();
@@ -479,7 +445,7 @@ function resolveProfileRouteDocument({
           (baseline) =>
             baseline.type === script.type &&
             baseline.rawBytes === script.rawBytes &&
-            baseline.sha256 === script.sha256,
+            baseline.sha256 === script.sha256
         );
         if (baselineIndex === -1 || seenBaselines.has(baselineIndex)) {
           unapproved.push({
@@ -505,7 +471,7 @@ function resolveProfileRouteDocument({
             unapproved,
             approvedMatches: seenBaselines.size,
             approvedExpected: INHERITED_INLINE_SCRIPT_BASELINES.length,
-          },
+          }
         );
       }
     },
@@ -515,12 +481,8 @@ function resolveProfileRouteDocument({
         sha256: documentIdentity.sha256,
         rawBytes: documentIdentity.bytes,
         externalStyles: [...html.externalStyles],
-        inlineStyles: html.inlineStyles.map(
-          ({ content: _content, ...style }) => style,
-        ),
-        inlineScripts: html.inlineScripts.map(
-          ({ content: _content, ...script }) => script,
-        ),
+        inlineStyles: html.inlineStyles.map(({ content: _content, ...style }) => style),
+        inlineScripts: html.inlineScripts.map(({ content: _content, ...script }) => script),
         clientRoots: html.clientRoots,
       });
     },
@@ -534,7 +496,7 @@ function scanFinalHtml(bytes, documentPath) {
     throw budgetError(
       'PROFILE_ROUTE_DOCUMENT_ENCODING_INVALID',
       'The emitted profile document is not canonical UTF-8.',
-      { documentPath },
+      { documentPath }
     );
   }
 
@@ -560,8 +522,7 @@ function scanFinalHtml(bytes, documentPath) {
     }
 
     let nameStart = open + 1;
-    if (source[nameStart] === '/' || source[nameStart] === '!' ||
-        source[nameStart] === '?') {
+    if (source[nameStart] === '/' || source[nameStart] === '!' || source[nameStart] === '?') {
       const ignoredEnd = findHtmlTagEnd(source, nameStart);
       if (ignoredEnd === -1) {
         throw malformedHtml(documentPath, 'unterminated markup');
@@ -583,40 +544,24 @@ function scanFinalHtml(bytes, documentPath) {
     if (tagEnd === -1) {
       throw malformedHtml(documentPath, `unterminated <${tagName}> tag`);
     }
-    const attributes = parseHtmlAttributes(
-      source.slice(nameEnd, tagEnd),
-      documentPath,
-      tagName,
-    );
+    const attributes = parseHtmlAttributes(source.slice(nameEnd, tagEnd), documentPath, tagName);
 
     if (tagName === 'link') {
-      const rel = (attributes.get('rel') ?? '')
-        .toLowerCase()
-        .split(/\s+/u)
-        .filter(Boolean);
+      const rel = (attributes.get('rel') ?? '').toLowerCase().split(/\s+/u).filter(Boolean);
       if (rel.includes('stylesheet')) {
         const href = attributes.get('href');
         if (href === undefined) {
-          throw malformedHtml(
-            documentPath,
-            'stylesheet link without href',
-          );
+          throw malformedHtml(documentPath, 'stylesheet link without href');
         }
-        externalStyles.push(
-          normalizeInternalOutputUrl(href, 'stylesheet href'),
-        );
+        externalStyles.push(normalizeInternalOutputUrl(href, 'stylesheet href'));
       }
       if (
         rel.includes('modulepreload') ||
-        (rel.includes('preload') &&
-          (attributes.get('as') ?? '').toLowerCase() === 'script')
+        (rel.includes('preload') && (attributes.get('as') ?? '').toLowerCase() === 'script')
       ) {
         const href = attributes.get('href');
         if (href === undefined) {
-          throw malformedHtml(
-            documentPath,
-            'client preload link without href',
-          );
+          throw malformedHtml(documentPath, 'client preload link without href');
         }
         clientRoots.push({
           role: 'modulepreload',
@@ -630,10 +575,7 @@ function scanFinalHtml(bytes, documentPath) {
       ]) {
         const value = attributes.get(attribute);
         if (value === undefined) {
-          throw malformedHtml(
-            documentPath,
-            `astro-island without ${attribute}`,
-          );
+          throw malformedHtml(documentPath, `astro-island without ${attribute}`);
         }
         clientRoots.push({
           role,
@@ -643,38 +585,22 @@ function scanFinalHtml(bytes, documentPath) {
     } else if (tagName === 'script' && attributes.has('src')) {
       clientRoots.push({
         role: 'script',
-        path: normalizeInternalOutputUrl(
-          attributes.get('src'),
-          'script src',
-        ),
+        path: normalizeInternalOutputUrl(attributes.get('src'), 'script src'),
       });
     }
 
     if (tagName === 'style' || tagName === 'script') {
-      const closeStart = findRawTextClose(
-        lowerSource,
-        tagName,
-        tagEnd + 1,
-      );
+      const closeStart = findRawTextClose(lowerSource, tagName, tagEnd + 1);
       if (closeStart === -1) {
-        throw malformedHtml(
-          documentPath,
-          `unterminated <${tagName}> raw-text element`,
-        );
+        throw malformedHtml(documentPath, `unterminated <${tagName}> raw-text element`);
       }
       const closeEnd = findHtmlTagEnd(source, closeStart + 2 + tagName.length);
       if (closeEnd === -1) {
-        throw malformedHtml(
-          documentPath,
-          `unterminated </${tagName}> tag`,
-        );
+        throw malformedHtml(documentPath, `unterminated </${tagName}> tag`);
       }
       if (tagName === 'style') {
         const contentStart = tagEnd + 1;
-        const content = Buffer.from(
-          source.slice(contentStart, closeStart),
-          'utf8',
-        );
+        const content = Buffer.from(source.slice(contentStart, closeStart), 'utf8');
         inlineStyles.push({
           styleIndex,
           startByte: Buffer.byteLength(source.slice(0, contentStart)),
@@ -686,15 +612,10 @@ function scanFinalHtml(bytes, documentPath) {
         styleIndex += 1;
       } else if (!attributes.has('src')) {
         const contentStart = tagEnd + 1;
-        const content = Buffer.from(
-          source.slice(contentStart, closeStart),
-          'utf8',
-        );
+        const content = Buffer.from(source.slice(contentStart, closeStart), 'utf8');
         const rawType = attributes.get('type');
         const type =
-          rawType === undefined || rawType.trim() === ''
-            ? null
-            : rawType.trim().toLowerCase();
+          rawType === undefined || rawType.trim() === '' ? null : rawType.trim().toLowerCase();
         inlineScripts.push({
           scriptIndex,
           type,
@@ -718,9 +639,7 @@ function scanFinalHtml(bytes, documentPath) {
     externalStyles: Object.freeze([...externalStyles]),
     inlineStyles: Object.freeze(inlineStyles),
     inlineScripts: Object.freeze(inlineScripts),
-    clientRoots: Object.freeze(
-      clientRoots.map((root) => deepFreeze(root)),
-    ),
+    clientRoots: Object.freeze(clientRoots.map((root) => deepFreeze(root))),
   };
 }
 
@@ -731,11 +650,7 @@ function findRawTextClose(lowerSource, tagName, start) {
     const candidate = lowerSource.indexOf(marker, cursor);
     if (candidate === -1) return -1;
     const boundary = lowerSource[candidate + marker.length];
-    if (
-      boundary === '>' ||
-      boundary === '/' ||
-      isHtmlWhitespace(boundary)
-    ) {
+    if (boundary === '>' || boundary === '/' || isHtmlWhitespace(boundary)) {
       return candidate;
     }
     cursor = candidate + marker.length;
@@ -791,10 +706,7 @@ function parseHtmlAttributes(source, documentPath, tagName) {
         const valueStart = cursor;
         const valueEnd = source.indexOf(quote, cursor);
         if (valueEnd === -1) {
-          throw malformedHtml(
-            documentPath,
-            `unterminated ${name} attribute`,
-          );
+          throw malformedHtml(documentPath, `unterminated ${name} attribute`);
         }
         value = source.slice(valueStart, valueEnd);
         cursor = valueEnd + 1;
@@ -811,10 +723,7 @@ function parseHtmlAttributes(source, documentPath, tagName) {
       }
     }
     if (attributes.has(name)) {
-      throw malformedHtml(
-        documentPath,
-        `duplicate ${name} attribute on <${tagName}>`,
-      );
+      throw malformedHtml(documentPath, `duplicate ${name} attribute on <${tagName}>`);
     }
     attributes.set(name, value);
   }
@@ -835,7 +744,7 @@ function normalizeInternalOutputUrl(value, label) {
     throw budgetError(
       'PROFILE_ROUTE_EXTERNAL_RESOURCE',
       `The profile route contains a non-output ${label}.`,
-      { value },
+      { value }
     );
   }
   let decoded;
@@ -846,22 +755,21 @@ function normalizeInternalOutputUrl(value, label) {
       'PROFILE_ASSET_PATH_INVALID',
       `The profile route contains an invalid ${label}.`,
       { value },
-      cause,
+      cause
     );
   }
   return normalizeRelativePath(decoded.slice(1), label);
 }
 
 function isHtmlWhitespace(value) {
-  return value === ' ' || value === '\n' || value === '\r' ||
-    value === '\t' || value === '\f';
+  return value === ' ' || value === '\n' || value === '\r' || value === '\t' || value === '\f';
 }
 
 function malformedHtml(documentPath, reason) {
   return budgetError(
     'PROFILE_ROUTE_DOCUMENT_INVALID',
     'The emitted profile HTML could not be parsed fail-closed.',
-    { documentPath, reason },
+    { documentPath, reason }
   );
 }
 
@@ -891,7 +799,7 @@ function resolveExternalStyle({
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_MISSING',
       'A route stylesheet cannot be traced through Rollup to emitted bytes.',
-      { route, path },
+      { route, path }
     );
   }
   if (
@@ -902,7 +810,7 @@ function resolveExternalStyle({
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_AMBIGUOUS',
       'Rollup and final-output identities disagree for a route stylesheet.',
-      { route, path, rollupAsset, outputIdentity },
+      { route, path, rollupAsset, outputIdentity }
     );
   }
 
@@ -955,7 +863,7 @@ function resolveInlineStyle({
     throw budgetError(
       'PROFILE_CSS_INLINE_IDENTITY_INVALID',
       'An inline stylesheet lacks exact byte evidence.',
-      { route, depth, order },
+      { route, depth, order }
     );
   }
   const bytes = decodeCanonicalBase64(sheet.contentBase64);
@@ -964,7 +872,7 @@ function resolveInlineStyle({
     throw budgetError(
       'PROFILE_CSS_INLINE_IDENTITY_MISMATCH',
       'An inline stylesheet does not match its build-manifest identity.',
-      { route, depth, order, expected: sheet, actual },
+      { route, depth, order, expected: sheet, actual }
     );
   }
 
@@ -975,16 +883,14 @@ function resolveInlineStyle({
   // exact link. Without exactly one such asset, fall back to the page
   // component's own asset, whose transform check then fails closed.
   const byContent = [...cssAssets.values()].filter(
-    (asset) =>
-      cssProvenance.has(asset.file) &&
-      isApprovedInlineCssTransform(asset.content, bytes),
+    (asset) => cssProvenance.has(asset.file) && isApprovedInlineCssTransform(asset.content, bytes)
   );
-  const matches = byContent.length === 1
-    ? byContent
-    : [...cssAssets.values()].filter(
-        (asset) =>
-          cssProvenance.get(asset.file)?.modules.includes(component),
-      );
+  const matches =
+    byContent.length === 1
+      ? byContent
+      : [...cssAssets.values()].filter((asset) =>
+          cssProvenance.get(asset.file)?.modules.includes(component)
+        );
   if (matches.length !== 1) {
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_AMBIGUOUS',
@@ -994,7 +900,7 @@ function resolveInlineStyle({
         component,
         sha256: sheet.sha256,
         matches: matches.map(({ file }) => file),
-      },
+      }
     );
   }
 
@@ -1085,15 +991,10 @@ function unionProfileAssets(assets) {
         finalLocations: new Map(
           asset.finalLocation === undefined
             ? []
-            : [[
-                finalLocationKey(asset.finalLocation),
-                asset.finalLocation,
-              ]],
+            : [[finalLocationKey(asset.finalLocation), asset.finalLocation]]
         ),
         sourceRollupAssetPaths: new Set(
-          asset.sourceRollupAssetPath === undefined
-            ? []
-            : [asset.sourceRollupAssetPath],
+          asset.sourceRollupAssetPath === undefined ? [] : [asset.sourceRollupAssetPath]
         ),
       });
       continue;
@@ -1103,10 +1004,7 @@ function unionProfileAssets(assets) {
     for (const chunk of asset.provenanceChunks) current.provenanceChunks.add(chunk);
     current.emittedAssetPaths.add(asset.emittedAssetPath);
     if (asset.finalLocation !== undefined) {
-      current.finalLocations.set(
-        finalLocationKey(asset.finalLocation),
-        asset.finalLocation,
-      );
+      current.finalLocations.set(finalLocationKey(asset.finalLocation), asset.finalLocation);
     }
     if (asset.sourceRollupAssetPath !== undefined) {
       current.sourceRollupAssetPaths.add(asset.sourceRollupAssetPath);
@@ -1128,11 +1026,10 @@ function unionProfileAssets(assets) {
         finalLocations: [...asset.finalLocations.values()].sort(
           (left, right) =>
             left.documentPath.localeCompare(right.documentPath) ||
-            left.styleIndex - right.styleIndex,
+            left.styleIndex - right.styleIndex
         ),
-        sourceRollupAssetPaths:
-          [...asset.sourceRollupAssetPaths].sort(),
-      }),
+        sourceRollupAssetPaths: [...asset.sourceRollupAssetPaths].sort(),
+      })
     )
     .sort((left, right) => left.path.localeCompare(right.path));
 }
@@ -1156,7 +1053,7 @@ function indexCssAssets(outputs) {
       throw budgetError(
         'PROFILE_CSS_PROVENANCE_AMBIGUOUS',
         'The Rollup CSS asset manifest is duplicate or incomplete.',
-        { path },
+        { path }
       );
     }
     const content = decodeCanonicalBase64(output.contentBase64);
@@ -1168,7 +1065,7 @@ function indexCssAssets(outputs) {
       throw budgetError(
         'PROFILE_CSS_PROVENANCE_AMBIGUOUS',
         'The Rollup CSS asset content does not match its recorded identity.',
-        { path, expected: { bytes: output.bytes, sha256: output.sha256 }, actual },
+        { path, expected: { bytes: output.bytes, sha256: output.sha256 }, actual }
       );
     }
     result.set(path, {
@@ -1181,7 +1078,7 @@ function indexCssAssets(outputs) {
   if (result.size === 0) {
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_MISSING',
-      'The Rollup manifest contains no CSS assets.',
+      'The Rollup manifest contains no CSS assets.'
     );
   }
   return result;
@@ -1197,7 +1094,7 @@ function buildCssProvenance(outputs, cssAssets) {
         throw budgetError(
           'PROFILE_CSS_PROVENANCE_MISSING',
           'A Rollup chunk references an unmanifested CSS asset.',
-          { chunk: chunk.file, path },
+          { chunk: chunk.file, path }
         );
       }
       const current = result.get(path) ?? {
@@ -1216,7 +1113,7 @@ function buildCssProvenance(outputs, cssAssets) {
           throw budgetError(
             'PROFILE_CSS_SOURCE_UNAPPROVED',
             'A stylesheet under the profile ownership root is not explicitly approved.',
-            { chunk: chunk.file, module, modulePath },
+            { chunk: chunk.file, module, modulePath }
           );
         }
         if (
@@ -1226,7 +1123,7 @@ function buildCssProvenance(outputs, cssAssets) {
           throw budgetError(
             'PROFILE_CSS_SOURCE_UNAPPROVED',
             'A profile component or route emitted component-local CSS outside the approved style roots.',
-            { chunk: chunk.file, module, modulePath },
+            { chunk: chunk.file, module, modulePath }
           );
         }
         if (PROFILE_STYLE_ROOTS.includes(modulePath)) {
@@ -1245,7 +1142,7 @@ function buildCssProvenance(outputs, cssAssets) {
         modules: [...provenance.modules].sort(),
         profileStyleRoots: [...provenance.profileStyleRoots].sort(),
       }),
-    ]),
+    ])
   );
 }
 
@@ -1254,7 +1151,7 @@ function moduleOwnershipPath(module) {
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_AMBIGUOUS',
       'A CSS provenance module identifier is invalid.',
-      { module },
+      { module }
     );
   }
   const query = module.indexOf('?');
@@ -1281,21 +1178,13 @@ function isProfileComponentStyleModule(modulePath, module) {
 function isApprovedInlineCssTransform(sourceBytes, finalBytes) {
   if (sourceBytes.equals(finalBytes)) return true;
   return (
-    sourceBytes.byteLength ===
-      finalBytes.byteLength + VITE_POST_PROCESS_MARKER.byteLength &&
+    sourceBytes.byteLength === finalBytes.byteLength + VITE_POST_PROCESS_MARKER.byteLength &&
     sourceBytes.subarray(0, finalBytes.byteLength).equals(finalBytes) &&
-    sourceBytes.subarray(finalBytes.byteLength).equals(
-      VITE_POST_PROCESS_MARKER,
-    )
+    sourceBytes.subarray(finalBytes.byteLength).equals(VITE_POST_PROCESS_MARKER)
   );
 }
 
-function assertInlineCssTransform({
-  route,
-  sourcePath,
-  sourceBytes,
-  finalBytes,
-}) {
+function assertInlineCssTransform({ route, sourcePath, sourceBytes, finalBytes }) {
   if (isApprovedInlineCssTransform(sourceBytes, finalBytes)) return;
   throw budgetError(
     'PROFILE_CSS_INLINE_TRANSFORM_UNAPPROVED',
@@ -1311,44 +1200,33 @@ function assertInlineCssTransform({
         rawBytes: finalBytes.byteLength,
         sha256: sha256(finalBytes),
       },
-    },
+    }
   );
 }
 
 function assertCompleteStyleProvenance(provenance) {
   const found = new Set(
-    [...provenance.values()].flatMap(({ profileStyleRoots }) =>
-      profileStyleRoots,
-    ),
+    [...provenance.values()].flatMap(({ profileStyleRoots }) => profileStyleRoots)
   );
   const missing = PROFILE_STYLE_ROOTS.filter((root) => !found.has(root));
   if (missing.length > 0) {
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_MISSING',
       'One or more authored profile style roots have no emitted provenance.',
-      { missing },
+      { missing }
     );
   }
 }
 
-function analyzeClientJavaScript({
-  routeDocuments,
-  viteManifest,
-  outputs,
-  outputFiles,
-}) {
+function analyzeClientJavaScript({ routeDocuments, viteManifest, outputs, outputFiles }) {
   const manifestEntries = Object.entries(viteManifest);
   const manifestByFile = new Map();
   for (const [key, entry] of manifestEntries) {
-    if (
-      !isPlainRecord(entry) ||
-      typeof entry.file !== 'string' ||
-      !entry.file.endsWith('.js')
-    ) {
+    if (!isPlainRecord(entry) || typeof entry.file !== 'string' || !entry.file.endsWith('.js')) {
       throw budgetError(
         'PROFILE_CLIENT_MANIFEST_INVALID',
         'The Vite client manifest contains an invalid JavaScript entry.',
-        { key },
+        { key }
       );
     }
     const file = normalizeRelativePath(entry.file, 'client manifest file');
@@ -1358,27 +1236,20 @@ function analyzeClientJavaScript({
   }
 
   const profileEntries = Object.entries(viteManifest)
-    .filter(
-      ([key, entry]) =>
-        isProfileClientSource(key) ||
-        isProfileClientSource(entry.src ?? ''),
-    )
+    .filter(([key, entry]) => isProfileClientSource(key) || isProfileClientSource(entry.src ?? ''))
     .map(([key, entry]) => ({ key, file: entry.file, src: entry.src ?? null }))
     .sort((left, right) => left.key.localeCompare(right.key));
   const clientChunks = outputs.filter(
-    (output) => output.type === 'chunk' && output.file.endsWith('.js'),
+    (output) => output.type === 'chunk' && output.file.endsWith('.js')
   );
   const clientChunksByFile = new Map();
   for (const chunk of clientChunks) {
     const file = normalizeRelativePath(chunk.file, 'client chunk');
-    if (
-      clientChunksByFile.has(file) ||
-      !Array.isArray(chunk.modules)
-    ) {
+    if (clientChunksByFile.has(file) || !Array.isArray(chunk.modules)) {
       throw budgetError(
         'PROFILE_CLIENT_GRAPH_AMBIGUOUS',
         'The client Rollup graph contains a duplicate or invalid chunk.',
-        { file },
+        { file }
       );
     }
     clientChunksByFile.set(file, chunk);
@@ -1397,12 +1268,8 @@ function analyzeClientJavaScript({
   const reachableChunks = new Map();
 
   for (const routeDocument of routeDocuments) {
-    const directRoots = routeDocument.clientRoots.filter(
-      ({ role }) => role !== 'modulepreload',
-    );
-    const preloadRoots = routeDocument.clientRoots.filter(
-      ({ role }) => role === 'modulepreload',
-    );
+    const directRoots = routeDocument.clientRoots.filter(({ role }) => role !== 'modulepreload');
+    const preloadRoots = routeDocument.clientRoots.filter(({ role }) => role === 'modulepreload');
     for (const root of directRoots) {
       processHtmlRoot(routeDocument, root, true);
     }
@@ -1422,7 +1289,7 @@ function analyzeClientJavaScript({
           documentPath: routeDocument.documentPath,
           root,
           matches: candidates.map(({ key }) => key),
-        },
+        }
       );
     }
 
@@ -1439,15 +1306,10 @@ function analyzeClientJavaScript({
     reachableEntries.push(entryEvidence);
     const inherited = requireAllowlistedSource
       ? inheritedProfileClientEntries.has(source)
-      : reachableChunks.get(root.path)?.routes.has(routeDocument.route) ===
-        true;
+      : reachableChunks.get(root.path)?.routes.has(routeDocument.route) === true;
     if (!inherited) unknownReachableEntries.push(entryEvidence);
 
-    visitManifestEntry(
-      candidate.key,
-      routeDocument.route,
-      new Set(),
-    );
+    visitManifestEntry(candidate.key, routeDocument.route, new Set());
   }
 
   function visitManifestEntry(key, route, visiting) {
@@ -1455,7 +1317,7 @@ function analyzeClientJavaScript({
       throw budgetError(
         'PROFILE_CLIENT_GRAPH_AMBIGUOUS',
         'The Vite client manifest contains a cyclic dependency.',
-        { key, route, visiting: [...visiting] },
+        { key, route, visiting: [...visiting] }
       );
     }
     const entry = viteManifest[key];
@@ -1463,7 +1325,7 @@ function analyzeClientJavaScript({
       throw budgetError(
         'PROFILE_CLIENT_DEPENDENCY_MISSING',
         'A reachable client manifest dependency is missing.',
-        { key, route },
+        { key, route }
       );
     }
 
@@ -1474,7 +1336,7 @@ function analyzeClientJavaScript({
       throw budgetError(
         'PROFILE_CLIENT_OUTPUT_UNTRACEABLE',
         'A reachable client manifest entry is absent from Rollup or final output.',
-        { key, route, file },
+        { key, route, file }
       );
     }
     const current = reachableChunks.get(file) ?? {
@@ -1492,15 +1354,12 @@ function analyzeClientJavaScript({
 
     const nextVisiting = new Set(visiting);
     nextVisiting.add(key);
-    const dependencies = [
-      ...(entry.imports ?? []),
-      ...(entry.dynamicImports ?? []),
-    ];
+    const dependencies = [...(entry.imports ?? []), ...(entry.dynamicImports ?? [])];
     if (dependencies.some((dependency) => typeof dependency !== 'string')) {
       throw budgetError(
         'PROFILE_CLIENT_MANIFEST_INVALID',
         'A reachable client manifest entry has invalid dependencies.',
-        { key, route },
+        { key, route }
       );
     }
     for (const dependency of dependencies) {
@@ -1524,9 +1383,7 @@ function analyzeClientJavaScript({
   return deepFreeze({
     profileEntries,
     profileChunks,
-    unknownReachableEntries: unknownReachableEntries.sort(
-      compareReachableEntries,
-    ),
+    unknownReachableEntries: unknownReachableEntries.sort(compareReachableEntries),
     reachableEntries: reachableEntries.sort(compareReachableEntries),
     reachableChunks: reachableChunkEvidence,
     inheritedEntryAllowlist: [...INHERITED_PROFILE_CLIENT_ENTRIES],
@@ -1559,14 +1416,12 @@ function isProfileClientSource(path) {
 }
 
 function findExactProfilePage(pages, route) {
-  const matches = pages.filter(
-    (page) => (page.route.pathname ?? page.route.route) === route,
-  );
+  const matches = pages.filter((page) => (page.route.pathname ?? page.route.route) === route);
   if (matches.length !== 1 || !Array.isArray(matches[0].styles)) {
     throw budgetError(
       'PROFILE_ROUTE_GRAPH_AMBIGUOUS',
       'The build manifest does not contain one exact profile route graph.',
-      { route, matches: matches.length },
+      { route, matches: matches.length }
     );
   }
   return matches[0];
@@ -1585,7 +1440,7 @@ function indexOutputFiles(files) {
       throw budgetError(
         'PROFILE_ASSET_MANIFEST_INVALID',
         'The output file inventory is duplicate or invalid.',
-        { path },
+        { path }
       );
     }
     result.set(path, { bytes: file.bytes, sha256: file.sha256 });
@@ -1621,7 +1476,7 @@ function validateManifest(manifest) {
   ) {
     throw budgetError(
       'PROFILE_ASSET_MANIFEST_INVALID',
-      'The production build manifest is incomplete.',
+      'The production build manifest is incomplete.'
     );
   }
   for (const route of PROFILE_ROUTES) {
@@ -1629,7 +1484,7 @@ function validateManifest(manifest) {
       throw budgetError(
         'PROFILE_ROUTE_GRAPH_MISSING',
         'The production build identity is missing a profile route.',
-        { route },
+        { route }
       );
     }
   }
@@ -1644,20 +1499,18 @@ function validateManifestIdentity(manifest) {
         initialRollupGraphs: manifest.initialRollupGraphs,
         rollupGraphs: manifest.rollupGraphs,
         viteManifest: manifest.viteManifest,
-      }),
-    ),
+      })
+    )
   );
-  const outputSha256 = sha256(
-    Buffer.from(JSON.stringify(manifest.outputFiles)),
-  );
+  const outputSha256 = sha256(Buffer.from(JSON.stringify(manifest.outputFiles)));
   const id = sha256(
     Buffer.from(
       JSON.stringify({
         sourceGraphSha256,
         outputSha256,
         builtRoutes: manifest.buildIdentity.routes,
-      }),
-    ),
+      })
+    )
   );
   const actual = { id, sourceGraphSha256, outputSha256 };
   const expected = {
@@ -1673,7 +1526,7 @@ function validateManifestIdentity(manifest) {
     throw budgetError(
       'PROFILE_ASSET_MANIFEST_IDENTITY_MISMATCH',
       'The production build manifest identity is internally inconsistent.',
-      { expected, actual },
+      { expected, actual }
     );
   }
 }
@@ -1685,15 +1538,11 @@ function normalizeRelativePath(path, label) {
     path.startsWith('/') ||
     path.includes('\\') ||
     path.includes('\0') ||
-    path.split('/').some((segment) =>
-      segment === '' || segment === '.' || segment === '..'
-    )
+    path.split('/').some((segment) => segment === '' || segment === '.' || segment === '..')
   ) {
-    throw budgetError(
-      'PROFILE_ASSET_PATH_INVALID',
-      `${label} is not a normalized relative path.`,
-      { path },
-    );
+    throw budgetError('PROFILE_ASSET_PATH_INVALID', `${label} is not a normalized relative path.`, {
+      path,
+    });
   }
   return path;
 }
@@ -1703,7 +1552,7 @@ function decodeCanonicalBase64(value) {
   if (bytes.toString('base64') !== value) {
     throw budgetError(
       'PROFILE_CSS_INLINE_IDENTITY_INVALID',
-      'Inline CSS evidence is not canonical base64.',
+      'Inline CSS evidence is not canonical base64.'
     );
   }
   return bytes;
@@ -1726,8 +1575,7 @@ function isPlainRecord(value) {
     value !== null &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
-    (Object.getPrototypeOf(value) === Object.prototype ||
-      Object.getPrototypeOf(value) === null)
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
   );
 }
 

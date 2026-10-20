@@ -14,14 +14,14 @@ U1 이 제공하는 stable command surface 는 정확히 다섯 개이며 이 �
 있다. CI 와 U3 는 읽기 전용 네 개만 실행하고 `resume:pdf` 는 절대 호출하지
 않는다.
 
-| Command | Mutation | 하는 일 |
-| :--- | :--- | :--- |
-| `npm run test:unit` | 없음 (읽기 전용) | Vitest 예제 + obligation map 완전성 |
-| `npm run test:pbt` | 없음 (읽기 전용) | seed 검증 후 U1 property 스위트만 실행 |
-| `npm run test:e2e` | `dist/` 와 private evidence 만 | 폰트 검증 → clean build → loopback preview → Playwright/Axe |
-| `npm run resume:pdf -- --prepare` | private artifacts 만 | 후보 PDF, PDF.js 증거, 4-surface parity, draft receipt |
-| `npm run resume:pdf -- --promote <candidate-id> --review <path>` | 유일한 tracked mutation 경로 | 리뷰 재검증 → receipt/PDF 트랜잭션 → clean second build → finalize/rollback |
-| `npm run resume:pdf:verify` | 없음 (항상 읽기 전용) | 현재 tracked PDF/receipt 재검증 |
+| Command                                                          | Mutation                       | 하는 일                                                                     |
+| :--------------------------------------------------------------- | :----------------------------- | :-------------------------------------------------------------------------- |
+| `npm run test:unit`                                              | 없음 (읽기 전용)               | Vitest 예제 + obligation map 완전성                                         |
+| `npm run test:pbt`                                               | 없음 (읽기 전용)               | seed 검증 후 U1 property 스위트만 실행                                      |
+| `npm run test:e2e`                                               | `dist/` 와 private evidence 만 | 폰트 검증 → clean build → loopback preview → Playwright/Axe                 |
+| `npm run resume:pdf -- --prepare`                                | private artifacts 만           | 후보 PDF, PDF.js 증거, 4-surface parity, draft receipt                      |
+| `npm run resume:pdf -- --promote <candidate-id> --review <path>` | 유일한 tracked mutation 경로   | 리뷰 재검증 → receipt/PDF 트랜잭션 → clean second build → finalize/rollback |
+| `npm run resume:pdf:verify`                                      | 없음 (항상 읽기 전용)          | 현재 tracked PDF/receipt 재검증                                             |
 
 `npm run test:pbt:framework` 는 PBT-09 도구 선정 증거로 남겨둔 내부
 스크립트다. stable command 가 아니고 U3 가 호출하지 않으며 실제 U1 property
@@ -119,15 +119,15 @@ lock 은 구별되지 않고, 잘못 추측하면 공개 파일에 writer 가 �
 
 ## 생성물 경계
 
-| 경로 | 상태 |
-| :--- | :--- |
-| `src/lib/profile/profile-data.ts` | tracked, 유일한 production fact source |
-| `verification/profile/*.json` | tracked, non-public 기계 영수증 |
-| `verification/resume/current-release.json` | tracked, non-public 릴리스 영수증 |
-| `public/resume.pdf` | tracked, 공개 파생 자산 — placeholder 금지 |
-| `.generated/profile-font/` | gitignored, 검증된 Pretendard 구체화 |
-| `.artifacts/profile/` | gitignored, 후보·증거·뷰어·journal |
-| `dist/` | gitignored 빌드 출력 |
+| 경로                                       | 상태                                       |
+| :----------------------------------------- | :----------------------------------------- |
+| `src/lib/profile/profile-data.ts`          | tracked, 유일한 production fact source     |
+| `verification/profile/*.json`              | tracked, non-public 기계 영수증            |
+| `verification/resume/current-release.json` | tracked, non-public 릴리스 영수증          |
+| `public/resume.pdf`                        | tracked, 공개 파생 자산 — placeholder 금지 |
+| `.generated/profile-font/`                 | gitignored, 검증된 Pretendard 구체화       |
+| `.artifacts/profile/`                      | gitignored, 후보·증거·뷰어·journal         |
+| `dist/`                                    | gitignored 빌드 출력                       |
 
 `.artifacts/` 와 `.generated/` 는 절대 tracked 가 되지 않으며 빌드 출력에도 새지
 않는다. 빌드 종료 시 sitemap 생성 이후 private receipt 마커를 내용과 경로 양쪽에서

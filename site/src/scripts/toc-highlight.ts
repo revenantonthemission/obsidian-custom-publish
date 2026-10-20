@@ -14,7 +14,7 @@
 const LINE_SLACK = 24;
 
 const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a[href^="#"]')];
-const ids = [...new Set(links.map((link) => (link.getAttribute("href") ?? "").slice(1)))];
+const ids = [...new Set(links.map((link) => (link.getAttribute('href') ?? '').slice(1)))];
 const headings = ids
   .map((id) => document.getElementById(id))
   .filter((heading): heading is HTMLElement => heading !== null);
@@ -33,7 +33,8 @@ function currentId(): string | null {
   // Headings inside a folded section have no box and are skipped.
   const visible = headings.filter((heading) => heading.getClientRects().length > 0);
   const root = document.documentElement;
-  const atBottom = window.scrollY > 0 && window.innerHeight + window.scrollY >= root.scrollHeight - 2;
+  const atBottom =
+    window.scrollY > 0 && window.innerHeight + window.scrollY >= root.scrollHeight - 2;
   if (atBottom) return visible.at(-1)?.id ?? null;
   const passed = visible.filter((heading) => heading.getBoundingClientRect().top <= readingLine);
   return passed.at(-1)?.id ?? null;
@@ -44,8 +45,8 @@ function apply(id: string | null): void {
   activeId = id;
   const href = id === null ? null : `#${id}`;
   for (const link of links) {
-    if (link.getAttribute("href") === href) link.setAttribute("aria-current", "location");
-    else link.removeAttribute("aria-current");
+    if (link.getAttribute('href') === href) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
   }
 }
 
@@ -60,13 +61,13 @@ function schedule(): void {
 
 if (headings.length > 0) {
   measureReadingLine();
-  window.addEventListener("scroll", schedule, { passive: true });
-  window.addEventListener("resize", () => {
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', () => {
     measureReadingLine();
     schedule();
   });
   // Folding a section or a late image moves the headings without a scroll.
-  const content = document.querySelector(".post-content");
+  const content = document.querySelector('.post-content');
   if (content) new ResizeObserver(schedule).observe(content);
   schedule();
 }

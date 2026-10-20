@@ -33,10 +33,7 @@ export type ProfileRouteIdentity =
       label: PortfolioRole['title'];
     }>;
 
-export type ProfileLocalNavigationId =
-  | 'home'
-  | 'resume'
-  | 'portfolio';
+export type ProfileLocalNavigationId = 'home' | 'resume' | 'portfolio';
 
 export interface ProfileLocalNavigationItemView {
   readonly id: ProfileLocalNavigationId;
@@ -72,20 +69,11 @@ export interface PeriodView {
   readonly text: string;
 }
 
-export type ProfileActionTarget =
-  | 'email'
-  | 'external'
-  | 'internal'
-  | 'document';
+export type ProfileActionTarget = 'email' | 'external' | 'internal' | 'document';
 
 export interface ProfileActionView {
   readonly id: string;
-  readonly kind:
-    | 'email'
-    | 'github'
-    | 'additional'
-    | 'evidence'
-    | 'document';
+  readonly kind: 'email' | 'github' | 'additional' | 'evidence' | 'document';
   readonly target: ProfileActionTarget;
   readonly href: string;
   readonly label: string;
@@ -210,22 +198,11 @@ export interface ResumePresentation {
 }
 
 export type CaseStudyDimensionKey =
-  | 'problem'
-  | 'role'
-  | 'keyDecisions'
-  | 'architecture'
-  | 'outcomes'
-  | 'lessons';
+  'problem' | 'role' | 'keyDecisions' | 'architecture' | 'outcomes' | 'lessons';
 
 export interface CaseStudyDimensionView {
   readonly key: CaseStudyDimensionKey;
-  readonly heading:
-    | '문제'
-    | '역할'
-    | '핵심 결정'
-    | '구조'
-    | '결과'
-    | '배운 점';
+  readonly heading: '문제' | '역할' | '핵심 결정' | '구조' | '결과' | '배운 점';
   readonly blocks: readonly TextBlockView[];
 }
 
@@ -268,10 +245,7 @@ const PROFILE_ROUTE_IDENTITIES = Object.freeze({
     pathname: '/portfolio',
     label: 'Portfolio',
   }),
-} as const satisfies Record<
-  ProfileRouteIdentity['route'],
-  ProfileRouteIdentity
->);
+} as const satisfies Record<ProfileRouteIdentity['route'], ProfileRouteIdentity>);
 
 const LOCAL_NAVIGATION_IDS = Object.freeze({
   '/': 'home',
@@ -286,10 +260,7 @@ const DIMENSION_HEADINGS = Object.freeze({
   architecture: '구조',
   outcomes: '결과',
   lessons: '배운 점',
-} as const satisfies Record<
-  CaseStudyDimensionKey,
-  CaseStudyDimensionView['heading']
->);
+} as const satisfies Record<CaseStudyDimensionKey, CaseStudyDimensionView['heading']>);
 
 /**
  * Maps the already-validated résumé projection to a frozen semantic tree.
@@ -297,7 +268,7 @@ const DIMENSION_HEADINGS = Object.freeze({
  */
 export function buildResumePresentation(
   profile: ResumeProfile,
-  documentLink?: ResumeDocumentLink,
+  documentLink?: ResumeDocumentLink
 ): ResumePresentation {
   const sections: ResumeSectionView[] = [
     Object.freeze({
@@ -322,9 +293,7 @@ export function buildResumePresentation(
     Object.freeze({
       kind: 'projects',
       heading: '프로젝트',
-      projects: frozenArray(
-        profile.projectSummaries.map(resumeProjectSummary),
-      ),
+      projects: frozenArray(profile.projectSummaries.map(resumeProjectSummary)),
     }),
   ];
 
@@ -334,7 +303,7 @@ export function buildResumePresentation(
         kind: 'education',
         heading: '학력',
         entries: frozenArray(profile.education.map(educationView)),
-      }),
+      })
     );
   }
 
@@ -343,10 +312,8 @@ export function buildResumePresentation(
       Object.freeze({
         kind: 'certifications',
         heading: '어학 자격',
-        entries: frozenArray(
-          profile.certifications.map(certificationView),
-        ),
-      }),
+        entries: frozenArray(profile.certifications.map(certificationView)),
+      })
     );
   }
 
@@ -362,16 +329,19 @@ export function buildResumePresentation(
  */
 export function buildPortfolioPresentation(
   profile: PortfolioProfile,
-  roleId: PortfolioRoleId = 'data-engineer-ai',
+  roleId: PortfolioRoleId = 'data-engineer-ai'
 ): PortfolioPresentation {
   const role = getPortfolioRole(roleId);
   const selected = selectPortfolioForRole(profile, roleId);
   return Object.freeze({
-    shell: profileShell('portfolio', Object.freeze({
-      route: 'portfolio',
-      pathname: role.pathname,
-      label: role.title,
-    })),
+    shell: profileShell(
+      'portfolio',
+      Object.freeze({
+        route: 'portfolio',
+        pathname: role.pathname,
+        label: role.title,
+      })
+    ),
     sections: frozenArray([
       Object.freeze({
         kind: 'intro',
@@ -390,35 +360,25 @@ export function buildPortfolioPresentation(
 
 function profileShell(
   route: ProfileRouteIdentity['route'],
-  identity: ProfileRouteIdentity = PROFILE_ROUTE_IDENTITIES[route],
+  identity: ProfileRouteIdentity = PROFILE_ROUTE_IDENTITIES[route]
 ): ProfileShellView {
   const navigation = getProfileLocalNavigationState(identity.pathname);
 
   if (!navigation.ok) {
-    throw new TypeError(
-      'The fixed profile-local navigation contract is invalid.',
-    );
+    throw new TypeError('The fixed profile-local navigation contract is invalid.');
   }
 
   return Object.freeze({
     identity,
-    navigation: frozenArray(
-      navigation.value.map(profileNavigationItem),
-    ),
+    navigation: frozenArray(navigation.value.map(profileNavigationItem)),
   });
 }
 
-function profileNavigationItem(
-  item: NavigationState,
-): ProfileLocalNavigationItemView {
-  const id = LOCAL_NAVIGATION_IDS[
-    item.href as keyof typeof LOCAL_NAVIGATION_IDS
-  ];
+function profileNavigationItem(item: NavigationState): ProfileLocalNavigationItemView {
+  const id = LOCAL_NAVIGATION_IDS[item.href as keyof typeof LOCAL_NAVIGATION_IDS];
 
   if (id === undefined) {
-    throw new TypeError(
-      'The profile-local navigation contains an unknown destination.',
-    );
+    throw new TypeError('The profile-local navigation contains an unknown destination.');
   }
 
   return Object.freeze({
@@ -432,7 +392,7 @@ function profileNavigationItem(
 function contactActions(
   contact: ContactActions,
   documentLink?: ResumeDocumentLink,
-  labelStyle: 'action' | 'destination' = 'action',
+  labelStyle: 'action' | 'destination' = 'action'
 ): readonly ProfileActionView[] {
   const actions: ProfileActionView[] = [
     Object.freeze({
@@ -451,9 +411,7 @@ function contactActions(
       label: labelStyle === 'destination' ? contact.github.value : 'GitHub 프로필 보기',
       destinationFactId: contact.github.factId,
     }),
-    ...contact.additionalLinks.map((link) =>
-      profileAction(link, 'additional'),
-    ),
+    ...contact.additionalLinks.map((link) => profileAction(link, 'additional')),
   ];
 
   if (documentLink !== undefined) {
@@ -464,17 +422,14 @@ function contactActions(
         target: 'document',
         href: documentLink.href,
         label: documentLink.label,
-      }),
+      })
     );
   }
 
   return frozenArray(actions);
 }
 
-function profileAction(
-  link: EvidenceLink,
-  kind: 'additional' | 'evidence',
-): ProfileActionView {
+function profileAction(link: EvidenceLink, kind: 'additional' | 'evidence'): ProfileActionView {
   return Object.freeze({
     id: link.id,
     kind,
@@ -487,12 +442,8 @@ function profileAction(
   });
 }
 
-function evidenceActions(
-  links: readonly EvidenceLink[],
-): readonly ProfileActionView[] {
-  return frozenArray(
-    links.map((link) => profileAction(link, 'evidence')),
-  );
+function evidenceActions(links: readonly EvidenceLink[]): readonly ProfileActionView[] {
+  return frozenArray(links.map((link) => profileAction(link, 'evidence')));
 }
 
 function skillGroup(group: SkillGroup): SkillGroupView {
@@ -506,15 +457,13 @@ function skillGroup(group: SkillGroup): SkillGroupView {
           id: skill.id,
           order: skill.order,
           name: textFact(skill.name),
-        }),
-      ),
+        })
+      )
     ),
   });
 }
 
-function highlightGroups(
-  profile: ResumeProfile,
-): readonly ResumeHighlightGroupView[] {
+function highlightGroups(profile: ResumeProfile): readonly ResumeHighlightGroupView[] {
   const groups: ResumeHighlightGroupView[] = [];
 
   if (profile.experiences.length > 0) {
@@ -523,7 +472,7 @@ function highlightGroups(
         kind: 'career',
         heading: '경력',
         entries: frozenArray(profile.experiences.map(careerEntry)),
-      }),
+      })
     );
   }
 
@@ -532,10 +481,8 @@ function highlightGroups(
       Object.freeze({
         kind: 'achievement',
         heading: '대표 성과',
-        entries: frozenArray(
-          profile.achievements.map(achievementEntry),
-        ),
-      }),
+        entries: frozenArray(profile.achievements.map(achievementEntry)),
+      })
     );
   }
 
@@ -563,9 +510,7 @@ function achievementEntry(achievement: Achievement): ResumeEntryView {
     id: achievement.id,
     order: achievement.order,
     title: textFact(achievement.title),
-    ...(achievement.period === undefined
-      ? {}
-      : { period: periodView(achievement.period) }),
+    ...(achievement.period === undefined ? {} : { period: periodView(achievement.period) }),
     summary: textFact(achievement.summary),
     details: contentBlocks(achievement.details),
     evidence: evidenceActions(achievement.evidence),
@@ -573,16 +518,12 @@ function achievementEntry(achievement: Achievement): ResumeEntryView {
   });
 }
 
-function resumeProjectSummary(
-  project: ResumeProjectSummary,
-): ResumeProjectSummaryView {
+function resumeProjectSummary(project: ResumeProjectSummary): ResumeProjectSummaryView {
   return Object.freeze({
     id: project.id,
     order: project.order,
     title: textFact(project.title),
-    ...(project.period === undefined
-      ? {}
-      : { period: periodView(project.period) }),
+    ...(project.period === undefined ? {} : { period: periodView(project.period) }),
     outcomeSummary: textFact(project.outcomeSummary),
     details: contentBlocks(project.details ?? []),
     portfolioHref: `/portfolio#project-${project.id}`,
@@ -594,30 +535,20 @@ function educationView(education: Education): EducationView {
     id: education.id,
     order: education.order,
     title: textFact(education.title),
-    ...(education.subtitle === undefined
-      ? {}
-      : { subtitle: textFact(education.subtitle) }),
-    ...(education.period === undefined
-      ? {}
-      : { period: periodView(education.period) }),
+    ...(education.subtitle === undefined ? {} : { subtitle: textFact(education.subtitle) }),
+    ...(education.period === undefined ? {} : { period: periodView(education.period) }),
     details: contentBlocks(education.details),
     evidence: evidenceActions(education.evidence),
   });
 }
 
-function certificationView(
-  certification: Certification,
-): CertificationView {
+function certificationView(certification: Certification): CertificationView {
   return Object.freeze({
     id: certification.id,
     order: certification.order,
     title: textFact(certification.title),
-    ...(certification.issuer === undefined
-      ? {}
-      : { issuer: textFact(certification.issuer) }),
-    ...(certification.period === undefined
-      ? {}
-      : { period: periodView(certification.period) }),
+    ...(certification.issuer === undefined ? {} : { issuer: textFact(certification.issuer) }),
+    ...(certification.period === undefined ? {} : { period: periodView(certification.period) }),
     details: contentBlocks(certification.details),
     evidence: evidenceActions(certification.evidence),
   });
@@ -628,9 +559,7 @@ function caseStudy(project: PortfolioProject): CaseStudyView {
     id: project.id,
     order: project.order,
     title: textFact(project.title),
-    ...(project.period === undefined
-      ? {}
-      : { period: periodView(project.period) }),
+    ...(project.period === undefined ? {} : { period: periodView(project.period) }),
     outcomeSummary: textFact(project.outcomeSummary),
     dimensions: frozenArray(
       project.dimensions.map((dimension) =>
@@ -638,16 +567,14 @@ function caseStudy(project: PortfolioProject): CaseStudyView {
           key: dimension.key,
           heading: DIMENSION_HEADINGS[dimension.key],
           blocks: contentBlocks(dimension.blocks),
-        }),
-      ),
+        })
+      )
     ),
     evidence: evidenceActions(project.evidence),
   });
 }
 
-function contentBlocks(
-  blocks: readonly ContentBlock[],
-): readonly TextBlockView[] {
+function contentBlocks(blocks: readonly ContentBlock[]): readonly TextBlockView[] {
   return frozenArray(
     blocks.map((block) => {
       if (block.tag === 'paragraph') {
@@ -662,13 +589,11 @@ function contentBlocks(
         style: block.style,
         items: frozenArray(block.items.map(textFact)),
       });
-    }),
+    })
   );
 }
 
-function textFact<Value extends string>(
-  fact: PublicFact<Value>,
-): TextFactView {
+function textFact<Value extends string>(fact: PublicFact<Value>): TextFactView {
   return Object.freeze({
     factId: fact.factId,
     value: fact.value,
@@ -691,8 +616,6 @@ function datePointText(point: Period['start'] | Period['end']): string {
   return point.tag === 'present' ? '현재' : point.value;
 }
 
-function frozenArray<Value>(
-  values: readonly Value[],
-): readonly Value[] {
+function frozenArray<Value>(values: readonly Value[]): readonly Value[] {
   return Object.freeze([...values]);
 }

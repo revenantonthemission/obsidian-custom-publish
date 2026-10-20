@@ -32,7 +32,7 @@ html {
   text-size-adjust: 100%;
 }
 
-html:has(body[data-surface="grouped"]) {
+html:has(body[data-surface='grouped']) {
   background: var(--c-bg-grouped);
 }
 
@@ -145,14 +145,14 @@ pre.shiki span {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) pre.shiki,
-  :root:not([data-theme="light"]) pre.shiki span {
+  :root:not([data-theme='light']) pre.shiki,
+  :root:not([data-theme='light']) pre.shiki span {
     color: var(--shiki-dark);
   }
 }
 
-:root[data-theme="dark"] pre.shiki,
-:root[data-theme="dark"] pre.shiki span {
+:root[data-theme='dark'] pre.shiki,
+:root[data-theme='dark'] pre.shiki span {
   color: var(--shiki-dark);
 }
 
@@ -209,11 +209,11 @@ img {
   box-shadow: var(--c-glass-edge), var(--shadow-float);
 }
 
-[data-material="regular"] {
+[data-material='regular'] {
   background-color: var(--c-glass-regular);
 }
 
-[data-material="thick"] {
+[data-material='thick'] {
   background-color: var(--c-glass-thick);
 }
 
@@ -221,7 +221,9 @@ img {
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   [data-material] {
     background-color: var(--c-surface);
-    box-shadow: 0 0 0 1px var(--c-control-border), var(--shadow-float);
+    box-shadow:
+      0 0 0 1px var(--c-control-border),
+      var(--shadow-float);
   }
 }
 
@@ -230,7 +232,9 @@ img {
     background-color: var(--c-surface);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    box-shadow: 0 0 0 1px var(--c-control-border), var(--shadow-float);
+    box-shadow:
+      0 0 0 1px var(--c-control-border),
+      var(--shadow-float);
   }
 }
 

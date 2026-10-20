@@ -2,14 +2,9 @@ import { createHash } from 'node:crypto';
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, relative, resolve } from 'node:path';
-import receiptDocument from '../../../verification/profile/fact-approval.json' with {
-  type: 'json',
-};
+import receiptDocument from '../../../verification/profile/fact-approval.json' with { type: 'json' };
 import { assembleFactApprovedProfile } from './assembly.js';
-import {
-  collectMaterializedFacts,
-  validateFactApproval,
-} from './fact-approval.js';
+import { collectMaterializedFacts, validateFactApproval } from './fact-approval.js';
 import type {
   FactApprovalReceipt,
   FactApprovalReview,
@@ -43,17 +38,17 @@ const RECEIPT_KEYS = [
 ] as const;
 
 const EXPECTED_RECEIPT = Object.freeze({
-  "schemaVersion": 1,
-  "receiptId": "profile-fact-approval-2026-09-27-r2",
-  "inventoryRevision": "profile-facts-r8",
-  "inventoryDigest": "5bcfa4743718a00b5c802e6ee842da27e22671409909ea6adacaa0872c8200c1",
-  "productionDiffRevision": "profile-production-diff-r8",
-  "productionDiffDigest": "e6aa8ea7935abbccdf4de1c1bc22c8eb38c2d3e2b63874a3c9e36ffc005f3e4b",
-  "approvedRecordsDigest": "2161243cca522ef5c0e9178a747741906bab771459e69fb01c48e91efab5c313",
-  "materializedProfileDigest": "2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c",
-  "decision": "Approved",
-  "decisionAuditId": "PROFILE-RESUME-TRUTHFUL-20260927T140225005Z",
-  "decisionRecordedAt": "2026-09-27T14:02:25.005Z"
+  schemaVersion: 1,
+  receiptId: 'profile-fact-approval-2026-09-27-r2',
+  inventoryRevision: 'profile-facts-r8',
+  inventoryDigest: '5bcfa4743718a00b5c802e6ee842da27e22671409909ea6adacaa0872c8200c1',
+  productionDiffRevision: 'profile-production-diff-r8',
+  productionDiffDigest: 'e6aa8ea7935abbccdf4de1c1bc22c8eb38c2d3e2b63874a3c9e36ffc005f3e4b',
+  approvedRecordsDigest: '2161243cca522ef5c0e9178a747741906bab771459e69fb01c48e91efab5c313',
+  materializedProfileDigest: '2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c',
+  decision: 'Approved',
+  decisionAuditId: 'PROFILE-RESUME-TRUTHFUL-20260927T140225005Z',
+  decisionRecordedAt: '2026-09-27T14:02:25.005Z',
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';
@@ -73,14 +68,26 @@ const PROJECT_FACT_SUFFIXES = [
 ] as const;
 
 type EvidenceId =
-  | 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07'
-  | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13' | 'E14' | 'E15';
+  | 'E01'
+  | 'E02'
+  | 'E03'
+  | 'E04'
+  | 'E05'
+  | 'E06'
+  | 'E07'
+  | 'E08'
+  | 'E09'
+  | 'E10'
+  | 'E11'
+  | 'E12'
+  | 'E13'
+  | 'E14'
+  | 'E15';
 
 const EVIDENCE_SOURCES = deepFreeze({
   E01: {
     kind: 'user-provided',
-    reference:
-      'Vault attachment 2025년하반기포트폴리오_조준희.zip의 exported PDF pp. 1–3',
+    reference: 'Vault attachment 2025년하반기포트폴리오_조준희.zip의 exported PDF pp. 1–3',
   },
   E02: {
     kind: 'public-source',
@@ -91,18 +98,15 @@ const EVIDENCE_SOURCES = deepFreeze({
   },
   E03: {
     kind: 'public-source',
-    reference:
-      'https://github.com/revenantonthemission/obsidian-custom-publish',
-    expectedDestination:
-      'https://github.com/revenantonthemission/obsidian-custom-publish',
+    reference: 'https://github.com/revenantonthemission/obsidian-custom-publish',
+    expectedDestination: 'https://github.com/revenantonthemission/obsidian-custom-publish',
     verifier: 'Codex public-source collector',
     checkedAt: PUBLIC_SOURCE_CHECKED_AT,
   },
   E04: {
     kind: 'public-source',
     reference: 'https://github.com/revenantonthemission/mcp-local-reference',
-    expectedDestination:
-      'https://github.com/revenantonthemission/mcp-local-reference',
+    expectedDestination: 'https://github.com/revenantonthemission/mcp-local-reference',
     verifier: 'Codex public-source collector',
     checkedAt: PUBLIC_SOURCE_CHECKED_AT,
   },
@@ -194,11 +198,7 @@ export class ProfileProductionError extends Error {
   readonly path: string;
   readonly diagnostics: readonly string[];
 
-  constructor(
-    code: ProfileProductionErrorCode,
-    path: string,
-    diagnostics: readonly string[] = [],
-  ) {
+  constructor(code: ProfileProductionErrorCode, path: string, diagnostics: readonly string[] = []) {
     super(`${code}@${path}`);
     this.name = 'ProfileProductionError';
     this.code = code;
@@ -254,16 +254,13 @@ export function getApprovedExternalDestinations(): readonly ApprovedExternalDest
           // stored literal omits milliseconds, and verification compares
           // timestamps against `new Date(value).toISOString()` exactly.
           checkedAt: new Date(evidence.checkedAt).toISOString(),
-        }),
-      ),
+        })
+      )
   );
 }
 
 export function getProductionProfileAssembly(): FactApprovedProfileAssembly {
-  cachedAssembly ??= evaluateProductionProfile(
-    profileData,
-    receiptDocument,
-  ).assembly;
+  cachedAssembly ??= evaluateProductionProfile(profileData, receiptDocument).assembly;
   return cachedAssembly;
 }
 
@@ -271,32 +268,23 @@ export function getProductionProfileAssembly(): FactApprovedProfileAssembly {
  * Fails a completed build if any private approval identity or receipt filename
  * was emitted. Marker values are intentionally absent from thrown diagnostics.
  */
-export async function assertNoProfileApprovalLeak(
-  directory: URL | string,
-): Promise<void> {
-  const root =
-    directory instanceof URL ? fileURLToPath(directory) : resolve(directory);
+export async function assertNoProfileApprovalLeak(directory: URL | string): Promise<void> {
+  const root = directory instanceof URL ? fileURLToPath(directory) : resolve(directory);
   const markers = Object.values(EXPECTED_RECEIPT)
-    .filter(
-      (value) =>
-        typeof value === 'string' && value.length > 'Approved'.length,
-    )
+    .filter((value) => typeof value === 'string' && value.length > 'Approved'.length)
     .map((value) => Buffer.from(value as string, 'utf8'));
 
   for (const path of await listOutputFiles(root, markers)) {
     const bytes = await readFile(path);
     if (markers.some((marker) => bytes.includes(marker))) {
-      throw new ProfileProductionError(
-        'PROFILE_APPROVAL_OUTPUT_LEAK',
-        'build.output',
-      );
+      throw new ProfileProductionError('PROFILE_APPROVAL_OUTPUT_LEAK', 'build.output');
     }
   }
 }
 
 function evaluateProductionProfile(
   candidate: ProfileData,
-  receiptCandidate: unknown,
+  receiptCandidate: unknown
 ): ProductionEvaluation {
   const receipt = requireExactReceipt(receiptCandidate);
   const snapshot = materializeSnapshot(candidate);
@@ -306,15 +294,11 @@ function evaluateProductionProfile(
     records.some(
       (record) =>
         record.status !== 'Approved' ||
-        record.decisionRecord?.auditInteractionId !==
-          receipt.decisionAuditId ||
-        record.decisionRecord?.recordedAt !== receipt.decisionRecordedAt,
+        record.decisionRecord?.auditInteractionId !== receipt.decisionAuditId ||
+        record.decisionRecord?.recordedAt !== receipt.decisionRecordedAt
     )
   ) {
-    throw new ProfileProductionError(
-      'PROFILE_APPROVAL_REVIEW_INVALID',
-      'profile.facts',
-    );
+    throw new ProfileProductionError('PROFILE_APPROVAL_REVIEW_INVALID', 'profile.facts');
   }
 
   const approvedRecordsDigest = canonicalDigest({
@@ -335,21 +319,9 @@ function evaluateProductionProfile(
     structuralOperations: snapshot.structuralDecisions,
   });
 
-  requireDigest(
-    approvedRecordsDigest,
-    receipt.approvedRecordsDigest,
-    'profile.facts',
-  );
-  requireDigest(
-    snapshot.materializedProfileDigest,
-    receipt.materializedProfileDigest,
-    'profile',
-  );
-  requireDigest(
-    productionDiffDigest,
-    receipt.productionDiffDigest,
-    'profile.diff',
-  );
+  requireDigest(approvedRecordsDigest, receipt.approvedRecordsDigest, 'profile.facts');
+  requireDigest(snapshot.materializedProfileDigest, receipt.materializedProfileDigest, 'profile');
+  requireDigest(productionDiffDigest, receipt.productionDiffDigest, 'profile.diff');
 
   const review: FactApprovalReview = deepFreeze({
     inventory: {
@@ -376,7 +348,7 @@ function evaluateProductionProfile(
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_REVIEW_INVALID',
       'profile.facts',
-      issueDiagnostics(approval.issues),
+      issueDiagnostics(approval.issues)
     );
   }
 
@@ -397,14 +369,12 @@ function materializeSnapshot(candidate: ProfileData): MaterializedSnapshot {
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_SOURCE_INVALID',
       'profile',
-      issueDiagnostics(validation.issues),
+      issueDiagnostics(validation.issues)
     );
   }
 
   const facts = collectMaterializedFacts(validation.value);
-  const structuralDecisions = deepFreeze(
-    deriveStructuralDecisions(validation.value),
-  );
+  const structuralDecisions = deepFreeze(deriveStructuralDecisions(validation.value));
   const materializedProfileDigest = canonicalDigest({
     domain: 'obsidian-press:profile-materialization-proposal',
     schemaVersion: EXPECTED_RECEIPT.schemaVersion,
@@ -426,7 +396,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
   function inspectRecord(
     value: unknown,
     allowedKeys: readonly string[],
-    inspect: (record: Record<string, unknown>) => void,
+    inspect: (record: Record<string, unknown>) => void
   ): void {
     if (!isRecord(value)) {
       return;
@@ -435,9 +405,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
       (Object.getPrototypeOf(value) !== Object.prototype &&
         Object.getPrototypeOf(value) !== null) ||
       Object.getOwnPropertySymbols(value).length > 0 ||
-      Object.getOwnPropertyNames(value).some(
-        (key) => !allowedKeys.includes(key),
-      )
+      Object.getOwnPropertyNames(value).some((key) => !allowedKeys.includes(key))
     ) {
       sourceShapeFailure();
     }
@@ -448,10 +416,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
     inspect(value as Record<string, unknown>);
   }
 
-  function inspectArray(
-    value: unknown,
-    inspect: (item: unknown) => void,
-  ): void {
+  function inspectArray(value: unknown, inspect: (item: unknown) => void): void {
     if (!Array.isArray(value)) {
       return;
     }
@@ -459,10 +424,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
       Object.getPrototypeOf(value) !== Array.prototype ||
       Object.getOwnPropertySymbols(value).length > 0 ||
       Object.getOwnPropertyNames(value).some(
-        (key) =>
-          key !== 'length' &&
-          (!/^(?:0|[1-9]\d*)$/.test(key) ||
-            Number(key) >= value.length),
+        (key) => key !== 'length' && (!/^(?:0|[1-9]\d*)$/.test(key) || Number(key) >= value.length)
       )
     ) {
       sourceShapeFailure();
@@ -476,7 +438,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
 
   function inspectFact(
     value: unknown,
-    inspectValue: (factValue: unknown) => void = () => {},
+    inspectValue: (factValue: unknown) => void = () => {}
   ): void {
     inspectRecord(value, ['factId', 'value'], (fact) => {
       inspectValue(fact.value);
@@ -494,8 +456,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
     if (!isRecord(value)) {
       return;
     }
-    const allowedKeys =
-      value.tag === 'present' ? ['tag'] : ['tag', 'value'];
+    const allowedKeys = value.tag === 'present' ? ['tag'] : ['tag', 'value'];
     inspectRecord(value, allowedKeys, () => {});
   }
 
@@ -523,16 +484,12 @@ function assertExactProfileSourceShape(candidate: unknown): void {
   }
 
   function inspectEvidence(value: unknown): void {
-    inspectRecord(
-      value,
-      ['id', 'order', 'label', 'destination'],
-      (link) => {
-        inspectFact(link.label);
-        inspectFact(link.destination, (destination) => {
-          inspectRecord(destination, ['tag', 'value'], () => {});
-        });
-      },
-    );
+    inspectRecord(value, ['id', 'order', 'label', 'destination'], (link) => {
+      inspectFact(link.label);
+      inspectFact(link.destination, (destination) => {
+        inspectRecord(destination, ['tag', 'value'], () => {});
+      });
+    });
   }
 
   function inspectEvidenceCollection(value: unknown): void {
@@ -553,16 +510,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
   function inspectExperience(value: unknown): void {
     inspectRecord(
       value,
-      [
-        'id',
-        'order',
-        'organization',
-        'role',
-        'period',
-        'summary',
-        'details',
-        'evidence',
-      ],
+      ['id', 'order', 'organization', 'role', 'period', 'summary', 'details', 'evidence'],
       (experience) => {
         inspectFact(experience.organization);
         inspectFact(experience.role);
@@ -570,29 +518,21 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         inspectFact(experience.summary);
         inspectContentBlocks(experience.details);
         inspectEvidenceCollection(experience.evidence);
-      },
+      }
     );
   }
 
   function inspectAchievement(value: unknown): void {
     inspectRecord(
       value,
-      [
-        'id',
-        'order',
-        'title',
-        'period',
-        'summary',
-        'details',
-        'evidence',
-      ],
+      ['id', 'order', 'title', 'period', 'summary', 'details', 'evidence'],
       (achievement) => {
         inspectFact(achievement.title);
         inspectFact(achievement.period, inspectPeriod);
         inspectFact(achievement.summary);
         inspectContentBlocks(achievement.details);
         inspectEvidenceCollection(achievement.evidence);
-      },
+      }
     );
   }
 
@@ -627,56 +567,36 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         inspectContentBlocks(project.outcomes);
         inspectContentBlocks(project.lessons);
         inspectEvidenceCollection(project.evidence);
-        inspectRecord(
-          project.relatedProfileEntity,
-          ['tag', 'id'],
-          () => {},
-        );
-      },
+        inspectRecord(project.relatedProfileEntity, ['tag', 'id'], () => {});
+      }
     );
   }
 
   function inspectEducation(value: unknown): void {
     inspectRecord(
       value,
-      [
-        'id',
-        'order',
-        'title',
-        'subtitle',
-        'period',
-        'details',
-        'evidence',
-      ],
+      ['id', 'order', 'title', 'subtitle', 'period', 'details', 'evidence'],
       (education) => {
         inspectFact(education.title);
         inspectFact(education.subtitle);
         inspectFact(education.period, inspectPeriod);
         inspectContentBlocks(education.details);
         inspectEvidenceCollection(education.evidence);
-      },
+      }
     );
   }
 
   function inspectCertification(value: unknown): void {
     inspectRecord(
       value,
-      [
-        'id',
-        'order',
-        'title',
-        'issuer',
-        'period',
-        'details',
-        'evidence',
-      ],
+      ['id', 'order', 'title', 'issuer', 'period', 'details', 'evidence'],
       (certification) => {
         inspectFact(certification.title);
         inspectFact(certification.issuer);
         inspectFact(certification.period, inspectPeriod);
         inspectContentBlocks(certification.details);
         inspectEvidenceCollection(certification.evidence);
-      },
+      }
     );
   }
 
@@ -702,28 +622,19 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         });
         inspectRecord(
           profile.narrative,
-          [
-            'shortIntro',
-            'detailedIntro',
-            'resumeSummary',
-            'portfolioSummary',
-          ],
+          ['shortIntro', 'detailedIntro', 'resumeSummary', 'portfolioSummary'],
           (narrative) => {
             inspectFact(narrative.shortIntro);
             inspectContentBlocks(narrative.detailedIntro);
             inspectFact(narrative.resumeSummary);
             inspectFact(narrative.portfolioSummary);
-          },
+          }
         );
-        inspectRecord(
-          profile.contact,
-          ['email', 'github', 'additionalLinks'],
-          (contact) => {
-            inspectFact(contact.email);
-            inspectFact(contact.github);
-            inspectEvidenceCollection(contact.additionalLinks);
-          },
-        );
+        inspectRecord(profile.contact, ['email', 'github', 'additionalLinks'], (contact) => {
+          inspectFact(contact.email);
+          inspectFact(contact.github);
+          inspectEvidenceCollection(contact.additionalLinks);
+        });
         inspectArray(profile.skillGroups, inspectSkillGroup);
         inspectArray(profile.experiences, inspectExperience);
         inspectArray(profile.achievements, inspectAchievement);
@@ -735,7 +646,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         }
         inspectArray(profile.education, inspectEducation);
         inspectArray(profile.certifications, inspectCertification);
-      },
+      }
     );
   } catch (error) {
     if (error instanceof ProfileProductionError) {
@@ -745,35 +656,26 @@ function assertExactProfileSourceShape(candidate: unknown): void {
   }
 
   function sourceShapeFailure(): never {
-    throw new ProfileProductionError(
-      'PROFILE_APPROVAL_SOURCE_INVALID',
-      'profile',
-    );
+    throw new ProfileProductionError('PROFILE_APPROVAL_SOURCE_INVALID', 'profile');
   }
 }
 
 function buildReviewRecords(
   facts: readonly MaterializedFact[],
-  receipt: FactApprovalReceipt,
+  receipt: FactApprovalReceipt
 ): readonly FactReviewRecord[] {
   if (
     facts.length !== EVIDENCE_MEMBERSHIP.size ||
     facts.some((fact) => !EVIDENCE_MEMBERSHIP.has(fact.factId))
   ) {
-    throw new ProfileProductionError(
-      'PROFILE_APPROVAL_EVIDENCE_INVALID',
-      'profile.facts',
-    );
+    throw new ProfileProductionError('PROFILE_APPROVAL_EVIDENCE_INVALID', 'profile.facts');
   }
 
   return Object.freeze(
     facts.map((fact) => {
       const evidenceId = EVIDENCE_MEMBERSHIP.get(fact.factId);
       if (evidenceId === undefined) {
-        throw new ProfileProductionError(
-          'PROFILE_APPROVAL_EVIDENCE_INVALID',
-          fact.sourcePath,
-        );
+        throw new ProfileProductionError('PROFILE_APPROVAL_EVIDENCE_INVALID', fact.sourcePath);
       }
 
       const evidence = EVIDENCE_SOURCES[evidenceId];
@@ -783,10 +685,7 @@ function buildReviewRecords(
         (evidence.kind !== 'public-source' ||
           evidence.expectedDestination !== fact.normalizedValue.value)
       ) {
-        throw new ProfileProductionError(
-          'PROFILE_APPROVAL_EVIDENCE_INVALID',
-          fact.sourcePath,
-        );
+        throw new ProfileProductionError('PROFILE_APPROVAL_EVIDENCE_INVALID', fact.sourcePath);
       }
 
       return deepFreeze({
@@ -803,13 +702,11 @@ function buildReviewRecords(
           recordedAt: receipt.decisionRecordedAt,
         },
       } satisfies FactReviewRecord);
-    }),
+    })
   );
 }
 
-function deriveStructuralDecisions(
-  validated: ValidatedProfile,
-): unknown {
+function deriveStructuralDecisions(validated: ValidatedProfile): unknown {
   const source = validated as unknown as ProfileData;
 
   return {
@@ -817,12 +714,8 @@ function deriveStructuralDecisions(
       ? {}
       : { resumeProjectIds: [...source.resumeProjectIds] }),
     identityAndNarrative: {
-      detailedIntroBlocks: source.narrative.detailedIntro.map(
-        describeIdentifiedBlock,
-      ),
-      additionalLinks: ordered(source.contact.additionalLinks).map(
-        describeEvidence,
-      ),
+      detailedIntroBlocks: source.narrative.detailedIntro.map(describeIdentifiedBlock),
+      additionalLinks: ordered(source.contact.additionalLinks).map(describeEvidence),
     },
     skillGroups: ordered(source.skillGroups).map((group) => ({
       id: group.id,
@@ -915,7 +808,7 @@ function describeEvidence(link: EvidenceLink): unknown {
 }
 
 function ordered<Item extends Readonly<{ order: number }>>(
-  items: readonly Item[],
+  items: readonly Item[]
 ): readonly Item[] {
   return [...items].sort((left, right) => left.order - right.order);
 }
@@ -934,7 +827,7 @@ function requireExactReceipt(candidate: unknown): FactApprovalReceipt {
   if (!isRecord(candidate) || !hasExactKeys(candidate, RECEIPT_KEYS)) {
     throw new ProfileProductionError(
       'PROFILE_APPROVAL_RECEIPT_INVALID',
-      'verification/profile/fact-approval.json',
+      'verification/profile/fact-approval.json'
     );
   }
 
@@ -942,7 +835,7 @@ function requireExactReceipt(candidate: unknown): FactApprovalReceipt {
     if (candidate[key] !== EXPECTED_RECEIPT[key]) {
       throw new ProfileProductionError(
         'PROFILE_APPROVAL_RECEIPT_INVALID',
-        'verification/profile/fact-approval.json',
+        'verification/profile/fact-approval.json'
       );
     }
   }
@@ -950,26 +843,16 @@ function requireExactReceipt(candidate: unknown): FactApprovalReceipt {
   return Object.freeze({ ...candidate }) as unknown as FactApprovalReceipt;
 }
 
-function requireDigest(
-  actual: string,
-  expected: string,
-  path: string,
-): void {
+function requireDigest(actual: string, expected: string, path: string): void {
   if (actual !== expected) {
-    throw new ProfileProductionError(
-      'PROFILE_APPROVAL_DIGEST_MISMATCH',
-      path,
-    );
+    throw new ProfileProductionError('PROFILE_APPROVAL_DIGEST_MISMATCH', path);
   }
 }
 
 function canonicalDigest(value: unknown): string {
   const serialized = JSON.stringify(canonicalize(value));
   if (serialized === undefined) {
-    throw new ProfileProductionError(
-      'PROFILE_APPROVAL_DIGEST_MISMATCH',
-      'profile',
-    );
+    throw new ProfileProductionError('PROFILE_APPROVAL_DIGEST_MISMATCH', 'profile');
   }
   return createHash('sha256').update(serialized, 'utf8').digest('hex');
 }
@@ -982,10 +865,7 @@ function canonicalize(value: unknown): unknown {
     return Object.fromEntries(
       Object.keys(value)
         .sort()
-        .map((key) => [
-          key,
-          canonicalize((value as Record<string, unknown>)[key]),
-        ]),
+        .map((key) => [key, canonicalize((value as Record<string, unknown>)[key])])
     );
   }
   if (
@@ -996,10 +876,7 @@ function canonicalize(value: unknown): unknown {
   ) {
     return value;
   }
-  throw new ProfileProductionError(
-    'PROFILE_APPROVAL_DIGEST_MISMATCH',
-    'profile',
-  );
+  throw new ProfileProductionError('PROFILE_APPROVAL_DIGEST_MISMATCH', 'profile');
 }
 
 function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
@@ -1071,10 +948,7 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       'project-docsuri-evidence-team-label',
       'project-docsuri-evidence-team-destination',
     ],
-    E07: [
-      'project-docsuri-evidence-fork-label',
-      'project-docsuri-evidence-fork-destination',
-    ],
+    E07: ['project-docsuri-evidence-fork-label', 'project-docsuri-evidence-fork-destination'],
     // Explicitly reviewed publication delta; never derive this allowlist from
     // the candidate profile. Unchanged facts retain their previous evidence.
     E08: [
@@ -1148,49 +1022,32 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
     ],
   };
 
-  for (const [evidenceId, factIds] of Object.entries(groups) as [
-    EvidenceId,
-    readonly string[],
-  ][]) {
+  for (const [evidenceId, factIds] of Object.entries(groups) as [EvidenceId, readonly string[]][]) {
     for (const factId of factIds) {
       if (membership.has(factId)) {
-        throw new ProfileProductionError(
-          'PROFILE_APPROVAL_EVIDENCE_INVALID',
-          'profile.facts',
-        );
+        throw new ProfileProductionError('PROFILE_APPROVAL_EVIDENCE_INVALID', 'profile.facts');
       }
       membership.set(factId, evidenceId);
     }
   }
   if (membership.size !== 120) {
-    throw new ProfileProductionError(
-      'PROFILE_APPROVAL_EVIDENCE_INVALID',
-      'profile.facts',
-    );
+    throw new ProfileProductionError('PROFILE_APPROVAL_EVIDENCE_INVALID', 'profile.facts');
   }
   return membership;
 }
 
 function projectFactIds(projectId: string): readonly string[] {
-  return PROJECT_FACT_SUFFIXES.map(
-    (suffix) => `project-${projectId}-${suffix}`,
-  );
+  return PROJECT_FACT_SUFFIXES.map((suffix) => `project-${projectId}-${suffix}`);
 }
 
-function issueDiagnostics(
-  issues: readonly ValidationIssue[],
-): readonly string[] {
+function issueDiagnostics(issues: readonly ValidationIssue[]): readonly string[] {
   return issues.map((issue) => `${issue.code}@${issue.path}`);
 }
 
-function hasExactKeys(
-  value: Record<PropertyKey, unknown>,
-  keys: readonly string[],
-): boolean {
+function hasExactKeys(value: Record<PropertyKey, unknown>, keys: readonly string[]): boolean {
   return (
     Object.getOwnPropertySymbols(value).length === 0 &&
-    Object.keys(value).sort().join('\u0000') ===
-      [...keys].sort().join('\u0000')
+    Object.keys(value).sort().join('\u0000') === [...keys].sort().join('\u0000')
   );
 }
 
@@ -1210,7 +1067,7 @@ function deepFreeze<Value>(value: Value): Value {
 
 async function listOutputFiles(
   root: string,
-  forbiddenMarkers: readonly Buffer[],
+  forbiddenMarkers: readonly Buffer[]
 ): Promise<readonly string[]> {
   const files: string[] = [];
 
@@ -1225,17 +1082,11 @@ async function listOutputFiles(
         relativePath.includes('fact-approval.json') ||
         forbiddenMarkers.some((marker) => relativeBytes.includes(marker))
       ) {
-        throw new ProfileProductionError(
-          'PROFILE_APPROVAL_OUTPUT_LEAK',
-          'build.output',
-        );
+        throw new ProfileProductionError('PROFILE_APPROVAL_OUTPUT_LEAK', 'build.output');
       }
       const metadata = await lstat(path);
       if (metadata.isSymbolicLink()) {
-        throw new ProfileProductionError(
-          'PROFILE_APPROVAL_OUTPUT_LEAK',
-          'build.output',
-        );
+        throw new ProfileProductionError('PROFILE_APPROVAL_OUTPUT_LEAK', 'build.output');
       }
       if (metadata.isDirectory()) {
         await visit(path);

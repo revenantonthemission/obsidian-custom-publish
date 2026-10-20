@@ -54,7 +54,7 @@ function requireSupervisedOrigin(baseURL) {
       'The candidate may only be rendered from one supervised loopback preview.',
       'pdf.render.origin',
       {},
-      cause,
+      cause
     );
   }
   if (!LOOPBACK_HOSTS.includes(url.hostname)) {
@@ -62,7 +62,7 @@ function requireSupervisedOrigin(baseURL) {
       'PDF_RENDER_ORIGIN_NOT_LOOPBACK',
       'The candidate may only be rendered from one supervised loopback preview.',
       'pdf.render.origin',
-      { hostname: url.hostname },
+      { hostname: url.hostname }
     );
   }
   return url.origin;
@@ -97,15 +97,11 @@ export async function renderResumePdfCandidate({
   // surfaces are observed against the same approved source the inspector and
   // the receipt are measured against. Rendering first and resolving the
   // manifest afterwards would let the two name different sources.
-  if (
-    manifest === null ||
-    typeof manifest !== 'object' ||
-    !Array.isArray(manifest.entries)
-  ) {
+  if (manifest === null || typeof manifest !== 'object' || !Array.isArray(manifest.entries)) {
     throw rendererError(
       'PDF_RENDER_MANIFEST_REQUIRED',
       'The rendered surfaces cannot be observed without the approved manifest.',
-      'pdf.render.surface',
+      'pdf.render.surface'
     );
   }
   if (!Number.isSafeInteger(schemaVersion) || schemaVersion < 1) {
@@ -147,7 +143,7 @@ export async function renderResumePdfCandidate({
         'PDF_RENDER_ROUTE_NOT_READY',
         'The résumé route did not answer 200 on the supervised preview.',
         'pdf.render.navigate',
-        { status: navigation?.status() ?? null },
+        { status: navigation?.status() ?? null }
       );
     }
     await page.waitForLoadState('networkidle');
@@ -171,7 +167,7 @@ export async function renderResumePdfCandidate({
       'web',
       manifest,
       schemaVersion,
-      await observeRenderedFacts(page),
+      await observeRenderedFacts(page)
     );
 
     await page.emulateMedia({ media: 'print' });
@@ -181,7 +177,7 @@ export async function renderResumePdfCandidate({
       'print',
       manifest,
       schemaVersion,
-      await observeRenderedFacts(page),
+      await observeRenderedFacts(page)
     );
     await page.emulateMedia({ media: null });
 
@@ -204,7 +200,7 @@ export async function renderResumePdfCandidate({
         throw rendererError(
           'PDF_RENDER_EMPTY',
           'The renderer produced an empty candidate.',
-          'pdf.render.print',
+          'pdf.render.print'
         );
       }
     }
@@ -226,7 +222,7 @@ export async function renderResumePdfCandidate({
         'PDF_RENDER_NON_LOOPBACK_RESPONSE',
         'A non-loopback response was observed while rendering the candidate.',
         'pdf.render.network',
-        { successful: network.successfulNonLoopbackRequests },
+        { successful: network.successfulNonLoopbackRequests }
       );
     }
 
@@ -235,10 +231,7 @@ export async function renderResumePdfCandidate({
     if (emitCandidate) {
       const pdfSha256 = sha256(bytes);
       const candidateId = deriveCandidateId(buildIdentity, pdfSha256);
-      candidatePath = resolve(
-        PROFILE_PATHS.pdfCandidateRoot,
-        `${candidateId}.pdf`,
-      );
+      candidatePath = resolve(PROFILE_PATHS.pdfCandidateRoot, `${candidateId}.pdf`);
       await mkdir(PROFILE_PATHS.pdfCandidateRoot, { recursive: true });
       await writeFile(candidatePath, bytes);
       candidate = Object.freeze({ candidateId, pdfSha256 });
@@ -287,7 +280,7 @@ async function observeFontReadiness(page, fontResponse) {
       'PDF_RENDER_FONT_NOT_SERVED',
       'The pinned profile font was not served by the supervised preview.',
       'pdf.render.font',
-      { response: fontResponse },
+      { response: fontResponse }
     );
   }
   if (fontResponse.mime !== WOFF2_MIME) {
@@ -295,7 +288,7 @@ async function observeFontReadiness(page, fontResponse) {
       'PDF_RENDER_FONT_MIME_UNEXPECTED',
       'The profile font was served with an unexpected media type.',
       'pdf.render.font',
-      { mime: fontResponse.mime },
+      { mime: fontResponse.mime }
     );
   }
   if (!observed.fontsCheck) {
@@ -303,7 +296,7 @@ async function observeFontReadiness(page, fontResponse) {
       'PDF_RENDER_FONT_NOT_READY',
       'The profile font was not usable at résumé body size when printing began.',
       'pdf.render.font',
-      { family: observed.family },
+      { family: observed.family }
     );
   }
 
@@ -323,9 +316,9 @@ async function observePrintContract(page) {
       const shell = document.querySelector('.profile-shell');
       if (shell === null) return null;
 
-      const textElements = [
-        ...shell.querySelectorAll('p, li, span, dd, dt, td, th'),
-      ].filter((element) => (element.textContent ?? '').trim().length > 0);
+      const textElements = [...shell.querySelectorAll('p, li, span, dd, dt, td, th')].filter(
+        (element) => (element.textContent ?? '').trim().length > 0
+      );
 
       let minimumPt = Number.POSITIVE_INFINITY;
       let minimumLineHeight = Number.POSITIVE_INFINITY;
@@ -336,26 +329,21 @@ async function observePrintContract(page) {
         minimumPt = Math.min(minimumPt, fontPx / PX_PER_PT);
         const lineHeightPx = Number.parseFloat(style.lineHeight);
         if (Number.isFinite(lineHeightPx) && lineHeightPx > 0) {
-          minimumLineHeight = Math.min(
-            minimumLineHeight,
-            lineHeightPx / fontPx,
-          );
+          minimumLineHeight = Math.min(minimumLineHeight, lineHeightPx / fontPx);
         }
       }
 
       const shown = screenOnlySelectors.filter((selector) =>
         [...document.querySelectorAll(selector)].some(
-          (element) => window.getComputedStyle(element).display !== 'none',
-        ),
+          (element) => window.getComputedStyle(element).display !== 'none'
+        )
       );
 
-      const detailContents = [
-        ...shell.querySelectorAll('.resume-entry-detail-content'),
-      ];
+      const detailContents = [...shell.querySelectorAll('.resume-entry-detail-content')];
       const entries = [...shell.querySelectorAll('details.resume-entry')];
       const headings = [
         ...shell.querySelectorAll(
-          '.profile-section h2, .profile-section h3, .profile-section h4, .profile-section h5',
+          '.profile-section h2, .profile-section h3, .profile-section h4, .profile-section h5'
         ),
       ];
 
@@ -376,29 +364,25 @@ async function observePrintContract(page) {
 
       return {
         bodyTextMinimumPt: Number.isFinite(minimumPt) ? round(minimumPt) : 0,
-        lineHeightMinimum: Number.isFinite(minimumLineHeight)
-          ? round(minimumLineHeight)
-          : 0,
+        lineHeightMinimum: Number.isFinite(minimumLineHeight) ? round(minimumLineHeight) : 0,
         screenOnlyShown: shown,
         detailContentCount: detailContents.length,
         // Measured as real layout, not as computed `display`. A hidden
         // disclosure still reports `display: block`, so only a box with height
         // proves the content will actually be on the page.
         detailsCollapsed: detailContents.filter(
-          (element) => element.getBoundingClientRect().height <= 0,
+          (element) => element.getBoundingClientRect().height <= 0
         ).length,
         entryCount: entries.length,
         entriesSplittable: entries.filter(
-          (element) =>
-            !avoidBreak.includes(window.getComputedStyle(element).breakInside),
+          (element) => !avoidBreak.includes(window.getComputedStyle(element).breakInside)
         ).length,
         longDetailsUnsplittable: detailContents.filter(
-          (element) => window.getComputedStyle(element).breakInside !== 'auto',
+          (element) => window.getComputedStyle(element).breakInside !== 'auto'
         ).length,
         headingCount: headings.length,
         headingsUnkept: headings.filter(
-          (element) =>
-            !avoidBreak.includes(window.getComputedStyle(element).breakAfter),
+          (element) => !avoidBreak.includes(window.getComputedStyle(element).breakAfter)
         ).length,
         clippedCount: clipped.length,
       };
@@ -406,14 +390,14 @@ async function observePrintContract(page) {
     {
       screenOnlySelectors: [...SCREEN_ONLY_SELECTORS],
       avoidBreak: [...AVOID_BREAK],
-    },
+    }
   );
 
   if (observed === null) {
     throw rendererError(
       'PDF_RENDER_SHELL_MISSING',
       'The résumé shell was absent when the print contract was measured.',
-      'pdf.render.print',
+      'pdf.render.print'
     );
   }
 
@@ -421,7 +405,7 @@ async function observePrintContract(page) {
     observed.screenOnlyShown.length === 0,
     'PDF_RENDER_SCREEN_ONLY_PRINTED',
     'Screen-only chrome would print into the candidate.',
-    { shown: observed.screenOnlyShown },
+    { shown: observed.screenOnlyShown }
   );
   requirePrintFact(
     observed.detailContentCount > 0 && observed.detailsCollapsed === 0,
@@ -430,31 +414,31 @@ async function observePrintContract(page) {
     {
       detailContentCount: observed.detailContentCount,
       collapsed: observed.detailsCollapsed,
-    },
+    }
   );
   requirePrintFact(
     observed.entryCount > 0 && observed.entriesSplittable === 0,
     'PDF_RENDER_ENTRY_SPLITTABLE',
     'A résumé entry would break across pages.',
-    { entryCount: observed.entryCount, splittable: observed.entriesSplittable },
+    { entryCount: observed.entryCount, splittable: observed.entriesSplittable }
   );
   requirePrintFact(
     observed.longDetailsUnsplittable === 0,
     'PDF_RENDER_LONG_DETAIL_UNSPLITTABLE',
     'A long detail body may not refuse to break; only entries are atomic.',
-    { unsplittable: observed.longDetailsUnsplittable },
+    { unsplittable: observed.longDetailsUnsplittable }
   );
   requirePrintFact(
     observed.headingCount > 0 && observed.headingsUnkept === 0,
     'PDF_RENDER_HEADING_ORPHANED',
     'A heading could be separated from the block it introduces.',
-    { headingCount: observed.headingCount, unkept: observed.headingsUnkept },
+    { headingCount: observed.headingCount, unkept: observed.headingsUnkept }
   );
   requirePrintFact(
     observed.clippedCount === 0,
     'PDF_RENDER_CONTENT_CLIPPED',
     'Print layout would clip or ellipsise approved content.',
-    { clipped: observed.clippedCount },
+    { clipped: observed.clippedCount }
   );
 
   return Object.freeze({
@@ -501,18 +485,13 @@ async function observeSurfaceSkeleton(page) {
 
     const sectionElements = [...shell.querySelectorAll(SECTION)];
     const entityElements = [...shell.querySelectorAll(ENTITY)];
-    const sectionOf = new Map(
-      sectionElements.map((element, index) => [element, index]),
-    );
-    const entityOf = new Map(
-      entityElements.map((element, index) => [element, index]),
-    );
+    const sectionOf = new Map(sectionElements.map((element, index) => [element, index]));
+    const entityOf = new Map(entityElements.map((element, index) => [element, index]));
     const ordinalOf = (element, selector, table) => {
       const owner = element?.closest(selector) ?? null;
       return owner === null ? null : (table.get(owner) ?? null);
     };
-    const visibleText = (element) =>
-      (element.textContent ?? '').replace(/\s+/gu, ' ').trim();
+    const visibleText = (element) => (element.textContent ?? '').replace(/\s+/gu, ' ').trim();
 
     const facts = [];
     for (const element of shell.querySelectorAll(FACT)) {
@@ -550,7 +529,7 @@ async function observeSurfaceSkeleton(page) {
     throw rendererError(
       'PDF_RENDER_SHELL_MISSING',
       'The résumé shell was absent when the ordinal skeleton was observed.',
-      'pdf.render.skeleton',
+      'pdf.render.skeleton'
     );
   }
   for (const fact of observed.facts) {
@@ -559,7 +538,7 @@ async function observeSurfaceSkeleton(page) {
         'PDF_RENDER_FACT_OUTSIDE_SECTION',
         'A rendered fact does not belong to any profile section.',
         'pdf.render.skeleton',
-        { factOrder: fact.factOrder },
+        { factOrder: fact.factOrder }
       );
     }
   }
@@ -607,7 +586,7 @@ async function observeRenderedFacts(page) {
     throw rendererError(
       'PDF_RENDER_SHELL_MISSING',
       'The résumé shell was absent when the rendered surface was observed.',
-      'pdf.render.surface',
+      'pdf.render.surface'
     );
   }
   return observed;
@@ -637,7 +616,7 @@ function buildRenderedSurface(surface, manifest, schemaVersion, occurrences) {
         'PDF_RENDER_SURFACE_FACT_UNKNOWN',
         'The rendered document carries a fact the manifest does not approve.',
         'pdf.render.surface',
-        { surface, factId: occurrence.factId },
+        { surface, factId: occurrence.factId }
       );
     }
     // Two elements claiming one fact make `annotationOccurrence` a choice
@@ -647,7 +626,7 @@ function buildRenderedSurface(surface, manifest, schemaVersion, occurrences) {
         'PDF_RENDER_SURFACE_FACT_AMBIGUOUS',
         'One approved fact was rendered more than once.',
         'pdf.render.surface',
-        { surface, factId: occurrence.factId },
+        { surface, factId: occurrence.factId }
       );
     }
     byFactId.set(occurrence.factId, occurrence);
@@ -664,7 +643,7 @@ function buildRenderedSurface(surface, manifest, schemaVersion, occurrences) {
         annotationOccurrence: occurrence.annotationOccurrence,
         domPresent: true,
         rendered: occurrence.rendered,
-      }),
+      })
     );
   }
 
@@ -703,7 +682,7 @@ function deriveCandidateId(buildIdentity, pdfSha256) {
     throw rendererError(
       'PDF_RENDER_BUILD_IDENTITY_INVALID',
       'A candidate must be attributed to one clean build.',
-      'pdf.render.identity',
+      'pdf.render.identity'
     );
   }
   return sha256(Buffer.from(JSON.stringify({ buildId, pdfSha256 })));

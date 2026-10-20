@@ -5,10 +5,7 @@ import {
   selectPortfolioProfile,
   selectResumeProfile,
 } from '../../src/lib/profile/selectors.js';
-import type {
-  ProfileData,
-  ValidatedProfile,
-} from '../../src/lib/profile/types.js';
+import type { ProfileData, ValidatedProfile } from '../../src/lib/profile/types.js';
 import { validateProfile } from '../../src/lib/profile/validation.js';
 import { cloneProfileFixture } from '../fixtures/profile-fixtures.js';
 
@@ -19,10 +16,7 @@ describe('profile projections', () => {
     const resume = selectResumeProfile(source);
     const portfolio = selectPortfolioProfile(source);
 
-    expect(resume.skillGroups[0]?.skills.map(({ id }) => id)).toEqual([
-      'rust',
-      'typescript',
-    ]);
+    expect(resume.skillGroups[0]?.skills.map(({ id }) => id)).toEqual(['rust', 'typescript']);
     expect(resume.projectSummaries.map(({ id }) => id)).toEqual([
       'project-beta',
       'project-gamma',
@@ -40,9 +34,7 @@ describe('profile projections', () => {
 
   test('projects the six portfolio dimensions in their fixed semantic order', () => {
     const portfolio = selectPortfolioProfile(validSource());
-    const alpha = portfolio.projects.find(
-      ({ id }) => id === 'project-alpha',
-    );
+    const alpha = portfolio.projects.find(({ id }) => id === 'project-alpha');
 
     expect(alpha?.dimensions.map(({ key }) => key)).toEqual([
       'problem',
@@ -75,16 +67,10 @@ describe('profile projections', () => {
     const resume = selectResumeProfile(source);
     const portfolio = selectPortfolioProfile(source);
 
-    expect(resume.achievements.map(({ id }) => id)).toEqual([
-      'synthetic-award',
-    ]);
+    expect(resume.achievements.map(({ id }) => id)).toEqual(['synthetic-award']);
     expect(resume.achievements[0]?.period).toBeUndefined();
-    expect(resume.education?.map(({ id }) => id)).toEqual([
-      'synthetic-school',
-    ]);
-    expect(resume.certifications?.map(({ id }) => id)).toEqual([
-      'synthetic-certificate',
-    ]);
+    expect(resume.education?.map(({ id }) => id)).toEqual(['synthetic-school']);
+    expect(resume.certifications?.map(({ id }) => id)).toEqual(['synthetic-certificate']);
     expect(portfolio.projects[0]?.evidence[0]).toMatchObject({
       id: 'synthetic-project-proof',
       order: 10,
@@ -96,20 +82,15 @@ describe('profile projections', () => {
     const changedCandidate = cloneProfileFixture() as unknown as {
       narrative: { resumeSummary: { value: string } };
     };
-    changedCandidate.narrative.resumeSummary.value =
-      '이력서 전용 요약 변경입니다.';
+    changedCandidate.narrative.resumeSummary.value = '이력서 전용 요약 변경입니다.';
     const changed = validSource(changedCandidate as unknown as ProfileData);
 
     const originalResume = selectResumeProfile(original);
     const changedResume = selectResumeProfile(changed);
 
     expect(changedResume).not.toEqual(originalResume);
-    expect(selectPortfolioProfile(changed)).toEqual(
-      selectPortfolioProfile(original),
-    );
-    expect(selectHomepageProfile(changed)).toEqual(
-      selectHomepageProfile(original),
-    );
+    expect(selectPortfolioProfile(changed)).toEqual(selectPortfolioProfile(original));
+    expect(selectHomepageProfile(changed)).toEqual(selectHomepageProfile(original));
   });
 
   test('keeps a portfolio-only detail out of the complete résumé and homepage projections', () => {
@@ -123,15 +104,9 @@ describe('profile projections', () => {
       '포트폴리오 상세만 변경한 합성 입력입니다.';
     const changed = validSource(changedCandidate as unknown as ProfileData);
 
-    expect(selectPortfolioProfile(changed)).not.toEqual(
-      selectPortfolioProfile(original),
-    );
-    expect(selectResumeProfile(changed)).toEqual(
-      selectResumeProfile(original),
-    );
-    expect(selectHomepageProfile(changed)).toEqual(
-      selectHomepageProfile(original),
-    );
+    expect(selectPortfolioProfile(changed)).not.toEqual(selectPortfolioProfile(original));
+    expect(selectResumeProfile(changed)).toEqual(selectResumeProfile(original));
+    expect(selectHomepageProfile(changed)).toEqual(selectHomepageProfile(original));
   });
 
   test('assembles all read models from the same validated source', () => {
@@ -154,14 +129,10 @@ describe('profile projections', () => {
   });
 });
 
-function validSource(
-  input: ProfileData = cloneProfileFixture(),
-): ValidatedProfile {
+function validSource(input: ProfileData = cloneProfileFixture()): ValidatedProfile {
   const result = validateProfile(input);
   if (!result.ok) {
-    throw new Error(
-      result.issues.map(({ code, path }) => `${code}@${path}`).join(', '),
-    );
+    throw new Error(result.issues.map(({ code, path }) => `${code}@${path}`).join(', '));
   }
   return result.value;
 }

@@ -25,10 +25,7 @@ const HTML_ESCAPES = Object.freeze({
 });
 
 function escapeHtml(value) {
-  return String(value).replace(
-    /[&<>"']/gu,
-    (character) => HTML_ESCAPES[character],
-  );
+  return String(value).replace(/[&<>"']/gu, (character) => HTML_ESCAPES[character]);
 }
 
 /**
@@ -40,54 +37,35 @@ function escapeHtml(value) {
  * never copied, so reviewing never produces a second set of bytes to confuse
  * with the one under review.
  */
-export async function buildResumePdfViewer({
-  candidate,
-  candidatePath,
-  snapshot,
-} = {}) {
-  if (
-    typeof candidate?.candidateId !== 'string' ||
-    typeof candidate?.pdfSha256 !== 'string'
-  ) {
+export async function buildResumePdfViewer({ candidate, candidatePath, snapshot } = {}) {
+  if (typeof candidate?.candidateId !== 'string' || typeof candidate?.pdfSha256 !== 'string') {
     throw new TypeError('candidate must carry candidateId and pdfSha256');
   }
   try {
     await stat(candidatePath);
   } catch {
-    throw new ResumePdfViewerError(
-      'The candidate the viewer would present is not on disk.',
-      {
-        code: 'PDF_VIEWER_CANDIDATE_MISSING',
-        stage: 'pdf.viewer.build',
-        details: { candidatePath },
-      },
-    );
+    throw new ResumePdfViewerError('The candidate the viewer would present is not on disk.', {
+      code: 'PDF_VIEWER_CANDIDATE_MISSING',
+      stage: 'pdf.viewer.build',
+      details: { candidatePath },
+    });
   }
 
   await mkdir(PROFILE_PATHS.pdfViewerRoot, { recursive: true });
-  const viewerPath = resolve(
-    PROFILE_PATHS.pdfViewerRoot,
-    `${candidate.candidateId}.html`,
-  );
+  const viewerPath = resolve(PROFILE_PATHS.pdfViewerRoot, `${candidate.candidateId}.html`);
   const candidateHref = relative(PROFILE_PATHS.pdfViewerRoot, candidatePath);
 
-  const factNodes = snapshot.structure.nodes.filter(
-    (node) => node.role === 'fact',
-  );
+  const factNodes = snapshot.structure.nodes.filter((node) => node.role === 'fact');
   const rows = snapshot.occurrences.map((occurrence) => {
     const node = factNodes.find(
-      (candidateNode) =>
-        candidateNode.occurrenceOrder === occurrence.occurrenceOrder,
+      (candidateNode) => candidateNode.occurrenceOrder === occurrence.occurrenceOrder
     );
     const text = occurrence.fragments
       .map(
-        (fragment, index) =>
-          `${index > 0 && fragment.lineWrapBefore ? ' ' : ''}${fragment.text}`,
+        (fragment, index) => `${index > 0 && fragment.lineWrapBefore ? ' ' : ''}${fragment.text}`
       )
       .join('');
-    const pages = [
-      ...new Set(occurrence.fragments.map((fragment) => fragment.pageNumber)),
-    ];
+    const pages = [...new Set(occurrence.fragments.map((fragment) => fragment.pageNumber))];
     return `<tr>
       <td>${occurrence.occurrenceOrder}</td>
       <td>${escapeHtml(occurrence.valueKind)}</td>
@@ -97,16 +75,14 @@ export async function buildResumePdfViewer({
       <td>${escapeHtml((node?.path ?? []).join('.'))}</td>
       <td>${escapeHtml(text)}</td>
       <td>${escapeHtml(
-        occurrence.urlAnnotations
-          .map((annotation) => annotation.destination)
-          .join(' '),
+        occurrence.urlAnnotations.map((annotation) => annotation.destination).join(' ')
       )}</td>
     </tr>`;
   });
 
   const outlineRows = snapshot.outline.entries.map(
     (entry) =>
-      `<tr><td>${entry.outlineOrder}</td><td>${entry.sectionOrdinal}</td><td>${entry.pageNumber}</td></tr>`,
+      `<tr><td>${entry.outlineOrder}</td><td>${entry.sectionOrdinal}</td><td>${entry.pageNumber}</td></tr>`
   );
 
   const html = `<!doctype html>

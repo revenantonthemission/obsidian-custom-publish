@@ -50,7 +50,7 @@ export async function inspectResumePdfCandidate({
       'PDF_INSPECT_CANDIDATE_STALE',
       'The candidate on disk is not the bytes the identity names.',
       'pdf.inspect.read',
-      { candidateId: candidate.candidateId },
+      { candidateId: candidate.candidateId }
     );
   }
 
@@ -68,7 +68,7 @@ export async function inspectResumePdfCandidate({
       'The candidate could not be opened as a PDF document.',
       'pdf.inspect.read',
       {},
-      cause,
+      cause
     );
   }
 
@@ -79,7 +79,7 @@ export async function inspectResumePdfCandidate({
         'PDF_INSPECT_EMPTY',
         'The candidate reports no pages.',
         'pdf.inspect.read',
-        { pageCount },
+        { pageCount }
       );
     }
 
@@ -90,10 +90,8 @@ export async function inspectResumePdfCandidate({
         'The candidate is missing its tagged structure tree.',
         'pdf.inspect.structure',
         {
-          untagged: pages
-            .filter((page) => !page.tagged)
-            .map((page) => page.pageNumber),
-        },
+          untagged: pages.filter((page) => !page.tagged).map((page) => page.pageNumber),
+        }
       );
     }
 
@@ -104,9 +102,7 @@ export async function inspectResumePdfCandidate({
     const outline = await readOutline(document, pageCount, skeleton);
     const renderedPages = pages.map((page) => ({
       pageNumber: page.pageNumber,
-      evidenceId: sha256(
-        Buffer.from(page.textStream.map((item) => item.text).join(''), 'utf8'),
-      ),
+      evidenceId: sha256(Buffer.from(page.textStream.map((item) => item.text).join(''), 'utf8')),
     }));
 
     const snapshot = deepFreeze({
@@ -122,16 +118,9 @@ export async function inspectResumePdfCandidate({
       tools: await resolveToolVersions(tools),
     });
 
-    const snapshotPath = resolve(
-      PROFILE_PATHS.pdfInspectionRoot,
-      `${candidate.candidateId}.json`,
-    );
+    const snapshotPath = resolve(PROFILE_PATHS.pdfInspectionRoot, `${candidate.candidateId}.json`);
     await mkdir(PROFILE_PATHS.pdfInspectionRoot, { recursive: true });
-    await writeFile(
-      snapshotPath,
-      `${JSON.stringify(snapshot, null, 2)}\n`,
-      'utf8',
-    );
+    await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
 
     return Object.freeze({ rule: INSPECT_RULE, snapshot, snapshotPath });
   } finally {
@@ -151,7 +140,7 @@ async function readCandidateBytes(candidatePath) {
       'The private candidate is not present for inspection.',
       'pdf.inspect.read',
       { candidatePath },
-      cause,
+      cause
     );
   }
 }
@@ -165,10 +154,7 @@ async function readPages(document, pageCount) {
       page.getTextContent({ includeMarkedContent: true }),
       page.getAnnotations(),
     ]);
-    const { textItems, byMarkedContent } = indexMarkedContent(
-      pageNumber,
-      content.items,
-    );
+    const { textItems, byMarkedContent } = indexMarkedContent(pageNumber, content.items);
     pages.push({
       pageNumber,
       tagged: structure !== null && structure !== undefined,
@@ -178,8 +164,7 @@ async function readPages(document, pageCount) {
       annotations: annotations.map((annotation, annotationIndex) => ({
         pageNumber,
         annotationIndex,
-        destination:
-          typeof annotation.url === 'string' ? annotation.url : null,
+        destination: typeof annotation.url === 'string' ? annotation.url : null,
       })),
     });
   }
@@ -274,20 +259,18 @@ function extractOccurrences(stream, pages, skeleton) {
         'PDF_INSPECT_FACT_TEXT_MISSING',
         'A rendered fact could not be found in the candidate text.',
         'pdf.inspect.occurrences',
-        { factOrder: fact.factOrder, text: fact.text.slice(0, 60) },
+        { factOrder: fact.factOrder, text: fact.text.slice(0, 60) }
       );
     }
 
-    const fragments = stream
-      .slice(run.start, run.end + 1)
-      .map((item, index) => ({
-        pageNumber: item.pageNumber,
-        itemIndex: item.itemIndex,
-        text: item.text,
-        // Set only where the wrap stands for a space in the rendered text; the
-        // first fragment can never carry one, since nothing precedes it.
-        lineWrapBefore: run.wraps.has(index),
-      }));
+    const fragments = stream.slice(run.start, run.end + 1).map((item, index) => ({
+      pageNumber: item.pageNumber,
+      itemIndex: item.itemIndex,
+      text: item.text,
+      // Set only where the wrap stands for a space in the rendered text; the
+      // first fragment can never carry one, since nothing precedes it.
+      lineWrapBefore: run.wraps.has(index),
+    }));
 
     const urlAnnotations = isLinkKind(valueKind)
       ? [claimAnnotation(pages, fact, claimedAnnotations)]
@@ -325,7 +308,7 @@ function claimAnnotation(pages, fact, claimed) {
     'PDF_INSPECT_LINK_ANNOTATION_MISSING',
     'A rendered link has no matching annotation in the candidate.',
     'pdf.inspect.annotations',
-    { factOrder: fact.factOrder, href: fact.href },
+    { factOrder: fact.factOrder, href: fact.href }
   );
 }
 
@@ -387,9 +370,7 @@ function inferValueKind(fact) {
 }
 
 function isLinkKind(valueKind) {
-  return ['email', 'github-url', 'external-url', 'internal-path'].includes(
-    valueKind,
-  );
+  return ['email', 'github-url', 'external-url', 'internal-path'].includes(valueKind);
 }
 
 /**
@@ -399,35 +380,29 @@ function isLinkKind(valueKind) {
  * and facts in exactly their ordinal order.
  */
 function buildStructureTree(skeleton) {
-  const factByOrder = new Map(
-    skeleton.facts.map((fact) => [fact.factOrder, fact]),
-  );
+  const factByOrder = new Map(skeleton.facts.map((fact) => [fact.factOrder, fact]));
   const entityPosition = new Map();
   for (const entity of skeleton.entities) {
     const owned = skeleton.facts.filter((fact) =>
-      entityChain(skeleton, fact.entityOrdinal).includes(entity.entityOrdinal),
+      entityChain(skeleton, fact.entityOrdinal).includes(entity.entityOrdinal)
     );
     if (owned.length === 0) {
       throw inspectorError(
         'PDF_INSPECT_ENTITY_WITHOUT_FACT',
         'A rendered entity carries no fact and cannot be positioned.',
         'pdf.inspect.structure',
-        { entityOrdinal: entity.entityOrdinal },
+        { entityOrdinal: entity.entityOrdinal }
       );
     }
-    entityPosition.set(
-      entity.entityOrdinal,
-      Math.min(...owned.map((fact) => fact.factOrder)),
-    );
+    entityPosition.set(entity.entityOrdinal, Math.min(...owned.map((fact) => fact.factOrder)));
   }
 
   const childrenOf = (kind, ordinal) => {
     const entities = skeleton.entities
       .filter((entity) =>
         kind === 'section'
-          ? entity.parentEntityOrdinal === null &&
-            entity.sectionOrdinal === ordinal
-          : entity.parentEntityOrdinal === ordinal,
+          ? entity.parentEntityOrdinal === null && entity.sectionOrdinal === ordinal
+          : entity.parentEntityOrdinal === ordinal
       )
       .map((entity) => ({
         kind: 'entity',
@@ -438,7 +413,7 @@ function buildStructureTree(skeleton) {
       .filter((fact) =>
         kind === 'section'
           ? fact.entityOrdinal === null && fact.sectionOrdinal === ordinal
-          : fact.entityOrdinal === ordinal,
+          : fact.entityOrdinal === ordinal
       )
       .map((fact) => ({
         kind: 'fact',
@@ -455,10 +430,7 @@ function buildStructureTree(skeleton) {
       path,
       role,
       parentPath,
-      children: Array.from({ length: childCount }, (_, index) => [
-        ...path,
-        index,
-      ]),
+      children: Array.from({ length: childCount }, (_, index) => [...path, index]),
       sectionOrdinal: ordinals.sectionOrdinal,
       entityOrdinal: ordinals.entityOrdinal,
       occurrenceOrder: ordinals.occurrenceOrder,
@@ -477,7 +449,7 @@ function buildStructureTree(skeleton) {
           entityOrdinal: fact.entityOrdinal,
           occurrenceOrder: fact.factOrder,
         },
-        0,
+        0
       );
       return;
     }
@@ -492,7 +464,7 @@ function buildStructureTree(skeleton) {
         entityOrdinal: entity.entityOrdinal,
         occurrenceOrder: null,
       },
-      children.length,
+      children.length
     );
     children.forEach((child, index) => walk(child, [...path, index], path));
   };
@@ -503,7 +475,7 @@ function buildStructureTree(skeleton) {
     rootPath,
     null,
     { sectionOrdinal: null, entityOrdinal: null, occurrenceOrder: null },
-    skeleton.sections.length,
+    skeleton.sections.length
   );
   skeleton.sections.forEach((section, index) => {
     const sectionPath = [...rootPath, index];
@@ -517,24 +489,18 @@ function buildStructureTree(skeleton) {
         entityOrdinal: null,
         occurrenceOrder: null,
       },
-      children.length,
+      children.length
     );
-    children.forEach((child, childIndex) =>
-      walk(child, [...sectionPath, childIndex], sectionPath),
-    );
+    children.forEach((child, childIndex) => walk(child, [...sectionPath, childIndex], sectionPath));
   });
 
   return {
     tagged: true,
-    readingOrder: nodes
-      .filter((node) => node.role === 'fact')
-      .map((node) => node.occurrenceOrder),
+    readingOrder: nodes.filter((node) => node.role === 'fact').map((node) => node.occurrenceOrder),
     sectionOrder: nodes
       .filter((node) => node.role === 'section')
       .map((node) => node.sectionOrdinal),
-    entityOrder: nodes
-      .filter((node) => node.role === 'entity')
-      .map((node) => node.entityOrdinal),
+    entityOrder: nodes.filter((node) => node.role === 'entity').map((node) => node.entityOrdinal),
     nodes,
   };
 }
@@ -544,14 +510,14 @@ function bindStructurePaths(structure, occurrences) {
   const factNodes = structure.nodes.filter((node) => node.role === 'fact');
   for (const occurrence of occurrences) {
     const node = factNodes.find(
-      (candidate) => candidate.occurrenceOrder === occurrence.occurrenceOrder,
+      (candidate) => candidate.occurrenceOrder === occurrence.occurrenceOrder
     );
     if (node === undefined) {
       throw inspectorError(
         'PDF_INSPECT_OCCURRENCE_UNPLACED',
         'An occurrence has no fact node in the normalized structure.',
         'pdf.inspect.structure',
-        { occurrenceOrder: occurrence.occurrenceOrder },
+        { occurrenceOrder: occurrence.occurrenceOrder }
       );
     }
     occurrence.structurePath = [...node.path];
@@ -577,7 +543,7 @@ async function readOutline(document, pageCount, skeleton) {
       'PDF_INSPECT_OUTLINE_INCOMPLETE',
       'The candidate outline does not list every profile section.',
       'pdf.inspect.outline',
-      { observed: sections.length, expected: skeleton.sections.length },
+      { observed: sections.length, expected: skeleton.sections.length }
     );
   }
 
@@ -589,7 +555,7 @@ async function readOutline(document, pageCount, skeleton) {
         'PDF_INSPECT_OUTLINE_DESTINATION_INVALID',
         'A section outline entry does not resolve to a page in the candidate.',
         'pdf.inspect.outline',
-        { sectionOrdinal: index },
+        { sectionOrdinal: index }
       );
     }
     entries.push({ outlineOrder: index + 1, sectionOrdinal: index, pageNumber });
@@ -600,9 +566,7 @@ async function readOutline(document, pageCount, skeleton) {
 async function resolveOutlinePage(document, item) {
   try {
     const destination =
-      typeof item?.dest === 'string'
-        ? await document.getDestination(item.dest)
-        : item?.dest;
+      typeof item?.dest === 'string' ? await document.getDestination(item.dest) : item?.dest;
     if (!Array.isArray(destination) || destination.length === 0) return null;
     return (await document.getPageIndex(destination[0])) + 1;
   } catch {
@@ -617,7 +581,7 @@ async function resolveToolVersions(tools) {
     throw inspectorError(
       'PDF_INSPECT_TOOLS_INCOMPLETE',
       'The renderer did not report the runtime it produced the candidate with.',
-      'pdf.inspect.tools',
+      'pdf.inspect.tools'
     );
   }
   return {
@@ -632,31 +596,23 @@ async function resolveToolVersions(tools) {
 async function packageVersion(packageName) {
   const manifest = JSON.parse(
     await readFile(
-      resolve(
-        PROFILE_PATHS.siteRoot,
-        'node_modules',
-        packageName,
-        'package.json',
-      ),
-      'utf8',
-    ),
+      resolve(PROFILE_PATHS.siteRoot, 'node_modules', packageName, 'package.json'),
+      'utf8'
+    )
   );
   if (typeof manifest.version !== 'string' || manifest.version.length === 0) {
     throw inspectorError(
       'PDF_INSPECT_TOOL_VERSION_MISSING',
       'A pinned inspection tool does not declare its version.',
       'pdf.inspect.tools',
-      { packageName },
+      { packageName }
     );
   }
   return manifest.version;
 }
 
 function requireCandidateIdentity(candidate) {
-  if (
-    typeof candidate?.candidateId !== 'string' ||
-    typeof candidate?.pdfSha256 !== 'string'
-  ) {
+  if (typeof candidate?.candidateId !== 'string' || typeof candidate?.pdfSha256 !== 'string') {
     throw new TypeError('candidate must carry candidateId and pdfSha256');
   }
 }

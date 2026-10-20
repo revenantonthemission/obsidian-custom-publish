@@ -1,10 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import {
-  existsSync,
-  readFileSync,
-  statSync,
-  writeSync,
-} from 'node:fs';
+import { existsSync, readFileSync, statSync, writeSync } from 'node:fs';
 import { isAbsolute, posix, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -57,11 +52,7 @@ function parseSignedInt32(name) {
   }
 
   const value = Number(raw);
-  if (
-    !Number.isSafeInteger(value) ||
-    value < SIGNED_INT32_MIN ||
-    value > SIGNED_INT32_MAX
-  ) {
+  if (!Number.isSafeInteger(value) || value < SIGNED_INT32_MIN || value > SIGNED_INT32_MAX) {
     throw new PbtConfigurationError(name, 'must be within the signed 32-bit range');
   }
 
@@ -74,12 +65,12 @@ function collectFastCheckPropertyNames(file) {
     readFileSync(file, 'utf8'),
     ts.ScriptTarget.ESNext,
     true,
-    ts.ScriptKind.TS,
+    ts.ScriptKind.TS
   );
   if (source.parseDiagnostics.length > 0) {
     throw new PbtConfigurationError(
       'PBT_FILE',
-      'must be syntactically valid TypeScript before focused replay',
+      'must be syntactically valid TypeScript before focused replay'
     );
   }
 
@@ -108,7 +99,7 @@ function parseFocus() {
   if (hasFile !== hasFocus) {
     throw new PbtConfigurationError(
       hasFile ? 'PBT_FOCUS' : 'PBT_FILE',
-      'PBT_FILE and PBT_FOCUS must be provided together',
+      'PBT_FILE and PBT_FOCUS must be provided together'
     );
   }
 
@@ -125,7 +116,7 @@ function parseFocus() {
   ) {
     throw new PbtConfigurationError(
       'PBT_FILE',
-      'must be an exact tests/pbt/u1/*.pbt.test.ts repository-relative path',
+      'must be an exact tests/pbt/u1/*.pbt.test.ts repository-relative path'
     );
   }
 
@@ -150,7 +141,7 @@ function parseFocus() {
   ) {
     throw new PbtConfigurationError(
       'PBT_FOCUS',
-      'must be one exact non-empty full test name without control characters',
+      'must be one exact non-empty full test name without control characters'
     );
   }
 
@@ -161,7 +152,7 @@ function parseFocus() {
       'PBT_FOCUS',
       exactMatches.length === 0
         ? 'must exactly match one test.prop source name in PBT_FILE'
-        : 'must identify a unique test.prop source name in PBT_FILE',
+        : 'must identify a unique test.prop source name in PBT_FILE'
     );
   }
 
@@ -175,21 +166,15 @@ function parseReplayPath(explicitSeed, focus) {
 
   const path = process.env.PBT_PATH;
   if (explicitSeed === undefined) {
-    throw new PbtConfigurationError(
-      'PBT_PATH',
-      'requires an explicitly supplied PBT_SEED',
-    );
+    throw new PbtConfigurationError('PBT_PATH', 'requires an explicitly supplied PBT_SEED');
   }
   if (focus.file === undefined || focus.focus === undefined) {
-    throw new PbtConfigurationError(
-      'PBT_PATH',
-      'requires exact PBT_FILE and PBT_FOCUS values',
-    );
+    throw new PbtConfigurationError('PBT_PATH', 'requires exact PBT_FILE and PBT_FOCUS values');
   }
   if (typeof path !== 'string' || !COUNTEREXAMPLE_PATH.test(path)) {
     throw new PbtConfigurationError(
       'PBT_PATH',
-      'must be a fast-check counterexample path such as 0 or 0:1:2',
+      'must be a fast-check counterexample path such as 0 or 0:1:2'
     );
   }
 
@@ -218,7 +203,7 @@ function localVitestEntrypoint() {
   if (!existsSync(entrypoint) || !statSync(entrypoint).isFile()) {
     throw new PbtConfigurationError(
       'vitest',
-      'repository-local node_modules/vitest/vitest.mjs is required',
+      'repository-local node_modules/vitest/vitest.mjs is required'
     );
   }
 
@@ -243,11 +228,7 @@ async function run() {
   });
   const args = [vitest, 'run', '--config', 'vitest.pbt.config.ts'];
   if (config.file !== undefined && config.focus !== undefined) {
-    args.push(
-      config.file,
-      '--testNamePattern',
-      exactTestNamePattern(config.focus, config.seed),
-    );
+    args.push(config.file, '--testNamePattern', exactTestNamePattern(config.focus, config.seed));
   }
 
   writeSync(
@@ -258,7 +239,7 @@ async function run() {
       file: config.file ?? null,
       focus: config.focus ?? null,
       path: config.path ?? null,
-    })}\n`,
+    })}\n`
   );
 
   const child = spawn(process.execPath, args, {
@@ -294,7 +275,7 @@ async function run() {
       `[pbt-run-error] ${JSON.stringify({
         errorCode: 'PBT_RUN_INTERRUPTED',
         signal: outcome.signal,
-      })}\n`,
+      })}\n`
     );
     process.exitCode = 1;
     return;
@@ -313,7 +294,7 @@ try {
       errorCode: isConfigurationError ? 'PBT_CONFIG_INVALID' : 'PBT_RUNNER_FAILED',
       field: isConfigurationError ? error.field : null,
       message: error instanceof Error ? error.message : 'Unknown PBT runner failure',
-    })}\n`,
+    })}\n`
   );
   process.exitCode = 1;
 }

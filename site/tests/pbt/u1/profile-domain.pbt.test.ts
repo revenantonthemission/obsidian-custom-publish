@@ -9,21 +9,14 @@ import {
   collectMaterializedFacts,
   validateFactApproval,
 } from '../../../src/lib/profile/fact-approval.js';
-import type {
-  MaterializedFact,
-} from '../../../src/lib/profile/fact-approval.js';
+import type { MaterializedFact } from '../../../src/lib/profile/fact-approval.js';
 import {
   buildApprovedPortfolioMetadata,
   buildApprovedResumeMetadata,
 } from '../../../src/lib/profile/metadata.js';
 import type { SiteIdentity } from '../../../src/lib/profile/metadata.js';
-import {
-  normalizeProfile,
-  normalizeText,
-} from '../../../src/lib/profile/normalization.js';
-import {
-  productionProfileTesting,
-} from '../../../src/lib/profile/production-profile.js';
+import { normalizeProfile, normalizeText } from '../../../src/lib/profile/normalization.js';
+import { productionProfileTesting } from '../../../src/lib/profile/production-profile.js';
 import {
   selectHomepageProfile,
   selectPortfolioProfile,
@@ -50,10 +43,7 @@ import {
 test.prop([unicodeTextArbitrary, validProfileArbitrary])(
   'PBT-U1-DOMAIN: normalization is idempotent for Unicode text and complete profiles',
   (text, profile) => {
-    const expectedText = text
-      .trim()
-      .replace(/\r\n?/g, '\n')
-      .normalize('NFC');
+    const expectedText = text.trim().replace(/\r\n?/g, '\n').normalize('NFC');
     const inputSnapshot = structuredClone(profile);
 
     const once = normalizeText(text);
@@ -63,11 +53,11 @@ test.prop([unicodeTextArbitrary, validProfileArbitrary])(
     expect(normalizeText(once)).toBe(once);
     expect(once).not.toContain('\r');
     expect(once).toBe(once.normalize('NFC'));
-    expect(
-      normalizeProfile(normalizedProfile as unknown as ProfileData),
-    ).toEqual(normalizedProfile);
+    expect(normalizeProfile(normalizedProfile as unknown as ProfileData)).toEqual(
+      normalizedProfile
+    );
     expect(profile).toEqual(inputSnapshot);
-  },
+  }
 );
 
 test.prop([validProfileArbitrary])(
@@ -86,13 +76,11 @@ test.prop([validProfileArbitrary])(
     expect(result.value.projects.length).toBeGreaterThanOrEqual(3);
     expect(result.value.projects.length).toBeLessThanOrEqual(6);
     expect(result.value.skillGroups.length).toBeGreaterThan(0);
-    expect(
-      result.value.experiences.length + result.value.achievements.length,
-    ).toBeGreaterThan(0);
+    expect(result.value.experiences.length + result.value.achievements.length).toBeGreaterThan(0);
     expect(allSiblingOrdersArePositiveAndUnique(result.value)).toBe(true);
     expect(Object.isFrozen(result.value)).toBe(true);
     expect(Object.isFrozen(result.value.projects)).toBe(true);
-  },
+  }
 );
 
 test.prop([validProfileArbitrary])(
@@ -103,24 +91,14 @@ test.prop([validProfileArbitrary])(
 
     const first = productionProfileTesting.materialize(profile);
     const second = productionProfileTesting.materialize(permuted);
-    const third = productionProfileTesting.materialize(
-      structuredClone(profile),
-    );
+    const third = productionProfileTesting.materialize(structuredClone(profile));
 
-    expect(first.materializedProfileDigest).toBe(
-      second.materializedProfileDigest,
-    );
-    expect(first.materializedProfileDigest).toBe(
-      third.materializedProfileDigest,
-    );
-    expect(first.facts.map(factOperation)).toEqual(
-      second.facts.map(factOperation),
-    );
-    expect(first.structuralDecisions).toEqual(
-      second.structuralDecisions,
-    );
+    expect(first.materializedProfileDigest).toBe(second.materializedProfileDigest);
+    expect(first.materializedProfileDigest).toBe(third.materializedProfileDigest);
+    expect(first.facts.map(factOperation)).toEqual(second.facts.map(factOperation));
+    expect(first.structuralDecisions).toEqual(second.structuralDecisions);
     expect(profile).toEqual(inputSnapshot);
-  },
+  }
 );
 
 test.prop([invalidProfileCaseArbitrary])(
@@ -135,94 +113,60 @@ test.prop([invalidProfileCaseArbitrary])(
       throw new Error('A controlled-invalid profile unexpectedly validated');
     }
 
-    expect(
-      result.issues.map(({ code, path }) => ({ code, path })),
-    ).toEqual(expected);
+    expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual(expected);
     expect('value' in result).toBe(false);
-  },
+  }
 );
 
 test.prop([validProfileProjectionsArbitrary])(
   'PBT-U1-DOMAIN: selectors sort sparse source orders and preserve every member',
   ({ validated, resume, portfolio }) => {
-    expect(orderVector(resume.skillGroups)).toEqual(
-      sortedOrderVector(validated.skillGroups),
-    );
+    expect(orderVector(resume.skillGroups)).toEqual(sortedOrderVector(validated.skillGroups));
     for (const group of resume.skillGroups) {
-      const source = validated.skillGroups.find(
-        (candidate) => candidate.id === group.id,
-      );
+      const source = validated.skillGroups.find((candidate) => candidate.id === group.id);
       expect(source).toBeDefined();
-      expect(orderVector(group.skills)).toEqual(
-        sortedOrderVector(source?.skills ?? []),
-      );
+      expect(orderVector(group.skills)).toEqual(sortedOrderVector(source?.skills ?? []));
     }
 
-    expect(orderVector(resume.experiences)).toEqual(
-      sortedOrderVector(validated.experiences),
-    );
-    expect(orderVector(resume.achievements)).toEqual(
-      sortedOrderVector(validated.achievements),
-    );
-    expect(orderVector(resume.projectSummaries)).toEqual(
-      sortedOrderVector(validated.projects),
-    );
-    expect(orderVector(portfolio.projects)).toEqual(
-      sortedOrderVector(validated.projects),
-    );
+    expect(orderVector(resume.experiences)).toEqual(sortedOrderVector(validated.experiences));
+    expect(orderVector(resume.achievements)).toEqual(sortedOrderVector(validated.achievements));
+    expect(orderVector(resume.projectSummaries)).toEqual(sortedOrderVector(validated.projects));
+    expect(orderVector(portfolio.projects)).toEqual(sortedOrderVector(validated.projects));
     expect(orderVector(resume.contactActions.additionalLinks)).toEqual(
-      sortedOrderVector(validated.contact.additionalLinks),
+      sortedOrderVector(validated.contact.additionalLinks)
     );
-  },
+  }
 );
 
 test.prop([validProfileProjectionsArbitrary])(
   'PBT-U1-DOMAIN: optional values are omitted exactly while required projections remain',
   ({ validated, resume, portfolio }) => {
-    expect(Object.hasOwn(resume, 'education')).toBe(
-      validated.education.length > 0,
-    );
-    expect(Object.hasOwn(resume, 'certifications')).toBe(
-      validated.certifications.length > 0,
-    );
+    expect(Object.hasOwn(resume, 'education')).toBe(validated.education.length > 0);
+    expect(Object.hasOwn(resume, 'certifications')).toBe(validated.certifications.length > 0);
     expect(resume.contactActions.additionalLinks).toHaveLength(
-      validated.contact.additionalLinks.length,
+      validated.contact.additionalLinks.length
     );
 
     for (const experience of resume.experiences) {
-      const source = validated.experiences.find(
-        (candidate) => candidate.id === experience.id,
-      );
+      const source = validated.experiences.find((candidate) => candidate.id === experience.id);
       expect(source).toBeDefined();
       expect(experience.period).toEqual(source?.period);
       expect(experience.details.length).toBeGreaterThan(0);
-      expect(experience.evidence).toHaveLength(
-        source?.evidence.length ?? -1,
-      );
+      expect(experience.evidence).toHaveLength(source?.evidence.length ?? -1);
     }
 
     for (const achievement of resume.achievements) {
-      const source = validated.achievements.find(
-        (candidate) => candidate.id === achievement.id,
-      );
-      expect(Object.hasOwn(achievement, 'period')).toBe(
-        source?.period !== undefined,
-      );
+      const source = validated.achievements.find((candidate) => candidate.id === achievement.id);
+      expect(Object.hasOwn(achievement, 'period')).toBe(source?.period !== undefined);
       expect(achievement.details.length).toBeGreaterThan(0);
-      expect(achievement.evidence).toHaveLength(
-        source?.evidence.length ?? -1,
-      );
+      expect(achievement.evidence).toHaveLength(source?.evidence.length ?? -1);
     }
 
     for (const project of portfolio.projects) {
-      const source = validated.projects.find(
-        (candidate) => candidate.id === project.id,
-      );
-      expect(Object.hasOwn(project, 'period')).toBe(
-        source?.period !== undefined,
-      );
+      const source = validated.projects.find((candidate) => candidate.id === project.id);
+      expect(Object.hasOwn(project, 'period')).toBe(source?.period !== undefined);
       expect(Object.hasOwn(project, 'relatedProfileEntity')).toBe(
-        source?.relatedProfileEntity !== undefined,
+        source?.relatedProfileEntity !== undefined
       );
       expect(project.dimensions.map((dimension) => dimension.key)).toEqual([
         'problem',
@@ -232,54 +176,30 @@ test.prop([validProfileProjectionsArbitrary])(
         'outcomes',
         'lessons',
       ]);
-      expect(
-        project.dimensions.every(
-          (dimension) => dimension.blocks.length > 0,
-        ),
-      ).toBe(true);
-      expect(project.evidence).toHaveLength(
-        source?.evidence.length ?? -1,
-      );
+      expect(project.dimensions.every((dimension) => dimension.blocks.length > 0)).toBe(true);
+      expect(project.evidence).toHaveLength(source?.evidence.length ?? -1);
     }
 
     for (const education of resume.education ?? []) {
-      const source = validated.education.find(
-        (candidate) => candidate.id === education.id,
-      );
+      const source = validated.education.find((candidate) => candidate.id === education.id);
       expect(source).toBeDefined();
-      expect(Object.hasOwn(education, 'subtitle')).toBe(
-        source?.subtitle !== undefined,
-      );
-      expect(Object.hasOwn(education, 'period')).toBe(
-        source?.period !== undefined,
-      );
-      expect(education.details).toHaveLength(
-        source?.details.length ?? -1,
-      );
-      expect(education.evidence).toHaveLength(
-        source?.evidence.length ?? -1,
-      );
+      expect(Object.hasOwn(education, 'subtitle')).toBe(source?.subtitle !== undefined);
+      expect(Object.hasOwn(education, 'period')).toBe(source?.period !== undefined);
+      expect(education.details).toHaveLength(source?.details.length ?? -1);
+      expect(education.evidence).toHaveLength(source?.evidence.length ?? -1);
     }
 
     for (const certification of resume.certifications ?? []) {
       const source = validated.certifications.find(
-        (candidate) => candidate.id === certification.id,
+        (candidate) => candidate.id === certification.id
       );
       expect(source).toBeDefined();
-      expect(Object.hasOwn(certification, 'issuer')).toBe(
-        source?.issuer !== undefined,
-      );
-      expect(Object.hasOwn(certification, 'period')).toBe(
-        source?.period !== undefined,
-      );
-      expect(certification.details).toHaveLength(
-        source?.details.length ?? -1,
-      );
-      expect(certification.evidence).toHaveLength(
-        source?.evidence.length ?? -1,
-      );
+      expect(Object.hasOwn(certification, 'issuer')).toBe(source?.issuer !== undefined);
+      expect(Object.hasOwn(certification, 'period')).toBe(source?.period !== undefined);
+      expect(certification.details).toHaveLength(source?.details.length ?? -1);
+      expect(certification.evidence).toHaveLength(source?.evidence.length ?? -1);
     }
-  },
+  }
 );
 
 test.prop([validProfileProjectionsArbitrary])(
@@ -287,23 +207,15 @@ test.prop([validProfileProjectionsArbitrary])(
   ({ input, validated, resume, portfolio, homepage }) => {
     const canonicalFacts = collectFactEntries(validated);
     const canonicalMultiset = factMultiset(canonicalFacts);
-    expect(new Set(canonicalFacts.map((fact) => fact.factId)).size).toBe(
-      canonicalFacts.length,
-    );
+    expect(new Set(canonicalFacts.map((fact) => fact.factId)).size).toBe(canonicalFacts.length);
 
     for (const projection of [resume, portfolio, homepage]) {
       const projectedFacts = collectFactEntries(projection);
       const projectedMultiset = factMultiset(projectedFacts);
-      expect(multisetCardinality(projectedMultiset)).toBe(
-        projectedFacts.length,
-      );
-      expect(
-        new Set(projectedFacts.map((fact) => fact.factId)).size,
-      ).toBe(projectedFacts.length);
+      expect(multisetCardinality(projectedMultiset)).toBe(projectedFacts.length);
+      expect(new Set(projectedFacts.map((fact) => fact.factId)).size).toBe(projectedFacts.length);
       for (const [key, count] of projectedMultiset) {
-        expect(canonicalMultiset.get(key) ?? 0).toBeGreaterThanOrEqual(
-          count,
-        );
+        expect(canonicalMultiset.get(key) ?? 0).toBeGreaterThanOrEqual(count);
       }
     }
 
@@ -311,46 +223,36 @@ test.prop([validProfileProjectionsArbitrary])(
       narrative: { portfolioSummary: { value: string } };
     };
     portfolioChangedInput.narrative.portfolioSummary.value += ' 변경';
-    const portfolioChanged = validateProfile(
-      portfolioChangedInput as unknown as ProfileData,
-    );
+    const portfolioChanged = validateProfile(portfolioChangedInput as unknown as ProfileData);
     expect(portfolioChanged.ok).toBe(true);
     if (!portfolioChanged.ok) {
       throw new Error(formatDiagnostics(portfolioChanged.issues));
     }
 
     expect(selectResumeProfile(portfolioChanged.value)).toEqual(resume);
-    expect(selectHomepageProfile(portfolioChanged.value)).toEqual(
-      homepage,
+    expect(selectHomepageProfile(portfolioChanged.value)).toEqual(homepage);
+    expect(selectPortfolioProfile(portfolioChanged.value)).not.toEqual(portfolio);
+    expect(selectPortfolioProfile(portfolioChanged.value).portfolioSummary.value).toBe(
+      `${portfolio.portfolioSummary.value} 변경`
     );
-    expect(
-      selectPortfolioProfile(portfolioChanged.value),
-    ).not.toEqual(portfolio);
-    expect(
-      selectPortfolioProfile(portfolioChanged.value).portfolioSummary.value,
-    ).toBe(`${portfolio.portfolioSummary.value} 변경`);
 
     const resumeChangedInput = structuredClone(input) as unknown as {
       narrative: { resumeSummary: { value: string } };
     };
     resumeChangedInput.narrative.resumeSummary.value += ' 변경';
-    const resumeChanged = validateProfile(
-      resumeChangedInput as unknown as ProfileData,
-    );
+    const resumeChanged = validateProfile(resumeChangedInput as unknown as ProfileData);
     expect(resumeChanged.ok).toBe(true);
     if (!resumeChanged.ok) {
       throw new Error(formatDiagnostics(resumeChanged.issues));
     }
 
-    expect(selectPortfolioProfile(resumeChanged.value)).toEqual(
-      portfolio,
-    );
+    expect(selectPortfolioProfile(resumeChanged.value)).toEqual(portfolio);
     expect(selectHomepageProfile(resumeChanged.value)).toEqual(homepage);
     expect(selectResumeProfile(resumeChanged.value)).not.toEqual(resume);
-    expect(
-      selectResumeProfile(resumeChanged.value).resumeSummary.value,
-    ).toBe(`${resume.resumeSummary.value} 변경`);
-  },
+    expect(selectResumeProfile(resumeChanged.value).resumeSummary.value).toBe(
+      `${resume.resumeSummary.value} 변경`
+    );
+  }
 );
 
 test.prop([validProfileArbitrary])(
@@ -378,13 +280,12 @@ test.prop([validProfileArbitrary])(
     }));
     expect(firstIssues).toEqual(MULTIPLE_VIOLATION_ORACLE);
     expect(secondIssues).toEqual(firstIssues);
-    expect(
-      new Set(firstIssues.map(({ code, path }) => `${code}\u0000${path}`))
-        .size,
-    ).toBe(firstIssues.length);
+    expect(new Set(firstIssues.map(({ code, path }) => `${code}\u0000${path}`)).size).toBe(
+      firstIssues.length
+    );
     expect('value' in first).toBe(false);
     expect('value' in second).toBe(false);
-  },
+  }
 );
 
 test.prop([syntheticFactApprovalArbitrary])(
@@ -410,9 +311,7 @@ test.prop([syntheticFactApprovalArbitrary])(
     expect(facts).toEqual(currentFacts);
     expect(records).toHaveLength(currentFacts.length);
     expect(actualCorrespondence).toEqual(expectedCorrespondence);
-    expect(records.every((record) => record.status === 'Approved')).toBe(
-      true,
-    );
+    expect(records.every((record) => record.status === 'Approved')).toBe(true);
 
     const result = validateFactApproval(profile, review);
     expect(result.ok).toBe(true);
@@ -420,7 +319,7 @@ test.prop([syntheticFactApprovalArbitrary])(
       throw new Error(formatDiagnostics(result.issues));
     }
     expect(result.value.profile).toBe(profile);
-  },
+  }
 );
 
 test.prop([invalidSyntheticFactApprovalArbitrary])(
@@ -432,21 +331,14 @@ test.prop([invalidSyntheticFactApprovalArbitrary])(
     expect(review).toEqual(reviewSnapshot);
     expect(result.ok).toBe(false);
     if (result.ok) {
-      throw new Error(
-        'A controlled-invalid synthetic approval unexpectedly passed',
-      );
+      throw new Error('A controlled-invalid synthetic approval unexpectedly passed');
     }
-    expect(
-      result.issues.map(({ code, path }) => ({ code, path })),
-    ).toEqual([expected]);
+    expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([expected]);
     expect('value' in result).toBe(false);
-  },
+  }
 );
 
-test.prop([
-  validProfileProjectionsArbitrary,
-  invalidProfileCaseArbitrary,
-])(
+test.prop([validProfileProjectionsArbitrary, invalidProfileCaseArbitrary])(
   'PBT-U1-DOMAIN: assembly returns all projections for valid input and none for invalid input',
   ({ validated, resume, portfolio, homepage }, invalidCase) => {
     const assembly = assembleValidatedProfile(validated);
@@ -460,7 +352,7 @@ test.prop([
     if (!invalid.ok) {
       expect('value' in invalid).toBe(false);
     }
-  },
+  }
 );
 
 test.prop([syntheticFactApprovalArbitrary, siteIdentityArbitrary])(
@@ -474,14 +366,8 @@ test.prop([syntheticFactApprovalArbitrary, siteIdentityArbitrary])(
 
     const approvedSource = approval.value;
     const assembly = assembleFactApprovedProfile(approvedSource);
-    const resumeMetadata = buildApprovedResumeMetadata(
-      site,
-      approvedSource,
-    );
-    const portfolioMetadata = buildApprovedPortfolioMetadata(
-      site,
-      approvedSource,
-    );
+    const resumeMetadata = buildApprovedResumeMetadata(site, approvedSource);
+    const portfolioMetadata = buildApprovedPortfolioMetadata(site, approvedSource);
 
     expect(assembly.source).toBe(approvedSource);
     expect(assembly.source.profile).toBe(profile);
@@ -492,21 +378,15 @@ test.prop([syntheticFactApprovalArbitrary, siteIdentityArbitrary])(
         formatDiagnostics([
           ...(resumeMetadata.ok ? [] : resumeMetadata.issues),
           ...(portfolioMetadata.ok ? [] : portfolioMetadata.issues),
-        ]),
+        ])
       );
     }
-    expect(resumeMetadata.value.description).toBe(
-      assembly.resume.resumeSummary.value,
-    );
-    expect(portfolioMetadata.value.description).toBe(
-      assembly.portfolio.portfolioSummary.value,
-    );
+    expect(resumeMetadata.value.description).toBe(assembly.resume.resumeSummary.value);
+    expect(portfolioMetadata.value.description).toBe(assembly.portfolio.portfolioSummary.value);
 
-    const structuralClone = structuredClone(
-      approvedSource,
-    ) as FactApprovedProfile;
+    const structuralClone = structuredClone(approvedSource) as FactApprovedProfile;
     expectPublicBoundariesToReject(site, structuralClone);
-  },
+  }
 );
 
 test.prop([
@@ -516,10 +396,7 @@ test.prop([
 ])(
   'PBT-U1-DOMAIN: controlled invalid approval or profile produces no downstream public assembly or metadata',
   (invalidApprovalCase, invalidProfileCase, site) => {
-    const approval = validateFactApproval(
-      invalidApprovalCase.profile,
-      invalidApprovalCase.review,
-    );
+    const approval = validateFactApproval(invalidApprovalCase.profile, invalidApprovalCase.review);
     expect(approval.ok).toBe(false);
     if (approval.ok) {
       throw new Error('A controlled-invalid approval unexpectedly passed');
@@ -530,10 +407,7 @@ test.prop([
       profile: invalidApprovalCase.profile,
       approval: invalidApprovalCase.review.receipt,
     }) as unknown as FactApprovedProfile;
-    expectPublicBoundariesToReject(
-      site,
-      unregisteredApprovalCandidate,
-    );
+    expectPublicBoundariesToReject(site, unregisteredApprovalCandidate);
 
     const profile = validateProfile(invalidProfileCase.profile);
     expect(profile.ok).toBe(false);
@@ -546,17 +420,11 @@ test.prop([
       profile: invalidProfileCase.profile,
       approval: invalidApprovalCase.review.receipt,
     }) as unknown as FactApprovedProfile;
-    expectPublicBoundariesToReject(
-      site,
-      unregisteredProfileCandidate,
-    );
-  },
+    expectPublicBoundariesToReject(site, unregisteredProfileCandidate);
+  }
 );
 
-function expectPublicBoundariesToReject(
-  site: SiteIdentity,
-  candidate: FactApprovedProfile,
-): void {
+function expectPublicBoundariesToReject(site: SiteIdentity, candidate: FactApprovedProfile): void {
   expect(() => assembleFactApprovedProfile(candidate)).toThrow(TypeError);
   for (const metadata of [
     buildApprovedResumeMetadata(site, candidate),
@@ -570,9 +438,7 @@ function expectPublicBoundariesToReject(
   }
 }
 
-function allSiblingOrdersArePositiveAndUnique(
-  profile: ValidatedProfile,
-): boolean {
+function allSiblingOrdersArePositiveAndUnique(profile: ValidatedProfile): boolean {
   const collections: readonly (readonly unknown[])[] = [
     profile.skillGroups,
     ...profile.skillGroups.map((group) => group.skills),
@@ -590,9 +456,7 @@ function allSiblingOrdersArePositiveAndUnique(
   ];
 
   return collections.every((collection) => {
-    const orders = collection.map((value) =>
-      Number((value as { order: unknown }).order),
-    );
+    const orders = collection.map((value) => Number((value as { order: unknown }).order));
     return (
       orders.every((order) => Number.isInteger(order) && order > 0) &&
       new Set(orders).size === orders.length
@@ -600,9 +464,7 @@ function allSiblingOrdersArePositiveAndUnique(
   });
 }
 
-function orderVector(
-  values: readonly unknown[],
-): Array<Readonly<{ id: string; order: number }>> {
+function orderVector(values: readonly unknown[]): Array<Readonly<{ id: string; order: number }>> {
   return values.map((value) => {
     const item = value as { id: unknown; order: unknown };
     return {
@@ -613,11 +475,9 @@ function orderVector(
 }
 
 function sortedOrderVector(
-  values: readonly unknown[],
+  values: readonly unknown[]
 ): Array<Readonly<{ id: string; order: number }>> {
-  return orderVector(values).sort(
-    (left, right) => left.order - right.order,
-  );
+  return orderVector(values).sort((left, right) => left.order - right.order);
 }
 
 interface FactEntry {
@@ -640,10 +500,7 @@ function collectFactEntries(value: unknown): FactEntry[] {
     }
 
     const record = candidate as Record<string, unknown>;
-    if (
-      typeof record.factId === 'string' &&
-      Object.hasOwn(record, 'value')
-    ) {
+    if (typeof record.factId === 'string' && Object.hasOwn(record, 'value')) {
       facts.push({
         factId: record.factId,
         value: JSON.stringify(record.value) ?? 'undefined',
@@ -654,9 +511,7 @@ function collectFactEntries(value: unknown): FactEntry[] {
   }
 }
 
-function factMultiset(
-  facts: readonly FactEntry[],
-): ReadonlyMap<string, number> {
+function factMultiset(facts: readonly FactEntry[]): ReadonlyMap<string, number> {
   const multiset = new Map<string, number>();
   for (const fact of facts) {
     const key = `${fact.factId}\u0000${fact.value}`;
@@ -665,13 +520,8 @@ function factMultiset(
   return multiset;
 }
 
-function multisetCardinality(
-  multiset: ReadonlyMap<string, number>,
-): number {
-  return [...multiset.values()].reduce(
-    (total, count) => total + count,
-    0,
-  );
+function multisetCardinality(multiset: ReadonlyMap<string, number>): number {
+  return [...multiset.values()].reduce((total, count) => total + count, 0);
 }
 
 function reverseOrderedSources(profile: ProfileData): ProfileData {
@@ -735,9 +585,7 @@ const MULTIPLE_VIOLATION_ORACLE = [
   },
 ] as const;
 
-function addMultipleControlledViolations(
-  profile: ProfileData,
-): ProfileData {
+function addMultipleControlledViolations(profile: ProfileData): ProfileData {
   const invalid = structuredClone(profile) as unknown as {
     identity: { name: { value: string } };
     contact: { github: { value: string } };
@@ -757,8 +605,6 @@ function addMultipleControlledViolations(
   return invalid as unknown as ProfileData;
 }
 
-function formatDiagnostics(
-  issues: readonly Readonly<{ code: string; path: string }>[],
-): string {
+function formatDiagnostics(issues: readonly Readonly<{ code: string; path: string }>[]): string {
   return issues.map(({ code, path }) => `${code}@${path}`).join(', ');
 }

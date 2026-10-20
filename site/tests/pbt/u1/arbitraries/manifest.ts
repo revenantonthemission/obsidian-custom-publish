@@ -33,39 +33,29 @@ import type {
   ResumeProfile,
   ValidatedProfile,
 } from '../../../../src/lib/profile/types.js';
-import {
-  DOCUMENT_REQUEST_MUTATION_KINDS,
-  MANIFEST_MUTATION_KINDS,
-} from '../mutations.js';
-import type {
-  DocumentRequestMutationKind,
-  ManifestMutationKind,
-} from '../mutations.js';
-import {
-  validProfileProjectionsArbitrary,
-} from './profile.js';
+import { DOCUMENT_REQUEST_MUTATION_KINDS, MANIFEST_MUTATION_KINDS } from '../mutations.js';
+import type { DocumentRequestMutationKind, ManifestMutationKind } from '../mutations.js';
+import { validProfileProjectionsArbitrary } from './profile.js';
 
 export interface ResumeManifestSourceCase {
   readonly validated: ValidatedProfile;
   readonly resume: ResumeProfile;
 }
 
-export const resumeManifestSourceArbitrary: fc.Arbitrary<
-  ResumeManifestSourceCase
-> = validProfileProjectionsArbitrary.map((projections) =>
-  Object.freeze({
-    validated: projections.validated,
-    resume: projections.resume,
-  }),
+export const resumeManifestSourceArbitrary: fc.Arbitrary<ResumeManifestSourceCase> =
+  validProfileProjectionsArbitrary.map((projections) =>
+    Object.freeze({
+      validated: projections.validated,
+      resume: projections.resume,
+    })
+  );
+
+export const manifestMutationKindArbitrary: fc.Arbitrary<ManifestMutationKind> = fc.constantFrom(
+  ...MANIFEST_MUTATION_KINDS
 );
 
-export const manifestMutationKindArbitrary: fc.Arbitrary<
-  ManifestMutationKind
-> = fc.constantFrom(...MANIFEST_MUTATION_KINDS);
-
-export const documentRequestMutationKindArbitrary: fc.Arbitrary<
-  DocumentRequestMutationKind
-> = fc.constantFrom(...DOCUMENT_REQUEST_MUTATION_KINDS);
+export const documentRequestMutationKindArbitrary: fc.Arbitrary<DocumentRequestMutationKind> =
+  fc.constantFrom(...DOCUMENT_REQUEST_MUTATION_KINDS);
 
 export interface ResumeManifestOracle {
   readonly sectionOrder: readonly ResumeSectionOrder[];
@@ -81,35 +71,22 @@ export interface ResumeManifestOracle {
  * encoder. This keeps the property capable of detecting omissions and wrong
  * section/entity/value metadata in the production traversal.
  */
-export function buildResumeManifestOracle(
-  profile: ResumeProfile,
-): ResumeManifestOracle {
+export function buildResumeManifestOracle(profile: ResumeProfile): ResumeManifestOracle {
   const state: MutableResumeManifestOracle = {
     sectionOrder: [],
     entityOrder: [],
     entries: [],
   };
 
-  const intro = oracleSection(
-    state,
-    'intro-contact',
-    1,
-  );
-  oracleStringFact(
-    state,
-    intro,
-    null,
-    profile.identity.name,
-    'profile.identity.name',
-    'text',
-  );
+  const intro = oracleSection(state, 'intro-contact', 1);
+  oracleStringFact(state, intro, null, profile.identity.name, 'profile.identity.name', 'text');
   oracleStringFact(
     state,
     intro,
     null,
     profile.identity.headline,
     'profile.identity.headline',
-    'text',
+    'text'
   );
   oracleStringFact(
     state,
@@ -117,22 +94,16 @@ export function buildResumeManifestOracle(
     null,
     profile.resumeSummary,
     'profile.narrative.resumeSummary',
-    'text',
+    'text'
   );
-  oracleContentBlocks(
-    state,
-    intro,
-    null,
-    profile.detailedIntro,
-    'profile.narrative.detailedIntro',
-  );
+  oracleContentBlocks(state, intro, null, profile.detailedIntro, 'profile.narrative.detailedIntro');
   oracleStringFact(
     state,
     intro,
     null,
     profile.contactActions.email,
     'profile.contact.email',
-    'email',
+    'email'
   );
   oracleStringFact(
     state,
@@ -140,33 +111,26 @@ export function buildResumeManifestOracle(
     null,
     profile.contactActions.github,
     'profile.contact.github',
-    'github-url',
+    'github-url'
   );
   oracleEvidenceLinks(
     state,
     intro,
     profile.contactActions.additionalLinks,
     'profile.contact.additionalLinks',
-    null,
+    null
   );
 
   const skills = oracleSection(state, 'skills', 2);
   for (const group of profile.skillGroups) {
-    const groupEntity = oracleEntity(
-      state,
-      skills,
-      'skill-group',
-      group.id,
-      group.order,
-      null,
-    );
+    const groupEntity = oracleEntity(state, skills, 'skill-group', group.id, group.order, null);
     oracleStringFact(
       state,
       skills,
       groupEntity,
       group.title,
       `profile.skillGroups[id=${group.id}].title`,
-      'text',
+      'text'
     );
 
     for (const skill of group.skills) {
@@ -176,7 +140,7 @@ export function buildResumeManifestOracle(
         'skill',
         skill.id,
         skill.order,
-        oracleParent(groupEntity),
+        oracleParent(groupEntity)
       );
       oracleStringFact(
         state,
@@ -184,7 +148,7 @@ export function buildResumeManifestOracle(
         skillEntity,
         skill.name,
         `profile.skillGroups[id=${group.id}].skills[id=${skill.id}].name`,
-        'text',
+        'text'
       );
     }
   }
@@ -197,53 +161,27 @@ export function buildResumeManifestOracle(
       'experience',
       experience.id,
       experience.order,
-      null,
+      null
     );
     const base = `profile.experiences[id=${experience.id}]`;
-    oracleStringFact(
-      state,
-      highlights,
-      entity,
-      experience.role,
-      `${base}.role`,
-      'text',
-    );
+    oracleStringFact(state, highlights, entity, experience.role, `${base}.role`, 'text');
     oracleStringFact(
       state,
       highlights,
       entity,
       experience.organization,
       `${base}.organization`,
-      'text',
+      'text'
     );
-    oraclePeriodFact(
-      state,
-      highlights,
-      entity,
-      experience.period,
-      `${base}.period`,
-    );
-    oracleStringFact(
-      state,
-      highlights,
-      entity,
-      experience.summary,
-      `${base}.summary`,
-      'text',
-    );
-    oracleContentBlocks(
-      state,
-      highlights,
-      entity,
-      experience.details,
-      `${base}.details`,
-    );
+    oraclePeriodFact(state, highlights, entity, experience.period, `${base}.period`);
+    oracleStringFact(state, highlights, entity, experience.summary, `${base}.summary`, 'text');
+    oracleContentBlocks(state, highlights, entity, experience.details, `${base}.details`);
     oracleEvidenceLinks(
       state,
       highlights,
       experience.evidence,
       `${base}.evidence`,
-      oracleParent(entity),
+      oracleParent(entity)
     );
   }
 
@@ -254,81 +192,31 @@ export function buildResumeManifestOracle(
       'achievement',
       achievement.id,
       achievement.order,
-      null,
+      null
     );
     const base = `profile.achievements[id=${achievement.id}]`;
-    oracleStringFact(
-      state,
-      highlights,
-      entity,
-      achievement.title,
-      `${base}.title`,
-      'text',
-    );
+    oracleStringFact(state, highlights, entity, achievement.title, `${base}.title`, 'text');
     if (achievement.period !== undefined) {
-      oraclePeriodFact(
-        state,
-        highlights,
-        entity,
-        achievement.period,
-        `${base}.period`,
-      );
+      oraclePeriodFact(state, highlights, entity, achievement.period, `${base}.period`);
     }
-    oracleStringFact(
-      state,
-      highlights,
-      entity,
-      achievement.summary,
-      `${base}.summary`,
-      'text',
-    );
-    oracleContentBlocks(
-      state,
-      highlights,
-      entity,
-      achievement.details,
-      `${base}.details`,
-    );
+    oracleStringFact(state, highlights, entity, achievement.summary, `${base}.summary`, 'text');
+    oracleContentBlocks(state, highlights, entity, achievement.details, `${base}.details`);
     oracleEvidenceLinks(
       state,
       highlights,
       achievement.evidence,
       `${base}.evidence`,
-      oracleParent(entity),
+      oracleParent(entity)
     );
   }
 
-  const projects = oracleSection(
-    state,
-    'project-summaries',
-    4,
-  );
+  const projects = oracleSection(state, 'project-summaries', 4);
   for (const project of profile.projectSummaries) {
-    const entity = oracleEntity(
-      state,
-      projects,
-      'project',
-      project.id,
-      project.order,
-      null,
-    );
+    const entity = oracleEntity(state, projects, 'project', project.id, project.order, null);
     const base = `profile.projects[id=${project.id}]`;
-    oracleStringFact(
-      state,
-      projects,
-      entity,
-      project.title,
-      `${base}.title`,
-      'text',
-    );
+    oracleStringFact(state, projects, entity, project.title, `${base}.title`, 'text');
     if (project.period !== undefined) {
-      oraclePeriodFact(
-        state,
-        projects,
-        entity,
-        project.period,
-        `${base}.period`,
-      );
+      oraclePeriodFact(state, projects, entity, project.period, `${base}.period`);
     }
     oracleStringFact(
       state,
@@ -336,16 +224,12 @@ export function buildResumeManifestOracle(
       entity,
       project.outcomeSummary,
       `${base}.outcomeSummary`,
-      'text',
+      'text'
     );
   }
 
   if (profile.education !== undefined) {
-    const educationSection = oracleSection(
-      state,
-      'education',
-      5,
-    );
+    const educationSection = oracleSection(state, 'education', 5);
     for (const education of profile.education) {
       const entity = oracleEntity(
         state,
@@ -353,17 +237,10 @@ export function buildResumeManifestOracle(
         'education',
         education.id,
         education.order,
-        null,
+        null
       );
       const base = `profile.education[id=${education.id}]`;
-      oracleStringFact(
-        state,
-        educationSection,
-        entity,
-        education.title,
-        `${base}.title`,
-        'text',
-      );
+      oracleStringFact(state, educationSection, entity, education.title, `${base}.title`, 'text');
       if (education.subtitle !== undefined) {
         oracleStringFact(
           state,
@@ -371,41 +248,25 @@ export function buildResumeManifestOracle(
           entity,
           education.subtitle,
           `${base}.subtitle`,
-          'text',
+          'text'
         );
       }
       if (education.period !== undefined) {
-        oraclePeriodFact(
-          state,
-          educationSection,
-          entity,
-          education.period,
-          `${base}.period`,
-        );
+        oraclePeriodFact(state, educationSection, entity, education.period, `${base}.period`);
       }
-      oracleContentBlocks(
-        state,
-        educationSection,
-        entity,
-        education.details,
-        `${base}.details`,
-      );
+      oracleContentBlocks(state, educationSection, entity, education.details, `${base}.details`);
       oracleEvidenceLinks(
         state,
         educationSection,
         education.evidence,
         `${base}.evidence`,
-        oracleParent(entity),
+        oracleParent(entity)
       );
     }
   }
 
   if (profile.certifications !== undefined) {
-    const certificationSection = oracleSection(
-      state,
-      'certifications',
-      6,
-    );
+    const certificationSection = oracleSection(state, 'certifications', 6);
     for (const certification of profile.certifications) {
       const entity = oracleEntity(
         state,
@@ -413,17 +274,16 @@ export function buildResumeManifestOracle(
         'certification',
         certification.id,
         certification.order,
-        null,
+        null
       );
-      const base =
-        `profile.certifications[id=${certification.id}]`;
+      const base = `profile.certifications[id=${certification.id}]`;
       oracleStringFact(
         state,
         certificationSection,
         entity,
         certification.title,
         `${base}.title`,
-        'text',
+        'text'
       );
       if (certification.issuer !== undefined) {
         oracleStringFact(
@@ -432,7 +292,7 @@ export function buildResumeManifestOracle(
           entity,
           certification.issuer,
           `${base}.issuer`,
-          'text',
+          'text'
         );
       }
       if (certification.period !== undefined) {
@@ -441,7 +301,7 @@ export function buildResumeManifestOracle(
           certificationSection,
           entity,
           certification.period,
-          `${base}.period`,
+          `${base}.period`
         );
       }
       oracleContentBlocks(
@@ -449,14 +309,14 @@ export function buildResumeManifestOracle(
         certificationSection,
         entity,
         certification.details,
-        `${base}.details`,
+        `${base}.details`
       );
       oracleEvidenceLinks(
         state,
         certificationSection,
         certification.evidence,
         `${base}.evidence`,
-        oracleParent(entity),
+        oracleParent(entity)
       );
     }
   }
@@ -473,14 +333,11 @@ export function buildResumeManifestOracle(
  * facts. It mirrors the exact correspondence gate without bypassing the
  * production WeakSet capability boundary.
  */
-export function approveSyntheticProfile(
-  profile: ValidatedProfile,
-): FactApprovedProfileAssembly {
+export function approveSyntheticProfile(profile: ValidatedProfile): FactApprovedProfileAssembly {
   const facts = collectMaterializedFacts(profile);
   const records = facts.map((fact) => {
     const evidence: FactReviewEvidence =
-      fact.normalizedValue.kind === 'github-url' ||
-      fact.normalizedValue.kind === 'external-url'
+      fact.normalizedValue.kind === 'github-url' || fact.normalizedValue.kind === 'external-url'
         ? Object.freeze({
             kind: 'public-source' as const,
             reference: 'synthetic-pbt-public-source',
@@ -547,7 +404,7 @@ export function approveSyntheticProfile(
     throw new Error(
       `Synthetic approval fixture was rejected: ${approved.issues
         .map((issue) => `${issue.code}@${issue.path}`)
-        .join(', ')}`,
+        .join(', ')}`
     );
   }
 
@@ -568,7 +425,7 @@ interface OracleSection {
 function oracleSection(
   state: MutableResumeManifestOracle,
   key: ResumeSectionKey,
-  order: ResumeSectionRank,
+  order: ResumeSectionRank
 ): OracleSection {
   const section = Object.freeze({ key, order });
   state.sectionOrder.push(section);
@@ -581,7 +438,7 @@ function oracleEntity<Kind extends EntityKind>(
   kind: Kind,
   id: EntityId<Kind>,
   order: DisplayOrder,
-  parent: ResumeEntityParent | null,
+  parent: ResumeEntityParent | null
 ): ResumeEntityIdentity {
   const entity = Object.freeze({
     kind,
@@ -600,14 +457,12 @@ function oracleEntity<Kind extends EntityKind>(
               kind: parent.kind,
               id: parent.id,
             }),
-    }),
+    })
   );
   return entity;
 }
 
-function oracleParent(
-  entity: ResumeEntityIdentity,
-): ResumeEntityParent {
+function oracleParent(entity: ResumeEntityIdentity): ResumeEntityParent {
   return Object.freeze({
     kind: entity.kind,
     id: entity.id,
@@ -620,17 +475,9 @@ function oracleStringFact(
   entity: ResumeEntityIdentity | null,
   fact: PublicFact<string>,
   path: string,
-  valueKind: Exclude<ResumeManifestValueKind, 'period'>,
+  valueKind: Exclude<ResumeManifestValueKind, 'period'>
 ): void {
-  oracleEntry(
-    state,
-    section,
-    entity,
-    fact.factId,
-    path,
-    valueKind,
-    fact.value,
-  );
+  oracleEntry(state, section, entity, fact.factId, path, valueKind, fact.value);
 }
 
 function oraclePeriodFact(
@@ -638,17 +485,9 @@ function oraclePeriodFact(
   section: OracleSection,
   entity: ResumeEntityIdentity,
   fact: PublicFact<Period>,
-  path: string,
+  path: string
 ): void {
-  oracleEntry(
-    state,
-    section,
-    entity,
-    fact.factId,
-    path,
-    'period',
-    oraclePeriodValue(fact.value),
-  );
+  oracleEntry(state, section, entity, fact.factId, path, 'period', oraclePeriodValue(fact.value));
 }
 
 function oracleContentBlocks(
@@ -656,18 +495,11 @@ function oracleContentBlocks(
   section: OracleSection,
   entity: ResumeEntityIdentity | null,
   blocks: readonly ContentBlock[],
-  base: string,
+  base: string
 ): void {
   blocks.forEach((block, blockIndex) => {
     if (block.tag === 'paragraph') {
-      oracleStringFact(
-        state,
-        section,
-        entity,
-        block.text,
-        `${base}[${blockIndex}].text`,
-        'text',
-      );
+      oracleStringFact(state, section, entity, block.text, `${base}[${blockIndex}].text`, 'text');
       return;
     }
 
@@ -678,7 +510,7 @@ function oracleContentBlocks(
         entity,
         item,
         `${base}[${blockIndex}].items[${itemIndex}]`,
-        'text',
+        'text'
       );
     });
   });
@@ -689,36 +521,20 @@ function oracleEvidenceLinks(
   section: OracleSection,
   links: readonly EvidenceLink[],
   base: string,
-  parent: ResumeEntityParent | null,
+  parent: ResumeEntityParent | null
 ): void {
   for (const link of links) {
-    const entity = oracleEntity(
-      state,
-      section,
-      'evidence-link',
-      link.id,
-      link.order,
-      parent,
-    );
+    const entity = oracleEntity(state, section, 'evidence-link', link.id, link.order, parent);
     const linkBase = `${base}[id=${link.id}]`;
-    oracleStringFact(
-      state,
-      section,
-      entity,
-      link.label,
-      `${linkBase}.label`,
-      'text',
-    );
+    oracleStringFact(state, section, entity, link.label, `${linkBase}.label`, 'text');
     oracleEntry(
       state,
       section,
       entity,
       link.destination.factId,
       `${linkBase}.destination`,
-      link.destination.value.tag === 'external'
-        ? 'external-url'
-        : 'internal-path',
-      link.destination.value.value,
+      link.destination.value.tag === 'external' ? 'external-url' : 'internal-path',
+      link.destination.value.value
     );
   }
 }
@@ -730,7 +546,7 @@ function oracleEntry(
   factId: FactId,
   path: string,
   valueKind: ResumeManifestValueKind,
-  normalizedValue: string,
+  normalizedValue: string
 ): void {
   state.entries.push(
     Object.freeze({
@@ -749,16 +565,13 @@ function oracleEntry(
       path: path as ResumeManifestEntry['path'],
       valueKind,
       normalizedValue,
-    }),
+    })
   );
 }
 
 function oraclePeriodValue(period: Period): string {
   const start = `${period.start.tag}:${period.start.value}`;
-  const end =
-    period.end.tag === 'present'
-      ? 'present'
-      : `${period.end.tag}:${period.end.value}`;
+  const end = period.end.tag === 'present' ? 'present' : `${period.end.tag}:${period.end.value}`;
   return `start:${start}|end:${end}`;
 }
 

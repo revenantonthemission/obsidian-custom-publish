@@ -24,14 +24,11 @@ import type {
 declare const canonicalDigestBrand: unique symbol;
 
 export const CANONICAL_DIGEST_SCHEMA_VERSION = 1 as const;
-export const PROFILE_SOURCE_DIGEST_DOMAIN =
-  'obsidian-press:profile-source' as const;
-export const RESUME_FACT_MANIFEST_DIGEST_DOMAIN =
-  'obsidian-press:resume-fact-manifest' as const;
+export const PROFILE_SOURCE_DIGEST_DOMAIN = 'obsidian-press:profile-source' as const;
+export const RESUME_FACT_MANIFEST_DIGEST_DOMAIN = 'obsidian-press:resume-fact-manifest' as const;
 
 export type CanonicalDigestDomain =
-  | typeof PROFILE_SOURCE_DIGEST_DOMAIN
-  | typeof RESUME_FACT_MANIFEST_DIGEST_DOMAIN;
+  typeof PROFILE_SOURCE_DIGEST_DOMAIN | typeof RESUME_FACT_MANIFEST_DIGEST_DOMAIN;
 
 /** A versioned, domain-separated SHA-256 identity. */
 export type CanonicalDigest<Domain extends CanonicalDigestDomain> = Readonly<{
@@ -42,12 +39,8 @@ export type CanonicalDigest<Domain extends CanonicalDigestDomain> = Readonly<{
   readonly [canonicalDigestBrand]: Domain;
 }>;
 
-export type ProfileSourceDigest = CanonicalDigest<
-  typeof PROFILE_SOURCE_DIGEST_DOMAIN
->;
-export type ResumeFactManifestDigest = CanonicalDigest<
-  typeof RESUME_FACT_MANIFEST_DIGEST_DOMAIN
->;
+export type ProfileSourceDigest = CanonicalDigest<typeof PROFILE_SOURCE_DIGEST_DOMAIN>;
+export type ResumeFactManifestDigest = CanonicalDigest<typeof RESUME_FACT_MANIFEST_DIGEST_DOMAIN>;
 
 export interface ResumeFactManifestDigestInput {
   readonly sourceIdentity: ProfileSourceDigest;
@@ -94,7 +87,7 @@ const FIELD_TAG_PATTERN = /^[A-Za-z][A-Za-z0-9.-]*$/;
  */
 export function validateCanonicalDigest<Domain extends CanonicalDigestDomain>(
   candidate: unknown,
-  expectedDomain: Domain,
+  expectedDomain: Domain
 ): ValidationResult<CanonicalDigest<Domain>> {
   const digest = snapshotDigest(candidate);
   if (
@@ -115,16 +108,14 @@ export function validateCanonicalDigest<Domain extends CanonicalDigestDomain>(
 
 /** Computes the identity of the exact selected ResumeProfile projection. */
 export async function digestProfileSource(
-  resume: ResumeProfile,
+  resume: ResumeProfile
 ): Promise<ValidationResult<ProfileSourceDigest>> {
-  return digestPayload(PROFILE_SOURCE_DIGEST_DOMAIN, () =>
-    resumeProfileNode(resume),
-  );
+  return digestPayload(PROFILE_SOURCE_DIGEST_DOMAIN, () => resumeProfileNode(resume));
 }
 
 /** Computes the ordered manifest identity; the manifest fingerprint itself is excluded. */
 export async function digestResumeFactManifest(
-  input: ResumeFactManifestDigestInput,
+  input: ResumeFactManifestDigestInput
 ): Promise<ValidationResult<ResumeFactManifestDigest>> {
   return digestPayload(RESUME_FACT_MANIFEST_DIGEST_DOMAIN, () =>
     record([
@@ -132,21 +123,18 @@ export async function digestResumeFactManifest(
       field('sectionOrder', list(input.sectionOrder.map(sectionOrderNode))),
       field('entityOrder', list(input.entityOrder.map(entityOrderNode))),
       field('entries', list(input.entries.map(manifestEntryNode))),
-    ]),
+    ])
   );
 }
 
 async function digestPayload<Domain extends CanonicalDigestDomain>(
   domain: Domain,
-  buildPayload: () => CanonicalNode,
+  buildPayload: () => CanonicalNode
 ): Promise<ValidationResult<CanonicalDigest<Domain>>> {
   try {
     const bytes = encodeEnvelope(domain, buildPayload());
     const copied = Uint8Array.from(bytes);
-    const output = await globalThis.crypto.subtle.digest(
-      'SHA-256',
-      copied.buffer,
-    );
+    const output = await globalThis.crypto.subtle.digest('SHA-256', copied.buffer);
     return Object.freeze({
       ok: true,
       value: freezeDigest(domain, toHex(new Uint8Array(output))),
@@ -156,15 +144,8 @@ async function digestPayload<Domain extends CanonicalDigestDomain>(
   }
 }
 
-function encodeEnvelope(
-  domain: CanonicalDigestDomain,
-  payload: CanonicalNode,
-): Uint8Array {
-  return concat([
-    framedText(domain),
-    u32(CANONICAL_DIGEST_SCHEMA_VERSION),
-    encodeNode(payload),
-  ]);
+function encodeEnvelope(domain: CanonicalDigestDomain, payload: CanonicalNode): Uint8Array {
+  return concat([framedText(domain), u32(CANONICAL_DIGEST_SCHEMA_VERSION), encodeNode(payload)]);
 }
 
 function encodeNode(node: CanonicalNode): Uint8Array {
@@ -205,11 +186,7 @@ function encodeNode(node: CanonicalNode): Uint8Array {
       if (!FIELD_TAG_PATTERN.test(node.variant)) {
         throw new TypeError('Canonical variant has an invalid tag.');
       }
-      return concat([
-        byte(VARIANT),
-        framedText(node.variant),
-        framedBytes(encodeNode(node.value)),
-      ]);
+      return concat([byte(VARIANT), framedText(node.variant), framedBytes(encodeNode(node.value))]);
     }
   }
 }
@@ -221,27 +198,18 @@ function resumeProfileNode(resume: ResumeProfile): CanonicalNode {
       'identity',
       record([
         field('name', publicFactNode('single-line-text', resume.identity.name)),
-        field(
-          'headline',
-          publicFactNode('korean-single-line-text', resume.identity.headline),
-        ),
-      ]),
+        field('headline', publicFactNode('korean-single-line-text', resume.identity.headline)),
+      ])
     ),
-    field(
-      'resumeSummary',
-      publicFactNode('korean-single-line-text', resume.resumeSummary),
-    ),
+    field('resumeSummary', publicFactNode('korean-single-line-text', resume.resumeSummary)),
     field('detailedIntro', contentBlocksNode(resume.detailedIntro)),
     field(
       'contactActions',
       record([
         field('email', publicFactNode('email', resume.contactActions.email)),
         field('github', publicFactNode('github-url', resume.contactActions.github)),
-        field(
-          'additionalLinks',
-          list(resume.contactActions.additionalLinks.map(evidenceLinkNode)),
-        ),
-      ]),
+        field('additionalLinks', list(resume.contactActions.additionalLinks.map(evidenceLinkNode))),
+      ])
     ),
     field('skillGroups', list(resume.skillGroups.map(skillGroupNode))),
     field('experiences', list(resume.experiences.map(experienceNode))),
@@ -249,19 +217,16 @@ function resumeProfileNode(resume: ResumeProfile): CanonicalNode {
     field('projectSummaries', list(resume.projectSummaries.map(projectNode))),
     field(
       'education',
-      optionalListNode(resume.education, (value) => educationNode(value)),
+      optionalListNode(resume.education, (value) => educationNode(value))
     ),
     field(
       'certifications',
-      optionalListNode(resume.certifications, (value) => certificationNode(value)),
+      optionalListNode(resume.certifications, (value) => certificationNode(value))
     ),
   ]);
 }
 
-function publicFactNode<Value>(
-  valueKind: string,
-  fact: PublicFact<Value>,
-): CanonicalNode {
+function publicFactNode<Value>(valueKind: string, fact: PublicFact<Value>): CanonicalNode {
   return record([
     field('factId', text(String(fact.factId))),
     field('valueKind', text(valueKind)),
@@ -275,10 +240,7 @@ function valueNode(valueKind: string, value: unknown): CanonicalNode {
   }
   if (valueKind === 'link-destination') {
     const destination = value as EvidenceLink['destination']['value'];
-    return variant(
-      destination.tag,
-      record([field('value', text(String(destination.value)))]),
-    );
+    return variant(destination.tag, record([field('value', text(String(destination.value)))]));
   }
   return text(String(value));
 }
@@ -289,26 +251,17 @@ function contentBlocksNode(blocks: readonly ContentBlock[]): CanonicalNode {
       if (block.tag === 'paragraph') {
         return variant(
           'paragraph',
-          record([
-            field('text', publicFactNode('body-text', block.text)),
-          ]),
+          record([field('text', publicFactNode('body-text', block.text))])
         );
       }
       return variant(
         'list',
         record([
           field('style', text(block.style)),
-          field(
-            'items',
-            list(
-              block.items.map((item) =>
-                publicFactNode('single-line-text', item),
-              ),
-            ),
-          ),
-        ]),
+          field('items', list(block.items.map((item) => publicFactNode('single-line-text', item)))),
+        ])
       );
-    }),
+    })
   );
 }
 
@@ -318,10 +271,7 @@ function evidenceLinkNode(link: EvidenceLink): CanonicalNode {
     field('id', text(String(link.id))),
     field('order', decimal(Number(link.order))),
     field('label', publicFactNode('single-line-text', link.label)),
-    field(
-      'destination',
-      publicFactNode('link-destination', link.destination),
-    ),
+    field('destination', publicFactNode('link-destination', link.destination)),
   ]);
 }
 
@@ -340,9 +290,9 @@ function skillGroupNode(group: SkillGroup): CanonicalNode {
             field('id', text(String(skill.id))),
             field('order', decimal(Number(skill.order))),
             field('name', publicFactNode('single-line-text', skill.name)),
-          ]),
-        ),
-      ),
+          ])
+        )
+      )
     ),
   ]);
 }
@@ -369,9 +319,7 @@ function achievementNode(value: Achievement): CanonicalNode {
     field('title', publicFactNode('single-line-text', value.title)),
     field(
       'period',
-      value.period === undefined
-        ? absent()
-        : present(publicFactNode('period', value.period)),
+      value.period === undefined ? absent() : present(publicFactNode('period', value.period))
     ),
     field('summary', publicFactNode('korean-single-line-text', value.summary)),
     field('details', contentBlocksNode(value.details)),
@@ -387,14 +335,9 @@ function projectNode(value: ResumeProjectSummary): CanonicalNode {
     field('title', publicFactNode('single-line-text', value.title)),
     field(
       'period',
-      value.period === undefined
-        ? absent()
-        : present(publicFactNode('period', value.period)),
+      value.period === undefined ? absent() : present(publicFactNode('period', value.period))
     ),
-    field(
-      'outcomeSummary',
-      publicFactNode('korean-single-line-text', value.outcomeSummary),
-    ),
+    field('outcomeSummary', publicFactNode('korean-single-line-text', value.outcomeSummary)),
   ]);
 }
 
@@ -408,13 +351,11 @@ function educationNode(value: Education): CanonicalNode {
       'subtitle',
       value.subtitle === undefined
         ? absent()
-        : present(publicFactNode('single-line-text', value.subtitle)),
+        : present(publicFactNode('single-line-text', value.subtitle))
     ),
     field(
       'period',
-      value.period === undefined
-        ? absent()
-        : present(publicFactNode('period', value.period)),
+      value.period === undefined ? absent() : present(publicFactNode('period', value.period))
     ),
     field('details', contentBlocksNode(value.details)),
     field('evidence', list(value.evidence.map(evidenceLinkNode))),
@@ -431,38 +372,33 @@ function certificationNode(value: Certification): CanonicalNode {
       'issuer',
       value.issuer === undefined
         ? absent()
-        : present(publicFactNode('single-line-text', value.issuer)),
+        : present(publicFactNode('single-line-text', value.issuer))
     ),
     field(
       'period',
-      value.period === undefined
-        ? absent()
-        : present(publicFactNode('period', value.period)),
+      value.period === undefined ? absent() : present(publicFactNode('period', value.period))
     ),
     field('details', contentBlocksNode(value.details)),
     field('evidence', list(value.evidence.map(evidenceLinkNode))),
   ]);
 }
 
-function periodNode(period: ResumeProfile['experiences'][number]['period']['value']): CanonicalNode {
+function periodNode(
+  period: ResumeProfile['experiences'][number]['period']['value']
+): CanonicalNode {
   const datePoint = (value: { readonly tag: string; readonly value: string }) =>
     variant(value.tag, record([field('value', text(value.value))]));
   return record([
     field('start', datePoint(period.start)),
     field(
       'end',
-      period.end.tag === 'present'
-        ? variant('present', record([]))
-        : datePoint(period.end),
+      period.end.tag === 'present' ? variant('present', record([])) : datePoint(period.end)
     ),
   ]);
 }
 
 function sectionOrderNode(value: ResumeSectionOrder): CanonicalNode {
-  return record([
-    field('key', text(value.key)),
-    field('order', decimal(value.order)),
-  ]);
+  return record([field('key', text(value.key)), field('order', decimal(value.order))]);
 }
 
 function entityOrderNode(value: ResumeEntityOrder): CanonicalNode {
@@ -477,11 +413,8 @@ function entityOrderNode(value: ResumeEntityOrder): CanonicalNode {
       value.parent === null
         ? absent()
         : present(
-            record([
-              field('kind', text(value.parent.kind)),
-              field('id', text(value.parent.id)),
-            ]),
-          ),
+            record([field('kind', text(value.parent.kind)), field('id', text(value.parent.id))])
+          )
     ),
   ]);
 }
@@ -500,8 +433,8 @@ function manifestEntryNode(value: ResumeManifestEntry): CanonicalNode {
               field('kind', text(value.entity.kind)),
               field('id', text(value.entity.id)),
               field('order', decimal(value.entity.order)),
-            ]),
-          ),
+            ])
+          )
     ),
     field('factId', text(value.factId)),
     field('path', text(value.path)),
@@ -512,7 +445,7 @@ function manifestEntryNode(value: ResumeManifestEntry): CanonicalNode {
 
 function optionalListNode<Value>(
   value: readonly Value[] | undefined,
-  mapper: (entry: Value) => CanonicalNode,
+  mapper: (entry: Value) => CanonicalNode
 ): CanonicalNode {
   return value === undefined ? absent() : present(list(value.map(mapper)));
 }
@@ -601,7 +534,7 @@ function u32(value: number): Uint8Array {
     (value >>> 24) & 0xff,
     (value >>> 16) & 0xff,
     (value >>> 8) & 0xff,
-    value & 0xff,
+    value & 0xff
   );
 }
 
@@ -643,7 +576,7 @@ function toHex(value: Uint8Array): string {
 
 function freezeDigest<Domain extends CanonicalDigestDomain>(
   domain: Domain,
-  digest: string,
+  digest: string
 ): CanonicalDigest<Domain> {
   return Object.freeze({
     domain,
@@ -654,9 +587,7 @@ function freezeDigest<Domain extends CanonicalDigestDomain>(
 }
 
 function digestFailure(path: string): ValidationResult<never> {
-  const issues = sortAndDedupeIssues([
-    createValidationIssue('document.source.invalid', path),
-  ]);
+  const issues = sortAndDedupeIssues([createValidationIssue('document.source.invalid', path)]);
   return Object.freeze({ ok: false, issues: issues as [ValidationIssue, ...ValidationIssue[]] });
 }
 
@@ -664,15 +595,9 @@ function isSha256(value: unknown): value is string {
   return typeof value === 'string' && SHA256_PATTERN.test(value);
 }
 
-function snapshotDigest(
-  candidate: unknown,
-): Readonly<Record<string, unknown>> | null {
+function snapshotDigest(candidate: unknown): Readonly<Record<string, unknown>> | null {
   try {
-    if (
-      typeof candidate !== 'object' ||
-      candidate === null ||
-      Array.isArray(candidate)
-    ) {
+    if (typeof candidate !== 'object' || candidate === null || Array.isArray(candidate)) {
       return null;
     }
     const prototype = Object.getPrototypeOf(candidate);
@@ -684,8 +609,7 @@ function snapshotDigest(
       keys.length !== DIGEST_KEYS.length ||
       keys.some(
         (key) =>
-          typeof key !== 'string' ||
-          !DIGEST_KEYS.includes(key as (typeof DIGEST_KEYS)[number]),
+          typeof key !== 'string' || !DIGEST_KEYS.includes(key as (typeof DIGEST_KEYS)[number])
       )
     ) {
       return null;

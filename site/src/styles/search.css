@@ -158,7 +158,7 @@ html:has(.search-dialog[open]) {
   cursor: pointer;
 }
 
-.search-option[aria-selected="true"] {
+.search-option[aria-selected='true'] {
   background: var(--c-fill);
   box-shadow: inset 3px 0 0 var(--c-tint);
 }

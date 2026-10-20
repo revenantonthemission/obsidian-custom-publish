@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import type { PostMeta, GraphData } from "./types";
+import fs from 'node:fs';
+import path from 'node:path';
+import type { PostMeta, GraphData } from './types';
 
-const CONTENT_DIR = path.resolve("../content");
+const CONTENT_DIR = path.resolve('../content');
 
 // Module-level caches to avoid redundant filesystem reads during SSG builds
 let _allPostMeta: PostMeta[] | null = null;
@@ -12,14 +12,14 @@ let _previews: Record<string, { title: string; tags: string[]; summary: string }
 export function getAllPostMeta(): PostMeta[] {
   if (_allPostMeta) return _allPostMeta;
 
-  const metaDir = path.join(CONTENT_DIR, "meta");
+  const metaDir = path.join(CONTENT_DIR, 'meta');
   if (!fs.existsSync(metaDir)) return [];
 
   _allPostMeta = fs
     .readdirSync(metaDir)
-    .filter((f) => f.endsWith(".json"))
+    .filter((f) => f.endsWith('.json'))
     .map((f) => {
-      const raw = fs.readFileSync(path.join(metaDir, f), "utf-8");
+      const raw = fs.readFileSync(path.join(metaDir, f), 'utf-8');
       return JSON.parse(raw) as PostMeta;
     })
     .sort((a, b) => {
@@ -31,9 +31,9 @@ export function getAllPostMeta(): PostMeta[] {
 }
 
 export function getPostMeta(slug: string): PostMeta | null {
-  const filePath = path.join(CONTENT_DIR, "meta", `${slug}.json`);
+  const filePath = path.join(CONTENT_DIR, 'meta', `${slug}.json`);
   if (!fs.existsSync(filePath)) return null;
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
 export interface HomepageData {
@@ -48,8 +48,8 @@ export interface HomepageData {
  * deliberately unchanged (BR-U2-034).
  */
 export function getHomepage(contentDir: string = CONTENT_DIR): HomepageData {
-  const metaPath = path.join(contentDir, "homepage", "meta.json");
-  const bodyPath = path.join(contentDir, "homepage", "index.md");
+  const metaPath = path.join(contentDir, 'homepage', 'meta.json');
+  const bodyPath = path.join(contentDir, 'homepage', 'index.md');
 
   if (!fs.existsSync(metaPath)) {
     throw new Error(`HP001 ${metaPath}: homepage artifact missing — run the preprocessor`);
@@ -60,17 +60,17 @@ export function getHomepage(contentDir: string = CONTENT_DIR): HomepageData {
 
   let meta: unknown;
   try {
-    meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+    meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
   } catch (error) {
     throw new Error(`HP002 ${metaPath}: homepage metadata is not valid JSON (${String(error)})`);
   }
   const title = (meta as { title?: unknown }).title;
-  if (typeof title !== "string" || title.trim() === "") {
+  if (typeof title !== 'string' || title.trim() === '') {
     throw new Error(`HP002 ${metaPath}: homepage title must be a non-empty string`);
   }
 
-  const body = fs.readFileSync(bodyPath, "utf-8");
-  if (body.trim() === "") {
+  const body = fs.readFileSync(bodyPath, 'utf-8');
+  if (body.trim() === '') {
     throw new Error(`HP002 ${bodyPath}: homepage body is empty`);
   }
 
@@ -78,17 +78,17 @@ export function getHomepage(contentDir: string = CONTENT_DIR): HomepageData {
 }
 
 export function getPostContent(slug: string): string {
-  const filePath = path.join(CONTENT_DIR, "posts", `${slug}.md`);
-  if (!fs.existsSync(filePath)) return "";
-  return fs.readFileSync(filePath, "utf-8");
+  const filePath = path.join(CONTENT_DIR, 'posts', `${slug}.md`);
+  if (!fs.existsSync(filePath)) return '';
+  return fs.readFileSync(filePath, 'utf-8');
 }
 
 export function getGraph(): GraphData {
   if (_graph) return _graph;
 
-  const filePath = path.join(CONTENT_DIR, "graph.json");
+  const filePath = path.join(CONTENT_DIR, 'graph.json');
   if (!fs.existsSync(filePath)) return { nodes: [], edges: [] };
-  _graph = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  _graph = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   return _graph ?? { nodes: [], edges: [] };
 }
 
@@ -112,9 +112,7 @@ export function getLocalGraph(slug: string): GraphData {
 
   const nodes = full.nodes.filter((n) => nearby.has(n.slug));
   const slugSet = new Set(nodes.map((n) => n.slug));
-  const edges = full.edges.filter(
-    (e) => slugSet.has(e.source) && slugSet.has(e.target)
-  );
+  const edges = full.edges.filter((e) => slugSet.has(e.source) && slugSet.has(e.target));
   return { nodes, edges };
 }
 
@@ -124,7 +122,7 @@ export function getHubs(): PostMeta[] {
 
 /** Sanitize a tag for use as a URL path segment. */
 export function sanitizeTag(tag: string): string {
-  return tag.replace(/\//g, "-").replace(/\s+/g, "-").toLowerCase();
+  return tag.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
 }
 
 export function getTagIndex(): Record<string, PostMeta[]> {
@@ -142,16 +140,16 @@ export function getTagIndex(): Record<string, PostMeta[]> {
 
 /** Format an ISO date string (e.g. "2024-03-15") to Korean locale (e.g. "2024년 3월 15일"). */
 export function formatDateKo(iso: string): string {
-  const [y, m, d] = iso.split("-");
+  const [y, m, d] = iso.split('-');
   return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
 }
 
 /** Load previews.json (slug → {title, tags, summary}) for post card summaries. */
 export function getPreviewSummary(slug: string): string {
   if (!_previews) {
-    const filePath = path.resolve("public/previews.json");
-    if (!fs.existsSync(filePath)) return "";
-    _previews = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    const filePath = path.resolve('public/previews.json');
+    if (!fs.existsSync(filePath)) return '';
+    _previews = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   }
-  return _previews?.[slug]?.summary ?? "";
+  return _previews?.[slug]?.summary ?? '';
 }

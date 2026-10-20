@@ -24,7 +24,9 @@ describe('search key handling', () => {
 
   test('ignores Enter, the arrows and Escape while composition is active', () => {
     for (const name of ['Enter', 'ArrowDown', 'ArrowUp', 'Escape']) {
-      expect(searchKeyAction(key(name, { isComposing: true }), 0, 3), name).toEqual({ type: 'none' });
+      expect(searchKeyAction(key(name, { isComposing: true }), 0, 3), name).toEqual({
+        type: 'none',
+      });
     }
   });
 

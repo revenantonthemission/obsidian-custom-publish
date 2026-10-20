@@ -9,10 +9,10 @@
  */
 
 const SCROLL_REGIONS: readonly (readonly [selector: string, label: string])[] = [
-  ["pre.shiki", "코드, 가로로 스크롤 가능"],
-  [".table-wrapper", "표, 가로로 스크롤 가능"],
-  [".katex-display", "수식, 가로로 스크롤 가능"],
-  ["pre.diagram-d2-ascii", "다이어그램, 가로로 스크롤 가능"],
+  ['pre.shiki', '코드, 가로로 스크롤 가능'],
+  ['.table-wrapper', '표, 가로로 스크롤 가능'],
+  ['.katex-display', '수식, 가로로 스크롤 가능'],
+  ['pre.diagram-d2-ascii', '다이어그램, 가로로 스크롤 가능'],
 ];
 
 /** One pixel of slack absorbs sub-pixel rounding. */
@@ -25,18 +25,18 @@ function update(element: Element): void {
   if (label === undefined) return;
   const overflows = element.scrollWidth > element.clientWidth + OVERFLOW_SLACK;
   if (overflows) {
-    element.setAttribute("tabindex", "0");
-    element.setAttribute("role", "region");
-    element.setAttribute("aria-label", label);
+    element.setAttribute('tabindex', '0');
+    element.setAttribute('role', 'region');
+    element.setAttribute('aria-label', label);
     return;
   }
   // Shiki marks every block focusable; one that fits needs no Tab stop.
-  element.removeAttribute("tabindex");
-  element.removeAttribute("role");
-  element.removeAttribute("aria-label");
+  element.removeAttribute('tabindex');
+  element.removeAttribute('role');
+  element.removeAttribute('aria-label');
 }
 
-const content = document.querySelector(".post-content");
+const content = document.querySelector('.post-content');
 
 if (content) {
   for (const [selector, label] of SCROLL_REGIONS) {

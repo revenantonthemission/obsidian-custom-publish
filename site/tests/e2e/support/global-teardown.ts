@@ -19,6 +19,6 @@ export default async function globalTeardown(): Promise<void> {
       extraMatrixKeys: sealed.extraMatrixKeys,
       missingObligations: sealed.missingObligations,
       missingTools: sealed.missingTools,
-    })}\n`,
+    })}\n`
   );
 }

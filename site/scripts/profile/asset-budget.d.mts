@@ -15,7 +15,7 @@ export const assetBudgetTesting: Readonly<{
   analyzeClientJavaScript(input: any): Readonly<Record<string, any>>;
   analyzeManifest(
     manifest: any,
-    readAsset: (path: string) => Promise<Uint8Array> | Uint8Array,
+    readAsset: (path: string) => Promise<Uint8Array> | Uint8Array
   ): Promise<Readonly<Record<string, any>>>;
   buildCssProvenance: (...args: any[]) => any;
   resolveProfileRouteDocument: (...args: any[]) => any;

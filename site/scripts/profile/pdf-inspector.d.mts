@@ -24,9 +24,7 @@ export function inspectResumePdfCandidate(input: {
 >;
 
 export const resumePdfInspectorTesting: Readonly<{
-  buildStructureTree(
-    skeleton: ResumeSurfaceSkeleton,
-  ): Readonly<Record<string, any>>;
+  buildStructureTree(skeleton: ResumeSurfaceSkeleton): Readonly<Record<string, any>>;
   findTextRun(
     stream: readonly Readonly<{
       pageNumber: number;
@@ -35,7 +33,7 @@ export const resumePdfInspectorTesting: Readonly<{
       hasEOL: boolean;
     }>[],
     cursor: number,
-    target: string,
+    target: string
   ): Readonly<{ start: number; end: number; wraps: ReadonlySet<number> }> | null;
   inferValueKind(fact: Readonly<{ text: string; href: string | null }>): string;
 }>;

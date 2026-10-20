@@ -2,7 +2,13 @@
 // findings R-03, R-05 and R-11). The outline is a panel from 1100 px and a
 // modal sheet below; its rows are 44 px tall at every width (FR5.8).
 import { expect, test, type Page } from '@playwright/test';
-import { gotoSettled, horizontalOverflow, measureTargets, undersized, viewportFor } from './support/hig';
+import {
+  gotoSettled,
+  horizontalOverflow,
+  measureTargets,
+  undersized,
+  viewportFor,
+} from './support/hig';
 
 const CODE_POST = '/posts/post-with-code';
 const ROW = { width: 44, height: 44 };
@@ -85,14 +91,19 @@ test.describe('outline panel from 1100 px', () => {
     await expect(page.getByRole('tab', { name: '탐색' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('tree rows are 44 px tall and toggles expose aria-expanded with Korean names (FR5.4)', async ({ page }) => {
+  test('tree rows are 44 px tall and toggles expose aria-expanded with Korean names (FR5.4)', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/posts/simple-post');
     await page.getByRole('tab', { name: '탐색' }).click();
     // The tree names a note by its title ("Hub Page"), not by its first heading.
     const toggle = page.getByRole('button', { name: '‘Hub Page’ 접기' });
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await toggle.click();
-    await expect(page.getByRole('button', { name: '‘Hub Page’ 펼치기' })).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('button', { name: '‘Hub Page’ 펼치기' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
     const rows = await measureTargets(page, '.post-outline .nav-tree a');
     expect(rows.length).toBeGreaterThan(0);
     expect(undersized(rows, ROW)).toEqual([]);
@@ -112,8 +123,15 @@ test.describe('outline panel from 1100 px', () => {
   test('marks the heading in view as the current location', async ({ page }) => {
     await gotoSettled(page, CODE_POST);
     await page.locator('#수식').scrollIntoViewIfNeeded();
-    await page.locator('#수식').evaluate((heading) => window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - 80));
-    await expect(page.locator('.post-outline .toc a[href="#수식"]')).toHaveAttribute('aria-current', 'location');
+    await page
+      .locator('#수식')
+      .evaluate((heading) =>
+        window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - 80)
+      );
+    await expect(page.locator('.post-outline .toc a[href="#수식"]')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
   });
 
   test('backlinks, related posts and the local graph sit below the article', async ({ page }) => {
@@ -132,7 +150,10 @@ for (const width of [320, 768] as const) {
   test.describe(`outline sheet at ${width} px`, () => {
     test.use({ viewport: viewportFor(width) });
 
-    test('opens as a modal dialog, traps focus, closes on Escape and returns focus', async ({ page, browserName }) => {
+    test('opens as a modal dialog, traps focus, closes on Escape and returns focus', async ({
+      page,
+      browserName,
+    }) => {
       await gotoSettled(page, CODE_POST);
       const opener = page.getByRole('button', { name: '목차 열기' });
       expect(undersized(await measureTargets(page, '.outline-open'), ROW)).toEqual([]);
@@ -144,7 +165,7 @@ for (const width of [320, 768] as const) {
         await page.keyboard.press(tab);
         expect(
           await page.evaluate(() => document.activeElement?.closest('dialog') !== null),
-          `focus left the sheet after ${step + 1} presses`,
+          `focus left the sheet after ${step + 1} presses`
         ).toBe(true);
       }
       await page.keyboard.press('Escape');
@@ -157,7 +178,10 @@ for (const width of [320, 768] as const) {
       await openSheet(page);
       expect(undersized(await measureTargets(page, 'dialog .toc a'), ROW)).toEqual([]);
       await page.keyboard.press('ArrowRight');
-      await expect(page.getByRole('tab', { name: '탐색' })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('tab', { name: '탐색' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
       await expect(page.locator('dialog .nav-tree a').first()).toBeVisible();
       expect(undersized(await measureTargets(page, 'dialog .nav-tree a'), ROW)).toEqual([]);
     });
@@ -167,7 +191,9 @@ for (const width of [320, 768] as const) {
 test.describe('article controls', () => {
   test.use({ viewport: viewportFor(1024) });
 
-  test('heading fold toggles expose aria-expanded and hide the section (FR5.4)', async ({ page }) => {
+  test('heading fold toggles expose aria-expanded and hide the section (FR5.4)', async ({
+    page,
+  }) => {
     await gotoSettled(page, CODE_POST);
     const fold = page.getByRole('button', { name: '‘넓은 표’ 섹션 접기' });
     await expect(fold).toHaveAttribute('aria-expanded', 'true');
@@ -181,12 +207,15 @@ test.describe('article controls', () => {
   });
 
   for (const outcome of ['resolve', 'reject'] as const) {
-    test(`the copy button announces when copying ${outcome === 'resolve' ? 'succeeds' : 'fails'}`, async ({ page }) => {
+    test(`the copy button announces when copying ${outcome === 'resolve' ? 'succeeds' : 'fails'}`, async ({
+      page,
+    }) => {
       await page.addInitScript((result: string) => {
         Object.defineProperty(navigator, 'clipboard', {
           configurable: true,
           value: {
-            writeText: () => (result === 'resolve' ? Promise.resolve() : Promise.reject(new Error('denied'))),
+            writeText: () =>
+              result === 'resolve' ? Promise.resolve() : Promise.reject(new Error('denied')),
           },
         });
       }, outcome);
@@ -196,7 +225,7 @@ test.describe('article controls', () => {
       expect(undersized(await measureTargets(page, '.copy-btn'), ROW)).toEqual([]);
       await buttons.first().click();
       await expect(page.getByTestId('copy-status')).toHaveText(
-        outcome === 'resolve' ? '코드를 복사했습니다' : '복사하지 못했습니다',
+        outcome === 'resolve' ? '코드를 복사했습니다' : '복사하지 못했습니다'
       );
     });
   }
@@ -219,16 +248,20 @@ test.describe('article controls', () => {
 test.describe('narrow widths (R-05)', () => {
   test.use({ viewport: viewportFor(320) });
 
-  test('wide tables, display math and code scroll inside named, focusable regions', async ({ page }) => {
+  test('wide tables, display math and code scroll inside named, focusable regions', async ({
+    page,
+  }) => {
     await gotoSettled(page, CODE_POST);
-    const regions = await page.locator('.post-content :is(.table-wrapper, .katex-display, pre.shiki)').evaluateAll((elements) =>
-      elements.map((element) => ({
-        kind: element.className,
-        overflows: element.scrollWidth > element.clientWidth + 1,
-        tabindex: element.getAttribute('tabindex'),
-        label: element.getAttribute('aria-label') ?? '',
-      })),
-    );
+    const regions = await page
+      .locator('.post-content :is(.table-wrapper, .katex-display, pre.shiki)')
+      .evaluateAll((elements) =>
+        elements.map((element) => ({
+          kind: element.className,
+          overflows: element.scrollWidth > element.clientWidth + 1,
+          tabindex: element.getAttribute('tabindex'),
+          label: element.getAttribute('aria-label') ?? '',
+        }))
+      );
     const overflowing = regions.filter(({ overflows }) => overflows);
     expect(overflowing.length).toBeGreaterThanOrEqual(2);
     for (const region of overflowing) {
@@ -247,7 +280,7 @@ test.describe('narrow widths (R-05)', () => {
         .map((image) => ({
           image: image.getBoundingClientRect().width,
           column: (image.closest('.post-content') as HTMLElement).clientWidth,
-        })),
+        }))
     );
     expect(widths.length).toBeGreaterThan(0);
     for (const { image, column } of widths) expect(image).toBeLessThanOrEqual(column + 1);
@@ -260,7 +293,9 @@ test.describe('narrow widths (R-05)', () => {
     const box = await paragraph.boundingBox();
     const column = await page.locator('.post-content').boundingBox();
     expect(box!.x + box!.width).toBeLessThanOrEqual(column!.x + column!.width + 1);
-    expect(await paragraph.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+    expect(
+      await paragraph.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)
+    ).toBe(true);
   });
 });
 
@@ -274,7 +309,10 @@ test.describe('link preview (C-07, FR5.7)', () => {
     const tooltip = page.getByRole('tooltip');
     await expect(tooltip).toBeVisible();
     await expect(tooltip).toContainText('Simple Post');
-    await expect(link).toHaveAttribute('aria-describedby', (await tooltip.getAttribute('id')) ?? 'missing');
+    await expect(link).toHaveAttribute(
+      'aria-describedby',
+      (await tooltip.getAttribute('id')) ?? 'missing'
+    );
     await page.keyboard.press('Escape');
     await expect(tooltip).toBeHidden();
     await expect(link).toBeFocused();

@@ -1,11 +1,11 @@
 ---
-import BaseLayout from "./BaseLayout.astro";
-import HubNav from "../components/HubNav.astro";
-import HubProgress from "../components/HubProgress.astro";
-import PostCard from "../components/PostCard.astro";
-import { getPreviewSummary, sanitizeTag } from "../lib/data";
-import type { PostMeta } from "../lib/types";
-import "../styles/grouped.css";
+import BaseLayout from './BaseLayout.astro';
+import HubNav from '../components/HubNav.astro';
+import HubProgress from '../components/HubProgress.astro';
+import PostCard from '../components/PostCard.astro';
+import { getPreviewSummary, sanitizeTag } from '../lib/data';
+import type { PostMeta } from '../lib/types';
+import '../styles/grouped.css';
 
 interface Props {
   hub: PostMeta;
@@ -28,7 +28,12 @@ const { hub, children } = Astro.props;
       <ul class="tag-chips" aria-label="태그">
         {hub.tags.map((tag) => (
           <li>
-            <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip"><span class="tag-chip-mark" aria-hidden="true">#</span>{tag}</a>
+            <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip">
+              <span class="tag-chip-mark" aria-hidden="true">
+                #
+              </span>
+              {tag}
+            </a>
           </li>
         ))}
       </ul>

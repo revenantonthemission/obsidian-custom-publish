@@ -50,10 +50,7 @@ export async function gotoRoute(page: Page, route: string): Promise<void> {
  * profile route. Portfolio case-study details must be reviewed open as well
  * as in their initially closed state.
  */
-export async function applyDetailsState(
-  page: Page,
-  state: DetailsState,
-): Promise<void> {
+export async function applyDetailsState(page: Page, state: DetailsState): Promise<void> {
   await page.evaluate(
     ({ selector, open }: { selector: string; open: boolean }) => {
       const shell = document.querySelector(selector);
@@ -62,7 +59,7 @@ export async function applyDetailsState(
         element.open = open;
       }
     },
-    { selector: PROFILE_SHELL, open: state === 'all-open' },
+    { selector: PROFILE_SHELL, open: state === 'all-open' }
   );
 }
 
@@ -71,10 +68,7 @@ export async function countProfileDetails(page: Page): Promise<number> {
 }
 
 /** The document must never scroll sideways at any exercised viewport. */
-export async function expectNoHorizontalOverflow(
-  page: Page,
-  label: string,
-): Promise<void> {
+export async function expectNoHorizontalOverflow(page: Page, label: string): Promise<void> {
   const overflow = await page.evaluate(() => {
     const root = document.documentElement;
     return {
@@ -83,10 +77,9 @@ export async function expectNoHorizontalOverflow(
     };
   });
   // Sub-pixel layout rounding is tolerated; a real overflow is never 1px.
-  expect(
-    overflow.scrollWidth,
-    `${label} must not scroll horizontally`,
-  ).toBeLessThanOrEqual(overflow.clientWidth + 1);
+  expect(overflow.scrollWidth, `${label} must not scroll horizontally`).toBeLessThanOrEqual(
+    overflow.clientWidth + 1
+  );
 }
 
 export interface ClippedElement {
@@ -101,9 +94,7 @@ export interface ClippedElement {
  * Content may wrap, but it may never be cut off or ellipsised: a résumé that
  * silently truncates a role or a date is a wrong résumé, not a styled one.
  */
-export async function findClippedContent(
-  page: Page,
-): Promise<readonly ClippedElement[]> {
+export async function findClippedContent(page: Page): Promise<readonly ClippedElement[]> {
   return page.evaluate((selector: string) => {
     const shell = document.querySelector(selector);
     if (shell === null) return [] as ClippedElement[];
@@ -118,8 +109,7 @@ export async function findClippedContent(
       if ((hidesOverflow && overflows) || ellipsises || lineClamped) {
         clipped.push({
           selector:
-            element.dataset.testid ??
-            `${element.tagName.toLowerCase()}.${element.className}`,
+            element.dataset.testid ?? `${element.tagName.toLowerCase()}.${element.className}`,
           overflowX: style.overflowX,
           textOverflow: style.textOverflow,
           scrollWidth: element.scrollWidth,
@@ -133,10 +123,7 @@ export async function findClippedContent(
 
 async function packageVersion(packageName: string): Promise<string> {
   const manifest = JSON.parse(
-    await readFile(
-      resolve(SITE_ROOT, 'node_modules', packageName, 'package.json'),
-      'utf8',
-    ),
+    await readFile(resolve(SITE_ROOT, 'node_modules', packageName, 'package.json'), 'utf8')
   ) as { version?: unknown };
   if (typeof manifest.version !== 'string' || manifest.version.length === 0) {
     throw new Error(`${packageName} does not declare a version.`);

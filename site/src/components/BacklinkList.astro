@@ -1,6 +1,6 @@
 ---
-import PostCard from "./PostCard.astro";
-import { getPostMeta, getPreviewSummary } from "../lib/data";
+import PostCard from './PostCard.astro';
+import { getPostMeta, getPreviewSummary } from '../lib/data';
 
 interface Props {
   backlinks: string[];
@@ -8,9 +8,7 @@ interface Props {
 
 // Posts that link here, as an inset grouped list below the article (W3).
 const { backlinks } = Astro.props;
-const backlinkMetas = backlinks
-  .map((slug) => getPostMeta(slug))
-  .filter((m) => m !== null);
+const backlinkMetas = backlinks.map((slug) => getPostMeta(slug)).filter((m) => m !== null);
 ---
 
 {backlinkMetas.length > 0 && (

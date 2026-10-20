@@ -59,7 +59,7 @@ export async function main(argv = process.argv.slice(2)) {
       'CLI_UNKNOWN_COMMAND',
       `Unknown command. The stable surface is exactly: ${STABLE_COMMANDS.join(', ')}.`,
       'cli.route',
-      { command: command ?? null },
+      { command: command ?? null }
     );
   }
 
@@ -67,29 +67,21 @@ export async function main(argv = process.argv.slice(2)) {
     return runProcess(
       resolve(PROFILE_PATHS.siteRoot, 'node_modules', '.bin', 'vitest'),
       ['run', '--config', 'vitest.config.ts', 'tests/unit'],
-      'cli.test.unit',
+      'cli.test.unit'
     );
   }
   if (command === 'test:pbt') {
     return runProcess(
       process.execPath,
       [resolve(PROFILE_PATHS.siteRoot, 'scripts', 'profile', 'pbt-runner.mjs'), ...rest],
-      'cli.test.pbt',
+      'cli.test.pbt'
     );
   }
   if (command === 'test:e2e') {
     return runProcess(
       process.execPath,
-      [
-        resolve(
-          PROFILE_PATHS.siteRoot,
-          'scripts',
-          'profile',
-          'verification-provider.mjs',
-        ),
-        'e2e',
-      ],
-      'cli.test.e2e',
+      [resolve(PROFILE_PATHS.siteRoot, 'scripts', 'profile', 'verification-provider.mjs'), 'e2e'],
+      'cli.test.e2e'
     );
   }
   if (command === 'resume:pdf:verify') {
@@ -114,16 +106,14 @@ async function runResumePdf(args) {
     'CLI_RESUME_PDF_MODE_REQUIRED',
     'resume:pdf requires an explicit --prepare or --promote <candidate-id>.',
     'cli.resume.route',
-    { mode: mode ?? null },
+    { mode: mode ?? null }
   );
 }
 
 async function runPrepare() {
   const session = await prepareResumeRelease();
   try {
-    const { loadProfileReleaseTools } = await import(
-      './compile-profile-tools.mjs'
-    );
+    const { loadProfileReleaseTools } = await import('./compile-profile-tools.mjs');
     const tools = await loadProfileReleaseTools();
     const manifest = session.manifest;
 
@@ -138,15 +128,15 @@ async function runPrepare() {
     // prepare failed at this gate before the renderer observed the surfaces.
     const web = requirePure(
       tools.compareRenderedManifest(manifest, session.webSurface),
-      'web surface',
+      'web surface'
     );
     const print = requirePure(
       tools.compareRenderedManifest(manifest, session.printSurface),
-      'print surface',
+      'print surface'
     );
     const pdfEvidence = requirePure(
       tools.mapPdfEvidence(manifest, session.snapshot),
-      'PDF evidence',
+      'PDF evidence'
     );
     const comparison = requirePure(
       tools.compareResumeSurfaces({
@@ -155,7 +145,7 @@ async function runPrepare() {
         print,
         pdf: pdfEvidence,
       }),
-      'cross-surface comparison',
+      'cross-surface comparison'
     );
 
     const draftReceipt = requirePure(
@@ -166,15 +156,12 @@ async function runPrepare() {
           manifestDigest: manifest.fingerprint,
           comparison,
           pdfEvidence,
-          machineChecks: tools.buildMachineChecks(
-            pdfEvidence,
-            session.machineChecks,
-          ),
+          machineChecks: tools.buildMachineChecks(pdfEvidence, session.machineChecks),
           tools: session.snapshot.tools,
         },
-        manifest,
+        manifest
       ),
-      'draft receipt',
+      'draft receipt'
     );
 
     // The CLI never writes the draft; S04 owns the candidate directory so it
@@ -220,7 +207,7 @@ function requirePure(result, label) {
       'CLI_PREPARE_EVIDENCE_INVALID',
       `The ${label} did not validate against the approved manifest.`,
       'cli.resume.prepare',
-      { label, issues: result?.issues ?? null },
+      { label, issues: result?.issues ?? null }
     );
   }
   return result.value;
@@ -235,7 +222,7 @@ async function runPromote(args) {
       'CLI_PROMOTE_ARGUMENTS_REQUIRED',
       'resume:pdf --promote requires <candidate-id> --review <path>.',
       'cli.resume.promote',
-      {},
+      {}
     );
   }
 
@@ -249,10 +236,7 @@ async function runPromote(args) {
   const { verifyPendingRelease } = await import('./verification-provider.mjs');
   let verdict;
   try {
-    verdict = await verifyPendingRelease(
-      pending.capability,
-      pending.secondBuildIdentity,
-    );
+    verdict = await verifyPendingRelease(pending.capability, pending.secondBuildIdentity);
   } catch (verifyFailure) {
     await rollbackPreparedRelease(pending.capability, {
       code: verifyFailure?.code ?? 'CLI_FINAL_GATE_FAILED',
@@ -291,12 +275,9 @@ function runProcess(command, args, stage) {
     });
     child.on('error', (cause) => {
       rejectRun(
-        cliError(
-          'CLI_SPAWN_FAILED',
-          'The routed command could not be started.',
-          stage,
-          { message: cause?.message ?? null },
-        ),
+        cliError('CLI_SPAWN_FAILED', 'The routed command could not be started.', stage, {
+          message: cause?.message ?? null,
+        })
       );
     });
     child.on('close', (code, signal) => {
@@ -304,18 +285,14 @@ function runProcess(command, args, stage) {
         // `routed` marks a pass-through: the child owned stdio and has already
         // written its own report, so the CLI has nothing to add. Anything the
         // CLI computes itself carries no such marker and is always reported.
-        resolveRun(
-          Object.freeze({ rule: CLI_RULE, result: 'pass', routed: true }),
-        );
+        resolveRun(Object.freeze({ rule: CLI_RULE, result: 'pass', routed: true }));
         return;
       }
       rejectRun(
-        cliError(
-          'CLI_COMMAND_FAILED',
-          'The routed command exited non-zero.',
-          stage,
-          { exitCode: code, signal },
-        ),
+        cliError('CLI_COMMAND_FAILED', 'The routed command exited non-zero.', stage, {
+          exitCode: code,
+          signal,
+        })
       );
     });
   });
@@ -344,8 +321,7 @@ export const cliTesting = Object.freeze({
 
 const invokedPath = process.argv[1];
 const isDirectInvocation =
-  invokedPath !== undefined &&
-  import.meta.url === new URL(`file://${invokedPath}`).href;
+  invokedPath !== undefined && import.meta.url === new URL(`file://${invokedPath}`).href;
 
 if (isDirectInvocation) {
   main()
@@ -356,9 +332,7 @@ if (isDirectInvocation) {
       process.exitCode = 0;
     })
     .catch((error) => {
-      process.stderr.write(
-        `${error?.code ?? 'CLI_FAILED'}: ${error?.message ?? String(error)}\n`,
-      );
+      process.stderr.write(`${error?.code ?? 'CLI_FAILED'}: ${error?.message ?? String(error)}\n`);
       process.exitCode = 1;
     });
 }

@@ -1,13 +1,18 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-import { Search as SearchIcon, X } from "lucide-preact";
-import { isBackdropClick, trapTab } from "../lib/modal";
-import { prepareSearchIndex, searchIndex, type PreparedSearchIndex, type SearchResult } from "../lib/search";
-import { searchKeyAction } from "../lib/search-keys";
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { Search as SearchIcon, X } from 'lucide-preact';
+import { isBackdropClick, trapTab } from '../lib/modal';
+import {
+  prepareSearchIndex,
+  searchIndex,
+  type PreparedSearchIndex,
+  type SearchResult,
+} from '../lib/search';
+import { searchKeyAction } from '../lib/search-keys';
 
 const DEBOUNCE_MS = 200;
-const LISTBOX_ID = "search-results";
+const LISTBOX_ID = 'search-results';
 
-type LoadState = "idle" | "loading" | "error";
+type LoadState = 'idle' | 'loading' | 'error';
 
 /** The results of the last query that ran, so no message describes a stale query. */
 interface Outcome {
@@ -15,7 +20,7 @@ interface Outcome {
   readonly results: readonly SearchResult[];
 }
 
-const NO_OUTCOME: Outcome = { query: "", results: [] };
+const NO_OUTCOME: Outcome = { query: '', results: [] };
 
 function optionId(index: number): string {
   return `search-option-${index}`;
@@ -38,11 +43,11 @@ export default function Search() {
   const listboxRef = useRef<HTMLUListElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [outcome, setOutcome] = useState<Outcome>(NO_OUTCOME);
   const [selected, setSelected] = useState(0);
   const [index, setIndex] = useState<PreparedSearchIndex | null>(null);
-  const [loadState, setLoadState] = useState<LoadState>("idle");
+  const [loadState, setLoadState] = useState<LoadState>('idle');
   const [attempt, setAttempt] = useState(0);
 
   const show = (trigger: HTMLElement | null): void => {
@@ -61,7 +66,7 @@ export default function Search() {
   // ⌘K or Ctrl K toggles it; the header and the 404 page ask through "open-search".
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
       event.preventDefault();
       if (dialogRef.current?.open) hide();
       else show(document.activeElement instanceof HTMLElement ? document.activeElement : null);
@@ -70,11 +75,11 @@ export default function Search() {
       const trigger = (event as CustomEvent<{ trigger?: unknown } | null>).detail?.trigger;
       show(trigger instanceof HTMLElement ? trigger : null);
     };
-    window.addEventListener("keydown", onShortcut);
-    window.addEventListener("open-search", onRequest);
+    window.addEventListener('keydown', onShortcut);
+    window.addEventListener('open-search', onRequest);
     return () => {
-      window.removeEventListener("keydown", onShortcut);
-      window.removeEventListener("open-search", onRequest);
+      window.removeEventListener('keydown', onShortcut);
+      window.removeEventListener('open-search', onRequest);
     };
   }, []);
 
@@ -82,8 +87,8 @@ export default function Search() {
   useEffect(() => {
     if (!open || index !== null) return;
     let cancelled = false;
-    setLoadState("loading");
-    fetch("/search-index.json")
+    setLoadState('loading');
+    fetch('/search-index.json')
       .then((response) => {
         if (!response.ok) throw new Error(`search-index.json answered ${response.status}`);
         return response.json() as Promise<unknown>;
@@ -91,10 +96,10 @@ export default function Search() {
       .then((raw) => {
         if (cancelled) return;
         setIndex(prepareSearchIndex(raw));
-        setLoadState("idle");
+        setLoadState('idle');
       })
       .catch(() => {
-        if (!cancelled) setLoadState("error");
+        if (!cancelled) setLoadState('error');
       });
     return () => {
       cancelled = true;
@@ -102,7 +107,7 @@ export default function Search() {
   }, [open, attempt]);
 
   useEffect(() => {
-    if (index === null || query.trim() === "") {
+    if (index === null || query.trim() === '') {
       setOutcome(NO_OUTCOME);
       setSelected(0);
       return;
@@ -116,12 +121,14 @@ export default function Search() {
 
   // Keep the selected option in view as the arrows move it.
   useEffect(() => {
-    listboxRef.current?.querySelector(`#${optionId(selected)}`)?.scrollIntoView({ block: "nearest" });
+    listboxRef.current
+      ?.querySelector(`#${optionId(selected)}`)
+      ?.scrollIntoView({ block: 'nearest' });
   }, [selected]);
 
   const onClose = (): void => {
     setOpen(false);
-    setQuery("");
+    setQuery('');
     setOutcome(NO_OUTCOME);
     setSelected(0);
     const trigger = triggerRef.current;
@@ -135,14 +142,14 @@ export default function Search() {
 
   const results = outcome.query === query ? outcome.results : [];
   const hasResults = results.length > 0;
-  const searched = index !== null && query.trim() !== "" && outcome.query === query;
+  const searched = index !== null && query.trim() !== '' && outcome.query === query;
 
   const onInputKeyDown = (event: KeyboardEvent): void => {
     const action = searchKeyAction(event, selected, results.length);
-    if (action.type === "none") return;
+    if (action.type === 'none') return;
     event.preventDefault();
-    if (action.type === "move") setSelected(action.index);
-    else if (action.type === "close") hide();
+    if (action.type === 'move') setSelected(action.index);
+    else if (action.type === 'close') hide();
     else {
       const result = results[action.index];
       if (result) go(result);
@@ -178,7 +185,7 @@ export default function Search() {
           role="combobox"
           aria-label="검색어"
           aria-autocomplete="list"
-          aria-expanded={hasResults ? "true" : "false"}
+          aria-expanded={hasResults ? 'true' : 'false'}
           aria-controls={LISTBOX_ID}
           aria-activedescendant={hasResults ? optionId(selected) : undefined}
           placeholder="노트 검색"
@@ -194,13 +201,13 @@ export default function Search() {
       </div>
 
       <div class="search-body">
-        {loadState === "loading" && (
+        {loadState === 'loading' && (
           <p class="search-state">
             <span class="search-spinner" aria-hidden="true" />
             검색 색인을 불러오는 중
           </p>
         )}
-        {loadState === "error" && (
+        {loadState === 'error' && (
           <div class="search-state" role="alert">
             <p>검색을 사용할 수 없습니다</p>
             <button type="button" class="retry-button" onClick={retry}>
@@ -208,29 +215,38 @@ export default function Search() {
             </button>
           </div>
         )}
-        {index !== null && query.trim() === "" && <p class="search-state">제목이나 본문의 단어로 찾아보세요</p>}
+        {index !== null && query.trim() === '' && (
+          <p class="search-state">제목이나 본문의 단어로 찾아보세요</p>
+        )}
         {searched && !hasResults && <p class="search-state">‘{query}’에 대한 결과가 없습니다</p>}
-        <ul ref={listboxRef} id={LISTBOX_ID} class="search-results" role="listbox" aria-label="검색 결과" hidden={!hasResults}>
+        <ul
+          ref={listboxRef}
+          id={LISTBOX_ID}
+          class="search-results"
+          role="listbox"
+          aria-label="검색 결과"
+          hidden={!hasResults}
+        >
           {results.map((result, position) => (
             <li
               key={result.slug}
               id={optionId(position)}
               class="search-option"
               role="option"
-              aria-selected={position === selected ? "true" : "false"}
+              aria-selected={position === selected ? 'true' : 'false'}
               data-href={result.href}
               onClick={() => go(result)}
               onPointerMove={() => setSelected(position)}
             >
               <span class="search-option-title">{result.title}</span>
-              {result.snippet !== "" && <span class="search-option-snippet">{result.snippet}</span>}
+              {result.snippet !== '' && <span class="search-option-snippet">{result.snippet}</span>}
             </li>
           ))}
         </ul>
       </div>
 
       <p class="visually-hidden" role="status">
-        {searched ? `결과 ${results.length}개` : ""}
+        {searched ? `결과 ${results.length}개` : ''}
       </p>
     </dialog>
   );

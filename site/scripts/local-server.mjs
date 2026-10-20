@@ -43,7 +43,15 @@ const MIME = {
 };
 
 const COMPRESSIBLE = new Set([
-  '.html', '.css', '.js', '.mjs', '.json', '.svg', '.xml', '.txt', '.map',
+  '.html',
+  '.css',
+  '.js',
+  '.mjs',
+  '.json',
+  '.svg',
+  '.xml',
+  '.txt',
+  '.map',
 ]);
 
 // Mirrors the retired CloudFront function: directory URLs and extension-less
@@ -130,7 +138,9 @@ const server = createServer((req, res) => {
 
   let uri;
   try {
-    uri = decodeURIComponent(new URL(req.url, `http://${req.headers.host ?? 'localhost'}`).pathname);
+    uri = decodeURIComponent(
+      new URL(req.url, `http://${req.headers.host ?? 'localhost'}`).pathname
+    );
   } catch {
     res.writeHead(400);
     res.end();

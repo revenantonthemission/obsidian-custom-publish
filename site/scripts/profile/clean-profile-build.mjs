@@ -1,13 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import {
-  lstat,
-  readFile,
-  realpath,
-  rm,
-  stat,
-  unlink,
-} from 'node:fs/promises';
+import { lstat, readFile, realpath, rm, stat, unlink } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import {
   assertOwnedProcessObservationSupport,
@@ -51,10 +44,7 @@ export async function cleanProfileBuild({
   assertFixedBuildPaths(PROFILE_PATHS);
 
   const startedAtMs = Date.now();
-  await removeGeneratedDirectory(
-    PROFILE_PATHS.distRoot,
-    PROFILE_PATHS.siteRoot,
-  );
+  await removeGeneratedDirectory(PROFILE_PATHS.distRoot, PROFILE_PATHS.siteRoot);
   await removePriorManifest(PROFILE_PATHS.buildManifestPath);
 
   const processEvidence = await runLocalAstroBuild({
@@ -94,11 +84,7 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
   try {
     child = spawn(
       process.execPath,
-      [
-        PROFILE_PATHS.ownedNodeBootstrapPath,
-        PROFILE_PATHS.astroCliPath,
-        'build',
-      ],
+      [PROFILE_PATHS.ownedNodeBootstrapPath, PROFILE_PATHS.astroCliPath, 'build'],
       {
         cwd: PROFILE_PATHS.siteRoot,
         detached: process.platform !== 'win32',
@@ -109,39 +95,27 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
           PROFILE_OWNED_BOOTSTRAP_TOKEN: bootstrapToken,
         }),
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-      },
+      }
     );
-    bootstrapReady = waitForOwnedBootstrap(
-      child,
-      bootstrapToken,
-      2_000,
-    );
+    bootstrapReady = waitForOwnedBootstrap(child, bootstrapToken, 2_000);
     ownership = spawnGuard.adopt(child);
     descendantMonitor = monitorOwnedDescendants({
       rootPid: child.pid,
       label: 'profile-clean-build',
-      isRootHandleCurrent: () =>
-        child.exitCode === null &&
-        child.signalCode === null,
+      isRootHandleCurrent: () => child.exitCode === null && child.signalCode === null,
     });
   } catch (cause) {
     spawnGuard.cancel();
     await bootstrapReady?.catch(() => undefined);
-    throw new CleanProfileBuildError(
-      'The local Astro build process could not be launched.',
-      {
-        code: 'PROFILE_BUILD_LAUNCH_FAILED',
-        stage: 'build.clean',
-        details: {
-          executable: process.execPath,
-          cli: relative(
-            PROFILE_PATHS.siteRoot,
-            PROFILE_PATHS.astroCliPath,
-          ),
-        },
-        cause,
+    throw new CleanProfileBuildError('The local Astro build process could not be launched.', {
+      code: 'PROFILE_BUILD_LAUNCH_FAILED',
+      stage: 'build.clean',
+      details: {
+        executable: process.execPath,
+        cli: relative(PROFILE_PATHS.siteRoot, PROFILE_PATHS.astroCliPath),
       },
-    );
+      cause,
+    });
   }
   output.capture('stdout', child.stdout);
   output.capture('stderr', child.stderr);
@@ -150,11 +124,7 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
     await descendantMonitor.ready();
     await startOwnedBootstrap(child, bootstrapToken);
   } catch (cause) {
-    const cleanup = await releaseBuildProcessTree(
-      child,
-      descendantMonitor,
-      ownedScope,
-    );
+    const cleanup = await releaseBuildProcessTree(child, descendantMonitor, ownedScope);
     if (cleanup.ownershipReleaseSafe) {
       ownership.release();
     }
@@ -169,23 +139,16 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
           output: output.snapshot(),
         },
         cause,
-      },
+      }
     );
   }
 
   const result = await waitForBuildProcess(child, timeoutMs);
-  const cleanup = await releaseBuildProcessTree(
-    child,
-    descendantMonitor,
-    ownedScope,
-  );
+  const cleanup = await releaseBuildProcessTree(child, descendantMonitor, ownedScope);
   if (cleanup.ownershipReleaseSafe) {
     ownership.release();
   }
-  if (
-    !cleanup.pidReleased ||
-    !cleanup.processTreeReleased
-  ) {
+  if (!cleanup.pidReleased || !cleanup.processTreeReleased) {
     throw new CleanProfileBuildError(
       'The clean Astro build process tree remained alive after signal escalation.',
       {
@@ -199,62 +162,50 @@ async function runLocalAstroBuild({ timeoutMs, outputLimitBytes }) {
           output: output.snapshot(),
         },
         cause: result.launchError ?? undefined,
-      },
+      }
     );
   }
   if (result.timedOut) {
-    throw new CleanProfileBuildError(
-      'The clean Astro build exceeded its terminal deadline.',
-      {
-        code: 'PROFILE_BUILD_TIMEOUT',
-        stage: 'build.clean',
-        details: {
-          timeoutMs,
-          pid: child.pid ?? null,
-          exitCode: result.code,
-          signal: result.signal,
-          cleanup,
-          output: output.snapshot(),
-        },
+    throw new CleanProfileBuildError('The clean Astro build exceeded its terminal deadline.', {
+      code: 'PROFILE_BUILD_TIMEOUT',
+      stage: 'build.clean',
+      details: {
+        timeoutMs,
+        pid: child.pid ?? null,
+        exitCode: result.code,
+        signal: result.signal,
+        cleanup,
+        output: output.snapshot(),
       },
-    );
+    });
   }
 
   if (result.launchError !== null) {
-    throw new CleanProfileBuildError(
-      'The local Astro build process could not be launched.',
-      {
-        code: 'PROFILE_BUILD_LAUNCH_FAILED',
-        stage: 'build.clean',
-        details: {
-          executable: process.execPath,
-          cli: relative(
-            PROFILE_PATHS.siteRoot,
-            PROFILE_PATHS.astroCliPath,
-          ),
-          pid: child.pid ?? null,
-          cleanup,
-          output: output.snapshot(),
-        },
-        cause: result.launchError,
+    throw new CleanProfileBuildError('The local Astro build process could not be launched.', {
+      code: 'PROFILE_BUILD_LAUNCH_FAILED',
+      stage: 'build.clean',
+      details: {
+        executable: process.execPath,
+        cli: relative(PROFILE_PATHS.siteRoot, PROFILE_PATHS.astroCliPath),
+        pid: child.pid ?? null,
+        cleanup,
+        output: output.snapshot(),
       },
-    );
+      cause: result.launchError,
+    });
   }
 
   if (result.code !== 0 || result.signal !== null) {
-    throw new CleanProfileBuildError(
-      'The clean Astro production build failed.',
-      {
-        code: 'PROFILE_BUILD_FAILED',
-        stage: 'build.clean',
-        details: {
-          exitCode: result.code,
-          signal: result.signal,
-          cleanup,
-          output: output.snapshot(),
-        },
+    throw new CleanProfileBuildError('The clean Astro production build failed.', {
+      code: 'PROFILE_BUILD_FAILED',
+      stage: 'build.clean',
+      details: {
+        exitCode: result.code,
+        signal: result.signal,
+        cleanup,
+        output: output.snapshot(),
       },
-    );
+    });
   }
 
   return deepFreeze({
@@ -277,9 +228,7 @@ function waitForOwnedBootstrap(child, token, timeoutMs) {
   return new Promise((resolvePromise, rejectPromise) => {
     let settled = false;
     const timeout = setTimeout(() => {
-      settleReject(
-        new Error('owned node bootstrap readiness timed out'),
-      );
+      settleReject(new Error('owned node bootstrap readiness timed out'));
     }, timeoutMs);
 
     function cleanup() {
@@ -315,15 +264,11 @@ function waitForOwnedBootstrap(child, token, timeoutMs) {
     }
     function onExit(code, signal) {
       settleReject(
-        new Error(
-          `owned node bootstrap exited before readiness (${code ?? signal ?? 'unknown'})`,
-        ),
+        new Error(`owned node bootstrap exited before readiness (${code ?? signal ?? 'unknown'})`)
       );
     }
     function onDisconnect() {
-      settleReject(
-        new Error('owned node bootstrap disconnected before readiness'),
-      );
+      settleReject(new Error('owned node bootstrap disconnected before readiness'));
     }
 
     child.on('message', onMessage);
@@ -336,9 +281,7 @@ function waitForOwnedBootstrap(child, token, timeoutMs) {
 function startOwnedBootstrap(child, token) {
   return new Promise((resolvePromise, rejectPromise) => {
     if (!child.connected) {
-      rejectPromise(
-        new Error('owned node bootstrap IPC channel is not connected'),
-      );
+      rejectPromise(new Error('owned node bootstrap IPC channel is not connected'));
       return;
     }
     child.send(
@@ -349,7 +292,7 @@ function startOwnedBootstrap(child, token) {
       (error) => {
         if (error) rejectPromise(error);
         else resolvePromise();
-      },
+      }
     );
   });
 }
@@ -413,14 +356,10 @@ async function waitForBuildProcess(child, timeoutMs) {
   });
 }
 
-async function readFreshBuildManifest({
-  manifestPath,
-  distRoot,
-  startedAtMs,
-}) {
+async function readFreshBuildManifest({ manifestPath, distRoot, startedAtMs }) {
   const manifestStat = await requireRegularNonSymlinkFile(
     manifestPath,
-    'PROFILE_BUILD_MANIFEST_MISSING',
+    'PROFILE_BUILD_MANIFEST_MISSING'
   );
   if (manifestStat.mtimeMs + 1 < startedAtMs) {
     throw new CleanProfileBuildError(
@@ -429,7 +368,7 @@ async function readFreshBuildManifest({
         code: 'PROFILE_BUILD_MANIFEST_STALE',
         stage: 'build.identity',
         details: { manifestPath, startedAtMs, mtimeMs: manifestStat.mtimeMs },
-      },
+      }
     );
   }
 
@@ -438,15 +377,12 @@ async function readFreshBuildManifest({
   try {
     manifest = JSON.parse(bytes.toString('utf8'));
   } catch (cause) {
-    throw new CleanProfileBuildError(
-      'The private build manifest is not valid JSON.',
-      {
-        code: 'PROFILE_BUILD_MANIFEST_INVALID',
-        stage: 'build.identity',
-        details: { manifestPath },
-        cause,
-      },
-    );
+    throw new CleanProfileBuildError('The private build manifest is not valid JSON.', {
+      code: 'PROFILE_BUILD_MANIFEST_INVALID',
+      stage: 'build.identity',
+      details: { manifestPath },
+      cause,
+    });
   }
   validateManifestShape(manifest);
 
@@ -458,41 +394,33 @@ async function readFreshBuildManifest({
         code: 'PROFILE_BUILD_ROOT_INVALID',
         stage: 'build.identity',
         details: { expected: distRoot, actual: canonicalDistRoot },
-      },
+      }
     );
   }
 
   for (const route of REQUIRED_ROUTES) {
     if (!manifest.buildIdentity.routes.includes(route)) {
-      throw new CleanProfileBuildError(
-        `The clean build manifest is missing ${route}.`,
-        {
-          code: 'PROFILE_BUILD_ROUTE_MISSING',
-          stage: 'build.identity',
-          details: { route },
-        },
-      );
+      throw new CleanProfileBuildError(`The clean build manifest is missing ${route}.`, {
+        code: 'PROFILE_BUILD_ROUTE_MISSING',
+        stage: 'build.identity',
+        details: { route },
+      });
     }
   }
 
-  const outputPaths = new Set(
-    manifest.outputFiles.map(({ path }) => path),
-  );
+  const outputPaths = new Set(manifest.outputFiles.map(({ path }) => path));
   for (const path of ['resume/index.html', 'portfolio/index.html']) {
     if (!outputPaths.has(path)) {
-      throw new CleanProfileBuildError(
-        `The clean build output is missing ${path}.`,
-        {
-          code: 'PROFILE_BUILD_OUTPUT_MISSING',
-          stage: 'build.identity',
-          details: { path },
-        },
-      );
+      throw new CleanProfileBuildError(`The clean build output is missing ${path}.`, {
+        code: 'PROFILE_BUILD_OUTPUT_MISSING',
+        stage: 'build.identity',
+        details: { path },
+      });
     }
   }
   if (
     outputPaths.has('.profile-vite-manifest.json') ||
-    await exists(resolve(distRoot, '.profile-vite-manifest.json'))
+    (await exists(resolve(distRoot, '.profile-vite-manifest.json')))
   ) {
     throw new CleanProfileBuildError(
       'The temporary Vite manifest leaked into the production output.',
@@ -500,23 +428,20 @@ async function readFreshBuildManifest({
         code: 'PROFILE_BUILD_PRIVATE_OUTPUT_LEAK',
         stage: 'build.identity',
         details: { path: '.profile-vite-manifest.json' },
-      },
+      }
     );
   }
 
   const createdAt = Date.parse(manifest.buildIdentity.createdAt);
   if (!Number.isFinite(createdAt) || createdAt + 1 < startedAtMs) {
-    throw new CleanProfileBuildError(
-      'The build identity timestamp is stale or invalid.',
-      {
-        code: 'PROFILE_BUILD_IDENTITY_STALE',
-        stage: 'build.identity',
-        details: {
-          createdAt: manifest.buildIdentity.createdAt,
-          startedAtMs,
-        },
+    throw new CleanProfileBuildError('The build identity timestamp is stale or invalid.', {
+      code: 'PROFILE_BUILD_IDENTITY_STALE',
+      stage: 'build.identity',
+      details: {
+        createdAt: manifest.buildIdentity.createdAt,
+        startedAtMs,
       },
-    );
+    });
   }
 
   return {
@@ -544,13 +469,10 @@ function validateManifestShape(manifest) {
     !isPlainRecord(manifest.rollupGraphs.prerender) ||
     !isPlainRecord(manifest.pageGraph)
   ) {
-    throw new CleanProfileBuildError(
-      'The private build manifest is incomplete or ambiguous.',
-      {
-        code: 'PROFILE_BUILD_MANIFEST_INVALID',
-        stage: 'build.identity',
-      },
-    );
+    throw new CleanProfileBuildError('The private build manifest is incomplete or ambiguous.', {
+      code: 'PROFILE_BUILD_MANIFEST_INVALID',
+      stage: 'build.identity',
+    });
   }
 }
 
@@ -562,14 +484,11 @@ async function removeGeneratedDirectory(path, allowedParent) {
   });
   if (existing === undefined) return;
   if (existing.isSymbolicLink() || !existing.isDirectory()) {
-    throw new CleanProfileBuildError(
-      'The fixed dist target is not a real generated directory.',
-      {
-        code: 'PROFILE_BUILD_ROOT_INVALID',
-        stage: 'build.clean',
-        details: { path },
-      },
-    );
+    throw new CleanProfileBuildError('The fixed dist target is not a real generated directory.', {
+      code: 'PROFILE_BUILD_ROOT_INVALID',
+      stage: 'build.clean',
+      details: { path },
+    });
   }
   await rm(path, { recursive: true });
 }
@@ -581,14 +500,11 @@ async function removePriorManifest(path) {
   });
   if (existing === undefined) return;
   if (existing.isSymbolicLink() || !existing.isFile()) {
-    throw new CleanProfileBuildError(
-      'The prior private build manifest target is unsafe.',
-      {
-        code: 'PROFILE_BUILD_MANIFEST_TARGET_INVALID',
-        stage: 'build.clean',
-        details: { path },
-      },
-    );
+    throw new CleanProfileBuildError('The prior private build manifest target is unsafe.', {
+      code: 'PROFILE_BUILD_MANIFEST_TARGET_INVALID',
+      stage: 'build.clean',
+      details: { path },
+    });
   }
   await unlink(path);
 }
@@ -598,25 +514,19 @@ async function requireRegularNonSymlinkFile(path, missingCode) {
   try {
     fileStat = await lstat(path);
   } catch (cause) {
-    throw new CleanProfileBuildError(
-      'The clean build did not produce its private manifest.',
-      {
-        code: missingCode,
-        stage: 'build.identity',
-        details: { path },
-        cause,
-      },
-    );
+    throw new CleanProfileBuildError('The clean build did not produce its private manifest.', {
+      code: missingCode,
+      stage: 'build.identity',
+      details: { path },
+      cause,
+    });
   }
   if (fileStat.isSymbolicLink() || !fileStat.isFile()) {
-    throw new CleanProfileBuildError(
-      'The private build manifest is not a regular file.',
-      {
-        code: 'PROFILE_BUILD_MANIFEST_TARGET_INVALID',
-        stage: 'build.identity',
-        details: { path },
-      },
-    );
+    throw new CleanProfileBuildError('The private build manifest is not a regular file.', {
+      code: 'PROFILE_BUILD_MANIFEST_TARGET_INVALID',
+      stage: 'build.identity',
+      details: { path },
+    });
   }
   return fileStat;
 }
@@ -624,14 +534,11 @@ async function requireRegularNonSymlinkFile(path, missingCode) {
 async function requireRealDirectory(path) {
   const directoryStat = await lstat(path);
   if (directoryStat.isSymbolicLink() || !directoryStat.isDirectory()) {
-    throw new CleanProfileBuildError(
-      'The generated output root is not a real directory.',
-      {
-        code: 'PROFILE_BUILD_ROOT_INVALID',
-        stage: 'build.identity',
-        details: { path },
-      },
-    );
+    throw new CleanProfileBuildError('The generated output root is not a real directory.', {
+      code: 'PROFILE_BUILD_ROOT_INVALID',
+      stage: 'build.identity',
+      details: { path },
+    });
   }
   return realpath(path);
 }
@@ -648,11 +555,7 @@ function assertFixedBuildPaths(paths) {
     }
   }
   assertContainedChild(paths.siteRoot, paths.distRoot, 'distRoot');
-  assertContainedChild(
-    paths.siteRoot,
-    paths.buildManifestPath,
-    'buildManifestPath',
-  );
+  assertContainedChild(paths.siteRoot, paths.buildManifestPath, 'buildManifestPath');
 }
 
 function assertContainedChild(root, target, label) {
@@ -706,65 +609,55 @@ async function releaseBuildProcessTree(child, suppliedMonitor, ownedScope) {
     });
   }
 
-  const descendantMonitor = suppliedMonitor ??
+  const descendantMonitor =
+    suppliedMonitor ??
     monitorOwnedDescendants({
       rootPid: pid,
       label: 'profile-clean-build-release',
     });
-  const childActive =
-    child.exitCode === null && child.signalCode === null;
+  const childActive = child.exitCode === null && child.signalCode === null;
   if (childActive && isProcessGroupAlive(pid)) {
     signalProcessTree(child, 'SIGSTOP');
   }
   const descendantProcessTree = await descendantMonitor.stop();
-  const rootProcessGroupIds = new Set(
-    descendantProcessTree.activeProcessGroupIds,
-  );
+  const rootProcessGroupIds = new Set(descendantProcessTree.activeProcessGroupIds);
   if (childActive || descendantProcessTree.activeRootProcessGroup) {
     rootProcessGroupIds.add(pid);
   }
-  const frozen = rootProcessGroupIds.size === 0
-    ? null
-    : await freezeOwnedProcessTree({
-        rootProcessGroupIds: [...rootProcessGroupIds],
-        label: 'profile-clean-build-tree',
-      });
+  const frozen =
+    rootProcessGroupIds.size === 0
+      ? null
+      : await freezeOwnedProcessTree({
+          rootProcessGroupIds: [...rootProcessGroupIds],
+          label: 'profile-clean-build-tree',
+        });
   const frozenProcessTree = frozen?.evidence ?? {
     processIds: [],
     processGroupIds: [],
   };
   const processIds = childActive ? [pid] : [];
   const processGroupIds = [...frozenProcessTree.processGroupIds];
-  let pidReleased =
-    !childActive ||
-    processIds.every((processId) => !isProcessAlive(processId));
+  let pidReleased = !childActive || processIds.every((processId) => !isProcessAlive(processId));
   let processGroupsReleased = processGroupIds.every(
-    (processGroupId) => !isProcessGroupAlive(processGroupId),
+    (processGroupId) => !isProcessGroupAlive(processGroupId)
   );
 
   if (!pidReleased || !processGroupsReleased) {
     signalProcessGroups(processGroupIds, 'SIGKILL');
     await waitForProcessRelease(processIds, processGroupIds, 1_000);
-    pidReleased = processIds.every(
-      (processId) => !isProcessAlive(processId),
-    );
+    pidReleased = processIds.every((processId) => !isProcessAlive(processId));
     processGroupsReleased = processGroupIds.every(
-      (processGroupId) => !isProcessGroupAlive(processGroupId),
+      (processGroupId) => !isProcessGroupAlive(processGroupId)
     );
   }
 
   // Ancestry can only prove what it can still reach. The token sweep closes the
   // double-detach gap before any ownership lease is released. Callers that
   // never opened a scope keep their previous behaviour.
-  const ownershipResiduals =
-    ownedScope === undefined ? null : await ownedScope.reapResiduals();
-  const residualsCleared =
-    ownershipResiduals === null || ownershipResiduals.verified;
-  const ownershipReleaseSafe =
-    pidReleased && processGroupsReleased && residualsCleared;
-  const processTreeReleased =
-    ownershipReleaseSafe &&
-    descendantProcessTree.failures.length === 0;
+  const ownershipResiduals = ownedScope === undefined ? null : await ownedScope.reapResiduals();
+  const residualsCleared = ownershipResiduals === null || ownershipResiduals.verified;
+  const ownershipReleaseSafe = pidReleased && processGroupsReleased && residualsCleared;
+  const processTreeReleased = ownershipReleaseSafe && descendantProcessTree.failures.length === 0;
   if (ownershipReleaseSafe) {
     frozen?.releaseVerified();
     descendantMonitor.releaseVerified();
@@ -780,19 +673,11 @@ async function releaseBuildProcessTree(child, suppliedMonitor, ownedScope) {
   });
 }
 
-async function waitForProcessRelease(
-  processIds,
-  processGroupIds,
-  timeoutMs,
-) {
+async function waitForProcessRelease(processIds, processGroupIds, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const pidsReleased = processIds.every(
-      (pid) => !isProcessAlive(pid),
-    );
-    const groupsReleased = processGroupIds.every(
-      (pgid) => !isProcessGroupAlive(pgid),
-    );
+    const pidsReleased = processIds.every((pid) => !isProcessAlive(pid));
+    const groupsReleased = processGroupIds.every((pgid) => !isProcessGroupAlive(pgid));
     if (pidsReleased && groupsReleased) return;
     await delay(Math.min(25, Math.max(1, deadline - Date.now())));
   }
@@ -884,8 +769,7 @@ function isPlainRecord(value) {
     value !== null &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
-    (Object.getPrototypeOf(value) === Object.prototype ||
-      Object.getPrototypeOf(value) === null)
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
   );
 }
 

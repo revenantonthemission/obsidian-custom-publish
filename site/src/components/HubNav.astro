@@ -1,7 +1,7 @@
 ---
-import { ChevronLeft, ChevronRight } from "lucide-static";
-import { decorativeIcon } from "../lib/icons";
-import type { PostMeta } from "../lib/types";
+import { ChevronLeft, ChevronRight } from 'lucide-static';
+import { decorativeIcon } from '../lib/icons';
+import type { PostMeta } from '../lib/types';
 
 interface Props {
   hub: PostMeta;
@@ -28,15 +28,21 @@ const separator = decorativeIcon(ChevronRight, 14);
 
 <nav class="hub-nav" aria-label="허브 탐색">
   <ol class="hub-breadcrumb">
-    <li><a href="/">홈</a></li>
     <li>
-      <span class="hub-sep" set:html={separator}></span>
-      <a href={`/hubs/${hub.slug}`} aria-current={current ? undefined : "page"}>{hub.title}</a>
+      <a href="/">홈</a>
+    </li>
+    <li>
+      <span class="hub-sep" set:html={separator} />
+      <a href={`/hubs/${hub.slug}`} aria-current={current ? undefined : 'page'}>
+        {hub.title}
+      </a>
     </li>
     {current && (
       <li>
-        <span class="hub-sep" set:html={separator}></span>
-        <span class="hub-current" aria-current="page">{current.title}</span>
+        <span class="hub-sep" set:html={separator} />
+        <span class="hub-current" aria-current="page">
+          {current.title}
+        </span>
       </li>
     )}
   </ol>

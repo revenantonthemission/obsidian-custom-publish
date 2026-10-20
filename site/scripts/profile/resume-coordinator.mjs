@@ -42,10 +42,7 @@ function coordinatorError(code, message, stage, details) {
  * asking the verification provider for the web and print observations, and
  * this layer must not import that provider.
  */
-export async function prepareResumeRelease({
-  buildTimeoutMs,
-  renderTimeoutMs,
-} = {}) {
+export async function prepareResumeRelease({ buildTimeoutMs, renderTimeoutMs } = {}) {
   const stage = 'resume.prepare';
   const journal = await readReleaseJournal({ stage });
   if (journal !== null) {
@@ -53,12 +50,12 @@ export async function prepareResumeRelease({
       'RESUME_PREPARE_RELEASE_ACTIVE',
       'An unresolved release transaction exists; resolve it before preparing a new candidate.',
       stage,
-      { state: journal.state },
+      { state: journal.state }
     );
   }
 
   const buildIdentity = await cleanProfileBuild(
-    buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs },
+    buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs }
   );
 
   let lease;
@@ -86,9 +83,7 @@ export async function prepareResumeRelease({
     // build actually emitted, so the asset identities have to come from the
     // build manifest. Passing an empty list does not disable that check — it
     // makes every response unmappable, which is how this first surfaced.
-    const buildManifest = JSON.parse(
-      await readFile(buildIdentity.manifestPath, 'utf8'),
-    );
+    const buildManifest = JSON.parse(await readFile(buildIdentity.manifestPath, 'utf8'));
 
     // The manifest is the definition of "current source" for this run, and it
     // supplies both identities the inspector needs. Taking them from anywhere
@@ -187,7 +182,7 @@ export async function promotePreparedRelease({
       candidateId: prepared.candidateId,
       pdfSha256: prepared.candidateSha256,
     },
-    currentManifest,
+    currentManifest
   );
 
   // The pure C11 gate owns exact-SHA review currentness. Re-deciding it here
@@ -196,14 +191,14 @@ export async function promotePreparedRelease({
     prepared.draftReceipt,
     currentSubject,
     reviewRecord,
-    currentManifest,
+    currentManifest
   );
   if (!reviewed.ok) {
     throw coordinatorError(
       'RESUME_PROMOTE_REVIEW_INVALID',
       'The manual review does not validate against the current candidate and source.',
       stage,
-      { candidateId, issues: reviewed.issues ?? null },
+      { candidateId, issues: reviewed.issues ?? null }
     );
   }
 
@@ -212,14 +207,14 @@ export async function promotePreparedRelease({
     reviewed.value,
     currentSubject,
     currentManifest,
-    assembledAt,
+    assembledAt
   );
   if (!assembled.ok) {
     throw coordinatorError(
       'RESUME_PROMOTE_RECEIPT_INVALID',
       'The final release receipt could not be assembled from the reviewed candidate.',
       stage,
-      { candidateId, issues: assembled.issues ?? null },
+      { candidateId, issues: assembled.issues ?? null }
     );
   }
 
@@ -237,7 +232,7 @@ export async function promotePreparedRelease({
   let secondBuildIdentity;
   try {
     secondBuildIdentity = await cleanProfileBuild(
-      buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs },
+      buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs }
     );
   } catch (buildFailure) {
     // A failed second build never reaches the final gate; the transaction is
@@ -282,7 +277,7 @@ export async function readManualReviewRecord(path) {
       'RESUME_REVIEW_RECORD_MISSING',
       'The manual review record could not be read.',
       stage,
-      { path },
+      { path }
     );
   }
   try {
@@ -292,7 +287,7 @@ export async function readManualReviewRecord(path) {
       'RESUME_REVIEW_RECORD_UNREADABLE',
       'The manual review record is not valid JSON.',
       stage,
-      { path },
+      { path }
     );
   }
 }

@@ -13,7 +13,7 @@ export function prepareOwnedSpawn(label: string): Readonly<{
 
 export function registerOwnedProcess(
   child: ChildProcess,
-  label: string,
+  label: string
 ): Readonly<{
   pid: number;
   release(): void;
@@ -21,32 +21,32 @@ export function registerOwnedProcess(
 
 export function registerOwnedProcessGroup(
   processGroupId: number,
-  label: string,
+  label: string
 ): Readonly<{
   pid: number;
   release(): void;
 }>;
 
-export function snapshotDescendantProcessTree(
-  rootProcessIds: readonly number[],
-): Promise<Readonly<{
-  processIds: readonly number[];
-  processGroupIds: readonly number[];
-  processes: readonly Readonly<{
-    pid: number;
-    ppid: number;
-    pgid: number;
-    sessionId: number;
-    startedAt: string;
-  }>[];
-  processTable: readonly Readonly<{
-    pid: number;
-    ppid: number;
-    pgid: number;
-    sessionId: number;
-    startedAt: string;
-  }>[];
-}>>;
+export function snapshotDescendantProcessTree(rootProcessIds: readonly number[]): Promise<
+  Readonly<{
+    processIds: readonly number[];
+    processGroupIds: readonly number[];
+    processes: readonly Readonly<{
+      pid: number;
+      ppid: number;
+      pgid: number;
+      sessionId: number;
+      startedAt: string;
+    }>[];
+    processTable: readonly Readonly<{
+      pid: number;
+      ppid: number;
+      pgid: number;
+      sessionId: number;
+      startedAt: string;
+    }>[];
+  }>
+>;
 
 export function monitorOwnedDescendants(input: {
   rootPid: number;
@@ -54,74 +54,84 @@ export function monitorOwnedDescendants(input: {
   intervalMs?: number;
   isRootHandleCurrent?: () => boolean;
 }): Readonly<{
-  ready(): Promise<Readonly<{
-    rootPid: number;
-    sampleCount: number;
-    observedProcessIds: readonly number[];
-    observedProcessGroupIds: readonly number[];
-    activeProcessGroupIds: readonly number[];
-    activeRootProcessGroup: boolean;
-    rootProcessIdentity: Readonly<{
-      pid: number;
-      ppid: number;
-      pgid: number;
-      sessionId: number;
-      startedAt: string;
-    }> | null;
-    failures: readonly Readonly<{
-      name: string;
-      message: string;
-    }>[];
-  }>>;
-  stop(): Promise<Readonly<{
-    rootPid: number;
-    sampleCount: number;
-    observedProcessIds: readonly number[];
-    observedProcessGroupIds: readonly number[];
-    activeProcessGroupIds: readonly number[];
-    activeRootProcessGroup: boolean;
-    rootProcessIdentity: Readonly<{
-      pid: number;
-      ppid: number;
-      pgid: number;
-      sessionId: number;
-      startedAt: string;
-    }> | null;
-    failures: readonly Readonly<{
-      name: string;
-      message: string;
-    }>[];
-  }>>;
+  ready(): Promise<
+    Readonly<{
+      rootPid: number;
+      sampleCount: number;
+      observedProcessIds: readonly number[];
+      observedProcessGroupIds: readonly number[];
+      activeProcessGroupIds: readonly number[];
+      activeRootProcessGroup: boolean;
+      rootProcessIdentity: Readonly<{
+        pid: number;
+        ppid: number;
+        pgid: number;
+        sessionId: number;
+        startedAt: string;
+      }> | null;
+      failures: readonly Readonly<{
+        name: string;
+        message: string;
+      }>[];
+    }>
+  >;
+  stop(): Promise<
+    Readonly<{
+      rootPid: number;
+      sampleCount: number;
+      observedProcessIds: readonly number[];
+      observedProcessGroupIds: readonly number[];
+      activeProcessGroupIds: readonly number[];
+      activeRootProcessGroup: boolean;
+      rootProcessIdentity: Readonly<{
+        pid: number;
+        ppid: number;
+        pgid: number;
+        sessionId: number;
+        startedAt: string;
+      }> | null;
+      failures: readonly Readonly<{
+        name: string;
+        message: string;
+      }>[];
+    }>
+  >;
   releaseVerified(): void;
 }>;
 
 export function freezeOwnedProcessTree(input: {
   rootProcessGroupIds: readonly number[];
   label: string;
-}): Promise<Readonly<{
-  evidence: Readonly<{
-    processIds: readonly number[];
-    processGroupIds: readonly number[];
-  }>;
-  releaseVerified(): void;
-}>>;
+}): Promise<
+  Readonly<{
+    evidence: Readonly<{
+      processIds: readonly number[];
+      processGroupIds: readonly number[];
+    }>;
+    releaseVerified(): void;
+  }>
+>;
 
-export function beginOwnedProcessScope(label: string): Promise<Readonly<{
-  label: string;
-  environment: Readonly<Record<string, string>>;
-  reapResiduals(): Promise<Readonly<{
-    verified: boolean;
-    residualProcessIds: readonly number[];
-    candidateCount: number;
-    sweepCount: number;
-    probeBudget: number;
-    probeFailures: readonly Readonly<{
-      name: string;
-      message: string;
-    }>[];
-  }>>;
-  close(): void;
-}>>;
+export function beginOwnedProcessScope(label: string): Promise<
+  Readonly<{
+    label: string;
+    environment: Readonly<Record<string, string>>;
+    reapResiduals(): Promise<
+      Readonly<{
+        verified: boolean;
+        residualProcessIds: readonly number[];
+        candidateCount: number;
+        sweepCount: number;
+        probeBudget: number;
+        probeFailures: readonly Readonly<{
+          name: string;
+          message: string;
+        }>[];
+      }>
+    >;
+    close(): void;
+  }>
+>;
 
 export const ownedProcessRegistryTesting: Readonly<{
   isOwnedGroupAlive(pid: number): boolean;

@@ -1,15 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { constants as fsConstants } from 'node:fs';
-import {
-  lstat,
-  mkdir,
-  open,
-  readFile,
-  realpath,
-  rename,
-  rm,
-  unlink,
-} from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, realpath, rename, rm, unlink } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 import { PROFILE_PATHS } from './profile-paths.mjs';
 
@@ -101,7 +92,7 @@ const ROLLBACK_STATES = Object.freeze(
     'ROLLBACK_PDF_RESTORED',
     'ROLLBACK_RECEIPT_RESTORED',
     'ROLLED_BACK',
-  ]),
+  ])
 );
 
 const RECOVERY_HELD_STATES = Object.freeze(
@@ -114,7 +105,7 @@ const RECOVERY_HELD_STATES = Object.freeze(
     'ROLLBACK_PDF_RESTORED',
     'ROLLBACK_RECEIPT_RESTORED',
     'ROLLED_BACK',
-  ]),
+  ])
 );
 
 export class ResumeReleaseError extends Error {
@@ -188,9 +179,7 @@ export function releaseStateInvariants(state) {
     // After the commit point, failure requires restoring bytes rather than
     // simply abandoning the attempt.
     publicFileCommitted:
-      state === 'PDF_COMMITTED' ||
-      state === 'FINAL_VERIFIED' ||
-      state === 'ROLLBACK_REQUIRED',
+      state === 'PDF_COMMITTED' || state === 'FINAL_VERIFIED' || state === 'ROLLBACK_REQUIRED',
     readOnlyVerifyBlocked: journalPresent,
     terminal: state === RELEASE_STATE_ABSENT,
   });
@@ -201,17 +190,11 @@ export function legalReleaseCommands(state) {
   if (!isKnownState(state)) {
     throw new TypeError(`unknown release state: ${String(state)}`);
   }
-  return Object.freeze([
-    ...Object.keys(FORWARD_TRANSITIONS[state] ?? {}),
-    'crash',
-    'resume',
-  ]);
+  return Object.freeze([...Object.keys(FORWARD_TRANSITIONS[state] ?? {}), 'crash', 'resume']);
 }
 
 function isKnownState(state) {
-  return (
-    state === RELEASE_STATE_ABSENT || RELEASE_JOURNAL_STATES.includes(state)
-  );
+  return state === RELEASE_STATE_ABSENT || RELEASE_JOURNAL_STATES.includes(state);
 }
 
 function rejection(reason, state, command) {
@@ -258,7 +241,7 @@ function assertAllowlistedPath(target, stage) {
     'RELEASE_PATH_NOT_ALLOWED',
     'The release transaction refused a path outside its fixed allowlist.',
     stage,
-    { target },
+    { target }
   );
 }
 
@@ -276,12 +259,9 @@ async function assertSafeTarget(target, stage, { mustExist = false } = {}) {
     stats = await lstat(target);
   } catch {
     if (mustExist) {
-      throw releaseError(
-        'RELEASE_TARGET_MISSING',
-        'A required release target is absent.',
-        stage,
-        { target },
-      );
+      throw releaseError('RELEASE_TARGET_MISSING', 'A required release target is absent.', stage, {
+        target,
+      });
     }
     return Object.freeze({ present: false, stats: null });
   }
@@ -290,7 +270,7 @@ async function assertSafeTarget(target, stage, { mustExist = false } = {}) {
       'RELEASE_TARGET_SYMLINK',
       'The release transaction refused a symlinked target.',
       stage,
-      { target },
+      { target }
     );
   }
   if (!stats.isFile()) {
@@ -298,7 +278,7 @@ async function assertSafeTarget(target, stage, { mustExist = false } = {}) {
       'RELEASE_TARGET_NOT_REGULAR',
       'The release transaction refused a non-regular target.',
       stage,
-      { target },
+      { target }
     );
   }
   assertAllowlistedPath(await realpath(target), stage);
@@ -318,7 +298,7 @@ async function assertSameDevice(leftDir, rightDir, stage) {
       'RELEASE_CROSS_DEVICE',
       'Candidate staging and the public target are on different filesystems.',
       stage,
-      { leftDir, rightDir },
+      { leftDir, rightDir }
     );
   }
 }
@@ -401,7 +381,7 @@ export async function acquireReleaseLock({ stage = 'release.lock' } = {}) {
         'RELEASE_LOCK_HELD',
         'Another release transaction holds the exclusive lock.',
         stage,
-        { lockPath: PROFILE_PATHS.releaseLockPath },
+        { lockPath: PROFILE_PATHS.releaseLockPath }
       );
     }
     throw cause;
@@ -413,7 +393,7 @@ export async function acquireReleaseLock({ stage = 'release.lock' } = {}) {
         pid: process.pid,
         acquiredAt: new Date().toISOString(),
       })}\n`,
-      'utf8',
+      'utf8'
     );
     await handle.sync();
   } finally {
@@ -481,23 +461,20 @@ function requireJournalShape(value, stage) {
     !SHA256_PATTERN.test(value.newPdfSha256 ?? '') ||
     !SHA256_PATTERN.test(value.newReceiptSha256 ?? '') ||
     (value.oldPdfSha256 !== null && !SHA256_PATTERN.test(value.oldPdfSha256)) ||
-    (value.oldReceiptSha256 !== null &&
-      !SHA256_PATTERN.test(value.oldReceiptSha256))
+    (value.oldReceiptSha256 !== null && !SHA256_PATTERN.test(value.oldReceiptSha256))
   ) {
     throw releaseError(
       'RELEASE_JOURNAL_INVALID',
       'The release journal is unreadable or does not match its schema.',
       stage,
-      {},
+      {}
     );
   }
   return value;
 }
 
 /** Reads the journal without touching it. Absent is a valid answer. */
-export async function readReleaseJournal({
-  stage = 'release.journal.read',
-} = {}) {
+export async function readReleaseJournal({ stage = 'release.journal.read' } = {}) {
   const bytes = await readIfPresent(PROFILE_PATHS.releaseJournalPath, stage);
   if (bytes === null) return null;
   let parsed;
@@ -508,7 +485,7 @@ export async function readReleaseJournal({
       'RELEASE_JOURNAL_INVALID',
       'The release journal is not valid JSON.',
       stage,
-      {},
+      {}
     );
   }
   return Object.freeze(requireJournalShape(parsed, stage));
@@ -526,7 +503,7 @@ async function advanceJournal(journal, command, patch, stage) {
       'RELEASE_TRANSITION_ILLEGAL',
       'The release transaction refused a transition its journal does not allow.',
       stage,
-      { from: currentState, command, reason: decision.reason },
+      { from: currentState, command, reason: decision.reason }
     );
   }
   if (decision.state === RELEASE_STATE_ABSENT) {
@@ -545,7 +522,7 @@ async function advanceJournal(journal, command, patch, stage) {
   await atomicWrite(
     PROFILE_PATHS.releaseJournalPath,
     Buffer.from(`${JSON.stringify(next, null, 2)}\n`, 'utf8'),
-    stage,
+    stage
   );
   return Object.freeze(next);
 }
@@ -579,14 +556,9 @@ export async function inspectReleaseState({ stage = 'release.inspect' } = {}) {
  * Reads the current tracked pair without mutating it. Either both are present
  * or neither is; a half-present pair is a failure, not a first release.
  */
-export async function readCurrentReleasePair({
-  stage = 'release.pair.read',
-} = {}) {
+export async function readCurrentReleasePair({ stage = 'release.pair.read' } = {}) {
   const pdfBytes = await readIfPresent(PROFILE_PATHS.publicResumePdfPath, stage);
-  const receiptBytes = await readIfPresent(
-    PROFILE_PATHS.trackedReleaseReceiptPath,
-    stage,
-  );
+  const receiptBytes = await readIfPresent(PROFILE_PATHS.trackedReleaseReceiptPath, stage);
   if (pdfBytes === null && receiptBytes === null) {
     return Object.freeze({ present: false, pdf: null, receipt: null });
   }
@@ -595,7 +567,7 @@ export async function readCurrentReleasePair({
       'RELEASE_PAIR_INCOMPLETE',
       'Exactly one of the public PDF and the tracked receipt exists.',
       stage,
-      { pdfPresent: pdfBytes !== null, receiptPresent: receiptBytes !== null },
+      { pdfPresent: pdfBytes !== null, receiptPresent: receiptBytes !== null }
     );
   }
   let receipt;
@@ -606,7 +578,7 @@ export async function readCurrentReleasePair({
       'RELEASE_RECEIPT_UNREADABLE',
       'The tracked release receipt is not valid JSON.',
       stage,
-      {},
+      {}
     );
   }
   return Object.freeze({
@@ -645,7 +617,7 @@ function createPendingCapability(record) {
         'RELEASE_CAPABILITY_NOT_SERIALIZABLE',
         'A pending release capability may not be serialised.',
         'release.capability',
-        {},
+        {}
       );
     },
   });
@@ -654,17 +626,14 @@ function createPendingCapability(record) {
 }
 
 /** Resolves a capability this process issued, or fails terminally. */
-export function resolvePendingRelease(
-  capability,
-  stage = 'release.capability',
-) {
+export function resolvePendingRelease(capability, stage = 'release.capability') {
   const record = PENDING_RELEASES.get(capability);
   if (record === undefined) {
     throw releaseError(
       'RELEASE_CAPABILITY_UNKNOWN',
       'The pending release capability was not issued by this release store.',
       stage,
-      {},
+      {}
     );
   }
   if (record.settled) {
@@ -672,7 +641,7 @@ export function resolvePendingRelease(
       'RELEASE_CAPABILITY_SETTLED',
       'The pending release capability has already been finalized or rolled back.',
       stage,
-      {},
+      {}
     );
   }
   return record;
@@ -682,10 +651,7 @@ export function resolvePendingRelease(
  * The read-only view a transaction-scoped verifier may observe. It names the
  * committed pair and the journal it belongs to, and grants nothing.
  */
-export function describePendingRelease(
-  capability,
-  stage = 'release.capability',
-) {
+export function describePendingRelease(capability, stage = 'release.capability') {
   const record = resolvePendingRelease(capability, stage);
   return Object.freeze({
     journalId: record.journal.journalId,
@@ -707,11 +673,7 @@ export function describePendingRelease(
  * Persists the draft receipt beside its candidate. The CLI hands the assembled
  * draft here rather than writing it, so the candidate directory has one writer.
  */
-export async function persistPreparedEvidence({
-  candidate,
-  candidatePath,
-  draftReceipt,
-} = {}) {
+export async function persistPreparedEvidence({ candidate, candidatePath, draftReceipt } = {}) {
   const stage = 'release.prepare.persist';
   if (
     typeof candidate?.candidateId !== 'string' ||
@@ -724,7 +686,7 @@ export async function persistPreparedEvidence({
       'RELEASE_DRAFT_INVALID',
       'Prepared evidence must be an inspection draft receipt.',
       stage,
-      { kind: draftReceipt?.kind ?? null },
+      { kind: draftReceipt?.kind ?? null }
     );
   }
   if (
@@ -735,7 +697,7 @@ export async function persistPreparedEvidence({
       'RELEASE_DRAFT_IDENTITY_MISMATCH',
       'The draft receipt does not name the candidate it was prepared for.',
       stage,
-      { candidateId: candidate.candidateId },
+      { candidateId: candidate.candidateId }
     );
   }
   await assertSafeTarget(candidatePath, stage, { mustExist: true });
@@ -745,43 +707,31 @@ export async function persistPreparedEvidence({
       'RELEASE_CANDIDATE_STALE',
       'The candidate on disk is not the bytes its identity names.',
       stage,
-      { candidateId: candidate.candidateId },
+      { candidateId: candidate.candidateId }
     );
   }
 
-  const draftPath = resolve(
-    PROFILE_PATHS.pdfCandidateRoot,
-    `${candidate.candidateId}.draft.json`,
-  );
+  const draftPath = resolve(PROFILE_PATHS.pdfCandidateRoot, `${candidate.candidateId}.draft.json`);
   const draftSha256 = await atomicWrite(
     draftPath,
     Buffer.from(`${JSON.stringify(draftReceipt, null, 2)}\n`, 'utf8'),
-    stage,
+    stage
   );
   return Object.freeze({ draftPath, draftSha256 });
 }
 
 /** Reloads a persisted draft by candidate ID with a full identity recheck. */
-export async function readPreparedEvidence(
-  candidateId,
-  { stage = 'release.promote.reload' } = {},
-) {
+export async function readPreparedEvidence(candidateId, { stage = 'release.promote.reload' } = {}) {
   if (typeof candidateId !== 'string' || !SHA256_PATTERN.test(candidateId)) {
     throw releaseError(
       'RELEASE_CANDIDATE_ID_INVALID',
       'A candidate ID must be a SHA-256 hex digest.',
       stage,
-      {},
+      {}
     );
   }
-  const draftPath = resolve(
-    PROFILE_PATHS.pdfCandidateRoot,
-    `${candidateId}.draft.json`,
-  );
-  const candidatePath = resolve(
-    PROFILE_PATHS.pdfCandidateRoot,
-    `${candidateId}.pdf`,
-  );
+  const draftPath = resolve(PROFILE_PATHS.pdfCandidateRoot, `${candidateId}.draft.json`);
+  const candidatePath = resolve(PROFILE_PATHS.pdfCandidateRoot, `${candidateId}.pdf`);
   await assertSafeTarget(draftPath, stage, { mustExist: true });
   await assertSafeTarget(candidatePath, stage, { mustExist: true });
 
@@ -797,7 +747,7 @@ export async function readPreparedEvidence(
       'RELEASE_DRAFT_UNREADABLE',
       'The persisted draft receipt is not valid JSON.',
       stage,
-      { candidateId },
+      { candidateId }
     );
   }
   const candidateSha256 = sha256(candidateBytes);
@@ -809,7 +759,7 @@ export async function readPreparedEvidence(
       'RELEASE_CANDIDATE_STALE',
       'The persisted draft does not match the candidate bytes on disk.',
       stage,
-      { candidateId },
+      { candidateId }
     );
   }
   return Object.freeze({
@@ -848,21 +798,18 @@ export async function promoteResumeRelease({
       'RELEASE_CANDIDATE_ID_INVALID',
       'A candidate ID must be a SHA-256 hex digest.',
       stage,
-      {},
+      {}
     );
   }
   // The candidate ID is derived from the build identity and the PDF digest, so
   // it is deliberately not the digest itself. Comparing bytes against the ID
   // would be comparing against the wrong hash.
-  if (
-    typeof candidatePdfSha256 !== 'string' ||
-    !SHA256_PATTERN.test(candidatePdfSha256)
-  ) {
+  if (typeof candidatePdfSha256 !== 'string' || !SHA256_PATTERN.test(candidatePdfSha256)) {
     throw releaseError(
       'RELEASE_CANDIDATE_DIGEST_INVALID',
       'A candidate PDF digest must be a SHA-256 hex digest.',
       stage,
-      {},
+      {}
     );
   }
   if (releaseReceipt?.kind !== 'resume-release') {
@@ -870,7 +817,7 @@ export async function promoteResumeRelease({
       'RELEASE_RECEIPT_INVALID',
       'Promotion requires an assembled release receipt.',
       stage,
-      { kind: releaseReceipt?.kind ?? null },
+      { kind: releaseReceipt?.kind ?? null }
     );
   }
 
@@ -885,23 +832,15 @@ export async function promoteResumeRelease({
       'RELEASE_JOURNAL_ACTIVE',
       'A previous release transaction is unresolved; resolve it before promoting.',
       stage,
-      { state: existingJournal.state },
+      { state: existingJournal.state }
     );
   }
 
   const lock = await acquireReleaseLock({ stage });
   let journal = null;
   try {
-    await assertSameDevice(
-      PROFILE_PATHS.pdfCandidateRoot,
-      PROFILE_PATHS.publicRoot,
-      stage,
-    );
-    await assertSameDevice(
-      PROFILE_PATHS.releaseRecoveryRoot,
-      PROFILE_PATHS.publicRoot,
-      stage,
-    );
+    await assertSameDevice(PROFILE_PATHS.pdfCandidateRoot, PROFILE_PATHS.publicRoot, stage);
+    await assertSameDevice(PROFILE_PATHS.releaseRecoveryRoot, PROFILE_PATHS.publicRoot, stage);
 
     const newPdfSha256 = sha256(candidateBytes);
     if (newPdfSha256 !== candidatePdfSha256) {
@@ -909,7 +848,7 @@ export async function promoteResumeRelease({
         'RELEASE_CANDIDATE_STALE',
         'The candidate bytes do not hash to the digest its identity names.',
         stage,
-        { candidateId },
+        { candidateId }
       );
     }
     if (releaseReceipt.pdfSha256 !== newPdfSha256) {
@@ -917,7 +856,7 @@ export async function promoteResumeRelease({
         'RELEASE_RECEIPT_IDENTITY_MISMATCH',
         'The release receipt does not name the candidate being promoted.',
         stage,
-        { candidateId },
+        { candidateId }
       );
     }
     if (releaseReceipt.candidateId !== candidateId) {
@@ -925,13 +864,10 @@ export async function promoteResumeRelease({
         'RELEASE_RECEIPT_IDENTITY_MISMATCH',
         'The release receipt names a different candidate.',
         stage,
-        { candidateId },
+        { candidateId }
       );
     }
-    const receiptBytes = Buffer.from(
-      `${JSON.stringify(releaseReceipt, null, 2)}\n`,
-      'utf8',
-    );
+    const receiptBytes = Buffer.from(`${JSON.stringify(releaseReceipt, null, 2)}\n`, 'utf8');
     const newReceiptSha256 = sha256(receiptBytes);
 
     journal = await advanceJournal(
@@ -948,7 +884,7 @@ export async function promoteResumeRelease({
         recovery: null,
         originalFailure: null,
       },
-      stage,
+      stage
     );
 
     const previous = await readCurrentReleasePair({ stage });
@@ -959,7 +895,7 @@ export async function promoteResumeRelease({
         oldPdfSha256: previous.present ? previous.pdf.sha256 : null,
         oldReceiptSha256: previous.present ? previous.receipt.sha256 : null,
       },
-      stage,
+      stage
     );
 
     // Snapshot the exact previous bytes, or record an explicit absence
@@ -969,31 +905,20 @@ export async function promoteResumeRelease({
     if (previous.present) {
       const recoveryPdfPath = resolve(
         PROFILE_PATHS.releaseRecoveryRoot,
-        `${previous.pdf.sha256}.pdf`,
+        `${previous.pdf.sha256}.pdf`
       );
       const recoveryReceiptPath = resolve(
         PROFILE_PATHS.releaseRecoveryRoot,
-        `${previous.receipt.sha256}.json`,
+        `${previous.receipt.sha256}.json`
       );
-      const writtenPdf = await atomicWrite(
-        recoveryPdfPath,
-        previous.pdf.bytes,
-        stage,
-      );
-      const writtenReceipt = await atomicWrite(
-        recoveryReceiptPath,
-        previous.receipt.bytes,
-        stage,
-      );
-      if (
-        writtenPdf !== previous.pdf.sha256 ||
-        writtenReceipt !== previous.receipt.sha256
-      ) {
+      const writtenPdf = await atomicWrite(recoveryPdfPath, previous.pdf.bytes, stage);
+      const writtenReceipt = await atomicWrite(recoveryReceiptPath, previous.receipt.bytes, stage);
+      if (writtenPdf !== previous.pdf.sha256 || writtenReceipt !== previous.receipt.sha256) {
         throw releaseError(
           'RELEASE_RECOVERY_MISMATCH',
           'The recovery snapshot does not reproduce the previous pair.',
           stage,
-          {},
+          {}
         );
       }
       recovery = Object.freeze({
@@ -1002,12 +927,7 @@ export async function promoteResumeRelease({
         receiptPath: recoveryReceiptPath,
       });
     }
-    journal = await advanceJournal(
-      journal,
-      'snapshotRecovery',
-      { recovery },
-      stage,
-    );
+    journal = await advanceJournal(journal, 'snapshotRecovery', { recovery }, stage);
 
     // The receipt goes first. If the process dies between here and the rename,
     // the pair is deliberately inconsistent — and a verify that sees a receipt
@@ -1017,14 +937,14 @@ export async function promoteResumeRelease({
     const committedReceipt = await atomicWrite(
       PROFILE_PATHS.trackedReleaseReceiptPath,
       receiptBytes,
-      stage,
+      stage
     );
     if (committedReceipt !== newReceiptSha256) {
       throw releaseError(
         'RELEASE_RECEIPT_MISMATCH',
         'The committed receipt does not match its expected digest.',
         stage,
-        {},
+        {}
       );
     }
     journal = await advanceJournal(journal, 'promoteReceipt', {}, stage);
@@ -1038,7 +958,7 @@ export async function promoteResumeRelease({
         'RELEASE_PDF_MISMATCH',
         'The committed public PDF does not match the reviewed candidate.',
         stage,
-        {},
+        {}
       );
     }
     journal = await advanceJournal(journal, 'commitPdf', {}, stage);
@@ -1092,7 +1012,7 @@ export async function finalizeResumeRelease(capability) {
       'RELEASE_FINALIZE_PAIR_MISMATCH',
       'The tracked pair is not the pair this transaction committed.',
       stage,
-      {},
+      {}
     );
   }
 
@@ -1137,19 +1057,14 @@ export async function rollbackResumeRelease(capability, originalFailure) {
     code: originalFailure?.code ?? 'RELEASE_FINAL_GATE_FAILED',
     message: originalFailure?.message ?? 'The final release gate failed.',
   });
-  journal = await advanceJournal(
-    journal,
-    'requireRollback',
-    { originalFailure: failure },
-    stage,
-  );
+  journal = await advanceJournal(journal, 'requireRollback', { originalFailure: failure }, stage);
 
   const recovery = journal.recovery;
   const restoringPrevious = recovery?.kind === 'present';
 
   const quarantinePdfPath = resolve(
     PROFILE_PATHS.releaseQuarantineRoot,
-    `${journal.newPdfSha256}.pdf`,
+    `${journal.newPdfSha256}.pdf`
   );
   await assertSafeTarget(PROFILE_PATHS.publicResumePdfPath, stage, {
     mustExist: true,
@@ -1162,20 +1077,16 @@ export async function rollbackResumeRelease(capability, originalFailure) {
         'RELEASE_ROLLBACK_SNAPSHOT_MISMATCH',
         'The retained previous PDF does not match the hash the journal recorded.',
         stage,
-        {},
+        {}
       );
     }
-    const restored = await atomicWrite(
-      PROFILE_PATHS.publicResumePdfPath,
-      previousPdf,
-      stage,
-    );
+    const restored = await atomicWrite(PROFILE_PATHS.publicResumePdfPath, previousPdf, stage);
     if (restored !== journal.oldPdfSha256) {
       throw releaseError(
         'RELEASE_ROLLBACK_RESTORE_MISMATCH',
         'The restored public PDF does not match the previous hash.',
         stage,
-        {},
+        {}
       );
     }
   }
@@ -1183,21 +1094,17 @@ export async function rollbackResumeRelease(capability, originalFailure) {
     journal,
     'restorePdf',
     { quarantinedPdfPath: quarantinePdfPath },
-    stage,
+    stage
   );
 
   const quarantineReceiptPath = resolve(
     PROFILE_PATHS.releaseQuarantineRoot,
-    `${journal.newReceiptSha256}.json`,
+    `${journal.newReceiptSha256}.json`
   );
   await assertSafeTarget(PROFILE_PATHS.trackedReleaseReceiptPath, stage, {
     mustExist: true,
   });
-  await atomicMove(
-    PROFILE_PATHS.trackedReleaseReceiptPath,
-    quarantineReceiptPath,
-    stage,
-  );
+  await atomicMove(PROFILE_PATHS.trackedReleaseReceiptPath, quarantineReceiptPath, stage);
   if (restoringPrevious) {
     const previousReceipt = await readFile(recovery.receiptPath);
     if (sha256(previousReceipt) !== journal.oldReceiptSha256) {
@@ -1205,20 +1112,20 @@ export async function rollbackResumeRelease(capability, originalFailure) {
         'RELEASE_ROLLBACK_SNAPSHOT_MISMATCH',
         'The retained previous receipt does not match the hash the journal recorded.',
         stage,
-        {},
+        {}
       );
     }
     const restored = await atomicWrite(
       PROFILE_PATHS.trackedReleaseReceiptPath,
       previousReceipt,
-      stage,
+      stage
     );
     if (restored !== journal.oldReceiptSha256) {
       throw releaseError(
         'RELEASE_ROLLBACK_RESTORE_MISMATCH',
         'The restored receipt does not match the previous hash.',
         stage,
-        {},
+        {}
       );
     }
   }
@@ -1226,7 +1133,7 @@ export async function rollbackResumeRelease(capability, originalFailure) {
     journal,
     'restoreReceipt',
     { quarantinedReceiptPath: quarantineReceiptPath },
-    stage,
+    stage
   );
 
   // Full read-back of the old pair or the absence, before anything is cleaned.
@@ -1241,7 +1148,7 @@ export async function rollbackResumeRelease(capability, originalFailure) {
         'RELEASE_ROLLBACK_INCOMPLETE',
         'The restored pair does not read back as the previous release.',
         stage,
-        {},
+        {}
       );
     }
   } else if (finalPair.present) {
@@ -1249,7 +1156,7 @@ export async function rollbackResumeRelease(capability, originalFailure) {
       'RELEASE_ROLLBACK_INCOMPLETE',
       'A first-release rollback left a tracked pair in place.',
       stage,
-      {},
+      {}
     );
   }
   journal = await advanceJournal(journal, 'completeRollback', {}, stage);

@@ -30,46 +30,32 @@ import {
   metadataProjectionCaseArbitrary,
   navigationPathCaseArbitrary,
 } from './arbitraries/metadata.js';
-import type {
-  MetadataProjectionCase,
-} from './arbitraries/metadata.js';
-import {
-  METADATA_MUTATION_KINDS,
-  mutateMetadata,
-} from './mutations.js';
+import type { MetadataProjectionCase } from './arbitraries/metadata.js';
+import { METADATA_MUTATION_KINDS, mutateMetadata } from './mutations.js';
 
-const metadataMutationKindArbitrary = fc.constantFrom(
-  ...METADATA_MUTATION_KINDS,
-);
+const metadataMutationKindArbitrary = fc.constantFrom(...METADATA_MUTATION_KINDS);
 
 test.prop([metadataProjectionCaseArbitrary])(
   'U1-P08 builds route-exact metadata from visible approved projections',
   (projectionCase) => {
-    const result = buildMetadata(
-      projectionCase.site,
-      projectionCase.source,
-    );
+    const result = buildMetadata(projectionCase.site, projectionCase.source);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
     const metadata = result.value;
-    const expectedPathname =
-      projectionCase.route === 'resume' ? '/resume' : '/portfolio';
+    const expectedPathname = projectionCase.route === 'resume' ? '/resume' : '/portfolio';
     const expectedSummary =
       projectionCase.route === 'resume'
         ? projectionCase.resume.resumeSummary.value
         : projectionCase.portfolio.portfolioSummary.value;
-    const expectedTitle =
-      `${projectionCase.homepage.name.value} — ${
-        projectionCase.route === 'resume' ? 'Résumé' : 'Portfolio'
-      }`;
+    const expectedTitle = `${projectionCase.homepage.name.value} — ${
+      projectionCase.route === 'resume' ? 'Résumé' : 'Portfolio'
+    }`;
 
     expect(metadata.pathname).toBe(expectedPathname);
     expect(metadata.title).toBe(expectedTitle);
     expect(metadata.description).toBe(expectedSummary);
-    expect(metadata.canonical).toBe(
-      `${projectionCase.site.origin}${expectedPathname}`,
-    );
+    expect(metadata.canonical).toBe(`${projectionCase.site.origin}${expectedPathname}`);
     expect(metadata.openGraph).toEqual({
       title: expectedTitle,
       description: expectedSummary,
@@ -78,19 +64,13 @@ test.prop([metadataProjectionCaseArbitrary])(
     expect(metadata.twitter).toEqual(metadata.openGraph);
 
     assertStructuredClaims(metadata, projectionCase);
-  },
+  }
 );
 
-test.prop([
-  metadataProjectionCaseArbitrary,
-  metadataMutationKindArbitrary,
-])(
+test.prop([metadataProjectionCaseArbitrary, metadataMutationKindArbitrary])(
   'U1-P08 rejects each controlled metadata mutation without partial acceptance',
   (projectionCase, mutationKind) => {
-    const built = buildMetadata(
-      projectionCase.site,
-      projectionCase.source,
-    );
+    const built = buildMetadata(projectionCase.site, projectionCase.source);
     expect(built.ok).toBe(true);
     if (!built.ok) return;
 
@@ -100,23 +80,19 @@ test.prop([
     const result = validateMetadataConsistencyForTest(
       projectionCase.site,
       projectionCase.source,
-      mutation.candidate,
+      mutation.candidate
     );
 
     expect(built.value).toEqual(metadataSnapshot);
     expect(mutation.candidate).toEqual(candidateSnapshot);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(
-      result.issues.map(({ code, path }) => ({ code, path })),
-    ).toContainEqual(
-      {
-        code: mutation.expectedCode,
-        path: mutation.expectedPath,
-      },
-    );
+    expect(result.issues.map(({ code, path }) => ({ code, path }))).toContainEqual({
+      code: mutation.expectedCode,
+      path: mutation.expectedPath,
+    });
     expect('value' in result).toBe(false);
-  },
+  }
 );
 
 test.prop([jsonLdDocumentCollectionArbitrary])(
@@ -143,33 +119,22 @@ test.prop([jsonLdDocumentCollectionArbitrary])(
     const extracted = extractJsonLdDocuments(host);
     expect(extracted.ok).toBe(true);
     if (!extracted.ok) return;
-    expect(unbrandDocuments(extracted.value)).toEqual(
-      unbrandDocuments(documents),
-    );
+    expect(unbrandDocuments(extracted.value)).toEqual(unbrandDocuments(documents));
 
     const verified = verifyJsonLdRoundTrip(documents, host);
     expect(verified.ok).toBe(true);
     if (verified.ok) {
-      expect(unbrandDocuments(verified.value)).toEqual(
-        unbrandDocuments(documents),
-      );
+      expect(unbrandDocuments(verified.value)).toEqual(unbrandDocuments(documents));
     }
-  },
+  }
 );
 
 test.prop([
-  fc.constantFrom<readonly JsonLdDocument[] | null | undefined>(
-    null,
-    undefined,
-    Object.freeze([]),
-  ),
-])(
-  'U1-P09 omits the structured-data host for absent or empty documents',
-  (documents) => {
-    const result = serializeJsonLdDocuments(documents);
-    expect(result).toEqual({ ok: true, value: null });
-  },
-);
+  fc.constantFrom<readonly JsonLdDocument[] | null | undefined>(null, undefined, Object.freeze([])),
+])('U1-P09 omits the structured-data host for absent or empty documents', (documents) => {
+  const result = serializeJsonLdDocuments(documents);
+  expect(result).toEqual({ ok: true, value: null });
+});
 
 test.prop([navigationPathCaseArbitrary])(
   'U1-P10 preserves fixed navigation order and exact-segment current state',
@@ -180,74 +145,50 @@ test.prop([navigationPathCaseArbitrary])(
     const localSnapshot = structuredClone(localModel);
 
     const primary = getPrimaryNavigationState(pathCase.pathname);
-    const primaryFromModel = getNavigationState(
-      primaryModel,
-      pathCase.pathname,
-    );
+    const primaryFromModel = getNavigationState(primaryModel, pathCase.pathname);
     const local = getProfileLocalNavigationState(pathCase.pathname);
-    const localFromModel = getNavigationState(
-      localModel,
-      pathCase.pathname,
-    );
+    const localFromModel = getNavigationState(localModel, pathCase.pathname);
 
     expect(primary.ok).toBe(true);
     expect(primaryFromModel.ok).toBe(true);
     expect(local.ok).toBe(true);
     expect(localFromModel.ok).toBe(true);
-    if (
-      !primary.ok ||
-      !primaryFromModel.ok ||
-      !local.ok ||
-      !localFromModel.ok
-    ) {
+    if (!primary.ok || !primaryFromModel.ok || !local.ok || !localFromModel.ok) {
       return;
     }
 
     expect(primary.value).toEqual(primaryFromModel.value);
     expect(local.value).toEqual(localFromModel.value);
-    expect(primary.value.map(({ label, href }) => ({ label, href }))).toEqual(
-      [
-        { label: 'Tags', href: '/tags' },
-        { label: 'Graph', href: '/graph' },
-        { label: 'Résumé', href: '/resume' },
-        { label: 'Portfolio', href: '/portfolio' },
-      ],
-    );
-    expect(local.value.map(({ label, href }) => ({ label, href }))).toEqual(
-      [
-        { label: '홈', href: '/' },
-        { label: 'Résumé', href: '/resume' },
-        { label: 'Portfolio', href: '/portfolio' },
-      ],
-    );
+    expect(primary.value.map(({ label, href }) => ({ label, href }))).toEqual([
+      { label: 'Tags', href: '/tags' },
+      { label: 'Graph', href: '/graph' },
+      { label: 'Résumé', href: '/resume' },
+      { label: 'Portfolio', href: '/portfolio' },
+    ]);
+    expect(local.value.map(({ label, href }) => ({ label, href }))).toEqual([
+      { label: '홈', href: '/' },
+      { label: 'Résumé', href: '/resume' },
+      { label: 'Portfolio', href: '/portfolio' },
+    ]);
 
-    expect(currentHref(primary.value)).toBe(
-      pathCase.primaryCurrentHref,
-    );
+    expect(currentHref(primary.value)).toBe(pathCase.primaryCurrentHref);
     expect(currentHref(local.value)).toBe(pathCase.localCurrentHref);
     expect(primary.value.filter((item) => item.current).length).toBeLessThanOrEqual(1);
     expect(local.value.filter((item) => item.current).length).toBeLessThanOrEqual(1);
     expect(primaryModel).toEqual(primarySnapshot);
     expect(localModel).toEqual(localSnapshot);
-  },
+  }
 );
 
-function buildMetadata(
-  site: SiteIdentity,
-  source: MetadataProjectionSource,
-) {
+function buildMetadata(site: SiteIdentity, source: MetadataProjectionSource) {
   return source.route === 'resume'
     ? buildResumeMetadataForTest(site, source.profile)
-    : buildPortfolioMetadataForTest(
-        site,
-        source.name,
-        source.profile,
-      );
+    : buildPortfolioMetadataForTest(site, source.name, source.profile);
 }
 
 function assertStructuredClaims(
   metadata: ProfilePageMetadata,
-  projectionCase: MetadataProjectionCase,
+  projectionCase: MetadataProjectionCase
 ): void {
   if (metadata.route === 'resume') {
     expect(metadata.jsonLd.map((document) => document.schemaType)).toEqual([
@@ -256,16 +197,10 @@ function assertStructuredClaims(
     ]);
     const page = metadata.jsonLd[0].payload;
     const person = metadata.jsonLd[1].payload;
-    expect(page.description).toBe(
-      projectionCase.resume.resumeSummary.value,
-    );
+    expect(page.description).toBe(projectionCase.resume.resumeSummary.value);
     expect(person.name).toBe(projectionCase.resume.identity.name.value);
-    expect(person.email).toBe(
-      projectionCase.resume.contactActions.email.value,
-    );
-    expect(person.sameAs).toEqual([
-      projectionCase.resume.contactActions.github.value,
-    ]);
+    expect(person.email).toBe(projectionCase.resume.contactActions.email.value);
+    expect(person.sameAs).toEqual([projectionCase.resume.contactActions.github.value]);
     return;
   }
 
@@ -274,9 +209,7 @@ function assertStructuredClaims(
     'ItemList',
   ]);
   const itemList = metadata.jsonLd[1].payload;
-  expect(itemList.numberOfItems).toBe(
-    projectionCase.portfolio.projects.length,
-  );
+  expect(itemList.numberOfItems).toBe(projectionCase.portfolio.projects.length);
   const elements = itemList.itemListElement as readonly JsonObject[];
   expect(elements).toHaveLength(projectionCase.portfolio.projects.length);
   elements.forEach((element, index) => {
@@ -289,14 +222,12 @@ function assertStructuredClaims(
 }
 
 function currentHref(
-  states: readonly Readonly<{ href: string; current: boolean }>[],
+  states: readonly Readonly<{ href: string; current: boolean }>[]
 ): string | null {
   return states.find((state) => state.current)?.href ?? null;
 }
 
-function unbrandDocuments(
-  documents: readonly JsonLdDocument[],
-): readonly Readonly<{
+function unbrandDocuments(documents: readonly JsonLdDocument[]): readonly Readonly<{
   schemaType: JsonLdDocument['schemaType'];
   payload: JsonObject;
 }>[] {

@@ -1,8 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import {
-  extractJsonLdDocuments,
-  serializeJsonLdDocuments,
-} from '../../src/lib/layout/json-ld.js';
+import { extractJsonLdDocuments, serializeJsonLdDocuments } from '../../src/lib/layout/json-ld.js';
 import {
   LEGACY_ROUTE_RESOURCE_POLICY,
   PROFILE_ROUTE_RESOURCE_POLICY,
@@ -47,33 +44,27 @@ describe('profile metadata', () => {
       route: 'resume',
       pathname: '/resume',
       title: '테스트 사용자 — Résumé',
-      description:
-        '설계와 구현을 연결해 재현 가능한 정적 제품을 만듭니다.',
+      description: '설계와 구현을 연결해 재현 가능한 정적 제품을 만듭니다.',
       canonical: 'https://example.test/resume',
       openGraph: {
         title: '테스트 사용자 — Résumé',
-        description:
-          '설계와 구현을 연결해 재현 가능한 정적 제품을 만듭니다.',
+        description: '설계와 구현을 연결해 재현 가능한 정적 제품을 만듭니다.',
         url: 'https://example.test/resume',
       },
       twitter: {
         title: '테스트 사용자 — Résumé',
-        description:
-          '설계와 구현을 연결해 재현 가능한 정적 제품을 만듭니다.',
+        description: '설계와 구현을 연결해 재현 가능한 정적 제품을 만듭니다.',
         url: 'https://example.test/resume',
       },
     });
-    expect(metadata.jsonLd.map(({ schemaType }) => schemaType)).toEqual([
-      'ProfilePage',
-      'Person',
-    ]);
+    expect(metadata.jsonLd.map(({ schemaType }) => schemaType)).toEqual(['ProfilePage', 'Person']);
     expect(metadata.jsonLd[1]?.payload).toEqual(
       expect.objectContaining({
         '@type': 'Person',
         name: '테스트 사용자',
         email: 'tester@example.com',
         sameAs: ['https://github.com/example-user'],
-      }),
+      })
     );
     expect(metadata.jsonLd[1]?.payload).not.toHaveProperty('worksFor');
   });
@@ -82,9 +73,7 @@ describe('profile metadata', () => {
     const source = validSource();
     const profile = selectPortfolioProfile(source);
     const name = selectHomepageProfile(source).name;
-    const metadata = expectSuccess(
-      buildPortfolioMetadataForTest(site, name, profile),
-    );
+    const metadata = expectSuccess(buildPortfolioMetadataForTest(site, name, profile));
     const itemList = metadata.jsonLd[1]?.payload as {
       numberOfItems: number;
       itemListElement: Array<{
@@ -97,9 +86,7 @@ describe('profile metadata', () => {
     expect(metadata.description).toBe(profile.portfolioSummary.value);
     expect(itemList.numberOfItems).toBe(3);
     expect(
-      itemList.itemListElement.map(
-        ({ position, item: { name } }) => [position, name],
-      ),
+      itemList.itemListElement.map(({ position, item: { name } }) => [position, name])
     ).toEqual([
       [1, '프로젝트 베타'],
       [2, '프로젝트 감마'],
@@ -110,29 +97,18 @@ describe('profile metadata', () => {
   test('rejects changed visible descriptions and stronger structured-data claims', () => {
     const source = validSource();
     const profile = selectResumeProfile(source);
-    const metadata = expectSuccess(
-      buildResumeMetadataForTest(site, profile),
-    );
+    const metadata = expectSuccess(buildResumeMetadataForTest(site, profile));
     const projection: MetadataProjectionSource = Object.freeze({
       route: 'resume',
       profile,
     });
 
     const changedDescription = structuredClone(metadata);
-    (
-      changedDescription as unknown as { description: string }
-    ).description = '화면에 없는 더 강한 설명';
+    (changedDescription as unknown as { description: string }).description =
+      '화면에 없는 더 강한 설명';
     expect(
-      failureKeys(
-        validateMetadataConsistencyForTest(
-          site,
-          projection,
-          changedDescription,
-        ),
-      ),
-    ).toContain(
-      'metadata.description.mismatch@profile.metadata.resume.description',
-    );
+      failureKeys(validateMetadataConsistencyForTest(site, projection, changedDescription))
+    ).toContain('metadata.description.mismatch@profile.metadata.resume.description');
 
     const strongerClaim = structuredClone(metadata) as unknown as {
       jsonLd: Array<{ payload: Record<string, unknown> }>;
@@ -142,22 +118,14 @@ describe('profile metadata', () => {
       name: '추론한 조직',
     };
     expect(
-      failureKeys(
-        validateMetadataConsistencyForTest(
-          site,
-          projection,
-          strongerClaim,
-        ),
-      ),
-    ).toContain(
-      'metadata.claim.unsupported@profile.metadata.resume.jsonLd',
-    );
+      failureKeys(validateMetadataConsistencyForTest(site, projection, strongerClaim))
+    ).toContain('metadata.claim.unsupported@profile.metadata.resume.jsonLd');
   });
 
   test('rejects non-origin HTTPS site identities without producing partial metadata', () => {
     const result = buildResumeMetadataForTest(
       { origin: 'https://example.test/base' },
-      selectResumeProfile(validSource()),
+      selectResumeProfile(validSource())
     );
 
     expect(result.ok).toBe(false);
@@ -219,25 +187,14 @@ describe('shared navigation contracts', () => {
     ['/portfolio/case-study', '/portfolio'],
     ['/resume-old', null],
     ['/unknown', null],
-  ])(
-    'matches %s segment-aware without prefix collisions',
-    (pathname, expectedHref) => {
-      const states = expectSuccess(
-        getPrimaryNavigationState(pathname),
-      );
-      expect(
-        states.find(({ current }) => current)?.href ?? null,
-      ).toBe(expectedHref);
-      expect(states.filter(({ current }) => current)).toHaveLength(
-        expectedHref === null ? 0 : 1,
-      );
-    },
-  );
+  ])('matches %s segment-aware without prefix collisions', (pathname, expectedHref) => {
+    const states = expectSuccess(getPrimaryNavigationState(pathname));
+    expect(states.find(({ current }) => current)?.href ?? null).toBe(expectedHref);
+    expect(states.filter(({ current }) => current)).toHaveLength(expectedHref === null ? 0 : 1);
+  });
 
   test('marks only the current profile-local route and never the home item on descendants', () => {
-    const states = expectSuccess(
-      getProfileLocalNavigationState('/portfolio/example'),
-    );
+    const states = expectSuccess(getProfileLocalNavigationState('/portfolio/example'));
 
     expect(states.map(({ href, current }) => [href, current])).toEqual([
       ['/', false],
@@ -248,15 +205,11 @@ describe('shared navigation contracts', () => {
 
   test('fails closed for altered models and unsafe paths', () => {
     const reversed = [...getPrimaryNavigation()].reverse();
-    expect(
-      failureKeys(getNavigationState(reversed, '/resume')),
-    ).toContain(
-      'navigation.model.invalid@profile.navigation.model',
+    expect(failureKeys(getNavigationState(reversed, '/resume'))).toContain(
+      'navigation.model.invalid@profile.navigation.model'
     );
-    expect(
-      failureKeys(getPrimaryNavigationState('/resume%2fhidden')),
-    ).toContain(
-      'navigation.current.invalid@profile.navigation.current',
+    expect(failureKeys(getPrimaryNavigationState('/resume%2fhidden'))).toContain(
+      'navigation.current.invalid@profile.navigation.current'
     );
   });
 });
@@ -264,17 +217,15 @@ describe('shared navigation contracts', () => {
 describe('profile route resources', () => {
   test('uses local profile fonts only for exact profile routes and trailing slash variants', () => {
     expect(expectSuccess(resolveRouteResourcePolicy('/resume'))).toBe(
-      PROFILE_ROUTE_RESOURCE_POLICY,
+      PROFILE_ROUTE_RESOURCE_POLICY
     );
     expect(expectSuccess(resolveRouteResourcePolicy('/portfolio/'))).toBe(
-      PROFILE_ROUTE_RESOURCE_POLICY,
+      PROFILE_ROUTE_RESOURCE_POLICY
     );
     expect(expectSuccess(resolveRouteResourcePolicy('/resume-old'))).toBe(
-      LEGACY_ROUTE_RESOURCE_POLICY,
+      LEGACY_ROUTE_RESOURCE_POLICY
     );
-    expect(expectSuccess(resolveRouteResourcePolicy('/tags'))).toBe(
-      LEGACY_ROUTE_RESOURCE_POLICY,
-    );
+    expect(expectSuccess(resolveRouteResourcePolicy('/tags'))).toBe(LEGACY_ROUTE_RESOURCE_POLICY);
   });
 
   test('rejects mixed or injected resource policies', () => {
@@ -290,11 +241,9 @@ describe('profile route resources', () => {
               crossorigin: '',
             },
           ],
-        }),
-      ),
-    ).toContain(
-      'metadata.route.invalid@profile.metadata.resources',
-    );
+        })
+      )
+    ).toContain('metadata.route.invalid@profile.metadata.resources');
   });
 });
 
@@ -305,9 +254,11 @@ function validSource(): ValidatedProfile {
 }
 
 function expectSuccess<Value>(
-  result: { readonly ok: true; readonly value: Value } | {
-    readonly ok: false;
-  },
+  result:
+    | { readonly ok: true; readonly value: Value }
+    | {
+        readonly ok: false;
+      }
 ): Value {
   expect(result.ok).toBe(true);
   if (!result.ok) throw new Error('expected success');
@@ -323,7 +274,7 @@ function failureKeys(
           readonly code: string;
           readonly path: string;
         }[];
-      },
+      }
 ): string[] {
   expect(result.ok).toBe(false);
   if (result.ok) throw new Error('expected failure');

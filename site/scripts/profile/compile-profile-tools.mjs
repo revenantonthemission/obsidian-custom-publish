@@ -65,12 +65,12 @@ export async function compileProfileTools({
   await requireRegularFile(
     PROFILE_PATHS.typescriptCliPath,
     'PROFILE_TOOLS_COMPILER_MISSING',
-    'The repository-local TypeScript compiler is not installed.',
+    'The repository-local TypeScript compiler is not installed.'
   );
   await requireRegularFile(
     PROFILE_PATHS.profileToolsConfigPath,
     'PROFILE_TOOLS_CONFIG_MISSING',
-    'The profile tools TypeScript configuration is missing.',
+    'The profile tools TypeScript configuration is missing.'
   );
 
   const startedAtMs = Date.now();
@@ -84,7 +84,7 @@ export async function compileProfileTools({
         exitCode: compileOutput.code,
         signal: compileOutput.signal,
         output: compileOutput.text,
-      },
+      }
     );
   }
 
@@ -93,20 +93,20 @@ export async function compileProfileTools({
     const modulePath = resolveWithinRoot(
       PROFILE_PATHS.profileToolsModuleRoot,
       moduleName,
-      'compiled profile tool module',
+      'compiled profile tool module'
     );
     const stats = await requireRegularFile(
       modulePath,
       'PROFILE_TOOLS_OUTPUT_MISSING',
       'A required compiled profile module was not emitted.',
-      { moduleName },
+      { moduleName }
     );
     if (stats.mtimeMs < startedAtMs - 1_000) {
       throw compileError(
         'PROFILE_TOOLS_OUTPUT_STALE',
         'A required compiled profile module predates this compilation.',
         'tools.compile.verify',
-        { moduleName },
+        { moduleName }
       );
     }
     modules.push(
@@ -116,7 +116,7 @@ export async function compileProfileTools({
         sha256: createHash('sha256')
           .update(await readFile(modulePath))
           .digest('hex'),
-      }),
+      })
     );
   }
 
@@ -136,23 +136,15 @@ export async function compileProfileTools({
  */
 export async function loadProfileReleaseTools(options = {}) {
   const compilation = await compileProfileTools(options);
-  const receiptsUrl = pathToFileURL(
-    resolve(compilation.moduleRoot, 'resume-receipts.js'),
-  ).href;
-  const boundaryUrl = pathToFileURL(
-    resolve(compilation.moduleRoot, 'document-boundary.js'),
-  ).href;
+  const receiptsUrl = pathToFileURL(resolve(compilation.moduleRoot, 'resume-receipts.js')).href;
+  const boundaryUrl = pathToFileURL(resolve(compilation.moduleRoot, 'document-boundary.js')).href;
 
-  const manifestUrl = pathToFileURL(
-    resolve(compilation.moduleRoot, 'resume-manifest.js'),
-  ).href;
+  const manifestUrl = pathToFileURL(resolve(compilation.moduleRoot, 'resume-manifest.js')).href;
   const productionUrl = pathToFileURL(
-    resolve(compilation.moduleRoot, 'production-profile.js'),
+    resolve(compilation.moduleRoot, 'production-profile.js')
   ).href;
 
-  const evidenceUrl = pathToFileURL(
-    resolve(compilation.moduleRoot, 'resume-evidence.js'),
-  ).href;
+  const evidenceUrl = pathToFileURL(resolve(compilation.moduleRoot, 'resume-evidence.js')).href;
 
   const receipts = await import(receiptsUrl);
   const boundary = await import(boundaryUrl);
@@ -171,7 +163,7 @@ export async function loadProfileReleaseTools(options = {}) {
       'PROFILE_TOOLS_EXPORT_MISSING',
       'The compiled receipt module does not expose the required pure release functions.',
       'tools.compile.load',
-      { missing },
+      { missing }
     );
   }
 
@@ -191,7 +183,7 @@ export async function loadProfileReleaseTools(options = {}) {
         'PROFILE_TOOLS_MANIFEST_UNAVAILABLE',
         'The approved résumé manifest could not be built from production facts.',
         'tools.manifest.build',
-        { issues: built.issues ?? null },
+        { issues: built.issues ?? null }
       );
     }
     return built.value;
@@ -208,7 +200,7 @@ export async function loadProfileReleaseTools(options = {}) {
   const buildMachineChecks = (pdfEvidence, rendererChecks) => {
     const annotationCount = pdfEvidence.mappings.reduce(
       (count, mapping) => count + mapping.urlAnnotationReferences.length,
-      0,
+      0
     );
     return Object.freeze({
       pdf: Object.freeze({
@@ -249,8 +241,7 @@ export async function loadProfileReleaseTools(options = {}) {
     compareRenderedManifest: evidence.compareRenderedManifest,
     mapPdfEvidence: evidence.mapPdfEvidence,
     compareResumeSurfaces: evidence.compareResumeSurfaces,
-    assembleDraftResumeInspectionReceipt:
-      receipts.assembleDraftResumeInspectionReceipt,
+    assembleDraftResumeInspectionReceipt: receipts.assembleDraftResumeInspectionReceipt,
     buildMachineChecks,
     assembleResumeReleaseReceipt: receipts.assembleResumeReleaseReceipt,
     validateResumeHumanReview: receipts.validateResumeHumanReview,
@@ -311,7 +302,7 @@ function runCompiler({ timeoutMs, outputLimitBytes }) {
       {
         cwd: PROFILE_PATHS.siteRoot,
         stdio: ['ignore', 'pipe', 'pipe'],
-      },
+      }
     );
 
     let text = '';
@@ -336,8 +327,8 @@ function runCompiler({ timeoutMs, outputLimitBytes }) {
           'PROFILE_TOOLS_COMPILE_TIMEOUT',
           'The profile tools compilation exceeded its timeout.',
           'tools.compile.run',
-          { timeoutMs },
-        ),
+          { timeoutMs }
+        )
       );
     }, timeoutMs);
     timer.unref?.();
@@ -349,8 +340,8 @@ function runCompiler({ timeoutMs, outputLimitBytes }) {
           'PROFILE_TOOLS_COMPILE_SPAWN_FAILED',
           'The profile tools compiler could not be started.',
           'tools.compile.run',
-          { message: cause?.message ?? null },
-        ),
+          { message: cause?.message ?? null }
+        )
       );
     });
     child.on('close', (code, signal) => {

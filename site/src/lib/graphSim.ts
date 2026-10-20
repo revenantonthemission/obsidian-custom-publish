@@ -7,9 +7,9 @@ import {
   forceX,
   forceY,
   type Simulation,
-} from "d3-force";
-import type { GraphData } from "./types";
-import type { GraphNode, GraphLink } from "./graphUtils";
+} from 'd3-force';
+import type { GraphData } from './types';
+import type { GraphNode, GraphLink } from './graphUtils';
 
 interface SimConfig {
   width: number;
@@ -33,23 +33,23 @@ export function prepareGraphData(data: GraphData): { nodes: GraphNode[]; links: 
 export function createSimulation(
   nodes: GraphNode[],
   links: GraphLink[],
-  config: SimConfig,
+  config: SimConfig
 ): Simulation<GraphNode, GraphLink> {
   const sim = forceSimulation(nodes)
     .force(
-      "link",
+      'link',
       forceLink<GraphNode, GraphLink>(links)
         .id((d) => d.slug)
-        .distance(config.linkDistance ?? 80),
+        .distance(config.linkDistance ?? 80)
     )
-    .force("charge", forceManyBody().strength(config.chargeStrength ?? -200))
-    .force("center", forceCenter(config.width / 2, config.height / 2))
-    .force("collide", forceCollide().radius(config.collideRadius ?? 20));
+    .force('charge', forceManyBody().strength(config.chargeStrength ?? -200))
+    .force('center', forceCenter(config.width / 2, config.height / 2))
+    .force('collide', forceCollide().radius(config.collideRadius ?? 20));
 
   if (config.gravity) {
     sim
-      .force("x", forceX(config.width / 2).strength(config.gravity))
-      .force("y", forceY(config.height / 2).strength(config.gravity));
+      .force('x', forceX(config.width / 2).strength(config.gravity))
+      .force('y', forceY(config.height / 2).strength(config.gravity));
   }
 
   return sim;
@@ -66,13 +66,13 @@ export function observeThemeChange(callback: () => void): () => void {
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-theme", "data-appearance"],
+    attributeFilter: ['data-theme', 'data-appearance'],
   });
-  const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
-  systemDark.addEventListener("change", callback);
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+  systemDark.addEventListener('change', callback);
   return () => {
     observer.disconnect();
-    systemDark.removeEventListener("change", callback);
+    systemDark.removeEventListener('change', callback);
   };
 }
 

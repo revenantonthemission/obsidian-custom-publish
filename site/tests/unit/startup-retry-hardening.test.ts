@@ -19,13 +19,13 @@ describe('startup retry hardening', () => {
           attemptId: 'attempt-2',
           previewPid: 1002,
           browserContextIds: ['context-c', 'context-b'],
-        },
+        }
       )
     ).toThrow(
       expect.objectContaining({
         code: 'STARTUP_ATTEMPT_NOT_FRESH',
         stage: 'startup.attempt.identity',
-      }),
+      })
     );
   });
 
@@ -41,12 +41,12 @@ describe('startup retry hardening', () => {
           nested: {
             playwrightProcessId: 2001,
           },
-        },
+        }
       )
     ).toThrow(
       expect.objectContaining({
         code: 'STARTUP_ATTEMPT_NOT_FRESH',
-      }),
+      })
     );
   });
 
@@ -67,9 +67,7 @@ describe('startup retry hardening', () => {
               identities: [],
             });
           },
-          async teardown({ identity }: {
-            identity: Record<string, unknown>;
-          }) {
+          async teardown({ identity }: { identity: Record<string, unknown> }) {
             teardownCount += 1;
             return {
               status: 'succeeded',
@@ -79,7 +77,7 @@ describe('startup retry hardening', () => {
             };
           },
         }),
-      }),
+      })
     ).rejects.toMatchObject({
       errorCode: 'NESTED_STARTUP_ERROR',
       stage: 'semantic.assertion',
@@ -100,9 +98,7 @@ describe('startup retry hardening', () => {
               message: 'preview launch failed',
             });
           },
-          async teardown({ identity }: {
-            identity: Record<string, unknown>;
-          }) {
+          async teardown({ identity }: { identity: Record<string, unknown> }) {
             return {
               status: 'failed',
               attempt,

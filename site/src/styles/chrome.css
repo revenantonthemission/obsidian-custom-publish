@@ -158,7 +158,7 @@
 
 /* The current section: weight 600 and a 2 px --c-text underline, never a
    tinted pill on glass (R-02; changes mockup W1). */
-.site-nav-link[aria-current="page"] {
+.site-nav-link[aria-current='page'] {
   font-weight: 600;
   text-decoration: underline 2px var(--c-bar-indicator);
   text-underline-offset: 0.5em;
@@ -222,8 +222,8 @@
   display: none;
 }
 
-:root[data-platform="apple"] [data-platform-only="apple"],
-:root[data-platform="other"] [data-platform-only="other"] {
+:root[data-platform='apple'] [data-platform-only='apple'],
+:root[data-platform='other'] [data-platform-only='other'] {
   display: inline;
 }
 
@@ -232,9 +232,9 @@
   display: none;
 }
 
-:root[data-appearance="auto"] .appearance-option[data-mode="auto"],
-:root[data-appearance="light"] .appearance-option[data-mode="light"],
-:root[data-appearance="dark"] .appearance-option[data-mode="dark"] {
+:root[data-appearance='auto'] .appearance-option[data-mode='auto'],
+:root[data-appearance='light'] .appearance-option[data-mode='light'],
+:root[data-appearance='dark'] .appearance-option[data-mode='dark'] {
   display: inline-flex;
 }
 
@@ -291,7 +291,7 @@
 }
 
 .mobile-nav-link:not(:last-child)::after {
-  content: "";
+  content: '';
   position: absolute;
   inset-inline: var(--space-4) 0;
   inset-block-end: 0;
@@ -310,7 +310,7 @@
   color: var(--c-text-secondary);
 }
 
-.mobile-nav-link[aria-current="page"] svg {
+.mobile-nav-link[aria-current='page'] svg {
   color: var(--c-tint);
 }
 

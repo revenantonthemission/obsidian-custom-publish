@@ -1,12 +1,12 @@
 ---
-import { ArrowDownRight } from "lucide-static";
-import CaseStudy from "./CaseStudy.astro";
-import ContactActions from "./ContactActions.astro";
-import PortfolioRoleNavigation from "./PortfolioRoleNavigation.astro";
-import { decorativeIcon } from "../../lib/icons";
-import { getPortfolioRole } from "../../lib/profile/portfolio-roles.js";
-import type { PortfolioRoleId } from "../../lib/profile/portfolio-roles.js";
-import type { PortfolioPresentation } from "./presentation.js";
+import { ArrowDownRight } from 'lucide-static';
+import CaseStudy from './CaseStudy.astro';
+import ContactActions from './ContactActions.astro';
+import PortfolioRoleNavigation from './PortfolioRoleNavigation.astro';
+import { decorativeIcon } from '../../lib/icons';
+import { getPortfolioRole } from '../../lib/profile/portfolio-roles.js';
+import type { PortfolioRoleId } from '../../lib/profile/portfolio-roles.js';
+import type { PortfolioPresentation } from './presentation.js';
 
 interface Props {
   presentation: PortfolioPresentation;
@@ -19,31 +19,23 @@ const role = getPortfolioRole(roleId);
 
 <div class="portfolio-content" data-testid="portfolio-content">
   <PortfolioRoleNavigation current={roleId} />
-  {presentation.sections.map((section) => (
-    section.kind === "intro" ? (
-      <section
-        class="profile-section portfolio-intro"
-        data-profile-section="intro"
-      >
+  {presentation.sections.map((section) =>
+    section.kind === 'intro' ? (
+      <section class="profile-section portfolio-intro" data-profile-section="intro">
         <p class="portfolio-eyebrow">{role.eyebrow}</p>
         <h2>{section.heading}</h2>
         <p
           class="portfolio-summary"
-          data-profile-fact-id={role.introduction === undefined ? section.summary.factId : undefined}
+          data-profile-fact-id={
+            role.introduction === undefined ? section.summary.factId : undefined
+          }
         >
           {role.introduction ?? section.summary.value}
         </p>
-        <ContactActions
-          actions={section.actions}
-          label="연락처"
-          variant="contact-actions"
-        />
+        <ContactActions actions={section.actions} label="연락처" variant="contact-actions" />
       </section>
     ) : (
-      <section
-        class="profile-section portfolio-projects"
-        data-profile-section="projects"
-      >
+      <section class="profile-section portfolio-projects" data-profile-section="projects">
         <h2>{section.heading}</h2>
         <nav class="portfolio-project-navigation" aria-label="프로젝트 바로가기">
           <ol>
@@ -51,10 +43,13 @@ const role = getPortfolioRole(roleId);
               <li>
                 <a href={`#project-${project.id}`}>
                   <span class="portfolio-project-number" aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
+                    {String(index + 1).padStart(2, '0')}
                   </span>
                   <span>{project.title.value}</span>
-                  <span class="portfolio-project-arrow" set:html={decorativeIcon(ArrowDownRight, 16)}></span>
+                  <span
+                    class="portfolio-project-arrow"
+                    set:html={decorativeIcon(ArrowDownRight, 16)}
+                  />
                 </a>
               </li>
             ))}
@@ -65,5 +60,5 @@ const role = getPortfolioRole(roleId);
         ))}
       </section>
     )
-  ))}
+  )}
 </div>

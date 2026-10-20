@@ -7,7 +7,13 @@ import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import { HIG_ROUTES, gotoSettled } from './support/hig';
 
-const CWV_ROUTES = ['/', '/posts/post-with-code', '/posts/post-with-diagrams', '/graph', '/resume'] as const;
+const CWV_ROUTES = [
+  '/',
+  '/posts/post-with-code',
+  '/posts/post-with-diagrams',
+  '/graph',
+  '/resume',
+] as const;
 const CPU_SLOWDOWN = 4;
 const LCP_LIMIT_MS = 2500;
 const CLS_LIMIT = 0.1;
@@ -33,22 +39,32 @@ async function measureVitals(page: Page, path: string): Promise<Vitals> {
       for (const entry of list.getEntries()) state.lcp = entry.startTime;
     }).observe({ type: 'largest-contentful-paint', buffered: true });
     new PerformanceObserver((list) => {
-      for (const entry of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) {
+      for (const entry of list.getEntries() as (PerformanceEntry & {
+        value: number;
+        hadRecentInput: boolean;
+      })[]) {
         if (!entry.hadRecentInput) state.cls += entry.value;
       }
     }).observe({ type: 'layout-shift', buffered: true });
     new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) state.longTasks.push({ start: entry.startTime, duration: entry.duration });
+      for (const entry of list.getEntries())
+        state.longTasks.push({ start: entry.startTime, duration: entry.duration });
     }).observe({ type: 'longtask', buffered: true });
   });
   await gotoSettled(page, path);
   // Islands that hydrate when the browser is idle (search) take their turn too.
   await page.evaluate(
-    () => new Promise<void>((resolve) => requestIdleCallback(() => requestIdleCallback(() => resolve()), { timeout: 3000 })),
+    () =>
+      new Promise<void>((resolve) =>
+        requestIdleCallback(() => requestIdleCallback(() => resolve()), { timeout: 3000 })
+      )
   );
   return page.evaluate((longTaskMs: number) => {
-    const state = (window as unknown as { __vitals: { lcp: number; cls: number; longTasks: { start: number; duration: number }[] } })
-      .__vitals;
+    const state = (
+      window as unknown as {
+        __vitals: { lcp: number; cls: number; longTasks: { start: number; duration: number }[] };
+      }
+    ).__vitals;
     const fcp = performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? 0;
     const tbt = state.longTasks
       .filter(({ start, duration }) => start + duration > fcp)
@@ -82,8 +98,13 @@ function withoutKatex(css: string): string {
     .filter((rule) => {
       const prelude = rule.slice(0, rule.indexOf('{'));
       if (/katex/i.test(prelude)) return false;
-      if (prelude.trim().startsWith('@font-face') && /font-family:\s*KaTeX_/i.test(rule)) return false;
-      if (prelude.trim().startsWith('@media') && /^\s*\.katex/.test(rule.slice(rule.indexOf('{') + 1))) return false;
+      if (prelude.trim().startsWith('@font-face') && /font-family:\s*KaTeX_/i.test(rule))
+        return false;
+      if (
+        prelude.trim().startsWith('@media') &&
+        /^\s*\.katex/.test(rule.slice(rule.indexOf('{') + 1))
+      )
+        return false;
       return true;
     })
     .join('');
@@ -96,7 +117,8 @@ test.describe('third parties (NFR4)', () => {
       const foreign: string[] = [];
       page.on('request', (request) => {
         const url = new URL(request.url());
-        if ((url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== origin) foreign.push(request.url());
+        if ((url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== origin)
+          foreign.push(request.url());
       });
       await gotoSettled(page, path);
       expect(foreign).toEqual([]);
@@ -105,11 +127,21 @@ test.describe('third parties (NFR4)', () => {
 });
 
 test.describe('Core Web Vitals on a mid-range mobile profile (NFR2)', () => {
-  test.skip(({ browserName }) => browserName !== 'chromium', 'CPU throttling and these performance entries are Chromium only');
-  test.use({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'CPU throttling and these performance entries are Chromium only'
+  );
+  test.use({
+    viewport: { width: 412, height: 823 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
 
   for (const path of CWV_ROUTES) {
-    test(`${path}: LCP under 2.5 s, CLS under 0.1, TBT under 200 ms`, async ({ page }, testInfo) => {
+    test(`${path}: LCP under 2.5 s, CLS under 0.1, TBT under 200 ms`, async ({
+      page,
+    }, testInfo) => {
       const vitals = await measureVitals(page, path);
       testInfo.annotations.push({
         type: 'vitals',
@@ -124,21 +156,26 @@ test.describe('Core Web Vitals on a mid-range mobile profile (NFR2)', () => {
 });
 
 test.describe('blog CSS budget (NFR2)', () => {
-  test.skip(({ browserName }) => browserName !== 'chromium', 'the built CSS is the same in every browser');
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'the built CSS is the same in every browser'
+  );
 
   test('each blog route loads at most 30 KiB of gzipped CSS, KaTeX excluded', async ({ page }) => {
     const over: string[] = [];
     for (const path of BLOG_ROUTES) {
       await gotoSettled(page, path);
       const { hrefs, inline } = await page.evaluate(() => ({
-        hrefs: [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map((link) => link.href),
+        hrefs: [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map(
+          (link) => link.href
+        ),
         inline: [...document.querySelectorAll('style')].map((style) => style.textContent ?? ''),
       }));
       const sheets = [...inline];
       for (const href of hrefs) sheets.push(await (await page.request.get(href)).text());
       const gzipBytes = sheets.reduce(
         (total, css) => total + gzipSync(Buffer.from(withoutKatex(css)), { level: 9 }).byteLength,
-        0,
+        0
       );
       if (gzipBytes > BLOG_CSS_GZIP_LIMIT) over.push(`${path}: ${gzipBytes} B`);
     }

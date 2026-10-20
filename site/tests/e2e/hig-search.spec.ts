@@ -24,7 +24,9 @@ function combobox(dialog: Locator): Locator {
 test.describe('search dialog', () => {
   test.use({ viewport: viewportFor(1024) });
 
-  test('opens as a labelled modal dialog with focus in the combobox, over an inert page', async ({ page }) => {
+  test('opens as a labelled modal dialog with focus in the combobox, over an inert page', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     const dialog = await openFromBar(page);
     await expect(dialog).toHaveAttribute('aria-modal', 'true');
@@ -39,17 +41,29 @@ test.describe('search dialog', () => {
     expect(reachedPage).toBe(false);
   });
 
-  test('Tab stays inside the dialog and Escape returns focus to the trigger', async ({ page, browserName }) => {
+  test('Tab stays inside the dialog and Escape returns focus to the trigger', async ({
+    page,
+    browserName,
+  }) => {
     await gotoSettled(page, '/');
     const trigger = page.getByRole('button', { name: '검색 열기' });
     const dialog = await openFromBar(page);
     const tab = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
-    const keys = [tab, tab, tab, tab, `Shift+${tab}`, `Shift+${tab}`, `Shift+${tab}`, `Shift+${tab}`];
+    const keys = [
+      tab,
+      tab,
+      tab,
+      tab,
+      `Shift+${tab}`,
+      `Shift+${tab}`,
+      `Shift+${tab}`,
+      `Shift+${tab}`,
+    ];
     for (const [step, key] of keys.entries()) {
       await page.keyboard.press(key);
       expect(
         await page.evaluate(() => document.activeElement?.closest('dialog') !== null),
-        `focus left the dialog after ${step + 1} presses (${key})`,
+        `focus left the dialog after ${step + 1} presses (${key})`
       ).toBe(true);
     }
     await page.keyboard.press('Escape');
@@ -65,7 +79,9 @@ test.describe('search dialog', () => {
     await expect(combobox(dialog)).toBeFocused();
   });
 
-  test('the combobox drives a listbox: arrows move the selection, Enter opens it', async ({ page }) => {
+  test('the combobox drives a listbox: arrows move the selection, Enter opens it', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/');
     const dialog = await openFromBar(page);
     const input = combobox(dialog);
@@ -80,13 +96,22 @@ test.describe('search dialog', () => {
     expect(count).toBeLessThanOrEqual(10);
     await expect(dialog.getByRole('status')).toHaveText(`결과 ${count}개`);
     await expect(input).toHaveAttribute('aria-expanded', 'true');
-    await expect(input).toHaveAttribute('aria-controls', (await listbox.getAttribute('id')) ?? 'missing');
+    await expect(input).toHaveAttribute(
+      'aria-controls',
+      (await listbox.getAttribute('id')) ?? 'missing'
+    );
     await expect(options.nth(0)).toHaveAttribute('aria-selected', 'true');
-    await expect(input).toHaveAttribute('aria-activedescendant', (await options.nth(0).getAttribute('id')) ?? 'missing');
+    await expect(input).toHaveAttribute(
+      'aria-activedescendant',
+      (await options.nth(0).getAttribute('id')) ?? 'missing'
+    );
     await page.keyboard.press('ArrowDown');
     await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true');
     await expect(options.nth(0)).toHaveAttribute('aria-selected', 'false');
-    await expect(input).toHaveAttribute('aria-activedescendant', (await options.nth(1).getAttribute('id')) ?? 'missing');
+    await expect(input).toHaveAttribute(
+      'aria-activedescendant',
+      (await options.nth(1).getAttribute('id')) ?? 'missing'
+    );
     await page.keyboard.press('ArrowUp');
     await expect(options.nth(0)).toHaveAttribute('aria-selected', 'true');
     const href = await options.nth(0).getAttribute('data-href');
@@ -105,12 +130,26 @@ test.describe('search dialog', () => {
     page.on('request', (request) => {
       if (request.isNavigationRequest()) navigations.push(request.url());
     });
-    await input.dispatchEvent('keydown', { key: 'Enter', code: 'Enter', isComposing: true, bubbles: true, cancelable: true });
-    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await input.dispatchEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    );
     expect(navigations).toEqual([]);
     await expect(dialog).toBeVisible();
     // The same key without composition does open it, so the check above can fail.
-    await input.dispatchEvent('keydown', { key: 'Enter', code: 'Enter', isComposing: false, bubbles: true, cancelable: true });
+    await input.dispatchEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      isComposing: false,
+      bubbles: true,
+      cancelable: true,
+    });
     await expect(page).toHaveURL(/\/posts\/[^/]+\/?$/);
   });
 
@@ -170,7 +209,9 @@ for (const width of HIG_WIDTHS) {
       await expect(close).toBeVisible();
       expect(undersized(await measureTargets(page, 'dialog .search-close'), TARGET)).toEqual([]);
       // Measure the resting place, after the entrance animation has finished.
-      await dialog.evaluate((element) => Promise.all(element.getAnimations().map((animation) => animation.finished)));
+      await dialog.evaluate((element) =>
+        Promise.all(element.getAnimations().map((animation) => animation.finished))
+      );
       const box = (await dialog.boundingBox())!;
       if (width < 768) {
         expect(box.x).toBeLessThanOrEqual(1);

@@ -1,11 +1,4 @@
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, test } from 'vitest';
@@ -42,18 +35,13 @@ const temporaryRoots: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    temporaryRoots.splice(0).map((root) =>
-      rm(root, { force: true, recursive: true }),
-    ),
+    temporaryRoots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
   );
 });
 
 describe('approved production profile boundary', () => {
   test('materializes all 120 publication-authorized facts with a zero-diff identity', () => {
-    const evaluation = productionProfileTesting.evaluate(
-      profileData,
-      receiptDocument,
-    );
+    const evaluation = productionProfileTesting.evaluate(profileData, receiptDocument);
     const factProjection = evaluation.facts.map((fact) => ({
       factId: fact.factId,
       canonicalPath: fact.canonicalPath,
@@ -72,49 +60,31 @@ describe('approved production profile boundary', () => {
     expect(evaluation.facts).toHaveLength(120);
     expect(evaluation.records).toHaveLength(120);
     expect(recordProjection).toEqual(factProjection);
-    expect(evaluation.materializedProfileDigest).toBe(
-      EXPECTED_MATERIALIZED_DIGEST,
-    );
-    expect(evaluation.approvedRecordsDigest).toBe(
-      receiptDocument.approvedRecordsDigest,
-    );
-    expect(evaluation.productionDiffDigest).toBe(
-      receiptDocument.productionDiffDigest,
-    );
+    expect(evaluation.materializedProfileDigest).toBe(EXPECTED_MATERIALIZED_DIGEST);
+    expect(evaluation.approvedRecordsDigest).toBe(receiptDocument.approvedRecordsDigest);
+    expect(evaluation.productionDiffDigest).toBe(receiptDocument.productionDiffDigest);
     expect(
       evaluation.records.every(
         (record) =>
           record.status === 'Approved' &&
-          record.decisionRecord?.auditInteractionId ===
-            receiptDocument.decisionAuditId &&
-          record.decisionRecord?.recordedAt ===
-            receiptDocument.decisionRecordedAt,
-      ),
+          record.decisionRecord?.auditInteractionId === receiptDocument.decisionAuditId &&
+          record.decisionRecord?.recordedAt === receiptDocument.decisionRecordedAt
+      )
     ).toBe(true);
     expect(Object.isFrozen(evaluation.assembly)).toBe(true);
     expect(Object.isFrozen(evaluation.assembly.source)).toBe(true);
   });
 
   test('exposes one cached build-time assembly and no raw source via the barrel', async () => {
-    expect(getProductionProfileAssembly()).toBe(
-      getProductionProfileAssembly(),
-    );
+    expect(getProductionProfileAssembly()).toBe(getProductionProfileAssembly());
 
-    const barrel = await readFile(
-      resolve(process.cwd(), 'src/lib/profile/index.ts'),
-      'utf8',
-    );
+    const barrel = await readFile(resolve(process.cwd(), 'src/lib/profile/index.ts'), 'utf8');
     expect(barrel).not.toMatch(/profile-data|production-profile/);
   });
 
   test('keeps inherited source checks separate from the publication authorization', () => {
-    const evaluation = productionProfileTesting.evaluate(
-      profileData,
-      receiptDocument,
-    );
-    const byFactId = new Map(
-      evaluation.records.map((record) => [record.factId, record]),
-    );
+    const evaluation = productionProfileTesting.evaluate(profileData, receiptDocument);
+    const byFactId = new Map(evaluation.records.map((record) => [record.factId, record]));
     expect(byFactId.get('project-docsuri-title')?.evidence).toMatchObject({
       kind: 'public-source',
       verifier: 'Claude public-source collector',
@@ -130,22 +100,22 @@ describe('approved production profile boundary', () => {
       reference: expect.stringContaining('not a new human fact review'),
     });
     const newChecks = getApprovedExternalDestinations().filter(
-      (destination) => destination.checkedAt === '2026-09-20T09:30:23.000Z',
+      (destination) => destination.checkedAt === '2026-09-20T09:30:23.000Z'
     );
     expect(newChecks).toHaveLength(4);
-    expect(newChecks.every(
-      (destination) => destination.verifier ===
-        'Codex HTTP reachability collector (HTTP 200 only)',
-    )).toBe(true);
+    expect(
+      newChecks.every(
+        (destination) =>
+          destination.verifier === 'Codex HTTP reachability collector (HTTP 200 only)'
+      )
+    ).toBe(true);
   });
 
   test('keeps receipt and review metadata outside the public profile graph', () => {
     const found = new Set<string>();
     walkKeys(profileData, found);
 
-    expect([...found].filter((key) => FORBIDDEN_PROFILE_KEYS.has(key))).toEqual(
-      [],
-    );
+    expect([...found].filter((key) => FORBIDDEN_PROFILE_KEYS.has(key))).toEqual([]);
     expect(Object.keys(profileData)).toEqual([
       'identity',
       'narrative',
@@ -163,52 +133,66 @@ describe('approved production profile boundary', () => {
     expect(
       profileData.projects.every(
         (project) =>
-          !Object.hasOwn(project, 'period') &&
-          !Object.hasOwn(project, 'relatedProfileEntity'),
-      ),
+          !Object.hasOwn(project, 'period') && !Object.hasOwn(project, 'relatedProfileEntity')
+      )
     ).toBe(true);
     expect(
-      profileData.certifications.every(
-        (certification) => !Object.hasOwn(certification, 'issuer'),
-      ),
+      profileData.certifications.every((certification) => !Object.hasOwn(certification, 'issuer'))
     ).toBe(true);
   });
 
   test.each([
-    ['missing key', (receipt: Record<string, unknown>) => {
-      delete receipt.decisionAuditId;
-    }],
-    ['extra key', (receipt: Record<string, unknown>) => {
-      receipt.profileName = 'not-allowed';
-    }],
-    ['schema drift', (receipt: Record<string, unknown>) => {
-      receipt.schemaVersion = 2;
-    }],
-    ['revision drift', (receipt: Record<string, unknown>) => {
-      receipt.inventoryRevision = `${receiptDocument.inventoryRevision}-unapproved`;
-    }],
-    ['decision drift', (receipt: Record<string, unknown>) => {
-      receipt.decision = 'Pending';
-    }],
-    ['audit drift', (receipt: Record<string, unknown>) => {
-      receipt.decisionAuditId = 'U1-CG-S14-OTHER';
-    }],
-    ['timestamp drift', (receipt: Record<string, unknown>) => {
-      receipt.decisionRecordedAt = '2026-07-25T03:44:32Z';
-    }],
+    [
+      'missing key',
+      (receipt: Record<string, unknown>) => {
+        delete receipt.decisionAuditId;
+      },
+    ],
+    [
+      'extra key',
+      (receipt: Record<string, unknown>) => {
+        receipt.profileName = 'not-allowed';
+      },
+    ],
+    [
+      'schema drift',
+      (receipt: Record<string, unknown>) => {
+        receipt.schemaVersion = 2;
+      },
+    ],
+    [
+      'revision drift',
+      (receipt: Record<string, unknown>) => {
+        receipt.inventoryRevision = `${receiptDocument.inventoryRevision}-unapproved`;
+      },
+    ],
+    [
+      'decision drift',
+      (receipt: Record<string, unknown>) => {
+        receipt.decision = 'Pending';
+      },
+    ],
+    [
+      'audit drift',
+      (receipt: Record<string, unknown>) => {
+        receipt.decisionAuditId = 'U1-CG-S14-OTHER';
+      },
+    ],
+    [
+      'timestamp drift',
+      (receipt: Record<string, unknown>) => {
+        receipt.decisionRecordedAt = '2026-07-25T03:44:32Z';
+      },
+    ],
   ])('rejects %s in the machine receipt', (_label, mutate) => {
-    const receipt = structuredClone(
-      receiptDocument,
-    ) as unknown as Record<string, unknown>;
+    const receipt = structuredClone(receiptDocument) as unknown as Record<string, unknown>;
     mutate(receipt);
 
-    expect(() =>
-      productionProfileTesting.evaluate(profileData, receipt),
-    ).toThrow(
+    expect(() => productionProfileTesting.evaluate(profileData, receipt)).toThrow(
       expect.objectContaining({
         code: 'PROFILE_APPROVAL_RECEIPT_INVALID',
         path: 'verification/profile/fact-approval.json',
-      }),
+      })
     );
   });
 
@@ -220,13 +204,11 @@ describe('approved production profile boundary', () => {
       }
     ).value = '변경된 이름';
 
-    expect(() =>
-      productionProfileTesting.evaluate(candidate, receiptDocument),
-    ).toThrow(
+    expect(() => productionProfileTesting.evaluate(candidate, receiptDocument)).toThrow(
       expect.objectContaining({
         code: 'PROFILE_APPROVAL_DIGEST_MISMATCH',
         path: 'profile.facts',
-      }),
+      })
     );
   });
 
@@ -238,13 +220,11 @@ describe('approved production profile boundary', () => {
       }
     ).order = 11;
 
-    expect(() =>
-      productionProfileTesting.evaluate(candidate, receiptDocument),
-    ).toThrow(
+    expect(() => productionProfileTesting.evaluate(candidate, receiptDocument)).toThrow(
       expect.objectContaining({
         code: 'PROFILE_APPROVAL_DIGEST_MISMATCH',
         path: 'profile',
-      }),
+      })
     );
   });
 
@@ -262,13 +242,11 @@ describe('approved production profile boundary', () => {
       id: 'hansono',
     };
 
-    expect(() =>
-      productionProfileTesting.evaluate(candidate, receiptDocument),
-    ).toThrow(
+    expect(() => productionProfileTesting.evaluate(candidate, receiptDocument)).toThrow(
       expect.objectContaining({
         code: 'PROFILE_APPROVAL_DIGEST_MISMATCH',
         path: 'profile',
-      }),
+      })
     );
   });
 
@@ -280,13 +258,11 @@ describe('approved production profile boundary', () => {
       }
     ).value = '   ';
 
-    expect(() =>
-      productionProfileTesting.evaluate(candidate, receiptDocument),
-    ).toThrow(
+    expect(() => productionProfileTesting.evaluate(candidate, receiptDocument)).toThrow(
       expect.objectContaining({
         code: 'PROFILE_APPROVAL_SOURCE_INVALID',
         path: 'profile',
-      }),
+      })
     );
   });
 
@@ -296,13 +272,11 @@ describe('approved production profile boundary', () => {
     };
     candidate.receiptId = receiptDocument.receiptId;
 
-    expect(() =>
-      productionProfileTesting.evaluate(candidate, receiptDocument),
-    ).toThrow(
+    expect(() => productionProfileTesting.evaluate(candidate, receiptDocument)).toThrow(
       expect.objectContaining({
         code: 'PROFILE_APPROVAL_SOURCE_INVALID',
         path: 'profile',
-      }),
+      })
     );
   });
 
@@ -319,13 +293,11 @@ describe('approved production profile boundary', () => {
     ).reviewState = 'Pending';
 
     for (const candidate of [rootExtra, nestedExtra]) {
-      expect(() =>
-        productionProfileTesting.evaluate(candidate, receiptDocument),
-      ).toThrow(
+      expect(() => productionProfileTesting.evaluate(candidate, receiptDocument)).toThrow(
         expect.objectContaining({
           code: 'PROFILE_APPROVAL_SOURCE_INVALID',
           path: 'profile',
-        }),
+        })
       );
     }
   });
@@ -334,15 +306,12 @@ describe('approved production profile boundary', () => {
     const cleanRoot = await createTemporaryRoot();
     await writeFile(join(cleanRoot, 'index.html'), '<main>profile</main>');
     await expect(
-      productionProfileTesting.assertNoProfileApprovalLeak(cleanRoot),
+      productionProfileTesting.assertNoProfileApprovalLeak(cleanRoot)
     ).resolves.toBeUndefined();
 
-    await writeFile(
-      join(cleanRoot, 'asset.js'),
-      `const marker = "${receiptDocument.receiptId}";`,
-    );
+    await writeFile(join(cleanRoot, 'asset.js'), `const marker = "${receiptDocument.receiptId}";`);
     await expect(
-      productionProfileTesting.assertNoProfileApprovalLeak(cleanRoot),
+      productionProfileTesting.assertNoProfileApprovalLeak(cleanRoot)
     ).rejects.toMatchObject({
       code: 'PROFILE_APPROVAL_OUTPUT_LEAK',
       path: 'build.output',
@@ -351,34 +320,25 @@ describe('approved production profile boundary', () => {
     const filenameRoot = await createTemporaryRoot();
     await writeFile(join(filenameRoot, 'fact-approval.json'), '{}');
     await expect(
-      productionProfileTesting.assertNoProfileApprovalLeak(filenameRoot),
+      productionProfileTesting.assertNoProfileApprovalLeak(filenameRoot)
     ).rejects.toMatchObject({
       code: 'PROFILE_APPROVAL_OUTPUT_LEAK',
       path: 'build.output',
     });
 
     const markerFilenameRoot = await createTemporaryRoot();
-    await writeFile(
-      join(markerFilenameRoot, receiptDocument.receiptId),
-      '',
-    );
+    await writeFile(join(markerFilenameRoot, receiptDocument.receiptId), '');
     await expect(
-      productionProfileTesting.assertNoProfileApprovalLeak(
-        markerFilenameRoot,
-      ),
+      productionProfileTesting.assertNoProfileApprovalLeak(markerFilenameRoot)
     ).rejects.toMatchObject({
       code: 'PROFILE_APPROVAL_OUTPUT_LEAK',
       path: 'build.output',
     });
 
     const markerDirectoryRoot = await createTemporaryRoot();
-    await mkdir(
-      join(markerDirectoryRoot, receiptDocument.approvedRecordsDigest),
-    );
+    await mkdir(join(markerDirectoryRoot, receiptDocument.approvedRecordsDigest));
     await expect(
-      productionProfileTesting.assertNoProfileApprovalLeak(
-        markerDirectoryRoot,
-      ),
+      productionProfileTesting.assertNoProfileApprovalLeak(markerDirectoryRoot)
     ).rejects.toMatchObject({
       code: 'PROFILE_APPROVAL_OUTPUT_LEAK',
       path: 'build.output',
@@ -390,23 +350,16 @@ describe('approved production profile boundary', () => {
     const sourceFiles = await collectSourceFiles(sourceRoot);
     const productionSource = await readFile(
       resolve(sourceRoot, 'lib/profile/production-profile.ts'),
-      'utf8',
+      'utf8'
     );
-    const rawSource = await readFile(
-      resolve(sourceRoot, 'lib/profile/profile-data.ts'),
-      'utf8',
-    );
+    const rawSource = await readFile(resolve(sourceRoot, 'lib/profile/profile-data.ts'), 'utf8');
 
     expect(productionSource).toContain("from './profile-data.js'");
-    expect(productionSource).toContain(
-      "verification/profile/fact-approval.json",
-    );
+    expect(productionSource).toContain('verification/profile/fact-approval.json');
     expect(rawSource).not.toMatch(
-      /receiptId|decisionAuditId|inventoryDigest|productionDiffDigest|Pending|Excluded/,
+      /receiptId|decisionAuditId|inventoryDigest|productionDiffDigest|Pending|Excluded/
     );
-    expect(rawSource).not.toMatch(
-      /placeholder|inferred|TODO|FIXME|example\.com/i,
-    );
+    expect(rawSource).not.toMatch(/placeholder|inferred|TODO|FIXME|example\.com/i);
 
     for (const path of sourceFiles) {
       if (path.endsWith('/lib/profile/production-profile.ts')) {
@@ -414,10 +367,10 @@ describe('approved production profile boundary', () => {
       }
       const source = await readFile(path, 'utf8');
       expect(source, `${path} bypasses the profile source boundary`).not.toMatch(
-        /from\s+['"][^'"]*profile-data(?:\.js)?['"]/,
+        /from\s+['"][^'"]*profile-data(?:\.js)?['"]/
       );
       expect(source, `${path} imports the private approval receipt`).not.toMatch(
-        /verification\/profile\/fact-approval\.json/,
+        /verification\/profile\/fact-approval\.json/
       );
     }
   });
@@ -495,9 +448,7 @@ describe('approved production source builds its résumé manifest', () => {
   });
 
   test('buildApprovedResumeDocumentRequest resolves the current document request', async () => {
-    const request = await buildApprovedResumeDocumentRequest(
-      getProductionProfileAssembly(),
-    );
+    const request = await buildApprovedResumeDocumentRequest(getProductionProfileAssembly());
 
     expect(request.ok).toBe(true);
     if (!request.ok) return;
