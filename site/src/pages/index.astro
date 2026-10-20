@@ -10,6 +10,8 @@ import {
   resolveBuildDate,
 } from "../lib/homepage";
 import { getProductionProfileAssembly } from "../lib/profile/production-profile.js";
+// The homepage note can hold math too; KaTeX is self-hosted (NFR4).
+import "katex/dist/katex.min.css";
 import "../styles/callouts.css";
 import "../styles/diagrams.css";
 import "../styles/grouped.css";

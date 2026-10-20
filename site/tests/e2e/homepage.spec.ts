@@ -20,9 +20,9 @@ for (const viewport of VIEWPORTS) {
     test('profile fragment renders with internal CTAs and no external traffic', async ({
       page,
     }) => {
-      // NFR-U2-009 requires zero NEW external origins. Legacy pages keep their
-      // pre-existing jsDelivr defaults (recorded by U1); anything else fails.
-      const LEGACY_EXTERNAL_HOSTS = new Set(['cdn.jsdelivr.net']);
+      // NFR-U2-009 requires zero NEW external origins. Since the HIG redesign
+      // self-hosts KaTeX and the font (NFR4), no external host is allowed.
+      const LEGACY_EXTERNAL_HOSTS = new Set<string>();
       const external: string[] = [];
       page.on('request', (request) => {
         const url = new URL(request.url());

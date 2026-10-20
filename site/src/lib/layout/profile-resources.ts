@@ -41,20 +41,15 @@ const RESOURCE_ISSUE_PATH = 'profile.metadata.resources';
 const INVALID_PATHNAME_PATTERN = /[\u0000-\u0020\u007f\\?#]/;
 const INVALID_DECODED_PATHNAME_PATTERN = /[\u0000-\u001f\u007f\\]/;
 
-export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze([
-  Object.freeze({
-    id: 'jsdelivr-preconnect',
-    rel: 'preconnect',
-    href: 'https://cdn.jsdelivr.net',
-    crossorigin: '',
-  }),
-  Object.freeze({
-    id: 'legacy-katex',
-    rel: 'stylesheet',
-    href: 'https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css',
-    crossorigin: 'anonymous',
-  }),
-]) as readonly ManagedHeadResource[];
+/**
+ * Since the HIG redesign no route loads a third-party resource (NFR4): the
+ * KaTeX stylesheet and fonts come from the installed katex package through the
+ * pages that render math, so the jsDelivr preconnect and stylesheet are gone.
+ * The policy keeps its shape, and its validation, for any future resource.
+ */
+export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze(
+  [],
+) as readonly ManagedHeadResource[];
 
 export const LEGACY_ROUTE_RESOURCE_POLICY = Object.freeze({
   category: 'legacy',
