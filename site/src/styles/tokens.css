@@ -103,7 +103,9 @@
   --radius-lg: 22px;
   --radius-capsule: 999px;
 
-  /* Layout */
+  /* Layout. --max-width is the page column (.site-main, the profile shell);
+     --max-reading is the measure of running text (posts, the 404 page). */
+  --max-width: 820px;
   --max-reading: 45rem;
   --outline-width: 260px;
   --bar-height: 52px;

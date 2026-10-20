@@ -2,18 +2,6 @@
  * code, focus, the Liquid Glass materials and their fallbacks, page layout
  * and reduced motion. Shared chrome is in chrome.css. */
 
-/* ── Transitional aliases ──
-   Values live in tokens.css. These names remain only until the stylesheets
-   that still read them are rebuilt (code-generation plan Steps 20–29). */
-:root {
-  --c-text-muted: var(--c-text-secondary);
-  --c-border: var(--c-separator);
-  --c-accent: var(--c-tint);
-  --c-accent-hover: var(--c-tint-hover);
-  --radius: var(--radius-xs);
-  --max-width: 820px;
-}
-
 /* ── Reset ── */
 *,
 *::before,
