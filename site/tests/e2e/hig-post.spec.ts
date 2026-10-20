@@ -135,6 +135,49 @@ test.describe('outline panel from 1100 px', () => {
     );
   });
 
+  // Review finding R-09: commit 8e1dce2 made toc-highlight.ts recompute when
+  // the article resizes, with no test. With the section being read at the top
+  // of the viewport, scroll anchoring holds its heading still, so folding the
+  // section pulls the next heading up past the reading line and no scroll
+  // event follows. (A fold above the viewport is answered by an anchoring
+  // scroll, which the scroll listener already handles.)
+  test('folding the section being read moves aria-current="location" to the next heading without any scroll', async ({
+    page,
+  }) => {
+    await gotoSettled(page, CODE_POST);
+    const outline = page.locator('.post-outline .toc');
+    const line = await page.evaluate(() => {
+      const heading = document.getElementById('긴-문자열')!;
+      window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - 20);
+      // toc-highlight.ts puts the reading line 24 px below the headings' scroll margin.
+      return Number.parseFloat(getComputedStyle(heading).scrollMarginTop) + 24;
+    });
+    const nextTop = () =>
+      page.evaluate(() => document.getElementById('넓은-표')!.getBoundingClientRect().top);
+    await expect(outline.locator('a[href="#긴-문자열"]')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
+    expect(await nextTop()).toBeGreaterThan(line);
+    const before = await page.evaluate(() => {
+      const counter = { scrolls: 0 };
+      Object.assign(window, { __foldScrolls: counter });
+      window.addEventListener('scroll', () => (counter.scrolls += 1));
+      return window.scrollY;
+    });
+    // A script click: Playwright's own click would scroll the toggle into view.
+    await page
+      .getByRole('button', { name: '‘긴 문자열’ 섹션 접기' })
+      .evaluate((button) => (button as HTMLButtonElement).click());
+    await expect(outline.locator('a[href="#넓은-표"]')).toHaveAttribute('aria-current', 'location');
+    expect(await nextTop()).toBeLessThanOrEqual(line);
+    const after = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      scrolls: (window as unknown as { __foldScrolls: { scrolls: number } }).__foldScrolls.scrolls,
+    }));
+    expect(after).toEqual({ scrollY: before, scrolls: 0 });
+  });
+
   test('backlinks, related posts and the local graph sit below the article', async ({ page }) => {
     await gotoSettled(page, '/posts/simple-post');
     const article = await page.locator('article').boundingBox();
