@@ -25,6 +25,9 @@ fixtures/vault/attachment/*.png
 # Session worktrees are nested checkouts of this repo — never commit them.
 .claude/worktrees/
 
+# AI-DLC Bolt worktrees are nested checkouts too (FR1.4).
+.aidlc/worktrees/
+
 # Playwright MCP session artifacts (snapshots, screenshots).
 .playwright-mcp/
 
