@@ -91,12 +91,16 @@ body[data-surface='grouped'] .grouped-list {
   overflow-wrap: anywhere;
 }
 
+/* Two lines at most. A long unbreakable token wraps like the title's does:
+   the clamp hides only the lines past the second, never the end of a line
+   cut off sideways (C-14, AC4.1). */
 .grouped-row-summary {
   display: -webkit-box;
   overflow: hidden;
   color: var(--c-text-secondary);
   font-size: var(--text-subheadline);
   line-height: var(--leading-subheadline);
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
