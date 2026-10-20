@@ -1,7 +1,9 @@
 /* Segmented control (interaction-spec.md "Segmented Control"): a --c-fill
  * track with a raised --c-surface selection that slides by transform. Where
  * it switches panels it is a tablist (scripts/tabs.ts, or the island's own
- * state); segments are at least 44 px tall (FR5.8). Up to three segments. */
+ * state); segments are at least 44 px tall (FR5.8). Up to three segments.
+ * The raised surface alone is 1.01–1.74:1 against the track, so a 1 px
+ * --c-segment-indicator ring marks the selection at 3:1 (NFR1; R-05). */
 .segmented {
   --segments: 2;
 
@@ -33,6 +35,7 @@
   border-radius: calc(var(--radius-sm) - 2px);
   background: var(--c-surface);
   box-shadow:
+    inset 0 0 0 1px var(--c-segment-indicator),
     0 1px 3px rgba(0, 0, 0, 0.12),
     0 0 0 0.5px rgba(0, 0, 0, 0.04);
   transition: transform var(--dur-normal) var(--ease-spring);
@@ -67,8 +70,11 @@
   outline-offset: -2px;
 }
 
+/* Increased contrast keeps the ring and drops the decorative shadow. The
+   ring stays --c-segment-indicator: --c-control-border falls under 3:1
+   against the track on thick glass. */
 @media (prefers-contrast: more) {
   .segmented::before {
-    box-shadow: inset 0 0 0 1px var(--c-control-border);
+    box-shadow: inset 0 0 0 1px var(--c-segment-indicator);
   }
 }

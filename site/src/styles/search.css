@@ -176,3 +176,9 @@ html:has(.search-dialog[open]) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* On the selection fill over thick glass, --c-text-secondary drops to 3.81:1
+   in dark mode over bright content (NFR1; R-12). */
+.search-option[aria-selected='true'] .search-option-snippet {
+  color: var(--c-selected-secondary-text);
+}

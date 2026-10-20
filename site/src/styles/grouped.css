@@ -157,7 +157,10 @@ body[data-surface='grouped'] .grouped-list {
   overflow-wrap: anywhere;
 }
 
-body[data-surface='grouped'] .tag-chip {
+/* On the grouped background a chip sits on --c-surface, unless it is the
+   current one: this rule outranks the current-chip rule below, which left
+   a current chip's --c-on-tint name on white (1.00:1; NFR1, R-12). */
+body[data-surface='grouped'] .tag-chip:not([aria-current='page']) {
   background: var(--c-surface);
 }
 
@@ -172,9 +175,16 @@ body[data-surface='grouped'] .tag-chip {
   color: var(--c-text-secondary);
 }
 
+/* The current tag (interaction-spec.md "Tag Chip"): a tint capsule. Its mark
+   and count take its --c-on-tint text (5.47:1); --c-text-secondary on the
+   tint is 1.09:1 light and 2.13:1 dark (NFR1; R-12). */
 .tag-chip[aria-current='page'] {
   background: var(--c-tint-fill);
   color: var(--c-on-tint);
+}
+
+.tag-chip[aria-current='page'] :is(.tag-chip-mark, .tag-chip-count) {
+  color: inherit;
 }
 
 @media (prefers-contrast: more) {

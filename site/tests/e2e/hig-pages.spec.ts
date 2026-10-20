@@ -4,9 +4,11 @@
 // tokens.css unless a test emulates dark.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
+  SEGMENT_INDICATOR,
   gotoSettled,
   horizontalOverflow,
   measureTargets,
+  renderedContrast,
   undersized,
   viewportFor,
 } from './support/hig';
@@ -350,6 +352,51 @@ test.describe('related lists and the local graph below a post (W3; FR5.6)', () =
       undersized(await measureTargets(page, '.post-local-graph [role="tab"]'), TARGET)
     ).toEqual([]);
   });
+});
+
+// Loop-back 1 (NFR1; review findings R-05 and R-12). The selected segment is
+// ringed in --c-segment-indicator, which hig-tokens.test.ts holds at 3:1
+// against the track.
+test.describe('selection states (NFR1; R-05, R-12)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  for (const scheme of ['light', 'dark'] as const) {
+    test(`the selected 그래프 | 목록 segment is ringed in --c-segment-indicator, ${scheme}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await gotoSettled(page, '/graph');
+      const shadow = await page
+        .locator('.graph-tabs')
+        .evaluate((tabs) => getComputedStyle(tabs, '::before').boxShadow);
+      expect(shadow).toContain(`${SEGMENT_INDICATOR[scheme]} 0px 0px 0px 1px inset`);
+    });
+
+    test(`a current tag chip keeps its name, mark and count at 4.5:1, ${scheme}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      // interaction-spec.md "Tag Chip" defines the current state, but no route
+      // renders it yet, so the test marks one chip current: on the grouped tag
+      // index and in a post header on the reading background.
+      for (const path of ['/tags', '/posts/post-with-code']) {
+        await gotoSettled(page, path);
+        await page
+          .locator('.tag-chip')
+          .first()
+          .evaluate((chip) => chip.setAttribute('aria-current', 'page'));
+        const pairs = await renderedContrast(
+          page,
+          '.tag-chip[aria-current="page"], .tag-chip[aria-current="page"] span'
+        );
+        expect(pairs.length, path).toBeGreaterThan(1);
+        expect(
+          pairs.filter(({ ratio }) => ratio < 4.5),
+          path
+        ).toEqual([]);
+      }
+    });
+  }
 });
 
 test.describe('narrow widths', () => {

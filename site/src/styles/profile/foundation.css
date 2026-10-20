@@ -89,10 +89,12 @@
   text-decoration: none;
 }
 
+/* The ring, not the raised surface, carries the 3:1 selection (NFR1; R-05). */
 .profile-local-navigation a[aria-current='page'],
 .portfolio-role-navigation a[aria-current='page'] {
   background: var(--c-surface);
   box-shadow:
+    inset 0 0 0 1px var(--c-segment-indicator),
     0 1px 3px rgba(0, 0, 0, 0.12),
     0 0 0 0.5px rgba(0, 0, 0, 0.04);
   font-weight: 600;
@@ -106,7 +108,7 @@
 @media (prefers-contrast: more) {
   .profile-local-navigation a[aria-current='page'],
   .portfolio-role-navigation a[aria-current='page'] {
-    box-shadow: inset 0 0 0 1px var(--c-control-border);
+    box-shadow: inset 0 0 0 1px var(--c-segment-indicator);
   }
 }
 

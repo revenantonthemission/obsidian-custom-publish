@@ -120,6 +120,31 @@ test.describe('search dialog', () => {
     await expect(page).toHaveURL(new RegExp(`${href}/?$`));
   });
 
+  // Loop-back 1 (NFR1; review finding R-12). Over bright content the dark
+  // selection fill on thick glass leaves --c-text-secondary at 3.81:1, so the
+  // selected option's snippet takes --c-selected-secondary-text instead
+  // (hig-tokens.test.ts holds it at 4.5:1). Unselected snippets keep
+  // --c-text-secondary.
+  for (const [scheme, selected, secondary] of [
+    ['light', 'rgb(99, 99, 102)', 'rgb(99, 99, 102)'],
+    ['dark', 'rgb(245, 245, 247)', 'rgb(161, 161, 166)'],
+  ] as const) {
+    test(`the selected option's snippet takes --c-selected-secondary-text, ${scheme}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await gotoSettled(page, '/');
+      const dialog = await openFromBar(page);
+      await combobox(dialog).fill('post');
+      const options = dialog.getByRole('listbox').getByRole('option');
+      await expect(options.nth(0)).toHaveAttribute('aria-selected', 'true');
+      const snippets = options.locator('.search-option-snippet');
+      expect(await snippets.count()).toBeGreaterThan(1);
+      await expect(options.nth(0).locator('.search-option-snippet')).toHaveCSS('color', selected);
+      await expect(options.nth(1).locator('.search-option-snippet')).toHaveCSS('color', secondary);
+    });
+  }
+
   test('Enter while an IME is composing never opens a result (R-08)', async ({ page }) => {
     await gotoSettled(page, '/');
     const dialog = await openFromBar(page);
