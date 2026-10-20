@@ -7,15 +7,15 @@ instead of in chat, write your answer after `[Answer]:` and say done.
 
 Approve the code plan?
 
-- Builds: the repository cleanup, then the HIG redesign of every page (tokens, Liquid Glass, appearance model, 13 accessibility fixes, print), then Prettier
-- Touches: git branches and worktrees, `.gitignore`, `site/src/{styles,layouts,components,islands,scripts,lib,pages}`, `site/scripts/profile/asset-budget.mjs`, `site/tests/{unit,e2e}`, `site/package....
-- Tests: 4 new Vitest files (about 30 tests) and 7 new Playwright specs (axe matrix 4 widths × 2 appearances × reduced motion, keyboard, focus, target size, overflow), all written failing first
+- Builds: the second Build and Test repair (loop-back 2) for two failed targets: links inside a highlight that fall under 4.5:1 off the page ground and on the dark homepage (NFR1-b), and search snipp...
+- Touches: `site/src/styles/post.css`, the homepage note's highlight style, `site/src/styles/search.css`, `site/tests/unit/hig-tokens.test.ts`, `site/tests/e2e/{hig-post,hig-pages,hig-chrome}.spec.ts...
+- Tests: about 10 new or extended checks, each written failing first: highlighted-link token pairs on every ground, a rendered highlighted-link check in three engines, and the 200%-text and six-width...
 
 Full plan: aidlc/spaces/default/intents/261019-hig-redesign/construction/code-generation/code-generation-plan.md
 Test instructions: aidlc/spaces/default/intents/261019-hig-redesign/construction/code-generation/unit-test-instructions.md
 
-[Approval Fingerprint]: sha256:v3:e35d7dfd6929f2b03272358fe383886acbf525d834ee851393bfb1282d849676
-[Planned Source]: 3427deaa106e9bc1f3680acdcb4143b367cd5f621e63302c77cbb0a7c9886ee8
+[Approval Fingerprint]: sha256:v3:7ec7683d2ad80e4e91b325917d1e98afc48ec303628d7a02089aa5dfbe7a3c9f
+[Planned Source]: 19438536f125647ffc06a2395a98fea85ebe0afd19df1ec318a0091c9d83017f
 
 - A. Approve Plan
 - B. Request Changes
