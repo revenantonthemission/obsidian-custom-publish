@@ -3,7 +3,7 @@
 // (C-01, C-04, C-14) and the team's testing posture: axe with the WCAG 2.2 AA
 // tags at 320, 768, 1024 and 1440 px, in light and dark, with reduced motion.
 import AxeBuilder from '@axe-core/playwright';
-import type { Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 export const HIG_WIDTHS = Object.freeze([320, 768, 1024, 1440] as const);
 export type HigWidth = (typeof HIG_WIDTHS)[number];
@@ -27,6 +27,8 @@ export type HigRouteKind =
 export interface HigRoute {
   readonly path: string;
   readonly kind: HigRouteKind;
+  /** The HTTP status the static server answers with; 200 when absent. */
+  readonly status?: number;
 }
 
 /**
@@ -43,7 +45,8 @@ export const HIG_ROUTES: readonly HigRoute[] = Object.freeze([
   { path: '/tags', kind: 'tags' },
   { path: '/tags/test', kind: 'tag' },
   { path: '/graph', kind: 'graph' },
-  { path: '/404', kind: 'not-found' },
+  // local-server.mjs serves 404.html with a 404 status, the page under test.
+  { path: '/404', kind: 'not-found', status: 404 },
   { path: '/resume', kind: 'profile' },
   { path: '/portfolio', kind: 'profile' },
   { path: '/portfolio/product-engineer', kind: 'profile' },
@@ -53,6 +56,99 @@ export const HIG_ROUTES: readonly HigRoute[] = Object.freeze([
 export function viewportFor(width: number): { width: number; height: number } {
   return { width, height: HIG_VIEWPORT_HEIGHT };
 }
+
+/** The status a load of the route must return, so a check never measures an error page by mistake (R-18). */
+export function expectedStatus(route: HigRoute): number {
+  return route.status ?? 200;
+}
+
+/**
+ * A dialog, sheet or tab panel that a page check must open before measuring
+ * it (NFR1-e, AC4.1; review finding R-18). The route checks load every page
+ * with these closed, so they never measured them.
+ */
+export interface OpenState {
+  readonly name: string;
+  readonly path: string;
+  /** The opener is shown only below this viewport width; at every width when absent. */
+  readonly shownBelow?: number;
+  readonly opener: (page: Page) => Locator;
+  /** Opens the state and waits until its content has rendered. */
+  readonly open: (page: Page) => Promise<void>;
+}
+
+const outlineSheet = (page: Page): Locator => page.getByRole('dialog', { name: '목차와 탐색' });
+
+async function openOutlineSheet(page: Page): Promise<Locator> {
+  await page.getByRole('button', { name: '목차 열기' }).click();
+  const sheet = outlineSheet(page);
+  await expect(sheet).toBeVisible();
+  return sheet;
+}
+
+export const OPEN_STATES: readonly OpenState[] = Object.freeze([
+  {
+    name: 'search dialog with results',
+    path: '/',
+    opener: (page) => page.getByRole('button', { name: '검색 열기' }),
+    open: async (page) => {
+      await page.getByRole('button', { name: '검색 열기' }).click();
+      const dialog = page.getByRole('dialog', { name: '검색' });
+      await dialog.getByRole('combobox', { name: '검색어' }).fill('post');
+      await expect(dialog.getByRole('option').first()).toBeVisible();
+    },
+  },
+  {
+    name: 'navigation sheet',
+    path: '/',
+    // chrome.css hides the toggle from 768 px, where the bar lists the sections.
+    shownBelow: 768,
+    opener: (page) => page.getByTestId('mobile-navigation-toggle'),
+    open: async (page) => {
+      await page.getByTestId('mobile-navigation-toggle').click();
+      await expect(page.locator('nav.mobile-nav-dropdown')).toBeVisible();
+    },
+  },
+  {
+    name: 'outline sheet on its 목차 tab',
+    path: '/posts/post-with-code',
+    // outline.css shows the outline as a panel from 1100 px, without the sheet button.
+    shownBelow: 1100,
+    opener: (page) => page.getByRole('button', { name: '목차 열기' }),
+    open: async (page) => {
+      const sheet = await openOutlineSheet(page);
+      await expect(sheet.getByRole('tab', { name: '목차' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(sheet.locator('.toc a').first()).toBeVisible();
+    },
+  },
+  {
+    name: 'outline sheet on its 탐색 tab',
+    path: '/posts/post-with-code',
+    shownBelow: 1100,
+    opener: (page) => page.getByRole('button', { name: '목차 열기' }),
+    open: async (page) => {
+      const sheet = await openOutlineSheet(page);
+      const tab = sheet.getByRole('tab', { name: '탐색' });
+      await tab.click();
+      await expect(tab).toHaveAttribute('aria-selected', 'true');
+      await expect(sheet.locator('.nav-tree a').first()).toBeVisible();
+    },
+  },
+  {
+    name: '/graph list',
+    path: '/graph',
+    opener: (page) => page.getByRole('tab', { name: '목록' }),
+    open: async (page) => {
+      await page.getByRole('tab', { name: '목록' }).click();
+      await expect(
+        page.getByRole('tabpanel', { name: '목록' }).locator('.graph-list-note').first()
+      ).toBeVisible();
+    },
+  },
+] satisfies OpenState[]);
 
 /** Writes localStorage entries before any page script runs, including the bootstrap. */
 export async function seedStorage(

@@ -6,13 +6,17 @@ import {
   HIG_APPEARANCES,
   HIG_ROUTES,
   HIG_WIDTHS,
+  OPEN_STATES,
   applyTextZoom,
   axeViolations,
+  expectedStatus,
+  freezeMotion,
   gotoSettled,
   horizontalOverflow,
   measureTargets,
   undersized,
   viewportFor,
+  type OverflowReport,
 } from './support/hig';
 
 const T1 = { width: 44, height: 44 };
@@ -309,6 +313,20 @@ test.describe('reduced motion', () => {
 // text in all three engines.
 const AC41_WIDTHS = Object.freeze([320, 375, 768, 1024, 1440, 1920] as const);
 
+/** One line per offender, and one for a page that scrolls sideways, prefixed with the cell. */
+function overflowProblems(cell: string, report: OverflowReport): string[] {
+  const problems = report.offenders.map((offender) => `${cell}: ${offender}`);
+  if (report.scrollWidth > report.clientWidth + 1) {
+    problems.push(`${cell}: page scrollWidth ${report.scrollWidth} > ${report.clientWidth}`);
+  }
+  return problems;
+}
+
+/** The status line for a load that did not answer as expected, or nothing (R-18). */
+function statusProblem(cell: string, status: number | null, expected: number): string[] {
+  return status === expected ? [] : [`${cell}: HTTP ${status ?? 'no response'}, not ${expected}`];
+}
+
 test.describe('no sideways overflow or cut-off content at six widths (AC4.1)', () => {
   test.skip(
     ({ browserName }) => browserName !== 'chromium',
@@ -321,32 +339,63 @@ test.describe('no sideways overflow or cut-off content at six widths (AC4.1)', (
         await page.emulateMedia({ colorScheme: appearance });
         for (const width of AC41_WIDTHS) {
           await page.setViewportSize(viewportFor(width));
-          await gotoSettled(page, route.path);
-          const report = await horizontalOverflow(page);
           const cell = `${width} px ${appearance}`;
-          problems.push(...report.offenders.map((offender) => `${cell}: ${offender}`));
-          if (report.scrollWidth > report.clientWidth + 1) {
-            problems.push(
-              `${cell}: page scrollWidth ${report.scrollWidth} > ${report.clientWidth}`
-            );
-          }
+          const status = await gotoSettled(page, route.path);
+          problems.push(...statusProblem(cell, status, expectedStatus(route)));
+          problems.push(...overflowProblems(cell, await horizontalOverflow(page)));
         }
       }
       expect(problems).toEqual([]);
     });
   }
+
+  // Loop-back 2 (NFR1-e; review finding R-18): the same matrix with each
+  // dialog, sheet and tab panel open, at every width where its opener shows.
+  for (const state of OPEN_STATES) {
+    test(`${state.name} open at ${AC41_WIDTHS.join(', ')} px, light and dark`, async ({ page }) => {
+      const problems: string[] = [];
+      let measured = 0;
+      for (const appearance of HIG_APPEARANCES) {
+        await page.emulateMedia({ colorScheme: appearance });
+        for (const width of AC41_WIDTHS) {
+          await page.setViewportSize(viewportFor(width));
+          const cell = `${width} px ${appearance}`;
+          problems.push(...statusProblem(cell, await gotoSettled(page, state.path), 200));
+          if (state.shownBelow !== undefined && width >= state.shownBelow) {
+            await expect(state.opener(page), `${cell}: the opener should be hidden`).toBeHidden();
+            continue;
+          }
+          await state.open(page);
+          await freezeMotion(page);
+          problems.push(...overflowProblems(cell, await horizontalOverflow(page)));
+          measured += 1;
+        }
+      }
+      expect(problems).toEqual([]);
+      expect(measured).toBeGreaterThan(0);
+    });
+  }
 });
 
-// C-14: at 320 px with the text doubled, nothing overflows sideways.
+// C-14: at 320 px with the text doubled, nothing overflows sideways or is cut
+// off, with every dialog and sheet closed and with each one open (R-18).
 test.describe('200 % text at 320 px', () => {
   test.use({ viewport: viewportFor(320) });
   for (const route of HIG_ROUTES) {
     test(`no horizontal overflow on ${route.path}`, async ({ page }) => {
-      await gotoSettled(page, route.path);
+      expect(await gotoSettled(page, route.path)).toBe(expectedStatus(route));
       await applyTextZoom(page, 2);
-      const report = await horizontalOverflow(page);
-      expect(report.offenders).toEqual([]);
-      expect(report.scrollWidth).toBeLessThanOrEqual(report.clientWidth + 1);
+      expect(overflowProblems('320 px, text doubled', await horizontalOverflow(page))).toEqual([]);
+    });
+  }
+
+  for (const state of OPEN_STATES) {
+    test(`no horizontal overflow with the ${state.name} open`, async ({ page }) => {
+      expect(await gotoSettled(page, state.path)).toBe(200);
+      await applyTextZoom(page, 2);
+      await state.open(page);
+      await freezeMotion(page);
+      expect(overflowProblems('320 px, text doubled', await horizontalOverflow(page))).toEqual([]);
     });
   }
 });
