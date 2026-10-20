@@ -13,10 +13,13 @@ import rehypeShiki from '@shikijs/rehype';
 import { transformerMetaHighlight } from '@shikijs/transformers';
 import rehypeSlug from 'rehype-slug';
 import rehypeStringify from 'rehype-stringify';
-import { visit } from 'unist-util-visit';
+import path from 'node:path';
+import { EXIT, visit } from 'unist-util-visit';
 import type { Root, Element } from 'hast';
+import type { Transformer } from 'unified';
 import type { ThemeRegistration } from '@shikijs/types';
 import { rehypeHomeSections } from './home-sections';
+import { assetImageSize } from './image-size';
 // Xcode-style code colors (design-system-mapping.md "Code Highlighting"; R-01):
 // every syntax color reaches 4.5:1 on the code panel token --c-code-bg
 // (tests/unit/hig-tokens.test.ts recomputes that from these files).
@@ -40,7 +43,15 @@ const xcodeDark = shikiTheme(xcodeDarkJson, 'dark');
 export interface RenderOptions {
   /** Wrap each H2 section in section.home-card. Homepage note only (R-04). */
   readonly homeSections?: boolean;
+  /**
+   * The folder `/assets/…` image sources are read from for their width and
+   * height (NFR2). Defaults to the preprocessor's content/assets, found the
+   * way data.ts finds content/: next to the site folder Astro builds in.
+   */
+  readonly assetsDir?: string;
 }
+
+const DEFAULT_ASSETS_DIR = path.resolve('../content/assets');
 
 /* ── Custom rehype plugins ── */
 
@@ -78,14 +89,77 @@ function rehypeCodeFilename() {
   };
 }
 
+function isImage(node: unknown): node is Element {
+  return (node as Element).type === 'element' && (node as Element).tagName === 'img';
+}
+
+/**
+ * The likeliest Largest Contentful Paint image: the first image of the
+ * document, or both images of its light/dark diagram pair, only one of which
+ * is visible in each appearance.
+ */
+function leadImages(tree: Root): ReadonlySet<Element> {
+  let lead: ReadonlySet<Element> = new Set();
+  visit(tree, 'element', (node: Element, _index, parent) => {
+    if (!isImage(node)) return undefined;
+    const container = parent?.type === 'element' ? parent : null;
+    const classes = container?.properties.className;
+    const isPair = Array.isArray(classes) && classes.includes('diagram-container');
+    lead = new Set(isPair && container ? container.children.filter(isImage) : [node]);
+    return EXIT;
+  });
+  return lead;
+}
+
+/** Gives an `/assets/` image its file's width and height, keeping a size the note set. */
+function sizeImage(node: Element, assetsDir: string): void {
+  const { src, width, height } = node.properties;
+  const hasWidth = width !== undefined && width !== null;
+  const hasHeight = height !== undefined && height !== null;
+  if (typeof src !== 'string' || (hasWidth && hasHeight)) return;
+  const size = assetImageSize(assetsDir, src);
+  if (size === null) return;
+  if (!hasWidth && !hasHeight) {
+    node.properties.width = size.width;
+    node.properties.height = size.height;
+    return;
+  }
+  // The note set one side (`![[image.png|300]]`): the other follows the file's ratio.
+  const given = Number(hasWidth ? width : height);
+  if (!Number.isFinite(given) || given <= 0) return;
+  if (hasWidth) node.properties.height = Math.round((given * size.height) / size.width);
+  else node.properties.width = Math.round((given * size.width) / size.height);
+}
+
+/**
+ * How post images load (NFR2; loop-back 1). Each `/assets/` image gets its
+ * file's width and height, so the browser reserves its box before it loads.
+ * The CSS keeps `max-inline-size: 100%` and `block-size: auto` (diagrams:
+ * `inline-size: 100%`), so the attributes give only the aspect ratio. The lead
+ * image loads eagerly at high priority; every later image loads lazily.
+ */
+function rehypeImageLoading(): Transformer<Root> {
+  return (tree, file) => {
+    // renderMarkdown passes the folder in the file's data (RenderOptions.assetsDir).
+    const { assetsDir } = file.data;
+    const folder = typeof assetsDir === 'string' ? assetsDir : DEFAULT_ASSETS_DIR;
+    const lead = leadImages(tree);
+    visit(tree, 'element', (node: Element) => {
+      if (!isImage(node)) return;
+      node.properties.loading = lead.has(node) ? 'eager' : 'lazy';
+      if (lead.has(node)) node.properties.fetchPriority = 'high';
+      node.properties.decoding = 'async';
+      sizeImage(node, folder);
+    });
+  };
+}
+
+/** Wraps an image that has alt text in a figure with that caption. */
 function rehypeImageCaption() {
   return (tree: Root) => {
     visit(tree, 'element', (node: Element, index, parent) => {
       if (!parent || index === undefined) return;
       if (node.tagName !== 'img') return;
-
-      node.properties.loading = 'lazy';
-      node.properties.decoding = 'async';
 
       const alt = node.properties.alt as string;
       if (!alt || alt === 'image') return;
@@ -175,6 +249,7 @@ function createProcessor(homeSections: boolean) {
       })
       .use(rehypeSlug)
       .use(rehypeCodeFilename)
+      .use(rehypeImageLoading)
       .use(rehypeImageCaption)
       .use(rehypeTableWrapper)
       .use(rehypeKatex, { strict: false })
@@ -198,7 +273,8 @@ const homeChunkProcessor = unified()
 
 export async function renderMarkdown(md: string, options: RenderOptions = {}): Promise<string> {
   const processor = options.homeSections === true ? homeProcessor : postProcessor;
-  const result = await processor.process(md);
+  const data = options.assetsDir === undefined ? {} : { assetsDir: options.assetsDir };
+  const result = await processor.process({ value: md, data });
   return String(result);
 }
 

@@ -1,8 +1,10 @@
-// Performance and third parties (NFR2, NFR4; code-generation plan Step 31).
+// Performance and third parties (NFR2, NFR4; code-generation plan Steps 31 and 39).
 // Core Web Vitals are measured in Chromium on a mid-range mobile profile, a
 // 412 × 823 viewport with 4× CPU throttling, against the local production
 // build. NFR2's Interaction to Next Paint needs real input; Total Blocking Time
 // stands in for main-thread blocking here, as in a Lighthouse navigation.
+// Step 39 adds Lighthouse's DevTools mobile network profile on top: the
+// loopback server alone hides how late a lazy, unsized image arrives.
 import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import { HIG_ROUTES, gotoSettled } from './support/hig';
@@ -14,7 +16,25 @@ const CWV_ROUTES = [
   '/graph',
   '/resume',
 ] as const;
+// NFR2's pages (the homepage, a long post with diagrams and math, /graph and
+// /resume) plus the code post, where code panels are wrapped after load.
+const MOBILE_NETWORK_ROUTES = [
+  '/',
+  '/posts/post-with-diagrams',
+  '/posts/post-with-math',
+  '/posts/post-with-code',
+  '/graph',
+  '/resume',
+] as const;
 const CPU_SLOWDOWN = 4;
+// Lighthouse's DevTools mobile throttling ("Slow 4G"): 562.5 ms request
+// latency, 1,474.56 kbps down and 675 kbps up, in bytes per second for CDP.
+const LIGHTHOUSE_MOBILE_NETWORK = Object.freeze({
+  offline: false,
+  latency: 562.5,
+  downloadThroughput: (1474.56 * 1024) / 8,
+  uploadThroughput: (675 * 1024) / 8,
+});
 const LCP_LIMIT_MS = 2500;
 const CLS_LIMIT = 0.1;
 const TBT_LIMIT_MS = 200;
@@ -28,9 +48,23 @@ interface Vitals {
   readonly tbt: number;
 }
 
-/** Loads the route under CPU throttling and reads LCP, CLS and TBT from the page's own entries. */
-async function measureVitals(page: Page, path: string): Promise<Vitals> {
+type NetworkConditions = typeof LIGHTHOUSE_MOBILE_NETWORK;
+
+/**
+ * Loads the route under CPU throttling, and under the given network
+ * conditions when there are any, and reads LCP, CLS and TBT from the page's
+ * own entries.
+ */
+async function measureVitals(
+  page: Page,
+  path: string,
+  network?: NetworkConditions
+): Promise<Vitals> {
   const session = await page.context().newCDPSession(page);
+  if (network) {
+    await session.send('Network.enable');
+    await session.send('Network.emulateNetworkConditions', { ...network });
+  }
   await session.send('Emulation.setCPUThrottlingRate', { rate: CPU_SLOWDOWN });
   await page.addInitScript(() => {
     const state = { lcp: 0, cls: 0, longTasks: [] as { start: number; duration: number }[] };
@@ -151,6 +185,35 @@ test.describe('Core Web Vitals on a mid-range mobile profile (NFR2)', () => {
       expect(vitals.lcp, `LCP ${Math.round(vitals.lcp)} ms`).toBeLessThan(LCP_LIMIT_MS);
       expect(vitals.cls, `CLS ${vitals.cls.toFixed(3)}`).toBeLessThan(CLS_LIMIT);
       expect(vitals.tbt, `TBT ${Math.round(vitals.tbt)} ms`).toBeLessThan(TBT_LIMIT_MS);
+    });
+  }
+});
+
+test.describe("Core Web Vitals on Lighthouse's mobile network profile (NFR2)", () => {
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'CPU and network throttling and these performance entries are Chromium only'
+  );
+  // Lighthouse's mobile device (a Moto G Power): 412 × 823 at DPR 1.75, with touch.
+  test.use({
+    viewport: { width: 412, height: 823 },
+    deviceScaleFactor: 1.75,
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  for (const path of MOBILE_NETWORK_ROUTES) {
+    test(`${path}: LCP under 2.5 s and CLS under 0.1 with 4× CPU and slow 4G`, async ({
+      page,
+    }, testInfo) => {
+      const vitals = await measureVitals(page, path, LIGHTHOUSE_MOBILE_NETWORK);
+      testInfo.annotations.push({
+        type: 'vitals',
+        description: `LCP ${Math.round(vitals.lcp)} ms, CLS ${vitals.cls.toFixed(4)}`,
+      });
+      expect(vitals.lcp, `LCP ${Math.round(vitals.lcp)} ms`).toBeGreaterThan(0);
+      expect(vitals.lcp, `LCP ${Math.round(vitals.lcp)} ms`).toBeLessThan(LCP_LIMIT_MS);
+      expect(vitals.cls, `CLS ${vitals.cls.toFixed(4)}`).toBeLessThan(CLS_LIMIT);
     });
   }
 });
