@@ -1,0 +1,16 @@
+[
+  {
+    "uuid": "01a15656-73df-704c-9e68-7d2436427bd1",
+    "slug": "obsidian-press-resume-and-portfolio-rebuild",
+    "dirName": "261019-obsidian-press-resume-an",
+    "status": "in-flight"
+  },
+  {
+    "uuid": "01a15656-808e-7965-b2bb-271180d55721",
+    "slug": "hig-redesign",
+    "dirName": "261019-hig-redesign",
+    "scope": "bugfix",
+    "status": "in-flight",
+    "request": "0e71e704"
+  }
+]
