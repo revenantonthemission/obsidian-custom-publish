@@ -1,5 +1,5 @@
 import type { SimulationNodeDatum, SimulationLinkDatum } from "d3-force";
-import type { GraphEdge, GraphNode as RawGraphNode } from "./types";
+import type { GraphData, GraphEdge, GraphNode as RawGraphNode } from "./types";
 
 /** A graph node enriched with d3 simulation position data. */
 export interface GraphNode extends RawGraphNode, SimulationNodeDatum {}
@@ -13,27 +13,91 @@ export interface ResolvedLink {
   target: GraphNode;
 }
 
-/** Tag-based color palette for hub categories. */
-const HUB_COLORS: Record<string, string> = {
-  os: "#3b82f6",
-  web: "#10b981",
-  db: "#f59e0b",
-  network: "#8b5cf6",
+/**
+ * Graph categories (FR5.6; design-system-mapping.md "Data Visualization").
+ * A note's first category tag decides its category, and a hub is always a
+ * hub. Each category has a shape, a Korean label and a color token
+ * (--c-graph-<category> in tokens.css), so none relies on hue alone.
+ */
+const CATEGORY_TAGS = ["os", "web", "db", "network"] as const;
+type CategoryTag = (typeof CATEGORY_TAGS)[number];
+
+export type LegendKey = CategoryTag | "hub" | "etc";
+
+export type NodeShape = "circle" | "square" | "diamond" | "triangle" | "star" | "ring";
+
+export const SHAPES: readonly NodeShape[] = ["circle", "square", "diamond", "triangle", "star", "ring"];
+
+export const CATEGORY_SHAPES: Readonly<Record<LegendKey, NodeShape>> = {
+  os: "circle",
+  web: "square",
+  db: "diamond",
+  network: "triangle",
+  hub: "star",
+  etc: "ring",
 };
 
-const HUB_COLOR = "#ef4444";
-const DEFAULT_NODE_COLOR = "#6b7280";
+/** The 24 px transparent hit area every node gets, whatever its drawn size. */
+export const HIT_RADIUS = 12;
+
 const MIN_RADIUS = 4;
 const MAX_RADIUS = 12;
 const RADIUS_SCALE = 2;
 
-/** Node fill color based on hub status and tags. */
+function isCategoryTag(tag: string): tag is CategoryTag {
+  return (CATEGORY_TAGS as readonly string[]).includes(tag);
+}
+
+/** The custom property that holds a category's color in the current appearance. */
+export function categoryToken(key: LegendKey): `--c-graph-${LegendKey}` {
+  return `--c-graph-${key}`;
+}
+
+/** Node paint as a CSS color: the category token, which follows the appearance. */
 export function getNodeColor(node: GraphNode): string {
-  if (node.is_hub) return HUB_COLOR;
-  for (const tag of node.tags) {
-    if (HUB_COLORS[tag]) return HUB_COLORS[tag];
+  return `var(${categoryToken(legendKey(node))})`;
+}
+
+function round(value: number): string {
+  return String(Math.round(value * 100) / 100);
+}
+
+/** Polygon through the points, closed. */
+function polygon(points: readonly (readonly [number, number])[]): string {
+  return `${points.map(([x, y], index) => `${index === 0 ? "M" : "L"}${round(x)} ${round(y)}`).join(" ")} Z`;
+}
+
+/**
+ * An SVG path for the shape, centered on 0,0, sized so every shape covers
+ * about the area of a circle of radius r. The ring is the circle's outline;
+ * it differs from the circle only in paint (stroke, no fill).
+ */
+export function shapePath(shape: NodeShape, r: number): string {
+  switch (shape) {
+    case "circle":
+    case "ring":
+      return `M${round(-r)} 0 A${round(r)} ${round(r)} 0 1 0 ${round(r)} 0 A${round(r)} ${round(r)} 0 1 0 ${round(-r)} 0 Z`;
+    case "square": {
+      const s = r * 0.9;
+      return polygon([[-s, -s], [s, -s], [s, s], [-s, s]]);
+    }
+    case "diamond": {
+      const d = r * 1.25;
+      return polygon([[0, -d], [d, 0], [0, d], [-d, 0]]);
+    }
+    case "triangle":
+      return polygon([[0, -r * 1.2], [r * 1.1, r * 0.75], [-r * 1.1, r * 0.75]]);
+    case "star": {
+      const outer = r * 1.3;
+      const inner = outer * 0.48;
+      const points = Array.from({ length: 10 }, (_, index) => {
+        const radius = index % 2 === 0 ? outer : inner;
+        const angle = (Math.PI / 5) * index - Math.PI / 2;
+        return [radius * Math.cos(angle), radius * Math.sin(angle)] as const;
+      });
+      return polygon(points);
+    }
   }
-  return DEFAULT_NODE_COLOR;
 }
 
 /** Node radius scaled by backlink count. */
@@ -116,15 +180,10 @@ export function matchesQuery(node: RawGraphNode, query: string): boolean {
   return node.tags.some((tag) => tag.toLowerCase().includes(q));
 }
 
-export type LegendKey = "hub" | keyof typeof HUB_COLORS | "etc";
-
-/** Legend category for a node, mirroring getNodeColor precedence. */
+/** A node's category: a hub is a hub, otherwise its first category tag, otherwise etc. */
 export function legendKey(node: RawGraphNode): LegendKey {
   if (node.is_hub) return "hub";
-  for (const tag of node.tags) {
-    if (HUB_COLORS[tag]) return tag as LegendKey;
-  }
-  return "etc";
+  return node.tags.find(isCategoryTag) ?? "etc";
 }
 
 /** Interaction state that determines how strongly each node is drawn. */
@@ -167,12 +226,57 @@ export function getNodeEmphasis(node: RawGraphNode, ctx: EmphasisContext): Empha
   return matches ? "focus" : "dim";
 }
 
-/** Ordered legend entries for the graph page UI. */
-export const LEGEND_ITEMS: ReadonlyArray<{ key: LegendKey; label: string; color: string }> = [
-  { key: "hub", label: "허브", color: HUB_COLOR },
-  { key: "os", label: "os", color: HUB_COLORS.os },
-  { key: "web", label: "web", color: HUB_COLORS.web },
-  { key: "db", label: "db", color: HUB_COLORS.db },
-  { key: "network", label: "network", color: HUB_COLORS.network },
-  { key: "etc", label: "기타", color: DEFAULT_NODE_COLOR },
+export interface LegendItem {
+  readonly key: LegendKey;
+  readonly label: string;
+  readonly shape: NodeShape;
+}
+
+/** The legend in the design's order: shape, color and a Korean label per category. */
+export const LEGEND_ITEMS: readonly LegendItem[] = [
+  { key: "os", label: "운영체제", shape: CATEGORY_SHAPES.os },
+  { key: "web", label: "웹", shape: CATEGORY_SHAPES.web },
+  { key: "db", label: "데이터베이스", shape: CATEGORY_SHAPES.db },
+  { key: "network", label: "네트워크", shape: CATEGORY_SHAPES.network },
+  { key: "hub", label: "허브", shape: CATEGORY_SHAPES.hub },
+  { key: "etc", label: "기타", shape: CATEGORY_SHAPES.etc },
 ];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toNode(value: unknown): RawGraphNode | null {
+  if (!isRecord(value)) return null;
+  const { slug, title, tags, is_hub, backlink_count } = value;
+  if (typeof slug !== "string" || typeof title !== "string") return null;
+  return {
+    slug,
+    title,
+    tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === "string") : [],
+    is_hub: is_hub === true,
+    backlink_count: typeof backlink_count === "number" ? backlink_count : 0,
+  };
+}
+
+/**
+ * Validates graph.json, which arrives over the network. Malformed nodes are
+ * dropped, and edges must join two known nodes; anything that is not a graph
+ * at all throws.
+ */
+export function parseGraphData(value: unknown): GraphData {
+  if (!isRecord(value) || !Array.isArray(value.nodes) || !Array.isArray(value.edges)) {
+    throw new Error("graph.json is not a graph");
+  }
+  const nodes = value.nodes.map(toNode).filter((node): node is RawGraphNode => node !== null);
+  const known = new Set(nodes.map((node) => node.slug));
+  const edges = value.edges.filter(
+    (edge): edge is GraphEdge =>
+      isRecord(edge) &&
+      typeof edge.source === "string" &&
+      typeof edge.target === "string" &&
+      known.has(edge.source) &&
+      known.has(edge.target),
+  );
+  return { nodes, edges };
+}

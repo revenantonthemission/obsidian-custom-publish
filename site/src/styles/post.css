@@ -1,409 +1,449 @@
-/* ── Post layout ── */
-.post-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
+/* The post page (FR4.2, FR5.3–FR5.8; mockups W3 and W4; interaction-spec.md
+ * "Code Panel and Copy Button", "Heading Fold Toggle", "Tag Chip"). The
+ * reading column is at most --max-reading wide on a solid page; from 1100 px
+ * the outline panel (outline.css) sits beside it. Nothing inside the article
+ * may widen the page: wide code, tables and display math scroll inside their
+ * own regions (scripts/scroll-regions.ts; review finding R-05). */
+
+/* ── Layout ── */
+.site-main:has(.post-layout) {
+  max-inline-size: calc(var(--max-reading) + var(--space-6) * 2);
 }
 
-@media (min-width: 960px) {
+.post-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-12);
+}
+
+.post-article,
+.post-after {
+  min-inline-size: 0;
+}
+
+@media (min-width: 1100px) {
+  .site-main:has(.post-layout) {
+    max-inline-size: calc(var(--max-reading) + var(--outline-width) + var(--space-10) + var(--space-6) * 2);
+  }
+
   .post-layout {
-    grid-template-columns: 1fr var(--sidebar-width);
+    grid-template-areas:
+      "article outline"
+      "after outline";
+    grid-template-columns: minmax(0, var(--max-reading)) var(--outline-width);
+    column-gap: var(--space-10);
+  }
+
+  .post-article {
+    grid-area: article;
+  }
+
+  .post-outline {
+    grid-area: outline;
+  }
+
+  .post-after {
+    grid-area: after;
   }
 }
 
-/* ── Article ── */
-.post-layout > article {
-  min-width: 0;
-}
-
-.post-content {
-  overflow-wrap: break-word;
-  word-break: break-word;
-  overflow-x: auto;
-}
-
+/* ── Header: Large Title, metadata and tag chips (grouped.css) ── */
 .post-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--c-border);
+  margin-block-end: var(--space-8);
 }
 
 .post-title {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  margin-block-end: var(--space-3);
+  font-size: var(--text-large-title);
 }
 
 .post-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  color: var(--c-text-muted);
-  font-size: 0.875rem;
+  gap: var(--space-1) var(--space-3);
+  margin-block-end: var(--space-3);
+  color: var(--c-text-secondary);
+  font-size: var(--text-footnote);
+  line-height: 1.45;
 }
 
-.post-tag {
-  background: var(--c-code-bg);
-  padding: 0.15em 0.5em;
-  border-radius: 3px;
-  font-size: 0.8rem;
-  /* --c-text-muted on --c-code-bg is 4.40:1 in light theme — under WCAG AA. */
-  color: var(--c-text);
-}
-.post-tag:hover {
-  color: var(--c-accent);
-  text-decoration: none;
+/* ── Article text ── */
+.post-content {
+  overflow-wrap: anywhere;
 }
 
-/* ── Sidebar ── */
-.post-sidebar {
-  display: none;
+.post-content > :first-child {
+  margin-block-start: 0;
 }
 
-@media (min-width: 960px) {
-  .post-sidebar {
-    display: block;
-    position: sticky;
-    top: 3.5rem;
-    align-self: start;
-    max-height: calc(100dvh - 4.5rem);
-    overflow-y: auto;
-  }
-}
-
-/* ── Backlinks ── */
-.backlinks {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--c-border);
-}
-
-.backlinks h2 {
-  font-size: 1rem;
-  margin-bottom: 0.75rem;
-  color: var(--c-text-muted);
-}
-
-.backlinks ul {
-  list-style: none;
-  padding: 0;
-}
-
-.backlinks li {
-  margin-bottom: 0.4rem;
-}
-
-/* ── Highlighted text (==text==) ── */
 .post-content mark {
-  background: rgba(255, 208, 0, 0.25);
-  color: inherit;
   padding: 0.1em 0.2em;
   border-radius: 2px;
+  background: color-mix(in srgb, var(--c-orange) 28%, transparent);
+  color: inherit;
 }
 
-[data-theme="dark"] .post-content mark {
-  background: rgba(255, 208, 0, 0.18);
-}
-
-/* ── Abbreviations (*[ABBR]: definition) ── */
 .post-content abbr[title] {
-  text-decoration: underline dotted var(--c-text-muted);
+  text-decoration: underline dotted var(--c-text-secondary);
   text-underline-offset: 0.2em;
   cursor: help;
 }
 
-/* ── Definition lists (term / : definition) ── */
 .post-content dl {
-  margin: 1.25rem 0;
+  margin-block: var(--space-5);
 }
 
 .post-content dt {
+  margin-block-start: var(--space-3);
   font-weight: 700;
-  margin-top: 0.75rem;
 }
 
 .post-content dd {
-  margin: 0.25rem 0 0.25rem 0;
-  padding-left: 1rem;
-  border-left: 2px solid var(--c-border);
-  color: var(--c-text-muted);
+  margin: var(--space-1) 0;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--c-separator);
+  color: var(--c-text-secondary);
 }
 
-/* ── Inline KaTeX size match ── */
+.post-content :is(ul, ol) {
+  margin-block-end: var(--space-4);
+  padding-inline-start: var(--space-6);
+}
+
+/* Inline KaTeX matches the body text (CLAUDE.md: the default 1.21em is too large). */
 .post-content > p .katex,
 .post-content > li .katex {
   font-size: 1em;
 }
 
-/* ── KaTeX display math overflow ── */
+/* Display math scrolls in its own region; the padding keeps tall glyphs unclipped. */
 .post-content .katex-display {
-  width: 100%;
+  margin-block: var(--space-5);
+  padding-block: var(--space-1);
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-/* On mobile, left-align overflowing formulas so the start is visible */
-@media (max-width: 767px) {
-  .post-content .katex-display > .katex {
-    text-align: left;
-  }
-}
-
-/* ── Code block with filename ── */
+/* ── Code panel (Xcode-style colors come from the Shiki themes) ── */
 .code-block {
-  position: relative;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
+  margin-block-end: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--c-code-bg);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.code-block-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--target);
+  padding-inline: var(--space-4) 0;
+  color: var(--c-text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.code-language {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.code-filename {
+  font-family: var(--font-code);
+  overflow-wrap: anywhere;
+}
+
+.copy-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target);
+  block-size: var(--target);
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.copy-btn:hover {
+  background: var(--c-fill);
+  color: var(--c-text);
+}
+
+.copy-btn:active {
+  transform: scale(0.94);
+}
+
+.copy-btn.copied {
+  color: var(--c-green-text);
+}
+
+/* The panel clips its corners, so focus rings sit inside their boxes. */
+.copy-btn:focus-visible,
+.code-block pre:focus-visible {
+  outline-offset: -2px;
 }
 
 .code-block pre {
   margin: 0;
-  border: none;
+  padding-block-start: 0;
   border-radius: 0;
-  padding: 1rem;
+  background: transparent;
 }
 
-/* ── Copy button ── */
-.code-block-wrapper {
-  position: relative;
+.shiki .line.highlighted {
+  display: inline-block;
+  inline-size: calc(100% + var(--space-4) * 2);
+  margin-inline: calc(var(--space-4) * -1);
+  padding-inline: var(--space-4);
+  background-color: var(--c-fill);
 }
 
-.copy-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: var(--c-code-bg);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  padding: 0.35rem;
-  cursor: pointer;
-  color: var(--c-text-muted);
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s, background 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
+/* ── Tables: wide ones scroll inside their wrapper ── */
+.table-wrapper {
+  margin-block-end: var(--space-6);
+  border: 1px solid var(--c-separator);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
 }
 
-.code-block-wrapper:hover .copy-btn,
-.code-block:hover .copy-btn,
-.copy-btn:focus-visible {
-  opacity: 1;
+.table-wrapper table {
+  inline-size: 100%;
+  margin: 0;
+  border-collapse: collapse;
 }
 
-.copy-btn:hover {
-  color: var(--c-text);
-  background: var(--c-border);
+/* Korean words stay whole (keep-all); a column is never squeezed below 6rem,
+   so a wide table scrolls instead of breaking every word. */
+.table-wrapper :is(th, td) {
+  min-inline-size: 6rem;
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--c-separator);
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  text-align: start;
+  vertical-align: top;
 }
 
-.copy-btn.copied {
-  color: #22c55e;
-  opacity: 1;
+.table-wrapper th {
+  background: var(--c-surface-2);
+  font-size: var(--text-subheadline);
+  font-weight: 600;
 }
 
-.code-filename {
-  padding: 0.4rem 1rem;
-  font-family: var(--font-code);
-  font-size: 0.8rem;
-  color: var(--c-text-muted);
-  background: var(--c-code-bg);
-  border-bottom: 1px solid var(--c-border);
+.table-wrapper tr:last-child td {
+  border-block-end: 0;
 }
 
-/* ── Language badge ── */
-.code-block pre.shiki[data-language]::before,
-.code-block-wrapper > pre.shiki[data-language]::before {
-  content: attr(data-language);
-  position: absolute;
-  top: 0.4rem;
-  right: 2.75rem;
-  font-family: var(--font-code);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-text-muted);
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: 1;
+.table-wrapper:focus-visible {
+  outline-offset: -2px;
 }
 
-/* Hide language badge when filename is shown — filename already implies language */
-.code-block .code-filename ~ pre.shiki[data-language]::before {
-  display: none;
+/* ── Images and diagrams scale to the column ── */
+.post-content img {
+  max-inline-size: 100%;
+  block-size: auto;
 }
 
-/* ── Image figures ── */
 .image-figure {
-  margin: 1.5rem 0;
+  margin-block: var(--space-6);
   text-align: center;
 }
 
 .image-figure img {
   display: block;
-  margin: 0 auto;
+  margin-inline: auto;
 }
 
 .image-figure figcaption {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--c-text-muted);
-  font-style: italic;
-}
-
-/* ── Image & diagram auto-scaling ── */
-.post-content img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Diagrams: scale to fit viewport, scroll wrapper handles overflow */
-.post-content img.diagram {
-  height: auto;
-  max-width: 100%;
-  width: 100%;
-}
-
-/* Images with inline width/height: respect the attribute but scale down */
-.post-content img[width] {
-  max-width: 100%;
-  height: auto;
-}
-
-/* ── Responsive tables ── */
-.table-wrapper {
-  overflow-x: auto;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-}
-
-.table-wrapper table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0;
-}
-
-.table-wrapper th,
-.table-wrapper td {
-  padding: 0.6rem 0.9rem;
-  text-align: left;
-  border-bottom: 1px solid var(--c-border);
-}
-
-.table-wrapper th {
-  background: var(--c-code-bg);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.table-wrapper tr:last-child td {
-  border-bottom: none;
+  margin-block-start: var(--space-2);
+  color: var(--c-text-secondary);
+  font-size: var(--text-footnote);
 }
 
 /* ── Footnotes ── */
 .footnotes {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--c-border);
-  font-size: 0.875rem;
-  color: var(--c-text-muted);
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--c-separator);
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
 }
 
 .footnotes ol {
-  padding-left: 2.5rem;
+  padding-inline-start: var(--space-8);
 }
 
 .footnotes li {
-  scroll-margin-top: 3.5rem;
-}
-
-.footnotes li {
-  margin-bottom: 0.5rem;
+  margin-block-end: var(--space-2);
 }
 
 .footnotes li p {
-  margin: 0;
   display: inline;
+  margin: 0;
 }
 
 sup a[data-footnote-ref] {
-  color: var(--c-accent);
-  text-decoration: none;
   font-weight: 600;
-  scroll-margin-top: 3.5rem;
-}
-
-a[data-footnote-backref] {
-  color: var(--c-accent);
   text-decoration: none;
-  margin-left: 0.25rem;
 }
 
-/* ── Code line highlighting ── */
-.shiki .line.highlighted {
-  background-color: rgba(101, 117, 133, 0.16);
-  display: inline-block;
-  width: 100%;
-  margin: 0 -1rem;
-  padding: 0 1rem;
+/* The back-reference is a 24 × 24 target (WCAG 2.5.8) holding an icon-like glyph. */
+a[data-footnote-backref] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 24px;
+  min-block-size: 24px;
+  margin-inline-start: var(--space-1);
+  text-decoration: none;
+  vertical-align: middle;
 }
 
-[data-theme="dark"] .shiki .line.highlighted {
-  background-color: rgba(101, 117, 133, 0.24);
+/* ── Heading fold toggle (scripts/heading-fold.ts) ──
+   The toggle sits at the end of the heading row, so the 44 × 44 target never
+   needs the leading margin a 320 px screen does not have; its negative
+   margins keep the row as tall as the heading's own line. */
+.heading-fold {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  line-height: var(--leading-title);
 }
 
-/* ── Heading fold toggle ── */
-.post-content h2,
-.post-content h3 {
-  position: relative;
+.heading-fold[data-level="2"] {
+  margin-block: var(--space-8) var(--space-2);
+  font-size: var(--text-title-2);
+}
+
+.heading-fold[data-level="3"] {
+  margin-block: var(--space-6) var(--space-2);
+  font-size: var(--text-title-3);
+}
+
+.heading-fold > :is(h2, h3) {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
 }
 
 .heading-fold-toggle {
-  position: absolute;
-  left: -1.25rem;
-  top: 50%;
-  transform: translateY(-50%) rotate(90deg);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.6em;
-  color: var(--c-text-muted);
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target);
+  block-size: var(--target);
+  margin-block: calc((1lh - var(--target)) / 2);
   padding: 0;
-  opacity: 0;
-  transition: opacity 0.15s, transform 0.15s;
+  border: 0;
+  border-radius: var(--radius-capsule);
+  background: transparent;
+  color: var(--c-text-secondary);
+  font: inherit;
+  cursor: pointer;
 }
 
-h2:hover .heading-fold-toggle,
-h3:hover .heading-fold-toggle,
-.heading-fold-toggle:focus-visible {
-  opacity: 1;
+.heading-fold-toggle:hover {
+  background: var(--c-fill);
+  color: var(--c-text);
 }
 
-h2.collapsed .heading-fold-toggle,
-h3.collapsed .heading-fold-toggle {
-  transform: translateY(-50%) rotate(0deg);
-  opacity: 1;
+.heading-fold-toggle svg {
+  transition: transform var(--dur-fast) var(--ease-standard);
 }
 
-/* ── Responsive: Post ── */
-@media (max-width: 479px) {
-  .post-title { font-size: 1.5rem; }
-  .post-meta { font-size: 0.8rem; }
-  pre.shiki, .code-block pre { padding: 0.75rem; }
-  .code-block pre.shiki[data-language]::before,
-  .code-block-wrapper > pre.shiki[data-language]::before { display: none; }
-  .copy-btn { padding: 0.5rem; }
+.heading-fold-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
 }
 
-@media (min-width: 480px) and (max-width: 767px) {
-  .post-title { font-size: 1.75rem; }
+.heading-fold-hidden {
+  display: none !important;
 }
 
-/* Hub page child post dates — auto-appended by preprocessor */
+/* ── Below the article: backlinks, related posts and the local graph ── */
+.post-after > section + section {
+  margin-block-start: var(--space-10);
+}
+
+.post-after h2 {
+  margin-block: 0 var(--space-3);
+  font-size: var(--text-title-3);
+}
+
+.post-after .grouped-list {
+  margin-block-end: 0;
+}
+
+/* ── Local graph (islands/LocalGraph.tsx): canvas or list, Caption labels ── */
+.local-graph-tabs {
+  inline-size: min(100%, 14rem);
+  margin-block-end: var(--space-3);
+}
+
+.local-graph-canvas canvas {
+  display: block;
+  inline-size: 240px;
+  block-size: 240px;
+  cursor: pointer;
+  font: 500 var(--text-caption) var(--font-body);
+}
+
+.local-graph-canvas canvas[hidden] {
+  display: none;
+}
+
+.local-graph-skeleton {
+  inline-size: 240px;
+  block-size: 240px;
+}
+
+.local-graph-list {
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface-2);
+  list-style: none;
+  overflow: hidden;
+}
+
+.local-graph-list a {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding-inline: var(--space-4);
+  color: var(--c-text);
+  text-decoration: none;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.local-graph-list li + li a {
+  box-shadow: inset 0 1px 0 var(--c-separator);
+}
+
+.local-graph-list a:hover {
+  background: var(--c-fill);
+}
+
+.local-graph-list a:focus-visible {
+  outline-offset: -2px;
+}
+
+.local-graph-empty {
+  color: var(--c-text-secondary);
+}
+
+/* Hub page child post dates, appended by the preprocessor. */
 .hub-child-date {
-  color: var(--c-text-muted);
+  margin-inline-start: var(--space-2);
+  color: var(--c-text-secondary);
   font-size: 0.85em;
-  margin-left: 0.5rem;
   font-variant-numeric: tabular-nums;
 }

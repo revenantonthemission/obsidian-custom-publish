@@ -5,13 +5,15 @@ interface Props {
   content: string;
 }
 
+// The 목차 tab names this list; rows are 44 px tall at every width (FR5.8,
+// mockups review finding R-03). Styles live in styles/outline.css because the
+// list moves into the outline sheet on narrow screens.
 const { content } = Astro.props;
 const headings = extractToc(content);
 ---
 
 {headings.length > 0 && (
-  <nav class="toc" aria-label="Table of contents">
-    <h3 class="toc-title">목차</h3>
+  <nav class="toc" aria-label="목차">
     <ul class="toc-list">
       {headings.map((h) => (
         <li class={`toc-item toc-depth-${h.depth}`}>
@@ -21,39 +23,3 @@ const headings = extractToc(content);
     </ul>
   </nav>
 )}
-
-<style>
-  .toc {
-    font-size: 0.85rem;
-  }
-  .toc-title {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--c-text-muted);
-    margin-bottom: 0.75rem;
-  }
-  .toc-list {
-    list-style: none;
-    padding: 0;
-  }
-  .toc-item {
-    margin-bottom: 0.3rem;
-  }
-  .toc-item a {
-    color: var(--c-text-muted);
-    text-decoration: none;
-  }
-  .toc-item a:hover {
-    color: var(--c-accent);
-  }
-  .toc-item a.toc-active {
-    color: var(--c-accent);
-    font-weight: 600;
-  }
-  .toc-depth-1 { font-weight: 600; }
-  .toc-depth-3 { padding-left: 1rem; }
-  .toc-depth-4 { padding-left: 2rem; }
-  .toc-depth-5 { padding-left: 3rem; }
-  .toc-depth-6 { padding-left: 4rem; }
-</style>

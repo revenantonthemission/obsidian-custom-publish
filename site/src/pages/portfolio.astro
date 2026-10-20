@@ -27,7 +27,7 @@ const metadata = metadataResult.value;
 const presentation = buildPortfolioPresentation(assembly.portfolio);
 ---
 
-<BaseLayout metadata={metadata}>
+<BaseLayout metadata={metadata} surface="grouped">
   <ProfileShell shell={presentation.shell}>
     <PortfolioContent presentation={presentation} />
   </ProfileShell>

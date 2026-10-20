@@ -1,238 +1,262 @@
+/* Portfolio and role pages (FR4.4; mockups W13). The role navigation is a
+ * segmented control (foundation.css); project jump links are 44 px capsule
+ * chips; every case study is a grouped card whose six dimensions are labelled
+ * rows, and its "자세히 보기" disclosures stay closed by default. */
 .portfolio-intro {
-  border-left: 3px solid var(--c-profile-accent-text);
-  padding: 0.25rem 0 0.25rem 1.25rem;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
 }
 
 .portfolio-eyebrow,
 .portfolio-case-number {
-  color: var(--c-profile-accent-text);
-  font-size: 0.75rem;
-  font-weight: 650;
+  color: var(--c-tint);
+  font-size: var(--text-footnote);
+  font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .portfolio-eyebrow {
-  margin-bottom: 0.75rem;
+  margin-block-end: var(--space-2);
 }
 
 .portfolio-summary {
-  max-width: 52rem;
-  font-size: clamp(1.05rem, 1rem + 0.3vw, 1.25rem);
-  font-weight: 550;
-  line-height: 1.85;
+  max-inline-size: 52rem;
+  font-size: var(--text-headline);
+  font-weight: 500;
+  line-height: var(--leading-body);
   word-break: keep-all;
 }
 
+/* ── Role navigation: its label above the segmented control ── */
+.portfolio-role-navigation {
+  margin-block-end: var(--space-6);
+}
+
+.portfolio-role-navigation > p {
+  margin-block-end: var(--space-2);
+  color: var(--c-text-secondary);
+  font-size: var(--text-footnote);
+  font-weight: 600;
+}
+
+.portfolio-project-focus {
+  margin: 0 0 var(--space-2);
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+  font-weight: 600;
+}
+
+/* ── Project jump links: 44 px chips ── */
 .portfolio-project-navigation {
-  margin: 0 0 2rem;
+  margin: 0 0 var(--space-6);
 }
 
 .portfolio-project-navigation ol {
-  display: grid;
-  gap: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.portfolio-project-navigation li {
+  max-inline-size: 100%;
+}
+
 .portfolio-project-navigation a {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  min-height: 3.5rem;
-  height: 100%;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  padding: 0.7rem 0.85rem;
+  gap: var(--space-2);
+  max-inline-size: 100%;
+  min-block-size: var(--target);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-4);
+  border-radius: var(--radius-capsule);
+  background: var(--c-surface);
   color: var(--c-text);
-  font-size: 0.9rem;
+  font-size: var(--text-subheadline);
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.35;
+  text-decoration: none;
   overflow-wrap: anywhere;
 }
 
 .portfolio-project-navigation a:hover {
-  border-color: var(--c-profile-accent-text);
-  background: var(--c-surface);
-  color: var(--c-profile-accent-text);
+  background: var(--c-fill);
+  color: var(--c-text);
   text-decoration: none;
 }
 
-.portfolio-project-number,
-.portfolio-project-arrow {
-  flex-shrink: 0;
-  color: var(--c-profile-accent-text);
+.portfolio-project-number {
+  flex: none;
+  color: var(--c-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .portfolio-project-arrow {
-  margin-left: auto;
+  display: inline-flex;
+  flex: none;
+  color: var(--c-text-secondary);
 }
 
+@media (prefers-contrast: more) {
+  .portfolio-project-navigation a {
+    box-shadow: inset 0 0 0 1px var(--c-control-border);
+  }
+}
+
+/* ── Case studies: grouped cards with labelled dimension rows ── */
 .portfolio-case-study {
-  scroll-margin-top: 5rem;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
+  scroll-margin-block-start: calc(var(--bar-height) + var(--bar-inset) * 2);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
   background: var(--c-surface);
 }
 
-.portfolio-case-study:first-of-type {
-  border-top: 3px solid var(--c-profile-accent-text);
-}
-
 .portfolio-case-study + .portfolio-case-study {
-  margin-top: 2rem;
+  margin-block-start: var(--space-5);
 }
 
 .portfolio-case-study-header {
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--c-border);
+  margin-block-end: var(--space-2);
+  padding-block-end: var(--space-4);
+  box-shadow: inset 0 -1px 0 var(--c-separator);
 }
 
 .portfolio-case-study-header h3 {
-  margin-top: 0;
-  margin-bottom: 0.35rem;
-  font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.85rem);
-  letter-spacing: -0.025em;
+  margin-block: 0 var(--space-1);
+  font-size: var(--text-title-2);
 }
 
 .portfolio-case-number {
-  margin-bottom: 0.65rem;
+  margin-block-end: var(--space-2);
 }
 
 .portfolio-case-study-header .profile-period {
-  margin-bottom: 0.6rem;
+  margin-block-end: var(--space-2);
 }
 
 .portfolio-outcome-summary {
-  max-width: 54rem;
-  margin-bottom: 0;
+  max-inline-size: 54rem;
+  margin-block-end: 0;
   font-weight: 600;
-  line-height: 1.85;
+  line-height: var(--leading-body);
 }
 
 .case-study-dimension {
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--c-border);
+  padding-block: var(--space-4);
+  box-shadow: inset 0 -1px 0 var(--c-separator);
 }
 
 .case-study-dimension h4,
 .case-study-evidence h4 {
-  margin-bottom: 0.65rem;
-  color: var(--c-profile-accent-text);
-  font-size: 1rem;
+  margin-block-end: var(--space-2);
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+  font-weight: 600;
 }
 
 .case-study-dimension > :last-child,
 .case-study-evidence > :last-child {
-  margin-bottom: 0;
+  margin-block-end: 0;
 }
 
 .case-study-evidence {
-  padding-top: 1rem;
+  padding-block-start: var(--space-4);
 }
 
 .case-study-dimension-outcomes {
-  border-bottom: 0;
-  border-radius: var(--radius);
-  padding: 1.1rem;
-  margin: 0.75rem 0;
-  background: var(--c-code-bg);
+  margin-block: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--c-surface-2);
+  box-shadow: none;
 }
 
+/* ── "자세히 보기": a native disclosure with a 44 px summary and a chevron ── */
 .case-study-details {
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  margin-top: 0.85rem;
+  margin-block-start: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--c-surface-2);
 }
 
 .case-study-details > summary {
-  cursor: pointer;
-  min-height: 2.75rem;
-  padding: 0.7rem 0.85rem;
-  color: var(--c-profile-accent-text);
-  font-size: 0.9rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding: var(--space-2) calc(var(--target) + var(--space-1)) var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--c-text);
+  font-size: var(--text-subheadline);
   font-weight: 600;
+  cursor: pointer;
+  list-style: none;
 }
+
+.case-study-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The chevron itself is drawn by foundation.css. */
 
 .case-study-details > summary:hover {
-  background: var(--c-code-bg);
+  background: var(--c-fill);
 }
 
-.case-study-details[open] > summary {
-  border-bottom: 1px solid var(--c-border);
+.case-study-details > summary:focus-visible {
+  outline-offset: -2px;
 }
 
 .case-study-details-content {
-  padding: 1rem;
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
 .case-study-details-content > :last-child {
-  margin-bottom: 0;
+  margin-block-end: 0;
 }
 
 .portfolio-case-study .profile-content-paragraph,
 .portfolio-case-study .profile-content-list {
-  line-height: 1.85;
+  line-height: var(--leading-body);
   word-break: keep-all;
 }
 
 .portfolio-case-study .profile-content-subtitle {
-  margin: 0 0 0.45rem;
+  margin: 0 0 var(--space-2);
   color: var(--c-text);
-  font-size: 0.95rem;
-  font-weight: 650;
+  font-size: var(--text-subheadline);
+  font-weight: 600;
   line-height: 1.6;
   word-break: keep-all;
 }
 
 .profile-content-subsection {
-  margin-bottom: 1.25rem;
+  margin-block-end: var(--space-5);
 }
 
 .profile-content-subsection > .profile-content-paragraph,
 .portfolio-case-study .profile-content-list li > .profile-content-paragraph {
-  margin-bottom: 0;
+  margin-block-end: 0;
 }
 
 .portfolio-case-study .profile-content-list li + li {
-  margin-top: 1rem;
-}
-
-@media (min-width: 360px) and (max-width: 479px) {
-  .portfolio-project-navigation ol {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  margin-block-start: var(--space-4);
 }
 
 @media (max-width: 479px) {
+  .portfolio-intro,
   .portfolio-case-study {
-    padding: 1rem;
-  }
-}
-
-@media (min-width: 480px) and (max-width: 767px) {
-  .portfolio-project-navigation ol {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .portfolio-case-study {
-    padding: 1.35rem;
+    padding: var(--space-4);
   }
 }
 
 @media (min-width: 768px) {
-  .portfolio-project-navigation ol {
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  }
-
   .portfolio-case-study {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 1.5rem;
-    padding: 1.5rem;
+    gap: 0 var(--space-6);
   }
 
   .portfolio-case-study-header,
@@ -243,14 +267,6 @@
   .case-study-evidence {
     grid-column: 1 / -1;
   }
-
-  .case-study-dimension-problem {
-    padding-right: 0.75rem;
-  }
-
-  .case-study-dimension-role {
-    padding-left: 0.75rem;
-  }
 }
 
 @media print {
@@ -259,8 +275,10 @@
     display: none;
   }
 
+  .portfolio-intro,
   .portfolio-case-study,
-  .case-study-dimension-outcomes {
+  .case-study-dimension-outcomes,
+  .case-study-details {
     background: transparent;
   }
 
@@ -275,54 +293,4 @@
   .case-study-details > summary {
     display: none;
   }
-}
-.portfolio-role-navigation {
-  margin-bottom: 2rem;
-}
-
-.portfolio-role-navigation > p {
-  margin-bottom: 0.6rem;
-  color: var(--c-text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.portfolio-role-navigation ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.portfolio-role-navigation a {
-  display: flex;
-  align-items: center;
-  min-height: 2.75rem;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  padding: 0.6rem 0.9rem;
-  color: var(--c-text);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.portfolio-role-navigation a:hover,
-.portfolio-role-navigation a[aria-current='page'] {
-  border-color: var(--c-profile-accent-text);
-  background: var(--c-surface);
-  color: var(--c-profile-accent-text);
-  text-decoration: none;
-}
-
-.portfolio-role-navigation a[aria-current='page'] {
-  box-shadow: inset 0 -2px 0 var(--c-profile-accent-text);
-}
-
-.portfolio-project-focus {
-  margin: 0 0 0.5rem;
-  color: var(--c-text-muted);
-  font-size: 0.9rem;
-  font-weight: 600;
 }

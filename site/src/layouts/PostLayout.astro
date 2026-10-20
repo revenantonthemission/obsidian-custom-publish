@@ -1,18 +1,25 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
-import TableOfContents from "../components/TableOfContents.astro";
 import BacklinkList from "../components/BacklinkList.astro";
 import RelatedPosts from "../components/RelatedPosts.astro";
 import HubNav from "../components/HubNav.astro";
+import OutlineTabs from "../components/OutlineTabs.astro";
 import LocalGraph from "../islands/LocalGraph.tsx";
-import NavTreeIsland from "../islands/NavTree.tsx";
+import { ListTree, X } from "lucide-static";
+import { decorativeIcon } from "../lib/icons";
+import { extractToc } from "../lib/toc";
 import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta, formatDateKo } from "../lib/data";
 import type { PostMeta } from "../lib/types";
-import MobileSidebar from "../islands/MobileSidebar.tsx";
+// KaTeX's stylesheet and fonts, self-hosted from the installed package (NFR4).
+import "katex/dist/katex.min.css";
+import "../styles/callouts.css";
+import "../styles/diagrams.css";
+import "../styles/segmented.css";
+import "../styles/grouped.css";
 import "../styles/post.css";
+import "../styles/outline.css";
 import "../styles/link-preview.css";
 import "../styles/nav-tree.css";
-import "../styles/mobile-sidebar.css";
 
 interface Props {
   meta: PostMeta;
@@ -21,6 +28,7 @@ interface Props {
 
 const { meta, content } = Astro.props;
 const localGraphData = getLocalGraph(meta.slug);
+const hasToc = extractToc(content).length > 0;
 
 // Use hub_parent field directly instead of scanning all hubs' forward_links
 let parentHub: PostMeta | undefined;
@@ -34,6 +42,14 @@ if (meta.hub_parent) {
       .filter((m): m is PostMeta => m !== null);
   }
 }
+
+// The outline (FR4.2, FR5.3; interaction-spec.md "Outline Panel and Outline
+// Sheet"; mockups W3 and W4) holds the table of contents and the hub
+// navigation tree in two tabs. From 1100 px it is a sticky panel beside the
+// article; below that the floating "목차 열기" button opens the same tabs in a
+// modal sheet (scripts/outline.ts). It replaces aside.post-sidebar and the
+// MobileSidebar island. Backlinks, related posts and the local graph sit
+// below the article at the reading width (W3).
 ---
 
 <BaseLayout
@@ -42,51 +58,89 @@ if (meta.hub_parent) {
   ogType="article"
   canonicalUrl={`/posts/${meta.slug}`}
 >
-  {parentHub && (
-    <HubNav hub={parentHub} current={meta} children={hubChildren} />
-  )}
   <div class="post-layout">
-    <article>
+    <article class="post-article">
+      {parentHub && (
+        <HubNav hub={parentHub} current={meta} children={hubChildren} />
+      )}
       <header class="post-header">
         <h1 class="post-title">{meta.title}</h1>
-        <div class="post-meta">
+        <p class="post-meta">
           {meta.published && <time datetime={meta.published}>{formatDateKo(meta.published)}</time>}
           {meta.updated && meta.updated !== meta.published && (
             <span>수정: <time datetime={meta.updated}>{formatDateKo(meta.updated)}</time></span>
           )}
           <span>{meta.reading_time_min}분 읽기</span>
-          {meta.tags.map((tag) => (
-            <a href={`/tags/${sanitizeTag(tag)}`} class="post-tag">{tag}</a>
-          ))}
-        </div>
+        </p>
+        {meta.tags.length > 0 && (
+          <ul class="tag-chips" aria-label="태그">
+            {meta.tags.map((tag) => (
+              <li>
+                <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip"><span class="tag-chip-mark" aria-hidden="true">#</span>{tag}</a>
+              </li>
+            ))}
+          </ul>
+        )}
       </header>
       {/* SECURITY: set:html trusts the vault content. rehype-raw passes through HTML from the
           preprocessor (callout divs, wikilink anchors). This is safe for a personal vault but
           must be revisited if the vault ever accepts third-party content. */}
       <div class="post-content" set:html={content} />
-      {!meta.is_hub && <RelatedPosts slugs={meta.related_posts ?? []} />}
-      <BacklinkList backlinks={meta.backlinks} />
     </article>
-    <aside class="post-sidebar">
-      <NavTreeIsland client:visible currentSlug={meta.slug} />
-      <TableOfContents content={content} />
-      <LocalGraph client:visible slug={meta.slug} data={localGraphData} />
+
+    <aside class="post-outline" data-material="thick" aria-label="목차와 탐색">
+      <OutlineTabs idPrefix="outline" content={content} hasToc={hasToc} currentSlug={meta.slug} />
     </aside>
+
+    <div class="post-after">
+      <BacklinkList backlinks={meta.backlinks} />
+      {!meta.is_hub && <RelatedPosts slugs={meta.related_posts ?? []} />}
+      <section class="post-local-graph" aria-labelledby="local-graph-heading">
+        <h2 id="local-graph-heading">로컬 그래프</h2>
+        <LocalGraph client:visible slug={meta.slug} data={localGraphData} />
+      </section>
+    </div>
   </div>
-<script>
-  import "../scripts/copy-button";
-</script>
-<script>
-  import "../scripts/link-preview";
-</script>
-<script>
-  import "../scripts/toc-highlight";
-</script>
-<script>
-  import "../scripts/diagram-wrap";
-</script>
-<script>
-  import "../scripts/heading-fold";
-</script>
-<MobileSidebar client:visible content={content} currentSlug={meta.slug} />
+
+  <button
+    type="button"
+    class="outline-open"
+    aria-label="목차 열기"
+    aria-haspopup="dialog"
+    aria-controls="outline-sheet"
+    data-material="regular"
+  >
+    <Fragment set:html={decorativeIcon(ListTree, 20)} />
+    <span aria-hidden="true">목차</span>
+  </button>
+  <dialog id="outline-sheet" class="outline-sheet" aria-modal="true" aria-label="목차와 탐색" data-material="thick">
+    <div class="outline-sheet-header">
+      <span class="outline-grabber" aria-hidden="true"></span>
+      <button type="button" class="outline-close" aria-label="목차 닫기">
+        <Fragment set:html={decorativeIcon(X, 20)} />
+      </button>
+    </div>
+    <div class="outline-sheet-body">
+      <OutlineTabs idPrefix="sheet" content={content} hasToc={hasToc} currentSlug={meta.slug} />
+    </div>
+  </dialog>
+
+  <script>
+    import "../scripts/outline";
+  </script>
+  <script>
+    import "../scripts/copy-button";
+  </script>
+  <script>
+    import "../scripts/scroll-regions";
+  </script>
+  <script>
+    import "../scripts/link-preview";
+  </script>
+  <script>
+    import "../scripts/toc-highlight";
+  </script>
+  <script>
+    import "../scripts/heading-fold";
+  </script>
 </BaseLayout>

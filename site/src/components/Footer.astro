@@ -1,7 +1,9 @@
 ---
 import { Split } from "lucide-static";
+import { decorativeIcon } from "../lib/icons";
 ---
 
 <footer class="site-footer">
-  Built with <span class="nav-icon" set:html={Split} /> obsidian-press
+  <span class="site-mark" set:html={decorativeIcon(Split, 16)} />
+  <p>obsidian-press로 만들었습니다</p>
 </footer>

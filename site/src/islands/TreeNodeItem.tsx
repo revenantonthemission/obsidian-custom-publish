@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { ChevronRight } from "lucide-preact";
 import type { NavTreeNode } from "../lib/types";
 
 /** Check if a node or any descendant has the target slug. */
@@ -7,25 +8,16 @@ export function isAncestor(node: NavTreeNode, slug: string): boolean {
   return node.children.some((child) => isAncestor(child, slug));
 }
 
-function ChevronIcon({ expanded }: { expanded: boolean }) {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-export function TreeNodeItem({ node, currentSlug, defaultExpanded }: {
+/**
+ * One row of the hub navigation tree. Rows are 44 px tall (FR5.8); a toggle
+ * exposes aria-expanded and a Korean name, "‘<제목>’ 펼치기" or "… 접기" (FR5.4,
+ * FR5.5), and its chevron turns by transform only.
+ */
+export function TreeNodeItem({
+  node,
+  currentSlug,
+  defaultExpanded,
+}: {
   node: NavTreeNode;
   currentSlug: string;
   defaultExpanded: boolean;
@@ -40,16 +32,20 @@ export function TreeNodeItem({ node, currentSlug, defaultExpanded }: {
       <div class={`nav-tree-label${isCurrent ? " current" : ""}`}>
         {hasChildren ? (
           <button
+            type="button"
             class="nav-tree-toggle"
+            aria-expanded={expanded ? "true" : "false"}
+            aria-label={`‘${node.title}’ ${expanded ? "접기" : "펼치기"}`}
             onClick={() => setExpanded(!expanded)}
-            aria-label={expanded ? "Collapse" : "Expand"}
           >
-            <ChevronIcon expanded={expanded} />
+            <ChevronRight class="nav-tree-chevron" size={16} strokeWidth={1.75} aria-hidden="true" />
           </button>
         ) : (
-          <span class="nav-tree-spacer" />
+          <span class="nav-tree-spacer" aria-hidden="true" />
         )}
-        <a href={href}>{node.title}</a>
+        <a href={href} aria-current={isCurrent ? "page" : undefined}>
+          {node.title}
+        </a>
       </div>
       {hasChildren && expanded && (
         <ul class="nav-tree-children">

@@ -1,0 +1,52 @@
+---
+import TableOfContents from "./TableOfContents.astro";
+import NavTreeIsland from "../islands/NavTree.tsx";
+import "../styles/segmented.css";
+
+interface Props {
+  /** Keeps ids unique: the outline panel and the outline sheet each render one copy. */
+  idPrefix: string;
+  content: string;
+  hasToc: boolean;
+  currentSlug: string;
+}
+
+// The outline's two tabs, 목차 and 탐색, in the WAI-ARIA tabs pattern
+// (interaction-spec.md "Outline Panel and Outline Sheet"); scripts/tabs.ts
+// switches them. A post without h2 to h4 has no 목차 tab and opens on 탐색.
+//
+// The panel and the sheet each get their own copy instead of sharing one that
+// moves between them: moving an astro-island re-runs its client:visible
+// directive, which can hydrate the tree twice before it is first shown.
+const { idPrefix, content, hasToc, currentSlug } = Astro.props;
+const tocTab = `${idPrefix}-tab-toc`;
+const tocPanel = `${idPrefix}-panel-toc`;
+const navTab = `${idPrefix}-tab-nav`;
+const navPanel = `${idPrefix}-panel-nav`;
+---
+
+<div class="outline-tabs segmented" role="tablist" aria-label="목차와 탐색" data-tabs>
+  {hasToc && (
+    <button type="button" role="tab" id={tocTab} aria-controls={tocPanel} aria-selected="true">
+      목차
+    </button>
+  )}
+  <button
+    type="button"
+    role="tab"
+    id={navTab}
+    aria-controls={navPanel}
+    aria-selected={hasToc ? "false" : "true"}
+    tabindex={hasToc ? "-1" : undefined}
+  >
+    탐색
+  </button>
+</div>
+{hasToc && (
+  <div role="tabpanel" id={tocPanel} class="outline-panel" aria-labelledby={tocTab}>
+    <TableOfContents content={content} />
+  </div>
+)}
+<div role="tabpanel" id={navPanel} class="outline-panel" aria-labelledby={navTab} hidden={hasToc}>
+  <NavTreeIsland client:visible currentSlug={currentSlug} />
+</div>

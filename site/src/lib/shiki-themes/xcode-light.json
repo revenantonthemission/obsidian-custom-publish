@@ -1,0 +1,55 @@
+{
+  "name": "xcode-light",
+  "displayName": "Xcode Light (obsidian-press)",
+  "type": "light",
+  "colors": {
+    "editor.background": "#F5F5F7",
+    "editor.foreground": "#000000"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment", "punctuation.definition.comment", "string.comment"],
+      "settings": { "foreground": "#5D6C79" }
+    },
+    {
+      "scope": ["string", "string.quoted", "string.template", "punctuation.definition.string", "string.regexp", "constant.character.escape"],
+      "settings": { "foreground": "#C41A16" }
+    },
+    {
+      "scope": ["constant.numeric", "constant.character"],
+      "settings": { "foreground": "#1C00CF" }
+    },
+    {
+      "scope": ["keyword", "keyword.control", "keyword.operator.new", "keyword.operator.expression", "keyword.other", "storage", "storage.type", "storage.modifier", "constant.language", "variable.language"],
+      "settings": { "foreground": "#9B2393", "fontStyle": "bold" }
+    },
+    {
+      "scope": ["entity.name.type", "entity.name.class", "entity.name.struct", "entity.name.enum", "entity.name.interface", "entity.other.inherited-class", "entity.name.namespace"],
+      "settings": { "foreground": "#0B4F79" }
+    },
+    {
+      "scope": ["support.type", "support.class", "support.type.primitive", "storage.type.primitive", "entity.name.type.primitive"],
+      "settings": { "foreground": "#3900A0" }
+    },
+    {
+      "scope": ["entity.name.function", "meta.function-call entity.name.function", "variable.function"],
+      "settings": { "foreground": "#326D74" }
+    },
+    {
+      "scope": ["support.function", "support.method", "entity.name.function.macro", "support.function.builtin"],
+      "settings": { "foreground": "#0F68A0" }
+    },
+    {
+      "scope": ["entity.other.attribute-name", "meta.attribute", "entity.name.tag", "meta.decorator"],
+      "settings": { "foreground": "#815F03" }
+    },
+    {
+      "scope": ["meta.preprocessor", "keyword.control.directive", "keyword.control.import", "keyword.control.export", "entity.name.function.preprocessor"],
+      "settings": { "foreground": "#643820" }
+    },
+    {
+      "scope": ["markup.heading", "markup.bold"],
+      "settings": { "foreground": "#000000", "fontStyle": "bold" }
+    }
+  ]
+}

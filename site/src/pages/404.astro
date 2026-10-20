@@ -1,99 +1,55 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getAllPostMeta } from "../lib/data";
+import PostCard from "../components/PostCard.astro";
+import { getAllPostMeta, getPreviewSummary } from "../lib/data";
+import "../styles/grouped.css";
 
+// Not found (mockups W11; FR4.3): what happened, the two ways on (search is
+// the filled primary action and opens the search dialog), and recent posts.
 const recentPosts = getAllPostMeta().filter((p) => !p.is_hub).slice(0, 5);
 ---
 
 <BaseLayout title="페이지를 찾을 수 없습니다">
   <div class="not-found">
-    <h1>404</h1>
-    <p>페이지를 찾을 수 없습니다.</p>
+    <h1>페이지를 찾을 수 없습니다</h1>
+    <p class="not-found-lead">주소가 바뀌었을 수 있습니다.</p>
     <div class="not-found-actions">
-      <a href="/" class="not-found-link">홈으로 돌아가기</a>
-      <button class="not-found-link" data-search-open>검색으로 찾기</button>
+      <button type="button" class="capsule capsule-filled" data-search-open>사이트 검색</button>
+      <a href="/" class="capsule">홈으로</a>
     </div>
     {recentPosts.length > 0 && (
-      <div class="not-found-recent">
-        <h2>최근 글</h2>
-        <ul>
+      <section class="not-found-recent" aria-labelledby="not-found-recent-heading">
+        <h2 id="not-found-recent-heading">최근 글</h2>
+        <ul class="grouped-list">
           {recentPosts.map((post) => (
-            <li><a href={`/posts/${post.slug}`}>{post.title}</a></li>
+            <PostCard post={post} summary={getPreviewSummary(post.slug)} />
           ))}
         </ul>
-      </div>
+      </section>
     )}
   </div>
 </BaseLayout>
 
 <style>
   .not-found {
-    text-align: center;
-    padding: 4rem 1rem;
+    max-inline-size: var(--max-reading);
+    margin-inline: auto;
+    padding-block: var(--space-8) 0;
   }
-  .not-found h1 {
-    font-size: 4rem;
-    color: var(--c-text-muted);
-    margin-bottom: 0.5rem;
+
+  .not-found-lead {
+    color: var(--c-text-secondary);
   }
-  .not-found p {
-    color: var(--c-text-muted);
-    margin-bottom: 1.5rem;
-  }
+
   .not-found-actions {
     display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-block: var(--space-6) var(--space-12);
   }
-  .not-found-link {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius);
-    background: none;
-    color: var(--c-text);
-    font-family: var(--font-body);
-    font-size: 0.9rem;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .not-found-link:hover {
-    background: var(--c-code-bg);
-    border-color: var(--c-accent);
-    color: var(--c-text);
-    text-decoration: none;
-  }
-  .not-found-recent {
-    text-align: left;
-    max-width: 400px;
-    margin: 0 auto;
-  }
+
   .not-found-recent h2 {
-    font-size: 0.9rem;
-    color: var(--c-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
-  }
-  .not-found-recent ul {
-    list-style: none;
-    padding: 0;
-  }
-  .not-found-recent li {
-    padding: 0.4rem 0;
-    border-bottom: 1px solid var(--c-border);
-  }
-  .not-found-recent li:last-child {
-    border-bottom: none;
-  }
-  .not-found-recent a {
-    color: var(--c-text);
-    text-decoration: none;
-  }
-  .not-found-recent a:hover {
-    color: var(--c-accent);
+    margin-block: 0 var(--space-3);
+    font-size: var(--text-title-3);
   }
 </style>

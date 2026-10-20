@@ -32,7 +32,7 @@ if (!metadataResult.ok) throw new TypeError('Invalid approved portfolio metadata
 const presentation = buildPortfolioPresentation(assembly.portfolio, roleId);
 ---
 
-<BaseLayout metadata={metadataResult.value}>
+<BaseLayout metadata={metadataResult.value} surface="grouped">
   <ProfileShell shell={presentation.shell}>
     <PortfolioContent presentation={presentation} roleId={roleId} />
   </ProfileShell>

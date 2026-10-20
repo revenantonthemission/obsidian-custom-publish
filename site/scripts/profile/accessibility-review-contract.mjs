@@ -95,7 +95,14 @@ export const REVIEW_SUBJECT_SOURCE_FILES = Object.freeze([
   'src/lib/navigation.ts',
   'src/pages/portfolio.astro',
   'src/pages/resume.astro',
+  // global.css became the entry that imports the four files below (HIG
+  // redesign, code-generation plan Step 17). They hold what global.css held,
+  // so they stay in the subject.
+  'src/styles/base.css',
+  'src/styles/chrome.css',
+  'src/styles/fonts.css',
   'src/styles/global.css',
+  'src/styles/tokens.css',
 ]);
 
 export const REVIEW_SUBJECT_SOURCE_DIRECTORIES = Object.freeze([

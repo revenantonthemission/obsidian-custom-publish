@@ -1,8 +1,8 @@
-import { spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { buildSiteInto } from './support/astro-build.js';
 import { getResumeDocumentLink } from '../../src/lib/profile/document-boundary.js';
 import { getCurrentResumeDocumentLink } from '../../src/lib/profile/current-resume-document.js';
 import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
@@ -19,8 +19,6 @@ import type { ProfileData, ValidatedProfile } from '../../src/lib/profile/types.
 import { validateProfile } from '../../src/lib/profile/validation.js';
 import { cloneProfileFixture } from '../fixtures/profile-fixtures.js';
 
-const ROOT = process.cwd();
-const ASTRO_CLI = resolve(ROOT, 'node_modules/astro/bin/astro.mjs');
 const PRIMARY_NAVIGATION = ['/tags', '/graph', '/resume', '/portfolio'];
 const PRODUCT_ENGINEER_PATH = '/portfolio/product-engineer';
 const PRODUCT_ENGINEER_PROJECTS = ['docsuri'] as const;
@@ -198,15 +196,8 @@ describe('production Astro profile output', () => {
 
   beforeAll(async () => {
     outputRoot = await mkdtemp(join(tmpdir(), 'obsidian-profile-output-'));
-    const result = spawnSync(
-      process.execPath,
-      [ASTRO_CLI, 'build', '--outDir', outputRoot],
-      {
-        cwd: ROOT,
-        encoding: 'utf8',
-        timeout: 60_000,
-      },
-    );
+    // Builds take turns with other built-HTML tests (support/astro-build.ts).
+    const result = await buildSiteInto(outputRoot);
 
     if (result.status !== 0 || result.error !== undefined) {
       throw new Error(

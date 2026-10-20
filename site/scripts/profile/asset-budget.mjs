@@ -30,12 +30,19 @@ const INHERITED_INLINE_STYLE_BASELINES = Object.freeze([
       'beff48a0aa3b0522db59c507af7b4d99f3559a6e4bffd09f9f61fa2cc93bfe8c',
   }),
 ]);
+// The shared layout's executable inline scripts, byte for byte. The HIG
+// redesign replaced three of them on purpose: the appearance bootstrap
+// (FR3.2: auto, light or dark before first paint, legacy keys removed), the
+// [data-search-open] dispatcher (FR5.2: it passes its control so focus can
+// return to it) and the reading progress and back-to-top script (FR5.10:
+// scaleX once per frame, no smooth scroll under reduced motion). The other
+// three are Astro's island loaders, unchanged.
 const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   Object.freeze({
     type: null,
-    rawBytes: 2_311,
+    rawBytes: 1_470,
     sha256:
-      'fc4b817e4fdb96d5d122976485e216d655705d8e494dae5834043976f2bf56d7',
+      '4545842ec6cdc2e3b13c4658517d11406dace2b12ba30c12a869b0f738985600',
   }),
   Object.freeze({
     type: null,
@@ -51,9 +58,9 @@ const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   }),
   Object.freeze({
     type: 'module',
-    rawBytes: 149,
+    rawBytes: 170,
     sha256:
-      '1fcbdb2b5e08bcec4814584eba64e18347d57c0c03fd65a638d7584fc5f65022',
+      'b70631db2e7ab2972387bef5a188b47d56c0cf9b0e017cd15cbc7f4796d5dc85',
   }),
   Object.freeze({
     type: null,
@@ -63,9 +70,9 @@ const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   }),
   Object.freeze({
     type: null,
-    rawBytes: 769,
+    rawBytes: 1_428,
     sha256:
-      'febfe30e5d58ba70c8d89444ea8e869afeb7670a61e09236ad265a7476aebdaf',
+      '2f24e41fb21ad23fcabbded0d4e419bf1a16e30e3ec6915ee68e1839b31581c5',
   }),
 ]);
 
@@ -961,10 +968,23 @@ function resolveInlineStyle({
     );
   }
 
-  const matches = [...cssAssets.values()].filter(
+  // An inline sheet is traced to the one Rollup asset whose bytes it carries
+  // under an approved transform. A shared chunk that the build inlines (for
+  // example the profile foundation once it is small enough) is imported by
+  // the shared chunk, not by the page component, so its bytes are the only
+  // exact link. Without exactly one such asset, fall back to the page
+  // component's own asset, whose transform check then fails closed.
+  const byContent = [...cssAssets.values()].filter(
     (asset) =>
-      cssProvenance.get(asset.file)?.modules.includes(component),
+      cssProvenance.has(asset.file) &&
+      isApprovedInlineCssTransform(asset.content, bytes),
   );
+  const matches = byContent.length === 1
+    ? byContent
+    : [...cssAssets.values()].filter(
+        (asset) =>
+          cssProvenance.get(asset.file)?.modules.includes(component),
+      );
   if (matches.length !== 1) {
     throw budgetError(
       'PROFILE_CSS_PROVENANCE_AMBIGUOUS',
@@ -1254,23 +1274,29 @@ function isProfileComponentStyleModule(modulePath, module) {
   return profileOwner && /[?&]type=style(?:&|$)/u.test(module);
 }
 
-function assertInlineCssTransform({
-  route,
-  sourcePath,
-  sourceBytes,
-  finalBytes,
-}) {
-  if (sourceBytes.equals(finalBytes)) return;
-  if (
+/**
+ * The two approved Rollup-to-HTML transforms: the inline bytes equal the
+ * asset's, or equal them without Vite's trailing post-process marker.
+ */
+function isApprovedInlineCssTransform(sourceBytes, finalBytes) {
+  if (sourceBytes.equals(finalBytes)) return true;
+  return (
     sourceBytes.byteLength ===
       finalBytes.byteLength + VITE_POST_PROCESS_MARKER.byteLength &&
     sourceBytes.subarray(0, finalBytes.byteLength).equals(finalBytes) &&
     sourceBytes.subarray(finalBytes.byteLength).equals(
       VITE_POST_PROCESS_MARKER,
     )
-  ) {
-    return;
-  }
+  );
+}
+
+function assertInlineCssTransform({
+  route,
+  sourcePath,
+  sourceBytes,
+  finalBytes,
+}) {
+  if (isApprovedInlineCssTransform(sourceBytes, finalBytes)) return;
   throw budgetError(
     'PROFILE_CSS_INLINE_TRANSFORM_UNAPPROVED',
     'An inline stylesheet does not match an approved deterministic Rollup-to-HTML transform.',

@@ -1,133 +1,59 @@
-import { useState, useEffect, useCallback } from "preact/hooks";
-import { Sun, Moon } from "lucide-preact";
+import { useState } from "preact/hooks";
+import { Moon, Sun, SunMoon } from "lucide-preact";
 import {
-  getCachedGeo,
-  requestGeoAndCache,
-  getCachedSolar,
-  fetchAndCacheSolar,
-  getSolarTheme,
-  msUntilNextBoundary,
-  isManualOverrideActive,
-  setManualOverride,
-  clearManualOverride,
-} from "../lib/solar";
-import type { SolarCache, GeoCache } from "../lib/solar";
+  APPEARANCES,
+  appearanceAnnouncement,
+  appearanceLabel,
+  browserStorage,
+  nextAppearance,
+  parseAppearance,
+  themeAttribute,
+  writeStoredAppearance,
+  type Appearance,
+} from "../lib/appearance";
 
-function getInitialTheme(): "light" | "dark" {
-  if (typeof window === "undefined") return "light";
-  const saved = localStorage.getItem("theme");
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
+const ICONS = { auto: SunMoon, light: Sun, dark: Moon } as const;
 
 /**
- * Add .theme-transitioning to <html>, apply the change, then remove after 350ms.
+ * The appearance button (FR3.2; interaction-spec.md, "Appearance Button").
  *
- * Uses a module-level timer so rapid successive toggles extend the window
- * rather than race each other. Does NOT use `transitionend` — that event
- * fires per-property per-descendant and the first firing from any child
- * would cut the window short.
+ * It cycles 자동, 라이트 and 다크. The current mode lives on
+ * <html data-appearance>, which BaseLayout's inline bootstrap sets before
+ * first paint, and CSS shows the matching icon and name. The server-rendered
+ * button therefore already names the stored choice before hydration (R-07),
+ * and hydration changes nothing on screen.
  */
-let transitionTimer: ReturnType<typeof setTimeout> | null = null;
-function withTransition(apply: () => void): void {
-  const el = document.documentElement;
-  el.classList.add("theme-transitioning");
-  apply();
-  if (transitionTimer !== null) clearTimeout(transitionTimer);
-  transitionTimer = setTimeout(() => {
-    el.classList.remove("theme-transitioning");
-    transitionTimer = null;
-  }, 350);
-}
-
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const [announcement, setAnnouncement] = useState("");
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    let timerId: ReturnType<typeof setTimeout> | null = null;
-    let aborted = false;
-
-    async function initSolar() {
-      let geo = getCachedGeo();
-      if (!geo) {
-        geo = await requestGeoAndCache();
-      }
-      if (aborted) return;
-
-      let solar = getCachedSolar();
-      if (!solar && geo) {
-        solar = await fetchAndCacheSolar(geo.lat, geo.lng);
-      }
-      if (aborted) return;
-
-      if (!isManualOverrideActive(solar)) {
-        clearManualOverride();
-        const solarTheme = getSolarTheme(solar);
-        if (solarTheme !== theme) {
-          withTransition(() => setTheme(solarTheme));
-        }
-      }
-
-      scheduleBoundary(solar, geo);
-    }
-
-    function scheduleBoundary(solar: SolarCache | null, geo: GeoCache | null) {
-      const ms = Math.max(msUntilNextBoundary(solar), 60_000);
-      timerId = setTimeout(async () => {
-        if (aborted) return;
-        clearManualOverride();
-
-        let freshSolar = solar;
-        if (geo) {
-          const fetched = await fetchAndCacheSolar(geo.lat, geo.lng);
-          if (aborted) return;
-          if (fetched) freshSolar = fetched;
-        }
-
-        const solarTheme = getSolarTheme(freshSolar);
-        withTransition(() => setTheme(solarTheme));
-
-        scheduleBoundary(freshSolar, geo);
-      }, ms);
-    }
-
-    initSolar();
-
-    return () => {
-      aborted = true;
-      if (timerId !== null) clearTimeout(timerId);
-    };
-  }, []);
-
-  const toggle = useCallback(() => {
-    setManualOverride();
-    withTransition(() => setTheme((t) => (t === "light" ? "dark" : "light")));
-  }, []);
+  const cycle = (): void => {
+    const root = document.documentElement;
+    const next: Appearance = nextAppearance(parseAppearance(root.getAttribute("data-appearance")));
+    const theme = themeAttribute(next);
+    if (theme === null) root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    root.setAttribute("data-appearance", next);
+    // Blocked storage keeps the choice for this page only (AC3.3).
+    writeStoredAppearance(browserStorage(), next);
+    setAnnouncement(appearanceAnnouncement(next));
+  };
 
   return (
-    <button
-      onClick={toggle}
-      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-      style={{
-        background: "none",
-        border: "1px solid var(--c-border)",
-        borderRadius: "var(--radius)",
-        padding: "0.35em 0.5em",
-        cursor: "pointer",
-        color: "var(--c-text)",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-    </button>
+    <>
+      <button type="button" class="appearance-toggle" onClick={cycle}>
+        {APPEARANCES.map((mode) => {
+          const Icon = ICONS[mode];
+          return (
+            <span key={mode} class="appearance-option" data-mode={mode}>
+              <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
+              <span class="visually-hidden">{appearanceLabel(mode)}</span>
+            </span>
+          );
+        })}
+      </button>
+      <span class="visually-hidden" role="status" aria-live="polite" data-testid="appearance-status">
+        {announcement}
+      </span>
+    </>
   );
 }

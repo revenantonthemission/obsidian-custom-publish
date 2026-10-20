@@ -1,0 +1,72 @@
+/* Segmented control (interaction-spec.md "Segmented Control"): a --c-fill
+ * track with a raised --c-surface selection that slides by transform. Where
+ * it switches panels it is a tablist (scripts/tabs.ts, or the island's own
+ * state); segments are at least 44 px tall (FR5.8). Up to three segments. */
+.segmented {
+  --segments: 2;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--c-fill);
+}
+
+.segmented:has(> [role="tab"]:only-child) {
+  --segments: 1;
+}
+
+.segmented:has(> [role="tab"]:nth-child(3)) {
+  --segments: 3;
+}
+
+.segmented::before {
+  content: "";
+  position: absolute;
+  inset-block: 2px;
+  inset-inline-start: 2px;
+  z-index: -1;
+  inline-size: calc((100% - 4px) / var(--segments));
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: var(--c-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transition: transform var(--dur-normal) var(--ease-spring);
+}
+
+.segmented:has(> [role="tab"]:nth-child(2)[aria-selected="true"])::before {
+  transform: translateX(100%);
+}
+
+.segmented:has(> [role="tab"]:nth-child(3)[aria-selected="true"])::before {
+  transform: translateX(200%);
+}
+
+.segmented > [role="tab"] {
+  min-block-size: var(--target);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--text-subheadline);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.segmented > [role="tab"][aria-selected="true"] {
+  font-weight: 600;
+}
+
+.segmented > [role="tab"]:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (prefers-contrast: more) {
+  .segmented::before {
+    box-shadow: inset 0 0 0 1px var(--c-control-border);
+  }
+}

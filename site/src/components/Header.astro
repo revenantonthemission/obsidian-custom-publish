@@ -1,14 +1,8 @@
 ---
 import ThemeToggle from "../islands/ThemeToggle.tsx";
 import MobileNav from "../islands/MobileNav.tsx";
-import {
-  BriefcaseBusiness,
-  FileText,
-  Search,
-  Split,
-  Tags,
-  Waypoints,
-} from "lucide-static";
+import { Search, Split } from "lucide-static";
+import { decorativeIcon } from "../lib/icons";
 import { getPrimaryNavigationState } from "../lib/navigation.js";
 
 interface Props {
@@ -21,90 +15,55 @@ if (!navigationResult.ok) {
   throw new TypeError("Invalid primary navigation state.");
 }
 const primaryNavigation = navigationResult.value;
-const navigationIcons = Object.freeze({
-  "/tags": Tags,
-  "/graph": Waypoints,
-  "/resume": FileText,
-  "/portfolio": BriefcaseBusiness,
-}) as Readonly<Record<string, string>>;
+
+// The floating glass bar (FR4.1; mockups.md W1–W2). One instance of every
+// control serves all widths: under 768 px the sections move into the
+// navigation sheet, from 768 px they sit in the bar.
+//
+// The glass is its own layer behind the bar's content: an element with a
+// backdrop-filter becomes the containing block of position: fixed
+// descendants, which would trap the full-height navigation sheet in the bar.
 ---
 
 <header class="site-header">
-  <a href="/" class="site-title" aria-current={pathname === "/" ? "page" : undefined}>
-    <span class="nav-icon" set:html={Split} />
-    obsidian-press
-  </a>
-  <nav class="desktop-nav" aria-label="주요 탐색">
-    {primaryNavigation.map((item) => (
-      <a
-        href={item.href}
-        class="site-nav-link"
-        aria-current={item.current ? "page" : undefined}
-        data-testid={`primary-navigation-link-${item.href.slice(1)}`}
-      >
-        <span
-          class="nav-icon"
-          aria-hidden="true"
-          set:html={navigationIcons[item.href]}
-        />
-        {item.label}
-      </a>
-    ))}
-    <button class="search-trigger" aria-label="검색 열기" data-search-open>
-      <span class="nav-icon" set:html={Search} />
-      <kbd>⌘K</kbd>
-    </button>
-    <ThemeToggle client:load />
-  </nav>
-  <div class="mobile-nav">
-    <button class="search-trigger mobile" aria-label="검색 열기" data-search-open>
-      <span class="nav-icon" set:html={Search} />
-    </button>
-    <ThemeToggle client:load />
-    <MobileNav items={primaryNavigation} />
+  <div class="site-bar">
+    <span class="site-bar-material" data-material="regular" aria-hidden="true"></span>
+    <a href="/" class="site-title" aria-current={pathname === "/" ? "page" : undefined}>
+      <span class="site-mark" set:html={decorativeIcon(Split, 20)} />
+      <span class="site-title-text">obsidian-press</span>
+    </a>
+    <nav class="desktop-nav" aria-label="주요 탐색">
+      {primaryNavigation.map((item) => (
+        <a
+          href={item.href}
+          class="site-nav-link"
+          aria-current={item.current ? "page" : undefined}
+          data-testid={`primary-navigation-link-${item.href.slice(1)}`}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <div class="site-actions">
+      <button type="button" class="search-trigger" aria-label="검색 열기" data-search-open>
+        <span class="search-icon" set:html={decorativeIcon(Search, 20)} />
+        <kbd class="search-shortcut" aria-hidden="true"
+          ><span data-platform-only="apple">⌘K</span><span data-platform-only="other">Ctrl K</span></kbd
+        >
+      </button>
+      <ThemeToggle client:load />
+      <MobileNav items={primaryNavigation} />
+    </div>
+    <div class="reading-progress" aria-hidden="true"></div>
   </div>
 </header>
 
 <script>
+  // Any [data-search-open] control opens the search dialog (islands/Search.tsx),
+  // which returns focus to that control when it closes.
   document.querySelectorAll("[data-search-open]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("open-search"));
+      window.dispatchEvent(new CustomEvent("open-search", { detail: { trigger: btn } }));
     });
   });
 </script>
-
-<style>
-  .search-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: none;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius);
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-    color: var(--c-text-muted);
-    font-size: 0.85rem;
-    transition: background 0.15s, color 0.15s;
-  }
-  .search-trigger:hover {
-    color: var(--c-text);
-    background: var(--c-code-bg);
-  }
-  .search-trigger kbd {
-    font-family: var(--font-body);
-    font-size: 0.7rem;
-    padding: 0.1em 0.35em;
-    border: 1px solid var(--c-border);
-    border-radius: 3px;
-    background: var(--c-bg);
-    color: var(--c-text-muted);
-  }
-  .search-trigger.mobile kbd {
-    display: none;
-  }
-  .search-trigger .nav-icon svg {
-    width: 15px;
-    height: 15px;
-  }
-</style>

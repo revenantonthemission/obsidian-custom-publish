@@ -1,44 +1,118 @@
-const SVG_ATTRS = 'width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+/**
+ * Code panels (interaction-spec.md "Code Panel and Copy Button"; mockups W3).
+ * Each highlighted block gets a bar with its language and a 44 × 44 button
+ * named "코드 복사" that is always visible, because touch has no hover. A
+ * successful copy shows a green check for 2 s. Both outcomes are announced
+ * in one polite status region, so a rejected clipboard write is reported to
+ * the reader instead of being swallowed.
+ */
+import { ICON_CHECK, ICON_COPY, svgIcon } from "./svg-icon";
 
-const COPY_ICON = `<svg ${SVG_ATTRS}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
-const CHECK_ICON = `<svg ${SVG_ATTRS}><polyline points="20 6 9 17 4 12"/></svg>`;
+const RESET_MS = 2000;
+const ICON_SIZE = 20;
+const COPIED = "코드를 복사했습니다";
+const FAILED = "복사하지 못했습니다";
+/** Languages that need no badge. */
+const UNLABELED = new Set(["", "text", "txt", "plaintext"]);
 
-const COPIED_RESET_MS = 1500;
+const copiedTimers = new WeakMap<HTMLButtonElement, number>();
+let statusTimer: number | undefined;
 
-document.querySelectorAll("pre.shiki").forEach((pre) => {
-  if (pre.parentElement?.querySelector(".copy-btn")) return;
-  if (!pre.parentNode) return;
+function createStatusRegion(): HTMLElement {
+  const region = document.createElement("p");
+  region.className = "visually-hidden";
+  region.setAttribute("role", "status");
+  region.dataset.testid = "copy-status";
+  document.body.append(region);
+  return region;
+}
 
-  let container: Element;
-  if (pre.parentElement?.classList.contains("code-block")) {
-    container = pre.parentElement;
-  } else {
-    const wrapper = document.createElement("div");
-    wrapper.className = "code-block-wrapper";
-    pre.parentNode.insertBefore(wrapper, pre);
-    wrapper.appendChild(pre);
-    container = wrapper;
-  }
-
-  const btn = document.createElement("button");
-  btn.className = "copy-btn";
-  btn.ariaLabel = "Copy code";
-  // COPY_ICON and CHECK_ICON are hardcoded SVG string constants, not user input
-  btn.innerHTML = COPY_ICON;
-  btn.addEventListener("click", async () => {
-    const code = pre.textContent || "";
-    try {
-      await navigator.clipboard.writeText(code);
-      btn.innerHTML = CHECK_ICON;
-      btn.classList.add("copied");
-      setTimeout(() => {
-        btn.innerHTML = COPY_ICON;
-        btn.classList.remove("copied");
-      }, COPIED_RESET_MS);
-    } catch {
-      // Clipboard API unavailable (e.g. non-HTTPS)
-    }
+function announce(status: HTMLElement, message: string): void {
+  // Clearing first makes a repeated message announce again.
+  status.textContent = "";
+  requestAnimationFrame(() => {
+    status.textContent = message;
   });
+  window.clearTimeout(statusTimer);
+  statusTimer = window.setTimeout(() => {
+    status.textContent = "";
+  }, RESET_MS);
+}
 
-  container.appendChild(btn);
-});
+function showCopied(button: HTMLButtonElement): void {
+  window.clearTimeout(copiedTimers.get(button));
+  button.classList.add("copied");
+  button.replaceChildren(svgIcon(ICON_CHECK, ICON_SIZE));
+  copiedTimers.set(
+    button,
+    window.setTimeout(() => {
+      button.classList.remove("copied");
+      button.replaceChildren(svgIcon(ICON_COPY, ICON_SIZE));
+    }, RESET_MS),
+  );
+}
+
+async function copy(pre: HTMLElement, button: HTMLButtonElement, status: HTMLElement): Promise<void> {
+  const code = pre.querySelector("code")?.textContent ?? pre.textContent ?? "";
+  try {
+    // Without a secure context there is no clipboard API at all.
+    if (!navigator.clipboard) throw new Error("The clipboard API is unavailable.");
+    await navigator.clipboard.writeText(code);
+  } catch {
+    announce(status, FAILED);
+    return;
+  }
+  showCopied(button);
+  announce(status, COPIED);
+}
+
+function copyButton(pre: HTMLElement, status: HTMLElement): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "copy-btn";
+  button.setAttribute("aria-label", "코드 복사");
+  button.append(svgIcon(ICON_COPY, ICON_SIZE));
+  button.addEventListener("click", () => {
+    void copy(pre, button, status);
+  });
+  return button;
+}
+
+function languageBadge(pre: HTMLElement): HTMLElement | null {
+  const language = (pre.dataset.language ?? "").trim();
+  if (UNLABELED.has(language.toLowerCase())) return null;
+  const badge = document.createElement("span");
+  badge.className = "code-language";
+  badge.textContent = language;
+  return badge;
+}
+
+/** The panel around the block: the filename wrapper from render.ts, or a new one. */
+function panelFor(pre: HTMLElement): HTMLElement | null {
+  const existing = pre.parentElement;
+  if (existing?.classList.contains("code-block")) return existing;
+  if (!existing) return null;
+  const panel = document.createElement("div");
+  panel.className = "code-block";
+  existing.insertBefore(panel, pre);
+  panel.append(pre);
+  return panel;
+}
+
+function decorate(pre: HTMLElement, status: HTMLElement): void {
+  const panel = panelFor(pre);
+  if (!panel || panel.querySelector(":scope > .code-block-bar")) return;
+  const bar = document.createElement("div");
+  bar.className = "code-block-bar";
+  const label = panel.querySelector<HTMLElement>(":scope > .code-filename") ?? languageBadge(pre);
+  if (label) bar.append(label);
+  bar.append(copyButton(pre, status));
+  panel.prepend(bar);
+}
+
+const blocks = document.querySelectorAll<HTMLElement>(".post-content pre.shiki");
+
+if (blocks.length > 0) {
+  const status = createStatusRegion();
+  for (const pre of blocks) decorate(pre, status);
+}

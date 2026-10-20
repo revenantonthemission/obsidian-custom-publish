@@ -4,9 +4,13 @@ import {
   buildAdjacency,
   computeFitTransform,
   getLabelOpacity,
+  getNodeColor,
   getNodeEmphasis,
   legendKey,
+  LEGEND_ITEMS,
   matchesQuery,
+  SHAPES,
+  shapePath,
   type EmphasisContext,
 } from '../../src/lib/graphUtils.js';
 import { createSimulation } from '../../src/lib/graphSim.js';
@@ -191,5 +195,39 @@ describe('legendKey', () => {
 
   test('falls back to etc when no colored tag exists', () => {
     expect(legendKey(node({ tags: ['algorithm'] }))).toBe('etc');
+  });
+});
+
+// FR5.6 and design-system-mapping.md "Data Visualization": a category is told
+// apart by shape and label as well as color, and its color is a token.
+describe('categories, shapes and token colors', () => {
+  test('the legend lists every category with a Korean label and its own shape', () => {
+    expect(LEGEND_ITEMS.map(({ key, label, shape }) => [key, label, shape])).toEqual([
+      ['os', '운영체제', 'circle'],
+      ['web', '웹', 'square'],
+      ['db', '데이터베이스', 'diamond'],
+      ['network', '네트워크', 'triangle'],
+      ['hub', '허브', 'star'],
+      ['etc', '기타', 'ring'],
+    ]);
+  });
+
+  test('nodes are painted with their category token, never a fixed color', () => {
+    expect(getNodeColor(node({ is_hub: true, tags: ['os'] }))).toBe('var(--c-graph-hub)');
+    expect(getNodeColor(node({ tags: ['web'] }))).toBe('var(--c-graph-web)');
+    expect(getNodeColor(node({ tags: ['algorithm'] }))).toBe('var(--c-graph-etc)');
+  });
+
+  test('every shape is a closed path centered on the node', () => {
+    const paths = SHAPES.map((shape) => shapePath(shape, 6));
+    for (const path of paths) {
+      expect(path).toMatch(/^M/);
+      expect(path.endsWith('Z')).toBe(true);
+      const numbers = (path.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+      expect(Math.max(...numbers.map(Math.abs))).toBeLessThanOrEqual(6 * 1.5);
+    }
+    // The ring shares the circle's outline and differs only in paint.
+    expect(shapePath('ring', 6)).toBe(shapePath('circle', 6));
+    expect(new Set(paths).size).toBe(SHAPES.length - 1);
   });
 });

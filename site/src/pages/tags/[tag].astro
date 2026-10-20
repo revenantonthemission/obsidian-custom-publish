@@ -2,28 +2,30 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostCard from "../../components/PostCard.astro";
 import { getTagIndex, getPreviewSummary } from "../../lib/data";
+import "../../styles/grouped.css";
 
 export function getStaticPaths() {
   const tagIndex = getTagIndex();
   return Object.keys(tagIndex).map((tag) => ({ params: { tag } }));
 }
 
+// A tag page (mockups W6; FR4.3, FR4.5): the posts carrying the tag as one
+// inset grouped list on the grouped background.
 const { tag } = Astro.params;
 const tagIndex = getTagIndex();
 const posts = tagIndex[tag!] || [];
 ---
 
-<BaseLayout title={`#${tag}`}>
-  <h1>#{tag}</h1>
-  <p class="tag-count">{posts.length}개 글</p>
-  {posts.map((post) => (
-    <PostCard post={post} summary={getPreviewSummary(post.slug)} />
-  ))}
+<BaseLayout title={`#${tag}`} surface="grouped">
+  <header class="listing-header">
+    <h1>#{tag}</h1>
+    <p class="listing-count">{posts.length}개 글</p>
+  </header>
+  <ul class="grouped-list">
+    {posts.length > 0 ? (
+      posts.map((post) => <PostCard post={post} summary={getPreviewSummary(post.slug)} />)
+    ) : (
+      <li class="grouped-empty">이 태그가 달린 글이 없습니다.</li>
+    )}
+  </ul>
 </BaseLayout>
-
-<style>
-  .tag-count {
-    color: var(--c-text-muted);
-    margin-bottom: 1rem;
-  }
-</style>

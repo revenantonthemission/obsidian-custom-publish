@@ -961,6 +961,55 @@ describe('manifest-backed profile resource evidence', () => {
       code: 'PROFILE_CSS_INLINE_TRANSFORM_UNAPPROVED',
     });
   });
+
+  test('traces a shared stylesheet that the build inlined by its exact bytes', async () => {
+    // Once the shared profile chunk is small enough, Astro inlines it into
+    // every profile route. Its Rollup asset is imported by the shared chunk,
+    // not by either page component, so only its bytes can identify it.
+    const fixture = createAssetBudgetManifestFixture({ inlineFoundation: true });
+    const evidence = await assetBudgetTesting.analyzeManifest(
+      fixture.manifest,
+      async (path: string) => requireFixtureOutput(fixture.outputs, path),
+    );
+
+    expect(evidence.result).toBe('pass');
+    expect(evidence.css.uniqueAssetCount).toBe(3);
+    expect(
+      evidence.css.assets.find(({ profileStyleRoots }: { profileStyleRoots: string[] }) =>
+        profileStyleRoots.includes('src/styles/profile/foundation.css'),
+      ),
+    ).toMatchObject({
+      kind: 'inline',
+      routes: ['/portfolio', '/resume'],
+      sourceRollupAssetPaths: ['_astro/foundation.css'],
+    });
+  });
+
+  test('still fails closed when an inlined shared stylesheet was altered', async () => {
+    const fixture = createAssetBudgetManifestFixture({ inlineFoundation: true });
+    const altered = Buffer.from('@font-face{font-family:RVNNT} .profile{display:none}');
+    for (const page of fixture.manifest.pageGraph.pages) {
+      const sheet = page.styles[0].sheet;
+      Object.assign(sheet, {
+        bytes: altered.byteLength,
+        sha256: digest(altered),
+        contentBase64: altered.toString('base64'),
+      });
+    }
+    for (const path of ['resume/index.html', 'portfolio/index.html']) {
+      const document = requireFixtureOutput(fixture.outputs, path).toString('utf8');
+      replaceFixtureOutput(fixture, path, Buffer.from(document.replace('display:block', 'display:none')));
+    }
+
+    await expect(
+      assetBudgetTesting.analyzeManifest(
+        fixture.manifest,
+        async (path: string) => requireFixtureOutput(fixture.outputs, path),
+      ),
+    ).rejects.toMatchObject({
+      code: 'PROFILE_CSS_INLINE_TRANSFORM_UNAPPROVED',
+    });
+  });
 });
 
 function createFakeBrowserContext() {
@@ -1044,7 +1093,9 @@ function fakeRequest({
   };
 }
 
-function createAssetBudgetManifestFixture() {
+function createAssetBudgetManifestFixture({
+  inlineFoundation = false,
+}: { inlineFoundation?: boolean } = {}) {
   const foundation = Buffer.from(
     '@font-face{font-family:RVNNT} .profile{display:block}',
   );
@@ -1054,18 +1105,31 @@ function createAssetBudgetManifestFixture() {
   const portfolio = Buffer.from(
     '.case-study{display:grid}.case-study__dimension{min-width:0}',
   );
+  // The shared stylesheet is either linked from both routes or, when the
+  // build inlines it, copied into each route's HTML.
+  const foundationHtml = inlineFoundation
+    ? `<style>${foundation.toString('utf8')}</style>`
+    : '<link rel="stylesheet" href="/_astro/foundation.css">';
+  const foundationSheet = inlineFoundation
+    ? {
+        type: 'inline',
+        bytes: foundation.byteLength,
+        sha256: digest(foundation),
+        contentBase64: foundation.toString('base64'),
+      }
+    : { type: 'external', src: '_astro/foundation.css' };
   const resumeDocument = Buffer.from(
     '<!doctype html>' +
-      '<link rel="stylesheet" href="/_astro/foundation.css">' +
+      foundationHtml +
       '<link rel="stylesheet" href="/_astro/resume.css">',
   );
   const portfolioDocument = Buffer.from(
     '<!doctype html>' +
-      '<link rel="stylesheet" href="/_astro/foundation.css">' +
+      foundationHtml +
       `<style>${portfolio.toString('utf8')}</style>`,
   );
   const outputs = new Map<string, Buffer>([
-    ['_astro/foundation.css', foundation],
+    ...(inlineFoundation ? [] : [['_astro/foundation.css', foundation] as const]),
     ['_astro/resume.css', resume],
     ['portfolio/index.html', portfolioDocument],
     ['resume/index.html', resumeDocument],
@@ -1168,10 +1232,7 @@ function createAssetBudgetManifestFixture() {
               {
                 depth: 1,
                 order: 1,
-                sheet: {
-                  type: 'external',
-                  src: '_astro/foundation.css',
-                },
+                sheet: structuredClone(foundationSheet),
               },
               {
                 depth: 1,
@@ -1190,10 +1251,7 @@ function createAssetBudgetManifestFixture() {
               {
                 depth: 1,
                 order: 1,
-                sheet: {
-                  type: 'external',
-                  src: '_astro/foundation.css',
-                },
+                sheet: structuredClone(foundationSheet),
               },
               {
                 depth: 1,
@@ -1234,7 +1292,7 @@ function createAssetBudgetManifestFixture() {
         client: { outputs: clientOutputs },
         prerender: {
           outputs: [
-            asset('_astro/foundation.css', foundation),
+            ...(inlineFoundation ? [] : [asset('_astro/foundation.css', foundation)]),
             asset('_astro/resume.css', resume),
           ],
         },

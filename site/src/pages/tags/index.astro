@@ -1,47 +1,28 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getTagIndex } from "../../lib/data";
+import "../../styles/grouped.css";
 
+// The tag index (mockups W7; interaction-spec.md "Tag Chip"): capsule chips
+// at least 44 px tall, most used first. The count is part of each link's
+// name, read as "os, 글 12개"; the "#" is decoration.
 const tagIndex = getTagIndex();
 const tags = Object.entries(tagIndex).sort((a, b) => b[1].length - a[1].length);
 ---
 
-<BaseLayout title="Tags">
-  <h1>태그</h1>
-  <div class="tag-cloud">
+<BaseLayout title="Tags" surface="grouped">
+  <header class="listing-header">
+    <h1>태그</h1>
+    <p class="listing-count">태그 {tags.length}개</p>
+  </header>
+  <ul class="tag-chips">
     {tags.map(([tag, posts]) => (
-      <a href={`/tags/${tag}`} class="tag-item">
-        {tag} <span class="tag-count">{posts.length}</span>
-      </a>
+      <li>
+        <a href={`/tags/${tag}`} class="tag-chip" aria-label={`${tag}, 글 ${posts.length}개`}>
+          <span><span class="tag-chip-mark">#</span>{tag}</span>
+          <span class="tag-chip-count">{posts.length}</span>
+        </a>
+      </li>
     ))}
-  </div>
+  </ul>
 </BaseLayout>
-
-<style>
-  .tag-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-  }
-  .tag-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4em 0.75em;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius);
-    color: var(--c-text);
-    font-size: 0.9rem;
-    text-decoration: none;
-  }
-  .tag-item:hover {
-    border-color: var(--c-accent);
-    color: var(--c-accent);
-    text-decoration: none;
-  }
-  .tag-count {
-    font-size: 0.75rem;
-    color: var(--c-text-muted);
-  }
-</style>

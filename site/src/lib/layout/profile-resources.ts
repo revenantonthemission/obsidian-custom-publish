@@ -14,12 +14,6 @@ export type ManagedHeadResource =
       crossorigin: '';
     }>
   | Readonly<{
-      id: 'legacy-pretendard';
-      rel: 'stylesheet';
-      href: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
-      crossorigin: '';
-    }>
-  | Readonly<{
       id: 'legacy-katex';
       rel: 'stylesheet';
       href: 'https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css';
@@ -28,7 +22,8 @@ export type ManagedHeadResource =
 
 export interface LegacyRouteResourcePolicy {
   readonly category: 'legacy';
-  readonly fontSource: 'legacy-cdn-pretendard';
+  /** Since the HIG redesign every route self-hosts Pretendard (FR2.2). */
+  readonly fontSource: 'local-site-font';
   readonly headResources: readonly ManagedHeadResource[];
 }
 
@@ -46,31 +41,19 @@ const RESOURCE_ISSUE_PATH = 'profile.metadata.resources';
 const INVALID_PATHNAME_PATTERN = /[\u0000-\u0020\u007f\\?#]/;
 const INVALID_DECODED_PATHNAME_PATTERN = /[\u0000-\u001f\u007f\\]/;
 
-export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze([
-  Object.freeze({
-    id: 'jsdelivr-preconnect',
-    rel: 'preconnect',
-    href: 'https://cdn.jsdelivr.net',
-    crossorigin: '',
-  }),
-  Object.freeze({
-    id: 'legacy-pretendard',
-    rel: 'stylesheet',
-    href:
-      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
-    crossorigin: '',
-  }),
-  Object.freeze({
-    id: 'legacy-katex',
-    rel: 'stylesheet',
-    href: 'https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css',
-    crossorigin: 'anonymous',
-  }),
-]) as readonly ManagedHeadResource[];
+/**
+ * Since the HIG redesign no route loads a third-party resource (NFR4): the
+ * KaTeX stylesheet and fonts come from the installed katex package through the
+ * pages that render math, so the jsDelivr preconnect and stylesheet are gone.
+ * The policy keeps its shape, and its validation, for any future resource.
+ */
+export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze(
+  [],
+) as readonly ManagedHeadResource[];
 
 export const LEGACY_ROUTE_RESOURCE_POLICY = Object.freeze({
   category: 'legacy',
-  fontSource: 'legacy-cdn-pretendard',
+  fontSource: 'local-site-font',
   headResources: LEGACY_BASE_LAYOUT_RESOURCES,
 }) satisfies LegacyRouteResourcePolicy;
 
@@ -142,7 +125,7 @@ export function validateRouteResourcePolicy(
     }
 
     if (resolved.value.category === 'legacy') {
-      return fontSource === 'legacy-cdn-pretendard' &&
+      return fontSource === 'local-site-font' &&
         category === 'legacy' &&
         hasExactLegacyResources(headResources)
         ? success(LEGACY_ROUTE_RESOURCE_POLICY)
