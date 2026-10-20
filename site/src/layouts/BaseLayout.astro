@@ -10,6 +10,10 @@ import {
   validateRouteResourcePolicy,
 } from '../lib/layout/profile-resources.js';
 import type { ProfilePageMetadata } from '../lib/profile/metadata.js';
+// The self-hosted Pretendard (FR2.2). Imported here, not through global.css:
+// only a stylesheet imported from a module gets its nested url()s resolved,
+// so only this way does Vite emit the font files (hig-built-assets.test.ts).
+import '../styles/fonts.css';
 // The two Pretendard subsets that cover Latin and the most frequent Hangul
 // (R-10). Vite emits them once; the @font-face rules in fonts.css point at
 // the same hashed files, so the preloads are reused, never fetched twice.
