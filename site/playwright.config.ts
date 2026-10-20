@@ -36,8 +36,14 @@ export default defineConfig({
       name: 'chromium',
       // crossunit.spec.ts belongs to the U3 command surface (test:crossunit,
       // playwright.crossunit.config.ts) — ignoring it here keeps this
-      // project's execution set exactly what it was before U3.
-      testIgnore: [/profile-cross-browser\.spec\.ts/, /crossunit\.spec\.ts/],
+      // project's execution set exactly what it was before U3. The hig-*
+      // specs belong to playwright.hig.config.ts, which builds and serves its
+      // own fixture site, so test:e2e's execution set stays unchanged too.
+      testIgnore: [
+        /profile-cross-browser\.spec\.ts/,
+        /crossunit\.spec\.ts/,
+        /hig-[a-z-]+\.spec\.ts/,
+      ],
       use: {
         ...devices['Desktop Chrome'],
         browserName: 'chromium',
