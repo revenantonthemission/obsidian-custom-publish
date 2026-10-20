@@ -1,6 +1,6 @@
 import { getProfileLocalNavigationState } from '../../lib/navigation.js';
 import { getPortfolioRole, selectPortfolioForRole } from '../../lib/profile/portfolio-roles.js';
-import type { PortfolioRoleId } from '../../lib/profile/portfolio-roles.js';
+import type { PortfolioRole, PortfolioRoleId } from '../../lib/profile/portfolio-roles.js';
 import type { NavigationState } from '../../lib/navigation.js';
 import type { ResumeDocumentLink } from '../../lib/profile/document-boundary.js';
 import type {
@@ -29,8 +29,8 @@ export type ProfileRouteIdentity =
     }>
   | Readonly<{
       route: 'portfolio';
-      pathname: '/portfolio' | '/portfolio/product-engineer';
-      label: 'Portfolio' | 'Product Engineer Portfolio';
+      pathname: PortfolioRole['pathname'];
+      label: PortfolioRole['title'];
     }>;
 
 export type ProfileLocalNavigationId =
@@ -357,8 +357,8 @@ export function buildResumePresentation(
 }
 
 /**
- * Maps the complete 3–6 project projection to a frozen semantic tree.
- * The selector-provided project and dimension order is preserved verbatim.
+ * Maps the role's selected projects to a frozen semantic tree.
+ * The role selector's project and dimension order is preserved verbatim.
  */
 export function buildPortfolioPresentation(
   profile: PortfolioProfile,

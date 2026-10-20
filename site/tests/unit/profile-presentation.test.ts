@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { getResumeDocumentLink } from '../../src/lib/profile/document-boundary.js';
 import { getCurrentResumeDocumentLink } from '../../src/lib/profile/current-resume-document.js';
 import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
+import type { ProfilePathname } from '../../src/lib/profile/metadata.js';
 import {
   buildPortfolioPresentation,
   buildResumePresentation,
@@ -23,6 +24,8 @@ const ASTRO_CLI = resolve(ROOT, 'node_modules/astro/bin/astro.mjs');
 const PRIMARY_NAVIGATION = ['/tags', '/graph', '/resume', '/portfolio'];
 const PRODUCT_ENGINEER_PATH = '/portfolio/product-engineer';
 const PRODUCT_ENGINEER_PROJECTS = ['docsuri'] as const;
+const INFRA_ENGINEER_PATH = '/portfolio/infra-engineer';
+const INFRA_ENGINEER_PROJECTS = ['docsuri', 'obsidian-custom-publish'] as const;
 const CASE_STUDY_DIMENSIONS = [
   'problem',
   'role',
@@ -189,6 +192,7 @@ describe('production Astro profile output', () => {
   let resumeHtml = '';
   let portfolioHtml = '';
   let productEngineerHtml = '';
+  let infraEngineerHtml = '';
   let searchIndex: unknown;
   let navTree: unknown;
 
@@ -217,18 +221,20 @@ describe('production Astro profile output', () => {
       );
     }
 
-    const [searchIndexText, navTreeText, resume, portfolio, productEngineer] = await Promise.all([
+    const [searchIndexText, navTreeText, resume, portfolio, productEngineer, infraEngineer] = await Promise.all([
       readFile(join(outputRoot, 'search-index.json'), 'utf8'),
       readFile(join(outputRoot, 'nav-tree.json'), 'utf8'),
       readFile(join(outputRoot, 'resume', 'index.html'), 'utf8'),
       readFile(join(outputRoot, 'portfolio', 'index.html'), 'utf8'),
       readFile(join(outputRoot, 'portfolio', 'product-engineer', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'portfolio', 'infra-engineer', 'index.html'), 'utf8'),
     ]);
     searchIndex = JSON.parse(searchIndexText);
     navTree = JSON.parse(navTreeText);
     resumeHtml = resume;
     portfolioHtml = portfolio;
     productEngineerHtml = productEngineer;
+    infraEngineerHtml = infraEngineer;
   }, 75_000);
 
   afterAll(async () => {
@@ -370,18 +376,51 @@ describe('production Astro profile output', () => {
       }));
   });
 
-  test('links both portfolio roles with exactly one current role on each page', () => {
+  test('renders the infrastructure portfolio with matching project anchors and metadata', () => {
+    assertProfileShell(infraEngineerHtml, 'portfolio', 'Infra Engineer Portfolio');
+    expect(headingTexts(infraEngineerHtml, 2)).toEqual(['프로필', '대표 프로젝트']);
+    assertLogicalHeadingOrder(infraEngineerHtml);
+    assertNavigation(infraEngineerHtml, '/portfolio');
+    assertCaseStudies(infraEngineerHtml, 2);
+    assertProfileMetadata(infraEngineerHtml, INFRA_ENGINEER_PATH, 'portfolio-summary', ['CollectionPage', 'ItemList']);
+    const ids = openingTags(infraEngineerHtml, 'article').map((tag) => attribute(tag, 'id'));
+    expect(ids).toEqual(INFRA_ENGINEER_PROJECTS.map((id) => `project-${id}`));
+    expect(anchorHrefs(elementByClass(infraEngineerHtml, 'nav', 'portfolio-project-navigation')))
+      .toEqual(ids.map((id) => `#${id}`));
+    const canonical = `https://rvnnt.dev${INFRA_ENGINEER_PATH}`;
+    const documents = jsonLdDocuments(infraEngineerHtml);
+    expect(documents[1]).toMatchObject({
+      '@id': `${canonical}#projects`,
+      numberOfItems: 2,
+      itemListElement: INFRA_ENGINEER_PROJECTS.map((id, index) => ({
+        position: index + 1,
+        url: `${canonical}#project-${id}`,
+      })),
+    });
+    expect(attribute(metaTags(infraEngineerHtml, 'property', 'og:url')[0]!, 'content')).toBe(canonical);
+    expect(infraEngineerHtml).toContain('data-profile-fact-id="project-docsuri-architecture-local-runtime"');
+    expect(infraEngineerHtml).toContain('data-profile-fact-id="project-docsuri-outcomes-recovery-checks"');
+    expect(infraEngineerHtml).toContain('data-profile-fact-id="project-obsidian-custom-publish-problem-renderer-exit"');
+    expect(elementByClass(infraEngineerHtml, 'p', 'portfolio-summary')).not.toContain('data-profile-fact-id');
+    const factIds = [...infraEngineerHtml.matchAll(/data-profile-fact-id="([^"]+)"/g)].map((match) => match[1]);
+    expect(new Set(factIds).size).toBe(factIds.length);
+    expect(infraEngineerHtml).not.toContain('cdn.jsdelivr.net');
+  });
+
+  test('links all portfolio roles with exactly one current role on each page', () => {
     for (const [html, pathname] of [
       [portfolioHtml, '/portfolio'],
       [productEngineerHtml, PRODUCT_ENGINEER_PATH],
+      [infraEngineerHtml, INFRA_ENGINEER_PATH],
     ] as const) {
       const navigation = elementByClass(html, 'nav', 'portfolio-role-navigation');
       expect(attribute(openingTags(navigation, 'nav')[0]!, 'aria-label'))
         .toBe('직무별 포트폴리오');
-      expect(anchorHrefs(navigation)).toEqual(['/portfolio', PRODUCT_ENGINEER_PATH]);
+      expect(anchorHrefs(navigation)).toEqual(['/portfolio', PRODUCT_ENGINEER_PATH, INFRA_ENGINEER_PATH]);
       expect(currentAnchorHrefs(navigation)).toEqual([pathname]);
       expect(stripTags(navigation)).toContain('Data Engineer / AI');
       expect(stripTags(navigation)).toContain('Product Engineer');
+      expect(stripTags(navigation)).toContain('Infra Engineer');
       expect(isInsideAstroIsland(html, openingTags(navigation, 'nav')[0]!)).toBe(false);
     }
   });
@@ -444,8 +483,10 @@ describe('production Astro profile output', () => {
     expect(navTreeSlugs(navTree)).not.toContain('portfolio');
     expect(searchDocumentSlugs(searchIndex)).not.toContain('portfolio/product-engineer');
     expect(navTreeSlugs(navTree)).not.toContain('portfolio/product-engineer');
+    expect(searchDocumentSlugs(searchIndex)).not.toContain('portfolio/infra-engineer');
+    expect(navTreeSlugs(navTree)).not.toContain('portfolio/infra-engineer');
 
-    for (const html of [resumeHtml, portfolioHtml, productEngineerHtml]) {
+    for (const html of [resumeHtml, portfolioHtml, productEngineerHtml, infraEngineerHtml]) {
       expect(anchorHrefs(elementByClass(html, 'nav', 'desktop-nav'))).toEqual(
         PRIMARY_NAVIGATION,
       );
@@ -569,7 +610,7 @@ function assertCaseStudies(html: string, expectedCount?: number): void {
 
 function assertProfileMetadata(
   html: string,
-  pathname: '/resume' | '/portfolio' | '/portfolio/product-engineer',
+  pathname: ProfilePathname,
   visibleSummaryClass: 'resume-summary' | 'portfolio-summary',
   expectedTypes: readonly string[],
 ): void {

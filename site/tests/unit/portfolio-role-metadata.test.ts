@@ -44,17 +44,20 @@ describe('role-aware portfolio metadata', () => {
     ))).toEqual(metadata);
   });
 
-  test('uses the product role in canonical, social metadata and every JSON-LD identity', () => {
+  test.each([
+    { roleId: 'product-engineer', titleSuffix: 'Product Engineer Portfolio', projectIds: ['docsuri'] },
+    { roleId: 'infra-engineer', titleSuffix: 'Infra Engineer Portfolio', projectIds: ['docsuri', 'obsidian-custom-publish'] },
+  ] as const)('uses $roleId in canonical, social metadata and every JSON-LD identity', ({ roleId, titleSuffix, projectIds }) => {
     const assembly = getProductionProfileAssembly();
-    const role = getPortfolioRole('product-engineer');
+    const role = getPortfolioRole(roleId);
     const profile = selectPortfolioForRole(assembly.portfolio, role.id);
     const metadata = success(buildApprovedPortfolioMetadata(site, assembly.source, role.id));
-    const canonical = 'https://example.test/portfolio/product-engineer';
-    const title = `${assembly.homepage.name.value} — Product Engineer Portfolio`;
+    const canonical = `https://example.test/portfolio/${roleId}`;
+    const title = `${assembly.homepage.name.value} — ${titleSuffix}`;
 
     expect(metadata).toMatchObject({
       route: 'portfolio',
-      pathname: '/portfolio/product-engineer',
+      pathname: `/portfolio/${roleId}`,
       title,
       description: role.introduction,
       canonical,
@@ -80,7 +83,7 @@ describe('role-aware portfolio metadata', () => {
         '@type': 'ItemList',
         '@id': `${canonical}#projects`,
         itemListOrder: 'https://schema.org/ItemListOrderAscending',
-        numberOfItems: 1,
+        numberOfItems: projectIds.length,
         itemListElement: profile.projects.map((project, index) => {
           const url = `${canonical}#project-${project.id}`;
           return {
@@ -103,16 +106,16 @@ describe('role-aware portfolio metadata', () => {
         }),
       },
     });
-    expect(profile.projects.map(({ id }) => id)).toEqual(['docsuri']);
+    expect(profile.projects.map(({ id }) => id)).toEqual(projectIds);
     expect(success(validateMetadataConsistency(
       site, assembly.source, 'portfolio', metadata,
     ))).toEqual(metadata);
     expect(Object.isFrozen(metadata.jsonLd[1]?.payload)).toBe(true);
   });
 
-  test('rejects mismatched role routes, descriptions and project positions', () => {
+  test.each(['product-engineer', 'infra-engineer'] as const)('%s rejects mismatched role routes, descriptions and project positions', (roleId) => {
     const { source } = getProductionProfileAssembly();
-    const metadata = success(buildApprovedPortfolioMetadata(site, source, 'product-engineer'));
+    const metadata = success(buildApprovedPortfolioMetadata(site, source, roleId));
     const misplaced = structuredClone(metadata) as unknown as {
       jsonLd: Array<{ payload: { itemListElement: Array<{ position: number }> } }>;
     };
@@ -132,7 +135,7 @@ describe('role-aware portfolio metadata', () => {
   test('keeps the fact-approval capability gate for each role', () => {
     const { source } = getProductionProfileAssembly();
     const forged = structuredClone(source) as FactApprovedProfile;
-    for (const roleId of ['data-engineer-ai', 'product-engineer'] as const) {
+    for (const roleId of ['data-engineer-ai', 'product-engineer', 'infra-engineer'] as const) {
       const metadata = success(buildApprovedPortfolioMetadata(site, source, roleId));
       expect(buildApprovedPortfolioMetadata(site, forged, roleId).ok).toBe(false);
       expect(validateMetadataConsistency(site, forged, 'portfolio', metadata).ok).toBe(false);
@@ -157,7 +160,7 @@ describe('role-aware portfolio metadata', () => {
 });
 
 describe('portfolio role resources', () => {
-  test.each(['/portfolio/product-engineer', '/portfolio/product-engineer/'])(
+  test.each(['/portfolio/product-engineer', '/portfolio/product-engineer/', '/portfolio/infra-engineer', '/portfolio/infra-engineer/'])(
     'uses only local profile fonts for %s',
     (pathname) => {
       expect(success(resolveRouteResourcePolicy(pathname))).toBe(PROFILE_ROUTE_RESOURCE_POLICY);
@@ -167,7 +170,7 @@ describe('portfolio role resources', () => {
     },
   );
 
-  test.each(['/portfolio/example', '/portfolio/product-engineer/case-study', '/portfolio/product-engineer-old'])(
+  test.each(['/portfolio/example', '/portfolio/product-engineer/case-study', '/portfolio/product-engineer-old', '/portfolio/infra-engineer/case-study', '/portfolio/infra-engineer-old'])(
     'retains legacy resources for unregistered path %s',
     (pathname) => {
       expect(success(resolveRouteResourcePolicy(pathname))).toBe(LEGACY_ROUTE_RESOURCE_POLICY);

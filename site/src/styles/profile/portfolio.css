@@ -225,7 +225,7 @@
 
 @media (min-width: 768px) {
   .portfolio-project-navigation ol {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   }
 
   .portfolio-case-study {
