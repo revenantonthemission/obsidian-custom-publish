@@ -1,7 +1,9 @@
 ---
+import { ArrowDownRight } from "lucide-static";
 import CaseStudy from "./CaseStudy.astro";
 import ContactActions from "./ContactActions.astro";
 import PortfolioRoleNavigation from "./PortfolioRoleNavigation.astro";
+import { decorativeIcon } from "../../lib/icons";
 import { getPortfolioRole } from "../../lib/profile/portfolio-roles.js";
 import type { PortfolioRoleId } from "../../lib/profile/portfolio-roles.js";
 import type { PortfolioPresentation } from "./presentation.js";
@@ -52,7 +54,7 @@ const role = getPortfolioRole(roleId);
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span>{project.title.value}</span>
-                  <span class="portfolio-project-arrow" aria-hidden="true">↘</span>
+                  <span class="portfolio-project-arrow" set:html={decorativeIcon(ArrowDownRight, 16)}></span>
                 </a>
               </li>
             ))}
