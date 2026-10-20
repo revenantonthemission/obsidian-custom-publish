@@ -36,6 +36,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 ## Git Flow
 - Feature branches per phase off `develop`, `--no-ff` merges back
 - Never pile multiple phases on one feature branch
+- AI-DLC Construction worktrees live under `.aidlc/worktrees/`, which `.gitignore` ignores; never commit a nested worktree
 
 ## Rust Gotchas
 - `Vec::dedup()` only removes consecutive duplicates — always `sort()` first
@@ -54,21 +55,29 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Korean filenames produce slugs with special chars — slugify strips non-alphanumeric except Korean + hyphens
 - `rehype-slug` generates heading IDs — TOC component depends on these `id` attributes
 - D2 and Mermaid diagrams are dual-rendered (light/dark SVGs); themed pairs wrapped in `.diagram-container`, CSS crossfades via `opacity` (not `display`). Typst has no theme support.
-- BaseLayout.astro `<script is:inline>` blocks must be ES5 (no const/let, no arrow functions) — they run before any polyfills
+- BaseLayout.astro `<script is:inline>` blocks must be ES5 (no const/let, no arrow functions) — they run before any polyfills. Prettier's `trailingComma: "es5"` keeps them ES5. Their exact bytes are pinned in `INHERITED_INLINE_SCRIPT_BASELINES` (`scripts/profile/asset-budget.mjs`): any edit, a reformat included, needs a new baseline from a `PROFILE_VERIFICATION_BUILD=1` build
 - Preact island `.tsx` files trigger spurious `JSX.IntrinsicElements` TS errors in IDE — `npx astro build` is the source of truth
 - `SVGSVGElement` has no `offsetHeight` — use `getBoundingClientRect()` to trigger reflow on SVG elements
 - `set:html` in PostLayout trusts vault content — revisit if vault ever accepts third-party content
 - BaseLayout uses `<style is:global>` — scoped styles don't match `set:html` content (callout divs, diagram imgs, code blocks)
 - Rehype wraps `<img>` with non-empty `alt` in `<figure>` + `<figcaption>` — use `alt=""` for decorative images (diagrams)
-- Icon libraries: `lucide-static` (build-time SVG via `set:html`) + `lucide-preact` (interactive islands only)
+- Icon libraries: `lucide-static` (build-time SVG via `set:html`, through `decorativeIcon()` in `src/lib/icons.ts`) + `lucide-preact` (interactive islands only). Post-page scripts build their icons with DOM APIs in `src/scripts/svg-icon.ts`, never `innerHTML`. Every icon is `aria-hidden` at a 1.75 stroke; the control around it carries the Korean name
 - Homepage renders `Passion Project.md` from vault; "이번주에 작성된 포스트" section is dynamically replaced with today's published posts ("오늘 발행된 글")
-- CSS variables use `--c-` prefix: `--c-text-muted`, `--c-border`, `--c-accent`, `--c-surface`, etc. Never use unprefixed names.
+- Design tokens (HIG) live in `src/styles/tokens.css`: light values on `:root`, dark values twice — under `@media (prefers-color-scheme: dark)` as `:root:not([data-theme='light'])` and as `:root[data-theme='dark']` — and the two dark blocks must agree (`tests/unit/hig-tokens.test.ts`, which also checks contrast). `global.css` only imports `tokens.css`, `base.css`, `chrome.css` and `search.css`; `fonts.css` is imported by BaseLayout's frontmatter (see the fonts note below)
+- Color variables use the `--c-` prefix: `--c-text`, `--c-text-secondary`, `--c-tint`, `--c-tint-fill`, `--c-on-tint`, `--c-bg`, `--c-bg-grouped`, `--c-surface`, `--c-separator`, `--c-code-bg`, `--c-graph-*`, etc. Never use unprefixed color names. Scales have their own prefixes: `--space-*`, `--text-*`, `--leading-*`, `--radius-*`, `--dur-*`, `--ease-*`, plus `--target` (44px) and `--max-width`/`--max-reading`. The old `--c-text-muted`, `--c-border` and `--c-accent` are gone
+- Appearance model: one localStorage key, `appearance` = `auto` | `light` | `dark` (anything else means `auto`). BaseLayout's inline bootstrap sets `data-appearance` on `<html>` before first paint, sets `data-theme` only for an explicit light or dark (`auto` follows `prefers-color-scheme`), and deletes the retired keys `theme`, `theme-manual`, `solar`, `geo`, `geo-denied`. `src/lib/appearance.ts` holds the same rules for the ThemeToggle island (자동 → 라이트 → 다크); keep the two in step. `solar.ts` (sunrise and geolocation switching) is removed
+- Fonts and KaTeX are self-hosted; no route requests another origin (`hig-performance.spec.ts`). Pretendard 1.3.9 comes from the `pretendard` npm package, is verified against `scripts/profile/font-allowlist.json` and materialized at build time into the gitignored `site/.generated/profile-font/`; `fonts.css` declares the dynamic subsets and BaseLayout preloads subsets 90 and 91. BaseLayout imports `fonts.css` from its frontmatter, never through `global.css`: inside the `<style is:global>` @import chain Vite leaves nested `url()`s unresolved and emits no font files, which only the built output shows (`tests/unit/hig-built-assets.test.ts` guards it). KaTeX CSS and fonts come from the `katex` package, imported by `PostLayout.astro` and `pages/index.astro`
 - Inline KaTeX overridden to `font-size: 1em` in post.css (default `1.21em` is too large for Pretendard body text)
-- Shiki code blocks get `data-language` via custom transformer in render.ts — CSS `::before` pseudo-element renders language badge
+- Shiki code blocks get `data-language` via custom transformer in render.ts — `src/scripts/copy-button.ts` turns it into the `.code-language` label in the code panel's bar, next to the copy button
+- Prettier formats `site/`: `npm run format`, and `npm run format:check` must pass (`.prettierrc`: single quotes, width 100, `trailingComma: "es5"`). prettier-plugin-astro puts mixed inline children on separate lines, and that whitespace renders between inline elements: where two inline nodes must touch, put `{/* prettier-ignore */}` on the line before (see `pages/tags/index.astro`)
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
-- 85 Rust tests (33 unit + 52 integration) using `fixtures/vault/` (11 test markdown files)
+- 110 Rust tests (33 unit + 77 integration) using `fixtures/vault/` (15 markdown files and one image)
 - Tests run against real fixture data, not mocks
 - `cargo test` from `preprocessor/` directory (tests use relative path `../fixtures/vault`)
 - Diagram rendering tests use inline closures for `render_fn` parameter (no real CLI spawn) — see `test_render_themed_diagram_wraps_in_container`
+- Site, from `site/`: `npm run test:unit` (Vitest, 348 tests), `npm run test:pbt` (fast-check, 37), `npx astro check`, `npm run format:check`
+- HIG browser checks: `npx playwright test --config playwright.hig.config.ts` preprocesses `fixtures/vault`, builds, serves `dist/` through `local-server.mjs` on 127.0.0.1:4329 and runs `tests/e2e/hig-*.spec.ts` in Chromium, Firefox and WebKit (861 tests: 846 pass; 15 skip where an engine cannot run them, such as the Chromium-only Core Web Vitals checks). `HIG_SKIP_BUILD=1` reuses the current `dist/`. The run overwrites the gitignored `content/` and `site/public/*.json` with fixture output; `just preprocess` restores real vault output
+- `just crossunit`: the link sweep plus no-JS navigation checks. On the fixture build the sweep reports exactly one broken link, the fixture's deliberate `nonexistent-image.png` in `Post With Image.md`
+- `npm run test:e2e` (the profile's evidence-sealed suite) also needs the maintainer's manual accessibility record, `site/verification/profile/manual-web-accessibility.json` (16 states). Any change to a review-subject file (listed in `scripts/profile/accessibility-review-contract.mjs`) makes it fail with `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE` until the review is redone. Never write or re-stamp that record on the maintainer's behalf
