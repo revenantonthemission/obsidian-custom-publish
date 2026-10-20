@@ -1,7 +1,8 @@
 use anyhow::{Context, Result, bail};
 use regex::Regex;
+use std::ffi::OsString;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use tempfile::NamedTempFile;
 
@@ -36,14 +37,44 @@ static MMDC_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 
 /// Optional puppeteer JSON config (e.g. `executablePath` for system Chrome).
 /// Looked up once at startup, relative to the preprocessor's cwd.
-static PUPPETEER_CONFIG_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
-    let path = PathBuf::from(".puppeteer-config.json");
+static PUPPETEER_CONFIG_PATH: LazyLock<Option<PathBuf>> =
+    LazyLock::new(|| puppeteer_config_in(Path::new(".")));
+
+/// The `.puppeteer-config.json` in `dir`, as an absolute path, when it exists.
+fn puppeteer_config_in(dir: &Path) -> Option<PathBuf> {
+    let path = dir.join(".puppeteer-config.json");
     if path.exists() {
         path.canonicalize().ok()
     } else {
         None
     }
-});
+}
+
+/// The arguments `mmdc` runs with. `-p` passes the puppeteer config when
+/// there is one (a029615). `theme` is `None` when the source's own
+/// `%%{init}%%` directive sets the theme, because `-t` would conflict with it.
+fn mmdc_args(
+    input: &Path,
+    output: &Path,
+    puppeteer_config: Option<&Path>,
+    theme: Option<&str>,
+) -> Vec<OsString> {
+    let mut args: Vec<OsString> = vec![
+        "-i".into(),
+        input.into(),
+        "-o".into(),
+        output.into(),
+        "-b".into(),
+        "transparent".into(),
+    ];
+    if let Some(config) = puppeteer_config {
+        args.extend(["-p".into(), config.into()]);
+    }
+    if let Some(theme) = theme {
+        args.extend(["-t".into(), theme.into()]);
+    }
+    args
+}
 
 static INIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%%\{[\s\S]*?\}%%").unwrap());
 
@@ -160,24 +191,15 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
         .as_ref()
         .context("mmdc not found — install with: npm install -g @mermaid-js/mermaid-cli")?;
 
-    let mut cmd = std::process::Command::new(mmdc);
-    cmd.arg("-i")
-        .arg(input.path())
-        .arg("-o")
-        .arg(&output_path)
-        .arg("-b")
-        .arg("transparent");
-
-    if let Some(config) = PUPPETEER_CONFIG_PATH.as_ref() {
-        cmd.arg("-p").arg(config);
-    }
-
     // Only pass -t when there's no %%{init}%% directive (avoid conflicts)
-    if !has_init {
-        cmd.arg("-t").arg(theme);
-    }
-
-    let result = cmd
+    let args = mmdc_args(
+        input.path(),
+        &output_path,
+        PUPPETEER_CONFIG_PATH.as_deref(),
+        (!has_init).then_some(theme),
+    );
+    let result = std::process::Command::new(mmdc)
+        .args(args)
         .output()
         .with_context(|| format!("failed to spawn mmdc at {}", mmdc.display()))?;
 
@@ -187,4 +209,90 @@ pub fn render_mermaid(source: &str, theme: &str) -> Result<String> {
     }
 
     std::fs::read_to_string(&output_path).context("failed to read mermaid SVG output")
+}
+
+// Regression tests for a029615 (the puppeteer config passed to mmdc with -p),
+// added by the code-generation loop-back 1 repair (plan Step 50).
+#[cfg(test)]
+mod tests {
+    use super::{mmdc_args, puppeteer_config_in};
+    use std::ffi::OsString;
+    use std::path::Path;
+
+    fn strings(args: &[OsString]) -> Vec<String> {
+        args.iter()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    #[test]
+    fn mmdc_gets_the_puppeteer_config_with_p_when_the_file_exists() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let file = dir.path().join(".puppeteer-config.json");
+        std::fs::write(&file, r#"{"executablePath":"/usr/bin/chrome"}"#).expect("config file");
+        let expected = file.canonicalize().expect("canonical config path");
+
+        let config = puppeteer_config_in(dir.path());
+        assert_eq!(config.as_deref(), Some(expected.as_path()));
+
+        let args = mmdc_args(
+            Path::new("in.mmd"),
+            Path::new("out.svg"),
+            config.as_deref(),
+            Some("default"),
+        );
+        assert_eq!(
+            strings(&args),
+            [
+                "-i",
+                "in.mmd",
+                "-o",
+                "out.svg",
+                "-b",
+                "transparent",
+                "-p",
+                expected.to_str().expect("UTF-8 path"),
+                "-t",
+                "default",
+            ]
+        );
+    }
+
+    #[test]
+    fn mmdc_gets_no_p_when_no_puppeteer_config_exists() {
+        let dir = tempfile::tempdir().expect("temp dir");
+
+        let config = puppeteer_config_in(dir.path());
+        assert_eq!(config, None);
+
+        let args = mmdc_args(
+            Path::new("in.mmd"),
+            Path::new("out.svg"),
+            config.as_deref(),
+            Some("dark"),
+        );
+        assert!(!args.iter().any(|arg| arg == "-p"), "no -p in {args:?}");
+        assert_eq!(
+            strings(&args),
+            [
+                "-i",
+                "in.mmd",
+                "-o",
+                "out.svg",
+                "-b",
+                "transparent",
+                "-t",
+                "dark"
+            ]
+        );
+    }
+
+    #[test]
+    fn mmdc_gets_no_t_when_the_source_sets_its_own_theme() {
+        let args = mmdc_args(Path::new("in.mmd"), Path::new("out.svg"), None, None);
+        assert_eq!(
+            strings(&args),
+            ["-i", "in.mmd", "-o", "out.svg", "-b", "transparent"]
+        );
+    }
 }
