@@ -1,14 +1,16 @@
 /* Global stylesheet entry, loaded by BaseLayout on every route (FR2, NFR5).
  *
- * It was split so no file nears 800 lines: tokens, the self-hosted font, the
- * base layer and the shared chrome. This file and the four it imports are
- * subjects of the profile accessibility review
+ * It was split so no file nears 800 lines: tokens, the base layer and the
+ * shared chrome. The self-hosted font (fonts.css) is imported by BaseLayout's
+ * frontmatter instead: through this file's @import chain, which starts in a
+ * <style> block, Vite leaves the font's url()s unresolved and emits no font
+ * files. This file, the files it imports and fonts.css are subjects of the
+ * profile accessibility review
  * (scripts/profile/accessibility-review-contract.mjs). Article styles
  * (callouts, diagrams, post content) load only on routes that render notes,
  * which keeps them out of the profile CSS budget.
  */
 @import './tokens.css';
-@import './fonts.css';
 @import './base.css';
 @import './chrome.css';
 @import './search.css';

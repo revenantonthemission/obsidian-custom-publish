@@ -5,7 +5,9 @@
  * WOFF2 subsets split by unicode-range with font-display: swap, under the
  * family name the PDF renderer checks, "RVNNT Profile". Loading it here, once,
  * replaces the CDN stylesheet the blog routes used and the separate import the
- * profile routes used. BaseLayout preloads the two most-used subsets.
+ * profile routes used. BaseLayout imports this file from its frontmatter, never
+ * through global.css, so Vite resolves the subsets' url()s and emits the files;
+ * it also preloads the two most-used subsets.
  */
 @import '../../.generated/profile-font/pretendard-profile.css';
 
