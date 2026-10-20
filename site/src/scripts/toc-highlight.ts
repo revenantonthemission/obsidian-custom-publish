@@ -65,5 +65,8 @@ if (headings.length > 0) {
     measureReadingLine();
     schedule();
   });
+  // Folding a section or a late image moves the headings without a scroll.
+  const content = document.querySelector(".post-content");
+  if (content) new ResizeObserver(schedule).observe(content);
   schedule();
 }

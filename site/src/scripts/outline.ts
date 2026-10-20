@@ -87,21 +87,20 @@ function focusableIn(root: HTMLElement): HTMLElement[] {
   );
 }
 
+/** The next stop in a ring of `count` stops; from outside the ring, the first or last. */
+function nextStop(current: number, count: number, backwards: boolean): number {
+  if (current === -1) return backwards ? count - 1 : 0;
+  return (current + (backwards ? count - 1 : 1)) % count;
+}
+
 /** Keeps Tab and Shift+Tab inside the open sheet, wrapping at either end. */
 function trapTab(dialog: HTMLDialogElement, event: KeyboardEvent): void {
   if (event.key !== "Tab") return;
   const focusables = focusableIn(dialog);
   if (focusables.length === 0) return;
   event.preventDefault();
-  const step = event.shiftKey ? -1 : 1;
   const current = focusables.indexOf(document.activeElement as HTMLElement);
-  const next =
-    current === -1
-      ? event.shiftKey
-        ? focusables.length - 1
-        : 0
-      : (current + step + focusables.length) % focusables.length;
-  focusables[next]?.focus();
+  focusables[nextStop(current, focusables.length, event.shiftKey)]?.focus();
 }
 
 function isOutside(dialog: HTMLDialogElement, event: MouseEvent): boolean {

@@ -19,6 +19,12 @@ interface PreviewEntry {
 
 type PreviewIndex = ReadonlyMap<string, PreviewEntry>;
 
+/** A lookup either finds the post, learns it has no preview, or cannot load the index. */
+type Lookup =
+  | { readonly kind: "found"; readonly entry: PreviewEntry }
+  | { readonly kind: "missing" }
+  | { readonly kind: "failed" };
+
 const HOVER_DELAY_MS = 300;
 const HIDE_DELAY_MS = 120;
 const CARD_ID = "link-preview";
@@ -69,6 +75,15 @@ function loadIndex(): Promise<PreviewIndex> {
   return indexRequest;
 }
 
+async function lookup(slug: string): Promise<Lookup> {
+  try {
+    const entry = (await loadIndex()).get(slug);
+    return entry === undefined ? { kind: "missing" } : { kind: "found", entry };
+  } catch {
+    return { kind: "failed" };
+  }
+}
+
 function slugOf(anchor: HTMLAnchorElement): string | null {
   const match = POST_HREF.exec(anchor.getAttribute("href") ?? "");
   if (!match?.[1]) return null;
@@ -103,6 +118,7 @@ function ensureCard(): HTMLElement {
   return element;
 }
 
+/** Text only, set through textContent; null shows the load error instead. */
 function fill(target: HTMLElement, entry: PreviewEntry | null): void {
   if (entry === null) {
     target.replaceChildren(paragraph("link-preview-summary", LOAD_ERROR));
@@ -159,20 +175,16 @@ async function open(anchor: HTMLAnchorElement): Promise<void> {
   clearTimers();
   if (current !== anchor) current?.removeAttribute("aria-describedby");
   current = anchor;
-  let entry: PreviewEntry | null;
-  try {
-    entry = (await loadIndex()).get(slug) ?? null;
-    // A post without a preview gets no card at all.
-    if (entry === null) {
-      if (current === anchor) close();
-      return;
-    }
-  } catch {
-    entry = null;
-  }
+  const result = await lookup(slug);
+  // Another link, a blur or Escape may have taken over while the index loaded.
   if (current !== anchor) return;
+  // A post without a preview gets no card at all.
+  if (result.kind === "missing") {
+    close();
+    return;
+  }
   const target = ensureCard();
-  fill(target, entry);
+  fill(target, result.kind === "found" ? result.entry : null);
   target.hidden = false;
   place(target, anchor);
   anchor.setAttribute("aria-describedby", CARD_ID);
