@@ -76,12 +76,23 @@ diff, 구조 digest 를 재계산한 뒤에야 `FactApprovedProfile` 을 발급�
 
 ### 2. 수동 웹 접근성 게이트
 
-`verification/profile/manual-web-accessibility.json` 은 12개 상태에 대한 사람
-검토 기록이며 **review subject digest 에 묶여 있다.** digest 는
-`src/components/profile`, `src/lib/layout`, `src/styles/profile` 의 현재 내용에서
-계산한다. 이 세 디렉터리 중 하나라도 바뀌면 digest 가 이동하고 기록은 즉시
-stale 이 되며 `npm run test:e2e` 가 `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE`
-로 실패한다. 스타일을 한 줄만 고쳐도 12개 상태를 다시 검토해야 한다.
+`verification/profile/manual-web-accessibility.json` 은 16개 상태에 대한 사람
+검토 기록이며 **review subject digest 에 묶여 있다.** 16개 상태는 Chromium 에서
+`/resume` 과 `/portfolio` × 320×800 과 1440×900 × 라이트와 다크 × 펼침을 모두 닫음과
+모두 엶이고, 상태마다 색에 기대지 않는 의미, 포커스 모양, 포커스 가림, 읽기 순서를
+판정한다. 두 페이지 모두 네이티브 펼침을 가지므로 `/portfolio` 도 닫음과 엶을 따로
+본다.
+
+digest 는 `scripts/profile/accessibility-review-contract.mjs` 가 정한 파일의 현재
+내용에서 계산한다: `src/components/profile`, `src/lib/layout`, `src/styles/profile`
+세 디렉터리, 공유 레이아웃과 헤더(`BaseLayout.astro`, `Header.astro`,
+`MobileNav.tsx`, `navigation.ts`), 전역 스타일(`global.css`, `tokens.css`,
+`fonts.css`, `base.css`, `chrome.css`), 두 프로필 페이지,
+`astro.config.mjs`, `package.json`, 잠금 파일, 빌드와 서빙 스크립트. 이 중 하나라도
+바뀌면 digest 가 이동하고 기록은 즉시 stale 이 되며 `npm run test:e2e` 가
+`MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE` 로 실패한다. 오류에 실린
+`reviewSubjectDigest` 가 새 기록에 적을 값이다. 스타일을 한 줄만 고쳐도 16개 상태를
+다시 검토해야 한다.
 
 ### 3. Exact-SHA PDF 리뷰 게이트
 
