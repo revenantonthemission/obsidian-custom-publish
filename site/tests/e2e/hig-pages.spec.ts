@@ -399,6 +399,44 @@ test.describe('selection states (NFR1; R-05, R-12)', () => {
   }
 });
 
+// Loop-back 2 (NFR1-b; review finding R-17). No fixture note highlights a link,
+// so the test wraps the homepage note's link in <mark>, the markup ==[[…]]==
+// renders to. The note must take the site's highlight, not the browser's
+// yellow, and its link must keep 4.5:1 on it.
+test.describe('highlights in the homepage note (NFR1-b; R-17)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  for (const scheme of ['light', 'dark'] as const) {
+    test(`a highlight takes --c-mark-fill and its link reaches 4.5:1, ${scheme}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await gotoSettled(page, '/');
+      await page
+        .locator('.home-content p a')
+        .first()
+        .evaluate((link) => {
+          const mark = document.createElement('mark');
+          link.replaceWith(mark);
+          mark.append(link);
+        });
+      const mark = page.locator('.home-content mark');
+      const expected = await page.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.style.backgroundColor = 'var(--c-mark-fill)';
+        document.body.append(probe);
+        const value = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return value;
+      });
+      await expect(mark).toHaveCSS('background-color', expected);
+      const pairs = await renderedContrast(page, '.home-content mark a');
+      expect(pairs).toHaveLength(1);
+      expect(pairs.filter(({ ratio }) => ratio < 4.5)).toEqual([]);
+    });
+  }
+});
+
 test.describe('narrow widths', () => {
   test.use({ viewport: viewportFor(320) });
 

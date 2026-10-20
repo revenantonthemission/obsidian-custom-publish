@@ -2,7 +2,7 @@
 // recomputed from site/src/styles/tokens.css on every run so a token edit that
 // breaks a pair fails here, before any browser check. Includes the mockups
 // review fixes R-01 (code panel) and R-02 (non-text on the regular glass bar).
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
@@ -463,16 +463,87 @@ describe('selection and highlight states (NFR1; R-05, R-12)', () => {
     expect(failures(pairs)).toEqual([]);
   });
 
-  test('a --c-tint link inside a highlight reaches 4.5:1 on --c-mark-fill (R-12)', () => {
+  // Loop-back 2 (NFR1-b; review finding R-17): a highlight sits on more than
+  // the page ground. The link color is read from the stylesheets, so the pair
+  // checked is the pair the site paints.
+  test('a link inside a highlight reaches 4.5:1 on --c-mark-fill over every ground it can sit on (R-12, R-17)', () => {
+    const link = highlightLinkTokens();
     const pairs = SCHEMES.flatMap((scheme) => {
       const map = byScheme[scheme];
-      const mark = composite(color(map, '--c-mark-fill'), color(map, '--c-bg'));
-      return ['--c-tint', '--c-tint-hover', '--c-text'].map((text) => ({
-        label: `${scheme} ${text} on --c-mark-fill`,
-        ratio: contrast(color(map, text), mark),
-        minimum: TEXT_MIN,
-      }));
+      const page = color(map, '--c-bg');
+      const mix = Number.parseFloat(resolveValue(map, '--c-callout-mix')) / 100;
+      const grounds: Record<string, Rgba> = {
+        '--c-bg': page,
+        '--c-bg-grouped (homepage note outside a card)': color(map, '--c-bg-grouped'),
+        '--c-surface (homepage card)': color(map, '--c-surface'),
+        '--c-surface-2 (table header)': color(map, '--c-surface-2'),
+        ...Object.fromEntries(
+          HUES.map((hue) => {
+            const base = color(map, `--c-${hue}`);
+            return [`${hue} callout`, composite([base[0], base[1], base[2], mix], page)];
+          })
+        ),
+      };
+      return Object.entries(grounds).flatMap(([ground, rgba]) => {
+        const mark = composite(color(map, '--c-mark-fill'), rgba);
+        return [
+          { role: 'link', token: link.rest },
+          { role: 'hovered link', token: link.hover },
+          { role: 'text', token: '--c-text' },
+        ].map(({ role, token }) => ({
+          label: `${scheme} ${role} (${token}) on --c-mark-fill over ${ground}`,
+          ratio: contrast(color(map, token), mark),
+          minimum: TEXT_MIN,
+        }));
+      });
     });
     expect(failures(pairs)).toEqual([]);
   });
 });
+
+const STYLES_DIR = resolve(SITE_ROOT, 'src', 'styles');
+
+/** Every `selector { declarations }` pair of a stylesheet, nested at-rules included. */
+function rules(css: string): { selectors: string[]; body: string }[] {
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  return [...withoutComments.matchAll(/([^{};]+)\{([^{}]*)\}/g)].map((match) => ({
+    selectors: match[1]!.split(',').map((selector) => selector.trim().replace(/\s+/g, ' ')),
+    body: match[2]!,
+  }));
+}
+
+/** The token the last rule matching `pattern` sets `color` to, across the given sheets. */
+function colorTokenFor(sheets: readonly string[], pattern: RegExp): string | undefined {
+  let found: string | undefined;
+  for (const css of sheets) {
+    for (const { selectors, body } of rules(css)) {
+      if (!selectors.some((selector) => pattern.test(selector))) continue;
+      const value = /(?:^|;)\s*color:\s*var\((--[a-z0-9-]+)\)/.exec(body);
+      if (value !== null) found = value[1];
+    }
+  }
+  return found;
+}
+
+/**
+ * The tokens a link inside `mark` is painted with, at rest and on hover: the
+ * site's highlight rule when one sets them, otherwise the plain link colors
+ * of base.css.
+ */
+function highlightLinkTokens(): { rest: string; hover: string } {
+  const base = [readFileSync(resolve(STYLES_DIR, 'base.css'), 'utf8')];
+  const sheets = readdirSync(STYLES_DIR)
+    .filter((name) => name.endsWith('.css'))
+    .map((name) => readFileSync(resolve(STYLES_DIR, name), 'utf8'));
+  const markRest = colorTokenFor(sheets, /\bmark a$/);
+  const markHover = colorTokenFor(sheets, /\bmark a:hover$/);
+  const rest = markRest ?? colorTokenFor(base, /^a$/);
+  // A highlight rule (`.post-content mark a`, class specificity) outranks
+  // base.css's `a:hover`, so its color also holds on hover unless a
+  // highlight hover rule sets another.
+  const hover = markHover ?? markRest ?? colorTokenFor(base, /^a:hover$/);
+  if (rest === undefined || hover === undefined) {
+    throw new Error('no stylesheet sets the color of a link inside a highlight');
+  }
+  return { rest, hover };
+}

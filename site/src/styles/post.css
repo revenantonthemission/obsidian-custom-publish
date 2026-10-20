@@ -78,13 +78,8 @@
   margin-block-start: 0;
 }
 
-/* --c-mark-fill keeps a --c-tint link inside the highlight at 4.5:1 (NFR1; R-12). */
-.post-content mark {
-  padding: 0.1em 0.2em;
-  border-radius: 2px;
-  background: var(--c-mark-fill);
-  color: inherit;
-}
+/* Highlights (==text==) and the links inside them are styled in highlight.css,
+ * which the homepage note shares (NFR1-b; R-17). */
 
 .post-content abbr[title] {
   text-decoration: underline dotted var(--c-text-secondary);

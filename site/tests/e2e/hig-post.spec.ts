@@ -21,6 +21,21 @@ async function openSheet(page: Page) {
   return dialog;
 }
 
+/**
+ * Puts ==강조 안의 [[Simple Post]]== at the end of the host's last paragraph (or
+ * the host itself), the markup a highlighted wikilink renders to. Runs in the page.
+ */
+function appendHighlightedLink(host: Element): void {
+  const paragraphs = host.querySelectorAll('p');
+  const target = paragraphs.length > 0 ? paragraphs[paragraphs.length - 1]! : host;
+  const mark = document.createElement('mark');
+  const link = document.createElement('a');
+  link.href = '/posts/simple-post';
+  link.textContent = 'Simple Post';
+  mark.append('강조 안의 ', link);
+  target.append(' ', mark);
+}
+
 /** Composited text-on-fill contrast, as the browser renders it, for every titled callout. */
 async function calloutTitleContrast(page: Page): Promise<{ type: string; ratio: number }[]> {
   return page.locator('.callout:has(.callout-title)').evaluateAll((callouts) => {
@@ -396,6 +411,28 @@ test.describe('highlights (NFR1; R-12)', () => {
       const pairs = await renderedContrast(page, '.post-content mark a');
       expect(pairs).toHaveLength(1);
       expect(pairs.filter(({ ratio }) => ratio < 4.5)).toEqual([]);
+    });
+
+    // Loop-back 2 (NFR1-b; review finding R-17): a highlight also sits on a
+    // callout's tinted fill and on a table header's --c-surface-2.
+    test(`a link inside a highlight reaches 4.5:1 in a callout and a table header, ${appearance}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: appearance });
+      const placements = [
+        { path: '/posts/post-with-callouts', host: '.post-content .callout' },
+        { path: CODE_POST, host: '.post-content .table-wrapper th' },
+      ];
+      for (const { path, host } of placements) {
+        await gotoSettled(page, path);
+        await page.locator(host).first().evaluate(appendHighlightedLink);
+        const pairs = await renderedContrast(page, `${host} mark a`);
+        expect(pairs, path).toHaveLength(1);
+        expect(
+          pairs.filter(({ ratio }) => ratio < 4.5),
+          `${path} ${host}`
+        ).toEqual([]);
+      }
     });
 
     test(`every syntax color reaches 4.5:1 on a highlighted code line, ${appearance}`, async ({
