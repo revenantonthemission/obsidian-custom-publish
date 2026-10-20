@@ -177,48 +177,60 @@
   --callout-border: #a8a29e;
 }
 
-/* ── Dark mode ── */
-[data-theme="dark"] .callout-note,
-[data-theme="dark"] .callout-info,
-[data-theme="dark"] .callout-abstract,
-[data-theme="dark"] .callout-todo {
+/* ── Dark mode ── (system dark unless light was chosen, or an explicit dark) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) :is(.callout-note, .callout-info, .callout-abstract, .callout-todo) {
+    --callout-bg: #1e3a5f;
+    --callout-border: #3b82f6;
+  }
+  :root:not([data-theme="light"]) :is(.callout-warning, .callout-attention, .callout-caution) {
+    --callout-bg: #422006;
+    --callout-border: #f59e0b;
+  }
+  :root:not([data-theme="light"]) :is(.callout-tip, .callout-success, .callout-done, .callout-check) {
+    --callout-bg: #052e16;
+    --callout-border: #22c55e;
+  }
+  :root:not([data-theme="light"]) :is(.callout-danger, .callout-failure, .callout-bug, .callout-important) {
+    --callout-bg: #450a0a;
+    --callout-border: #ef4444;
+  }
+  :root:not([data-theme="light"]) :is(.callout-question, .callout-help, .callout-faq) {
+    --callout-bg: #2e1065;
+    --callout-border: #a855f7;
+  }
+  :root:not([data-theme="light"]) :is(.callout-quote, .callout-cite, .callout-example) {
+    --callout-bg: #1c1917;
+    --callout-border: #a8a29e;
+  }
+}
+
+:root[data-theme="dark"] :is(.callout-note, .callout-info, .callout-abstract, .callout-todo) {
   --callout-bg: #1e3a5f;
   --callout-border: #3b82f6;
 }
 
-[data-theme="dark"] .callout-warning,
-[data-theme="dark"] .callout-attention,
-[data-theme="dark"] .callout-caution {
+:root[data-theme="dark"] :is(.callout-warning, .callout-attention, .callout-caution) {
   --callout-bg: #422006;
   --callout-border: #f59e0b;
 }
 
-[data-theme="dark"] .callout-tip,
-[data-theme="dark"] .callout-success,
-[data-theme="dark"] .callout-done,
-[data-theme="dark"] .callout-check {
+:root[data-theme="dark"] :is(.callout-tip, .callout-success, .callout-done, .callout-check) {
   --callout-bg: #052e16;
   --callout-border: #22c55e;
 }
 
-[data-theme="dark"] .callout-danger,
-[data-theme="dark"] .callout-failure,
-[data-theme="dark"] .callout-bug,
-[data-theme="dark"] .callout-important {
+:root[data-theme="dark"] :is(.callout-danger, .callout-failure, .callout-bug, .callout-important) {
   --callout-bg: #450a0a;
   --callout-border: #ef4444;
 }
 
-[data-theme="dark"] .callout-question,
-[data-theme="dark"] .callout-help,
-[data-theme="dark"] .callout-faq {
+:root[data-theme="dark"] :is(.callout-question, .callout-help, .callout-faq) {
   --callout-bg: #2e1065;
   --callout-border: #a855f7;
 }
 
-[data-theme="dark"] .callout-quote,
-[data-theme="dark"] .callout-cite,
-[data-theme="dark"] .callout-example {
+:root[data-theme="dark"] :is(.callout-quote, .callout-cite, .callout-example) {
   --callout-bg: #1c1917;
   --callout-border: #a8a29e;
 }

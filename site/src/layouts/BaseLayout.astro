@@ -79,7 +79,7 @@ const fullUrl = metadata?.canonical ?? legacyFullUrl;
 const openGraph = metadata?.openGraph;
 const twitter = metadata?.twitter;
 ---
-<html lang="ko" data-theme="">
+<html lang="ko">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -110,61 +110,27 @@ const twitter = metadata?.twitter;
       />
     ))}
     <script is:inline>
-      // Apply saved theme immediately to prevent flash of unthemed content.
-      // This runs synchronously before any other JS, so it MUST NOT throw —
-      // wrap the whole body in try/catch with a minimal fallback.
-      (function() {
-        try {
-          var theme;
-          var manual = localStorage.getItem("theme-manual");
-          var solar = null;
-          var DAY_MS = 86400000;
-
-          // Try to read cached solar data for today
+      // Appearance bootstrap (FR3.2): runs before first paint, so it is ES5
+      // and must never throw. CSS follows the system appearance by itself;
+      // this only applies an explicit choice and records the mode for the
+      // appearance button (src/lib/appearance.ts holds the same rules).
+      (function () {
+        var root = document.documentElement;
+        var appearance = "auto";
+        var storage = null;
+        try { storage = window.localStorage; } catch (e) { storage = null; }
+        if (storage) {
           try {
-            var raw = localStorage.getItem("solar");
-            if (raw) {
-              solar = JSON.parse(raw);
-              var today = new Date().toISOString().slice(0, 10);
-              if (!solar || solar.date !== today) solar = null;
-            }
-          } catch(e) { solar = null; }
-
-          if (manual && solar) {
-            // Manual override present — check if it's still valid
-            var mt = new Date(manual);
-            var now = new Date();
-            var sr = new Date(solar.sunrise);
-            var ss = new Date(solar.sunset);
-            // Overrides older than 24h have definitely crossed a boundary
-            var stale = (now.getTime() - mt.getTime()) > DAY_MS;
-            var boundaryPassed = stale || (mt < sr && now >= sr) || (mt < ss && now >= ss);
-            if (boundaryPassed) {
-              localStorage.removeItem("theme-manual");
-              theme = (now >= sr && now < ss) ? "light" : "dark";
-            } else {
-              theme = localStorage.getItem("theme");
-            }
-          } else if (solar) {
-            var now2 = new Date();
-            var sr2 = new Date(solar.sunrise);
-            var ss2 = new Date(solar.sunset);
-            theme = (now2 >= sr2 && now2 < ss2) ? "light" : "dark";
-          } else {
-            theme = localStorage.getItem("theme");
-            if (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-              theme = "dark";
-            }
+            var stored = storage.getItem("appearance");
+            if (stored === "light" || stored === "dark" || stored === "auto") appearance = stored;
+          } catch (e) {}
+          var legacy = ["theme", "theme-manual", "solar", "geo", "geo-denied"];
+          for (var i = 0; i < legacy.length; i++) {
+            try { storage.removeItem(legacy[i]); } catch (e) {}
           }
-
-          if (theme) document.documentElement.setAttribute("data-theme", theme);
-        } catch (e) {
-          // Last-resort fallback — just read the saved theme
-          try {
-            var t = localStorage.getItem("theme");
-            if (t) document.documentElement.setAttribute("data-theme", t);
-          } catch (e2) {}
         }
+        if (appearance !== "auto") root.setAttribute("data-theme", appearance);
+        root.setAttribute("data-appearance", appearance);
       })();
     </script>
   </head>
@@ -205,6 +171,7 @@ const twitter = metadata?.twitter;
 </html>
 
 <style is:global>
+  @import "../styles/tokens.css";
   @import "../styles/global.css";
   @import "../styles/callouts.css";
   @import "../styles/diagrams.css";

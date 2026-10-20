@@ -35,13 +35,13 @@ export default function LocalGraph({ slug, data }: Props) {
       collideRadius: 15,
     });
 
-    /** Read current theme colors from CSS variables. */
+    /** Reads the current appearance's colors from the HIG tokens (tokens.css). */
     function readThemeColors() {
       const styles = getComputedStyle(document.documentElement);
       return {
-        accent: styles.getPropertyValue("--c-accent").trim() || "#0d9488",
-        text: styles.getPropertyValue("--c-text").trim() || "#1c1917",
-        border: styles.getPropertyValue("--c-border").trim() || "#e7e5e4",
+        accent: styles.getPropertyValue("--c-tint").trim(),
+        text: styles.getPropertyValue("--c-text").trim(),
+        border: styles.getPropertyValue("--c-separator").trim(),
       };
     }
 

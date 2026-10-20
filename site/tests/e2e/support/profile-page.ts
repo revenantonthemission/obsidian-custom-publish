@@ -9,36 +9,17 @@ const SITE_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 export const PROFILE_SHELL = '.profile-shell';
 
 /**
- * BaseLayout's inline theme bootstrap reads `localStorage.theme` when no solar
- * cache and no manual override are present, then stamps `data-theme` on the
- * document element. Seeding that state before any page script runs is what
- * makes a theme deterministic instead of time-of-day dependent.
+ * BaseLayout's inline appearance bootstrap reads `localStorage.appearance`
+ * and, for an explicit `light` or `dark`, stamps `data-theme` on the document
+ * element before first paint (FR3.2). Seeding the explicit choice before any
+ * page script runs makes the theme deterministic whatever the system says.
  */
 export async function applyTheme(page: Page, theme: ThemeName): Promise<void> {
   await page.addInitScript((value: string) => {
     try {
-      // A fresh manual override paired with today's solar cache is the one
-      // state the bootstrap resolves straight to the stored theme: the
-      // override has crossed no sunrise or sunset, so nothing recomputes it.
-      const now = new Date();
-      const day = now.toISOString().slice(0, 10);
-      const atHour = (hour: number): string =>
-        new Date(
-          `${day}T${String(hour).padStart(2, '0')}:00:00.000Z`,
-        ).toISOString();
-
-      window.localStorage.setItem(
-        'solar',
-        JSON.stringify({
-          date: day,
-          sunrise: atHour(6),
-          sunset: atHour(18),
-        }),
-      );
-      window.localStorage.setItem('theme-manual', now.toISOString());
-      window.localStorage.setItem('theme', value);
+      window.localStorage.setItem('appearance', value);
     } catch {
-      /* A context without storage still renders the default theme. */
+      /* A context without storage follows the system appearance. */
     }
   }, theme);
 }

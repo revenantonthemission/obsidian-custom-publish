@@ -64,12 +64,16 @@
 .diagram-dark { opacity: 0; pointer-events: none; }
 .diagram-light { opacity: 1; }
 
-/* Explicit dark mode */
-[data-theme="dark"] .diagram-light { opacity: 0; pointer-events: none; }
-[data-theme="dark"] .diagram-dark { opacity: 1; pointer-events: auto; }
+/* Dark: the system setting unless light was chosen, or an explicit dark choice */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .diagram-light { opacity: 0; pointer-events: none; }
+  :root:not([data-theme="light"]) .diagram-dark { opacity: 1; pointer-events: auto; }
+}
+:root[data-theme="dark"] .diagram-light { opacity: 0; pointer-events: none; }
+:root[data-theme="dark"] .diagram-dark { opacity: 1; pointer-events: auto; }
 
-/* Transition only during active theme switches */
-html.theme-transitioning .diagram-light,
-html.theme-transitioning .diagram-dark {
-  transition: opacity 300ms ease;
+/* The pair crossfades by opacity whenever the appearance changes (FR2.6). */
+.diagram-light,
+.diagram-dark {
+  transition: opacity var(--dur-slow) var(--ease-standard);
 }

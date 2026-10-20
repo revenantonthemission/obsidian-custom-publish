@@ -100,7 +100,13 @@
   border-radius: 2px;
 }
 
-[data-theme="dark"] .post-content mark {
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .post-content mark {
+    background: rgba(255, 208, 0, 0.18);
+  }
+}
+
+:root[data-theme="dark"] .post-content mark {
   background: rgba(255, 208, 0, 0.18);
 }
 
@@ -349,7 +355,13 @@ a[data-footnote-backref] {
   padding: 0 1rem;
 }
 
-[data-theme="dark"] .shiki .line.highlighted {
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shiki .line.highlighted {
+    background-color: rgba(101, 117, 133, 0.24);
+  }
+}
+
+:root[data-theme="dark"] .shiki .line.highlighted {
   background-color: rgba(101, 117, 133, 0.24);
 }
 

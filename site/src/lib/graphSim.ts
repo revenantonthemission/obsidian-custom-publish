@@ -55,14 +55,25 @@ export function createSimulation(
   return sim;
 }
 
-/** Create a MutationObserver that fires on data-theme changes. Returns cleanup function. */
+/**
+ * Calls back whenever the rendered appearance may have changed: the reader
+ * picked a mode (data-theme and data-appearance on <html>), or, in Automatic
+ * mode, the system appearance changed while the page is open (FR3.3).
+ * Canvas and SVG graphs repaint from it; CSS-driven parts switch on their own.
+ * Returns a cleanup function.
+ */
 export function observeThemeChange(callback: () => void): () => void {
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-theme"],
+    attributeFilter: ["data-theme", "data-appearance"],
   });
-  return () => observer.disconnect();
+  const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+  systemDark.addEventListener("change", callback);
+  return () => {
+    observer.disconnect();
+    systemDark.removeEventListener("change", callback);
+  };
 }
 
 /** Navigate to a graph node's page. */

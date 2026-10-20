@@ -54,14 +54,15 @@ const navigationIcons = Object.freeze({
       <span class="nav-icon" set:html={Search} />
       <kbd>⌘K</kbd>
     </button>
-    <ThemeToggle client:load />
   </nav>
-  <div class="mobile-nav">
-    <button class="search-trigger mobile" aria-label="검색 열기" data-search-open>
-      <span class="nav-icon" set:html={Search} />
-    </button>
+  <div class="site-actions">
     <ThemeToggle client:load />
-    <MobileNav items={primaryNavigation} />
+    <div class="mobile-nav">
+      <button class="search-trigger mobile" aria-label="검색 열기" data-search-open>
+        <span class="nav-icon" set:html={Search} />
+      </button>
+      <MobileNav items={primaryNavigation} />
+    </div>
   </div>
 </header>
 

@@ -17,6 +17,12 @@
   --c-profile-accent-text: #0f766e;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .profile-shell {
+    --c-profile-accent-text: var(--c-accent);
+  }
+}
+
 :root[data-theme="dark"] .profile-shell {
   --c-profile-accent-text: var(--c-accent);
 }
