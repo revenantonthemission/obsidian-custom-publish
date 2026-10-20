@@ -14,12 +14,6 @@ export type ManagedHeadResource =
       crossorigin: '';
     }>
   | Readonly<{
-      id: 'legacy-pretendard';
-      rel: 'stylesheet';
-      href: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
-      crossorigin: '';
-    }>
-  | Readonly<{
       id: 'legacy-katex';
       rel: 'stylesheet';
       href: 'https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css';
@@ -28,7 +22,8 @@ export type ManagedHeadResource =
 
 export interface LegacyRouteResourcePolicy {
   readonly category: 'legacy';
-  readonly fontSource: 'legacy-cdn-pretendard';
+  /** Since the HIG redesign every route self-hosts Pretendard (FR2.2). */
+  readonly fontSource: 'local-site-font';
   readonly headResources: readonly ManagedHeadResource[];
 }
 
@@ -54,13 +49,6 @@ export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze([
     crossorigin: '',
   }),
   Object.freeze({
-    id: 'legacy-pretendard',
-    rel: 'stylesheet',
-    href:
-      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
-    crossorigin: '',
-  }),
-  Object.freeze({
     id: 'legacy-katex',
     rel: 'stylesheet',
     href: 'https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css',
@@ -70,7 +58,7 @@ export const LEGACY_BASE_LAYOUT_RESOURCES = Object.freeze([
 
 export const LEGACY_ROUTE_RESOURCE_POLICY = Object.freeze({
   category: 'legacy',
-  fontSource: 'legacy-cdn-pretendard',
+  fontSource: 'local-site-font',
   headResources: LEGACY_BASE_LAYOUT_RESOURCES,
 }) satisfies LegacyRouteResourcePolicy;
 
@@ -142,7 +130,7 @@ export function validateRouteResourcePolicy(
     }
 
     if (resolved.value.category === 'legacy') {
-      return fontSource === 'legacy-cdn-pretendard' &&
+      return fontSource === 'local-site-font' &&
         category === 'legacy' &&
         hasExactLegacyResources(headResources)
         ? success(LEGACY_ROUTE_RESOURCE_POLICY)

@@ -15,7 +15,24 @@ import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
 import { visit } from "unist-util-visit";
 import type { Root, Element } from "hast";
+import type { ThemeRegistration } from "@shikijs/types";
 import { rehypeHomeSections } from "./home-sections";
+// Xcode-style code colors (design-system-mapping.md "Code Highlighting"; R-01):
+// every syntax color reaches 4.5:1 on the code panel token --c-code-bg
+// (tests/unit/hig-tokens.test.ts recomputes that from these files).
+import xcodeDarkJson from "./shiki-themes/xcode-dark.json";
+import xcodeLightJson from "./shiki-themes/xcode-light.json";
+
+/** JSON imports type `type` as string; check it, then hand Shiki its theme type. */
+function shikiTheme(theme: { readonly name: string; readonly type: string }, scheme: "light" | "dark"): ThemeRegistration {
+  if (theme.type !== scheme) {
+    throw new TypeError(`Shiki theme ${theme.name} must be a ${scheme} theme.`);
+  }
+  return theme as unknown as ThemeRegistration;
+}
+
+const xcodeLight = shikiTheme(xcodeLightJson, "light");
+const xcodeDark = shikiTheme(xcodeDarkJson, "dark");
 
 export interface RenderOptions {
   /** Wrap each H2 section in section.home-card. Homepage note only (R-04). */
@@ -127,6 +144,11 @@ function createProcessor(homeSections: boolean) {
       .use(remarkMath)
       .use(remarkRehype, {
         allowDangerousHtml: true,
+        // Korean names for the GFM footnote section and its back-references,
+        // matching lang="ko" (FR5.5, C-12).
+        footnoteLabel: "각주",
+        footnoteBackLabel: (referenceIndex: number, rereferenceIndex: number) =>
+          `본문의 ${referenceIndex + 1}번 각주 위치로 돌아가기${rereferenceIndex > 1 ? ` (${rereferenceIndex})` : ""}`,
         handlers: {
           ...defListHastHandlers,
           // Drop abbr definition nodes: without a handler remark-rehype falls
@@ -137,8 +159,8 @@ function createProcessor(homeSections: boolean) {
       .use(rehypeRaw) // Pass through raw HTML from preprocessor (callout divs, wikilink anchors)
       .use(rehypeShiki, {
         themes: {
-          light: "github-light",
-          dark: "github-dark",
+          light: xcodeLight,
+          dark: xcodeDark,
         },
         defaultColor: false,
         transformers: [

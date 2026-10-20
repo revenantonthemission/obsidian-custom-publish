@@ -2,12 +2,19 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import Search from "../islands/Search.tsx";
+import { ArrowUp } from "lucide-static";
+import { decorativeIcon } from "../lib/icons";
 import { serializeJsonLdDocuments } from "../lib/layout/json-ld.js";
 import {
   resolveRouteResourcePolicy,
   validateRouteResourcePolicy,
 } from "../lib/layout/profile-resources.js";
 import type { ProfilePageMetadata } from "../lib/profile/metadata.js";
+// The two Pretendard subsets that cover Latin and the most frequent Hangul
+// (R-10). Vite emits them once; the @font-face rules in fonts.css point at
+// the same hashed files, so the preloads are reused, never fetched twice.
+import pretendardCommonSubset from "../../.generated/profile-font/woff2-dynamic-subset/PretendardVariable.subset.91.woff2?url";
+import pretendardHangulSubset from "../../.generated/profile-font/woff2-dynamic-subset/PretendardVariable.subset.90.woff2?url";
 
 interface Props {
   title?: string;
@@ -15,6 +22,8 @@ interface Props {
   ogType?: string;
   canonicalUrl?: string;
   metadata?: ProfilePageMetadata;
+  /** Reading pages sit on --c-bg; pages of grouped lists on --c-bg-grouped. */
+  surface?: "reading" | "grouped";
 }
 
 const props = Astro.props;
@@ -95,6 +104,8 @@ const twitter = metadata?.twitter;
     <link rel="canonical" href={fullUrl} />
     <link rel="alternate" type="application/rss+xml" title="obsidian-press RSS" href="/rss.xml" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href={pretendardCommonSubset} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={pretendardHangulSubset} as="font" type="font/woff2" crossorigin />
     {resourcePolicy.headResources.map((resource) => (
       <link
         rel={resource.rel}
@@ -131,49 +142,64 @@ const twitter = metadata?.twitter;
         }
         if (appearance !== "auto") root.setAttribute("data-theme", appearance);
         root.setAttribute("data-appearance", appearance);
+        // The search shortcut hint reads ⌘K on Apple platforms, Ctrl K elsewhere (FR5.9).
+        var platform = "";
+        try {
+          platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+        } catch (e) {}
+        root.setAttribute("data-platform", /mac|iphone|ipad|ipod/i.test(platform) ? "apple" : "other");
       })();
     </script>
   </head>
-  <body>
+  <body data-surface={props.surface ?? "reading"}>
     <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
-    <div class="reading-progress" aria-hidden="true"></div>
     <Header pathname={Astro.url.pathname} />
-    <main id="main-content" class="site-main">
+    <main id="main-content" class="site-main" tabindex="-1">
       <slot />
     </main>
     <Search client:idle />
     <Footer />
 
-    <button class="back-to-top" aria-label="맨 위로">↑</button>
+    <button type="button" class="back-to-top" aria-label="맨 위로" data-material="regular">
+      <Fragment set:html={decorativeIcon(ArrowUp, 20)} />
+    </button>
 
     <script is:inline>
-      // Reading progress bar
-      var progressBar = document.querySelector(".reading-progress");
-      if (progressBar) {
-        window.addEventListener("scroll", function() {
-          var h = document.documentElement.scrollHeight - window.innerHeight;
-          progressBar.style.width = h > 0 ? (window.scrollY / h * 100) + "%" : "0%";
-        }, { passive: true });
-      }
-
-      // Back-to-top button
-      var btt = document.querySelector(".back-to-top");
-      if (btt) {
-        btt.addEventListener("click", function() {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-        window.addEventListener("scroll", function() {
-          btt.classList.toggle("visible", window.scrollY > 400);
-        }, { passive: true });
-      }
+      // Reading progress and back to top (FR5.10): one update per animation
+      // frame, the progress drawn by transform: scaleX(), and a jump instead
+      // of a smooth scroll when the reader asks for reduced motion.
+      (function () {
+        var progress = document.querySelector(".reading-progress");
+        var top = document.querySelector(".back-to-top");
+        var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        var pending = false;
+        function update() {
+          pending = false;
+          var root = document.documentElement;
+          var range = root.scrollHeight - window.innerHeight;
+          var y = window.scrollY || root.scrollTop;
+          if (progress) progress.style.transform = "scaleX(" + (range > 0 ? Math.min(y / range, 1) : 0) + ")";
+          if (top) top.classList.toggle("visible", y > 400);
+        }
+        function schedule() {
+          if (pending) return;
+          pending = true;
+          window.requestAnimationFrame(update);
+        }
+        window.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("resize", schedule, { passive: true });
+        if (top) {
+          top.addEventListener("click", function () {
+            if (reduceMotion.matches) window.scrollTo(0, 0);
+            else window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+        }
+        update();
+      })();
     </script>
   </body>
 </html>
 
 <style is:global>
-  @import "../styles/tokens.css";
   @import "../styles/global.css";
-  @import "../styles/callouts.css";
-  @import "../styles/diagrams.css";
-  @import "../styles/search.css";
 </style>

@@ -171,6 +171,10 @@ export async function horizontalOverflow(page: Page): Promise<OverflowReport> {
     for (const element of document.body.querySelectorAll('*')) {
       const rect = element.getBoundingClientRect();
       if (rect.width === 0 || rect.right <= limit) continue;
+      // Content that is not rendered (display: none, or inside a closed
+      // details, whose content-visibility: hidden slot still reports a box)
+      // cannot overflow the page.
+      if (!element.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true })) continue;
       if (scrollsSideways(element.parentElement)) continue;
       offenders.push(`${element.tagName.toLowerCase()}.${String(element.className).slice(0, 60)} right=${Math.round(rect.right)}`);
       if (offenders.length >= 8) break;

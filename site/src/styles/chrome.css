@@ -1,0 +1,408 @@
+/* Shared chrome (FR4.1; mockups.md W1–W2; interaction-spec.md "Header Bar",
+ * "Navigation Sheet", "Appearance Button", "Reading Progress and Back to Top",
+ * "Skip Link"). Mobile-first: the base is the compact phone bar; from 768 px
+ * the bar shows the four sections directly. Every control is at least
+ * 44 × 44 CSS px (FR5.8). Motion uses transform and opacity only. */
+
+/* ── Skip link: the first stop, sliding in by transform ── */
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--space-2);
+  inset-inline-start: 50%;
+  z-index: 300;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-capsule);
+  background: var(--c-tint-fill);
+  box-shadow: var(--shadow-float);
+  color: var(--c-on-tint);
+  font-size: var(--text-subheadline);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translate(-50%, calc(-100% - var(--space-4)));
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.skip-link:focus {
+  color: var(--c-on-tint);
+  text-decoration: none;
+  transform: translate(-50%, 0);
+}
+
+.skip-link:focus-visible {
+  outline-color: var(--c-text);
+}
+
+/* ── The floating glass bar ──
+   The header itself is transparent and lets pointer events through, so the
+   page stays usable around the capsule as it scrolls underneath. */
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 100;
+  padding: var(--bar-inset) var(--bar-inset) 0;
+  pointer-events: none;
+}
+
+.site-bar {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-inline-size: 1100px;
+  min-block-size: var(--bar-height);
+  margin-inline: auto;
+  padding: var(--space-1);
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  pointer-events: auto;
+}
+
+/* The bar's glass sits on its own layer (see Header.astro). */
+.site-bar-material {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Regular glass carries primary text only, so the focus ring on the bar is
+   --c-text rather than the tint (mockups review finding R-02). */
+.site-bar :focus-visible {
+  outline-color: var(--c-bar-focus-ring);
+}
+
+.site-title {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--target);
+  min-inline-size: var(--target);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  font-size: var(--text-headline);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.site-title:hover {
+  background: var(--c-fill);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.site-mark {
+  display: inline-flex;
+  flex: none;
+}
+
+/* Below 360 px the title would crowd the three buttons, so the mark stands
+   alone; the name stays in the accessibility tree. */
+.site-title-text {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 360px) {
+  .site-title {
+    justify-content: flex-start;
+  }
+
+  .site-title-text {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    min-inline-size: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ── Sections: hidden on phones, where the sheet lists them ── */
+.desktop-nav {
+  display: none;
+}
+
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  font-size: var(--text-subheadline);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-nav-link:hover {
+  background: var(--c-fill);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+/* The current section: weight 600 and a 2 px --c-text underline, never a
+   tinted pill on glass (R-02; changes mockup W1). */
+.site-nav-link[aria-current="page"] {
+  font-weight: 600;
+  text-decoration: underline 2px var(--c-bar-indicator);
+  text-underline-offset: 0.5em;
+}
+
+/* ── Actions: search, appearance and (on phones) the menu ── */
+.site-actions {
+  display: flex;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+.search-trigger,
+.appearance-toggle,
+.mobile-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-inline-size: var(--target);
+  block-size: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-capsule);
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+:is(.search-trigger, .appearance-toggle, .mobile-nav-toggle):hover {
+  background: var(--c-fill);
+}
+
+:is(.search-trigger, .appearance-toggle, .mobile-nav-toggle):active {
+  transform: scale(0.94);
+}
+
+/* Search and the appearance button need JavaScript; without it they hide
+   rather than sit there inert (the bootstrap sets data-appearance). */
+:root:not([data-appearance]) :is(.search-trigger, .appearance-toggle) {
+  display: none;
+}
+
+.search-shortcut {
+  display: none;
+  align-items: center;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--c-separator);
+  border-radius: var(--radius-xs);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* The bootstrap marks the platform before paint (FR5.9). */
+[data-platform-only] {
+  display: none;
+}
+
+:root[data-platform="apple"] [data-platform-only="apple"],
+:root[data-platform="other"] [data-platform-only="other"] {
+  display: inline;
+}
+
+/* The appearance button shows the icon and name of the current mode. */
+.appearance-option {
+  display: none;
+}
+
+:root[data-appearance="auto"] .appearance-option[data-mode="auto"],
+:root[data-appearance="light"] .appearance-option[data-mode="light"],
+:root[data-appearance="dark"] .appearance-option[data-mode="dark"] {
+  display: inline-flex;
+}
+
+/* ── Navigation sheet (phones): a native details disclosure ── */
+.mobile-nav-disclosure {
+  display: inline-flex;
+}
+
+.mobile-nav-toggle {
+  list-style: none;
+}
+
+.mobile-nav-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-nav-disclosure:not([open]) .mobile-nav-icon-close,
+.mobile-nav-disclosure[open] .mobile-nav-icon-open {
+  display: none;
+}
+
+.mobile-nav-dropdown {
+  position: fixed;
+  inset: calc(var(--bar-inset) * 2 + var(--bar-height)) var(--bar-inset) var(--bar-inset);
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  overflow-y: auto;
+  animation: sheet-in var(--dur-normal) var(--ease-spring);
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-2) * -1));
+  }
+}
+
+.mobile-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: 52px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--c-text);
+  font-size: var(--text-title-3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mobile-nav-link:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--space-4) 0;
+  inset-block-end: 0;
+  block-size: 1px;
+  background: var(--c-separator);
+}
+
+.mobile-nav-link:hover {
+  background: var(--c-fill);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.mobile-nav-link svg {
+  flex: none;
+  color: var(--c-text-secondary);
+}
+
+.mobile-nav-link[aria-current="page"] svg {
+  color: var(--c-tint);
+}
+
+/* While the sheet is open, the page behind it is hidden from view and from
+   focus, so no focus trap is needed and nothing scrolls away underneath. */
+@media (width < 768px) {
+  body:has(.mobile-nav-disclosure[open]) :is(.site-main, .site-footer, .back-to-top) {
+    visibility: hidden;
+  }
+}
+
+@media (min-width: 768px) {
+  .desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-inline-start: var(--space-2);
+  }
+
+  .mobile-nav-disclosure {
+    display: none;
+  }
+
+  .search-trigger {
+    padding-inline: var(--space-3);
+  }
+
+  .search-shortcut {
+    display: inline-flex;
+  }
+}
+
+/* ── Footer ── */
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4) var(--space-12);
+  color: var(--c-text-secondary);
+  font-size: var(--text-footnote);
+  line-height: 1.45;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* ── Reading progress: a 2 px line along the bar's bottom edge (FR5.10) ──
+   Decorative and aria-hidden; the scroll script sets scaleX once per frame. */
+.reading-progress {
+  position: absolute;
+  inset-inline: var(--space-6);
+  inset-block-end: 0;
+  block-size: 2px;
+  border-radius: 1px;
+  background: var(--c-tint);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* ── Back to top: a glass capsule that fades in after 400 px ── */
+.back-to-top {
+  position: fixed;
+  inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target);
+  block-size: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard),
+    visibility 0s linear var(--dur-fast);
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.back-to-top:active {
+  transform: scale(0.94);
+}

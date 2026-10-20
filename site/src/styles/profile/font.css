@@ -1,5 +1,6 @@
-@import "../../../.generated/profile-font/pretendard-profile.css";
-
+/* The profile routes use the site's self-hosted Pretendard, which global.css
+   now loads for every route (src/styles/fonts.css). The family keeps the name
+   the PDF renderer checks, "RVNNT Profile". */
 :root {
-  --c-profile-font-family: "RVNNT Profile", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --c-profile-font-family: var(--font-body);
 }
