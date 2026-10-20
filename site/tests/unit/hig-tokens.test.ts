@@ -44,8 +44,15 @@ const SCALE_TOKENS = [
   '--dur-fast', '--dur-normal', '--dur-slow', '--ease-standard', '--ease-spring',
 ] as const;
 
+// A formatter may print an attribute selector with either quote, so a `"` in
+// the opener matches `"` or `'`.
+function findOpener(css: string, opener: string): number {
+  const pattern = opener.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/"/g, `["']`);
+  return css.search(new RegExp(pattern));
+}
+
 function readBlock(css: string, opener: string): string {
-  const start = css.indexOf(opener);
+  const start = findOpener(css, opener);
   if (start === -1) throw new Error(`tokens.css has no block opened by ${opener}`);
   let depth = 0;
   for (let index = css.indexOf('{', start); index < css.length; index += 1) {
