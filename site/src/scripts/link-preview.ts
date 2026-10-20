@@ -1,160 +1,220 @@
+/**
+ * Link preview card (FR5.7, C-07; interaction-spec.md "Link Preview"; mockups
+ * W10). Links to other posts in the article get a text-only card with
+ * role="tooltip", referenced from the link by aria-describedby while shown.
+ *
+ * - It opens on keyboard focus, or after 300 ms of mouse or pen hover.
+ * - It stays open while the pointer is on the link or on the card, and closes
+ *   on Escape (focus stays on the link), on blur, or 120 ms after the pointer
+ *   leaves both, which meets WCAG 1.4.13.
+ * - Touch is never intercepted: a tap navigates at once, and the browser's own
+ *   press-and-hold preview stays available (the FR5.7 amendment, R-11).
+ */
+
 interface PreviewEntry {
-  title: string;
-  tags: string[];
-  summary: string;
+  readonly title: string;
+  readonly tags: readonly string[];
+  readonly summary: string;
 }
 
-let previewData: Record<string, PreviewEntry> | null = null;
-let tooltip: HTMLDivElement | null = null;
-let hoverTimer: ReturnType<typeof setTimeout> | null = null;
-
-let mobileCard: HTMLDivElement | null = null;
-let mobileBackdrop: HTMLDivElement | null = null;
-
-const isMobile = window.matchMedia("(max-width: 767px)");
+type PreviewIndex = ReadonlyMap<string, PreviewEntry>;
 
 const HOVER_DELAY_MS = 300;
-const TIP_WIDTH = 280;
+const HIDE_DELAY_MS = 120;
+const CARD_ID = "link-preview";
+const GAP = 8;
+const EDGE = 16;
+const LOAD_ERROR = "미리보기를 불러오지 못했습니다";
+const POST_HREF = /^\/posts\/([^#?]+)/;
 
-/** Extract post slug from an href like "/posts/my-slug" or "/posts/my-slug#heading". */
-function extractPostSlug(href: string): string | null {
-  const match = href.match(/^\/posts\/(.+?)(?:#|$)/);
-  return match ? match[1] : null;
+let indexRequest: Promise<PreviewIndex> | null = null;
+let card: HTMLElement | null = null;
+let current: HTMLAnchorElement | null = null;
+let openTimer: number | undefined;
+let closeTimer: number | undefined;
+/** Set by a pointer press, so the focus that follows it opens nothing. */
+let focusFromPointer = false;
+
+// ── Data ──
+
+function toEntry(value: unknown): PreviewEntry | null {
+  if (typeof value !== "object" || value === null) return null;
+  const { title, tags, summary } = value as Record<string, unknown>;
+  if (typeof title !== "string") return null;
+  return {
+    title,
+    tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === "string") : [],
+    summary: typeof summary === "string" ? summary : "",
+  };
 }
 
-async function ensurePreviewData() {
-  if (previewData) return previewData;
+async function fetchIndex(): Promise<PreviewIndex> {
+  const response = await fetch("/previews.json");
+  if (!response.ok) throw new Error(`previews.json answered ${response.status}`);
+  const data: unknown = await response.json();
+  if (typeof data !== "object" || data === null) throw new Error("previews.json is not an object");
+  const entries = Object.entries(data as Record<string, unknown>).flatMap(([slug, value]) => {
+    const entry = toEntry(value);
+    return entry === null ? [] : [[slug, entry] as const];
+  });
+  return new Map(entries);
+}
+
+/** Loads the index once; a failed load is retried on the next preview. */
+function loadIndex(): Promise<PreviewIndex> {
+  indexRequest ??= fetchIndex().catch((error: unknown) => {
+    indexRequest = null;
+    throw error;
+  });
+  return indexRequest;
+}
+
+function slugOf(anchor: HTMLAnchorElement): string | null {
+  const match = POST_HREF.exec(anchor.getAttribute("href") ?? "");
+  if (!match?.[1]) return null;
   try {
-    const res = await fetch("/previews.json");
-    previewData = await res.json();
+    return decodeURIComponent(match[1]);
   } catch {
-    previewData = {};
+    return match[1];
   }
-  return previewData;
 }
 
-function buildPreviewContent(preview: PreviewEntry, container: HTMLElement) {
-  container.replaceChildren();
+// ── Card ──
 
-  const titleEl = document.createElement("div");
-  titleEl.className = "preview-title";
-  titleEl.textContent = preview.title;
-  container.appendChild(titleEl);
+function paragraph(className: string, text: string): HTMLParagraphElement {
+  const element = document.createElement("p");
+  element.className = className;
+  element.textContent = text;
+  return element;
+}
 
-  if (preview.tags.length) {
-    const tagsEl = document.createElement("div");
-    tagsEl.className = "preview-tags";
-    for (const tag of preview.tags) {
-      const tagSpan = document.createElement("span");
-      tagSpan.textContent = tag;
-      tagsEl.appendChild(tagSpan);
+function ensureCard(): HTMLElement {
+  if (card) return card;
+  const element = document.createElement("div");
+  element.id = CARD_ID;
+  element.className = "link-preview";
+  element.setAttribute("role", "tooltip");
+  element.dataset.material = "thick";
+  element.hidden = true;
+  element.addEventListener("pointerenter", cancelClose);
+  element.addEventListener("pointerleave", scheduleClose);
+  document.body.append(element);
+  card = element;
+  return element;
+}
+
+function fill(target: HTMLElement, entry: PreviewEntry | null): void {
+  if (entry === null) {
+    target.replaceChildren(paragraph("link-preview-summary", LOAD_ERROR));
+    return;
+  }
+  const parts = [paragraph("link-preview-title", entry.title)];
+  if (entry.tags.length > 0) {
+    parts.push(paragraph("link-preview-tags", entry.tags.map((tag) => `#${tag}`).join(" ")));
+  }
+  if (entry.summary !== "") parts.push(paragraph("link-preview-summary", entry.summary));
+  target.replaceChildren(...parts);
+}
+
+/** Below the link when it fits, otherwise above it; never past the edges. */
+function place(target: HTMLElement, anchor: HTMLAnchorElement): void {
+  const link = anchor.getBoundingClientRect();
+  const width = target.offsetWidth;
+  const height = target.offsetHeight;
+  const maxLeft = document.documentElement.clientWidth - width - EDGE;
+  const left = Math.max(EDGE, Math.min(link.left, maxLeft));
+  const below = link.bottom + GAP;
+  const top = below + height <= window.innerHeight - EDGE ? below : Math.max(EDGE, link.top - GAP - height);
+  target.style.left = `${left + window.scrollX}px`;
+  target.style.top = `${top + window.scrollY}px`;
+}
+
+// ── Open and close ──
+
+function clearTimers(): void {
+  window.clearTimeout(openTimer);
+  window.clearTimeout(closeTimer);
+}
+
+function close(): void {
+  clearTimers();
+  current?.removeAttribute("aria-describedby");
+  current = null;
+  if (card) card.hidden = true;
+}
+
+function cancelClose(): void {
+  window.clearTimeout(closeTimer);
+}
+
+function scheduleClose(): void {
+  window.clearTimeout(openTimer);
+  window.clearTimeout(closeTimer);
+  closeTimer = window.setTimeout(close, HIDE_DELAY_MS);
+}
+
+async function open(anchor: HTMLAnchorElement): Promise<void> {
+  const slug = slugOf(anchor);
+  if (slug === null) return;
+  clearTimers();
+  if (current !== anchor) current?.removeAttribute("aria-describedby");
+  current = anchor;
+  let entry: PreviewEntry | null;
+  try {
+    entry = (await loadIndex()).get(slug) ?? null;
+    // A post without a preview gets no card at all.
+    if (entry === null) {
+      if (current === anchor) close();
+      return;
     }
-    container.appendChild(tagsEl);
+  } catch {
+    entry = null;
   }
-
-  const summaryEl = document.createElement("p");
-  summaryEl.className = "preview-summary";
-  summaryEl.textContent = preview.summary;
-  container.appendChild(summaryEl);
+  if (current !== anchor) return;
+  const target = ensureCard();
+  fill(target, entry);
+  target.hidden = false;
+  place(target, anchor);
+  anchor.setAttribute("aria-describedby", CARD_ID);
 }
 
-// ── Desktop: hover tooltip ──
-
-function createTooltip() {
-  if (tooltip) return tooltip;
-  tooltip = document.createElement("div");
-  tooltip.className = "link-preview-tooltip";
-  document.body.appendChild(tooltip);
-  return tooltip;
-}
-
-function showPreview(anchor: HTMLAnchorElement) {
-  const href = anchor.getAttribute("href") || "";
-  const slug = extractPostSlug(href);
-  if (!slug) return;
-
-  hoverTimer = setTimeout(async () => {
-    const data = await ensurePreviewData();
-    if (!data) return;
-    const preview = data[slug];
-    if (!preview) return;
-
-    const tip = createTooltip();
-    buildPreviewContent(preview, tip);
-
-    const rect = anchor.getBoundingClientRect();
-    let left = rect.left + window.scrollX;
-    let top = rect.top + window.scrollY - 8;
-
-    tip.style.left = `${Math.min(left, window.innerWidth - TIP_WIDTH - 16)}px`;
-    tip.style.top = `${top}px`;
-    tip.style.transform = "translateY(-100%)";
-    tip.classList.add("visible");
+function scheduleOpen(anchor: HTMLAnchorElement): void {
+  clearTimers();
+  openTimer = window.setTimeout(() => {
+    void open(anchor);
   }, HOVER_DELAY_MS);
 }
 
-function hidePreview() {
-  if (hoverTimer) {
-    clearTimeout(hoverTimer);
-    hoverTimer = null;
-  }
-  if (tooltip) {
-    tooltip.classList.remove("visible");
-  }
+// ── Wiring ──
+
+function wire(anchor: HTMLAnchorElement): void {
+  anchor.addEventListener("pointerenter", (event) => {
+    if (event.pointerType === "touch") return;
+    if (current === anchor) cancelClose();
+    else scheduleOpen(anchor);
+  });
+  anchor.addEventListener("pointerleave", (event) => {
+    if (event.pointerType !== "touch") scheduleClose();
+  });
+  anchor.addEventListener("pointerdown", () => {
+    focusFromPointer = true;
+    window.setTimeout(() => {
+      focusFromPointer = false;
+    }, 0);
+  });
+  anchor.addEventListener("focus", () => {
+    if (focusFromPointer) return;
+    void open(anchor);
+  });
+  anchor.addEventListener("blur", () => {
+    if (current === anchor) close();
+  });
 }
 
-// ── Mobile: tap to show bottom card ──
-
-function createMobileCard() {
-  if (mobileCard) return;
-  mobileBackdrop = document.createElement("div");
-  mobileBackdrop.className = "link-preview-backdrop";
-  mobileBackdrop.addEventListener("click", hideMobilePreview);
-  document.body.appendChild(mobileBackdrop);
-
-  mobileCard = document.createElement("div");
-  mobileCard.className = "link-preview-mobile";
-  document.body.appendChild(mobileCard);
+for (const anchor of document.querySelectorAll<HTMLAnchorElement>('.post-content a[href^="/posts/"]')) {
+  wire(anchor);
 }
 
-function hideMobilePreview() {
-  mobileCard?.classList.remove("visible");
-  mobileBackdrop?.classList.remove("visible");
-}
-
-async function showMobilePreview(anchor: HTMLAnchorElement, e: Event) {
-  const href = anchor.getAttribute("href") || "";
-  const slug = extractPostSlug(href);
-  if (!slug) return;
-  const data = await ensurePreviewData();
-  if (!data) return;
-  const preview = data[slug];
-  if (!preview) return;
-
-  e.preventDefault();
-  createMobileCard();
-  if (!mobileCard || !mobileBackdrop) return;
-
-  buildPreviewContent(preview, mobileCard);
-
-  const visitLink = document.createElement("a");
-  visitLink.className = "preview-visit";
-  visitLink.href = href;
-  visitLink.textContent = "방문 →";
-  mobileCard.appendChild(visitLink);
-
-  mobileBackdrop.classList.add("visible");
-  mobileCard.offsetHeight; // force reflow for transition
-  mobileCard.classList.add("visible");
-}
-
-// ── Init ──
-
-document.querySelectorAll('a[href^="/posts/"]').forEach((a) => {
-  if (isMobile.matches) {
-    a.addEventListener("click", (e) => showMobilePreview(a as HTMLAnchorElement, e));
-  } else {
-    a.addEventListener("mouseenter", () => showPreview(a as HTMLAnchorElement));
-    a.addEventListener("mouseleave", hidePreview);
-  }
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && card && !card.hidden) close();
 });

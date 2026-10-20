@@ -12,7 +12,6 @@
   --c-accent-hover: var(--c-tint-hover);
   --radius: var(--radius-xs);
   --max-width: 820px;
-  --sidebar-width: var(--outline-width);
 }
 
 /* ── Reset ── */
@@ -248,9 +247,7 @@ img {
   outline: none;
 }
 
-.site-main:has(.post-layout) {
-  max-inline-size: calc(var(--max-width) + var(--sidebar-width) + var(--space-8));
-}
+/* Post pages set their own measure in post.css. */
 
 /* Visualization pages use the full viewport width. */
 .site-main:has(.graph-container) {

@@ -1,0 +1,312 @@
+/* The post outline (FR4.2, FR5.3, FR5.8; interaction-spec.md "Outline Panel
+ * and Outline Sheet", "Segmented Control"; mockups W3 and W4). Below 1100 px
+ * a floating button opens the outline as a bottom sheet; from 1100 px it is a
+ * sticky thick-glass panel beside the article. Every row is at least
+ * 44 px tall at every width (FR5.8, review finding R-03). Motion uses
+ * transform and opacity only. */
+
+/* ── Tabs: a segmented control whose raised selection slides by transform ── */
+.outline-tabs {
+  --segments: 2;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  margin-block-end: var(--space-2);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--c-fill);
+}
+
+.outline-tabs:has(> .outline-tab:only-child) {
+  --segments: 1;
+}
+
+.outline-tabs::before {
+  content: "";
+  position: absolute;
+  inset-block: 2px;
+  inset-inline-start: 2px;
+  z-index: -1;
+  inline-size: calc((100% - 4px) / var(--segments));
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: var(--c-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transition: transform var(--dur-normal) var(--ease-spring);
+}
+
+.outline-tabs:has(> .outline-tab:nth-child(2)[aria-selected="true"])::before {
+  transform: translateX(100%);
+}
+
+.outline-tab {
+  min-block-size: var(--target);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--text-subheadline);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.outline-tab[aria-selected="true"] {
+  font-weight: 600;
+}
+
+.outline-tab:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ── Table of contents rows ── */
+.toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toc-item a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-block-size: var(--target);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  font-size: var(--text-callout);
+  line-height: 1.35;
+  text-decoration: none;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.toc-depth-3 a {
+  padding-inline-start: var(--space-6);
+  color: var(--c-text-secondary);
+}
+
+.toc-depth-4 a {
+  padding-inline-start: var(--space-10);
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+}
+
+.toc-item a:hover {
+  background: var(--c-fill);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.toc-item a:focus-visible {
+  outline-offset: -2px;
+}
+
+/* The section being read: weight and an inset tint bar, never color alone. */
+.toc-item a[aria-current="location"] {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.toc-item a[aria-current="location"]::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--space-2);
+  inset-inline-start: 0;
+  inline-size: 3px;
+  border-radius: 2px;
+  background: var(--c-tint);
+}
+
+/* ── Tree loading and error states (FR4.5) ── */
+.outline-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+}
+
+.outline-status p {
+  margin: 0;
+}
+
+.retry-button {
+  min-block-size: var(--target);
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-capsule);
+  background: var(--c-tint-fill);
+  color: var(--c-on-tint);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: var(--c-tint-hover);
+}
+
+/* ── The floating "목차 열기" button (below 1100 px) ── */
+.outline-open {
+  position: fixed;
+  inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: var(--target);
+  min-block-size: var(--target);
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-capsule);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--text-subheadline);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.outline-open:active {
+  transform: scale(0.96);
+}
+
+/* Regular glass carries primary text only, so its focus ring is --c-text (R-02). */
+.outline-open:focus-visible {
+  outline-color: var(--c-bar-focus-ring);
+}
+
+/* The sheet needs JavaScript; without it the button hides rather than sit inert. */
+:root:not([data-appearance]) .outline-open {
+  display: none;
+}
+
+/* While the sheet is open the button hides (W4). */
+body:has(.outline-sheet[open]) .outline-open {
+  opacity: 0;
+}
+
+/* Back to top sits above the outline button, never on it (W4). */
+body:has(.outline-open) .back-to-top {
+  inset-block-end: calc(max(var(--space-4), env(safe-area-inset-bottom)) + var(--target) + var(--space-2));
+}
+
+/* ── The outline sheet: a modal bottom sheet in thick glass ── */
+.outline-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  inline-size: min(100%, 40rem);
+  max-inline-size: 100%;
+  max-block-size: min(85dvh, calc(100dvh - var(--space-8)));
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  color: var(--c-text);
+  overflow: hidden;
+}
+
+.outline-sheet[open] {
+  display: flex;
+  flex-direction: column;
+  animation: outline-sheet-in var(--dur-slow) var(--ease-spring);
+}
+
+.outline-sheet::backdrop {
+  background: var(--c-scrim, rgba(0, 0, 0, 0.25));
+}
+
+@keyframes outline-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-12));
+  }
+}
+
+/* The page behind the sheet does not scroll away underneath it. */
+html:has(.outline-sheet[open]) {
+  overflow: hidden;
+}
+
+.outline-sheet-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-1) var(--space-1) 0;
+}
+
+.outline-grabber {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: 50%;
+  inline-size: 36px;
+  block-size: 5px;
+  border-radius: var(--radius-capsule);
+  background: var(--c-text-tertiary);
+  transform: translateX(-50%);
+}
+
+.outline-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target);
+  block-size: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-capsule);
+  background: transparent;
+  color: var(--c-text);
+  cursor: pointer;
+}
+
+.outline-close:hover {
+  background: var(--c-fill);
+}
+
+.outline-close:focus-visible {
+  outline-offset: -2px;
+}
+
+.outline-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-3) max(var(--space-4), env(safe-area-inset-bottom));
+}
+
+/* ── From 1100 px: the sticky panel replaces the button and the sheet ── */
+.post-outline {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .post-outline {
+    position: sticky;
+    inset-block-start: calc(var(--bar-inset) * 2 + var(--bar-height));
+    display: block;
+    align-self: start;
+    max-block-size: calc(100dvh - var(--bar-inset) * 3 - var(--bar-height));
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .outline-open {
+    display: none;
+  }
+
+  body:has(.outline-open) .back-to-top {
+    inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+}

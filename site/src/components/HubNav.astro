@@ -1,4 +1,6 @@
 ---
+import { ChevronLeft, ChevronRight } from "lucide-static";
+import { decorativeIcon } from "../lib/icons";
 import type { PostMeta } from "../lib/types";
 
 interface Props {
@@ -7,6 +9,9 @@ interface Props {
   children: PostMeta[];
 }
 
+// Hub navigation (interaction-spec.md "Hub Navigation"): a breadcrumb to the
+// hub, then 이전 and 다음 links. Every link is at least 44 px tall (FR5.8);
+// the separators and arrows are aria-hidden icons, not text glyphs (FR5.9).
 const { hub, current, children } = Astro.props;
 
 // Find prev/next if viewing a child post within this hub
@@ -17,30 +22,44 @@ if (current) {
   if (idx > 0) prev = children[idx - 1];
   if (idx >= 0 && idx < children.length - 1) next = children[idx + 1];
 }
+
+const separator = decorativeIcon(ChevronRight, 14);
 ---
 
 <nav class="hub-nav" aria-label="허브 탐색">
-  <div class="hub-breadcrumb">
-    <a href="/">홈</a>
-    <span class="hub-sep">/</span>
-    <a href={`/hubs/${hub.slug}`}>{hub.title}</a>
+  <ol class="hub-breadcrumb">
+    <li><a href="/">홈</a></li>
+    <li>
+      <span class="hub-sep" set:html={separator}></span>
+      <a href={`/hubs/${hub.slug}`} aria-current={current ? undefined : "page"}>{hub.title}</a>
+    </li>
     {current && (
-      <>
-        <span class="hub-sep">/</span>
-        <span class="hub-current">{current.title}</span>
-      </>
+      <li>
+        <span class="hub-sep" set:html={separator}></span>
+        <span class="hub-current" aria-current="page">{current.title}</span>
+      </li>
     )}
-  </div>
+  </ol>
 
   {current && (prev || next) && (
     <div class="hub-prevnext">
-      {prev ? (
-        <a href={`/posts/${prev.slug}`} class="hub-prev">&larr; {prev.title}</a>
-      ) : (
-        <span />
+      {prev && (
+        <a href={`/posts/${prev.slug}`} class="hub-step hub-prev">
+          <Fragment set:html={decorativeIcon(ChevronLeft, 20)} />
+          <span class="hub-step-text">
+            <span class="hub-step-label">이전</span>
+            <span class="hub-step-title">{prev.title}</span>
+          </span>
+        </a>
       )}
       {next && (
-        <a href={`/posts/${next.slug}`} class="hub-next">{next.title} &rarr;</a>
+        <a href={`/posts/${next.slug}`} class="hub-step hub-next">
+          <span class="hub-step-text">
+            <span class="hub-step-label">다음</span>
+            <span class="hub-step-title">{next.title}</span>
+          </span>
+          <Fragment set:html={decorativeIcon(ChevronRight, 20)} />
+        </a>
       )}
     </div>
   )}
@@ -48,36 +67,116 @@ if (current) {
 
 <style>
   .hub-nav {
-    margin-bottom: 1.5rem;
-    font-size: 0.85rem;
+    margin-block-end: var(--space-6);
+    font-size: var(--text-subheadline);
   }
+
   .hub-breadcrumb {
     display: flex;
-    align-items: center;
-    gap: 0.35rem;
     flex-wrap: wrap;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
-  .hub-sep {
-    color: var(--c-text-muted);
+
+  .hub-breadcrumb li {
+    display: inline-flex;
+    align-items: center;
+    min-inline-size: 0;
   }
+
+  .hub-breadcrumb a,
   .hub-current {
-    color: var(--c-text-muted);
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--target);
+    overflow-wrap: anywhere;
   }
+
+  .hub-breadcrumb a {
+    min-inline-size: var(--target);
+    padding-inline: var(--space-1);
+  }
+
+  .hub-sep {
+    display: inline-flex;
+    margin-inline: var(--space-1);
+    color: var(--c-text-secondary);
+  }
+
+  .hub-current {
+    padding-inline: var(--space-1);
+    color: var(--c-text-secondary);
+  }
+
   .hub-prevnext {
     display: flex;
-    justify-content: space-between;
-    margin-top: 0.75rem;
-    gap: 1rem;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
   }
-  .hub-prev, .hub-next {
-    color: var(--c-accent);
+
+  .hub-step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--target);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-2);
+    color: var(--c-text);
+    text-decoration: none;
   }
+
+  .hub-step:hover {
+    background: var(--c-fill);
+    color: var(--c-text);
+    text-decoration: none;
+  }
+
+  .hub-step :global(svg) {
+    flex: none;
+    color: var(--c-text-secondary);
+  }
+
+  .hub-step-text {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  .hub-step-label {
+    color: var(--c-text-secondary);
+    font-size: var(--text-footnote);
+  }
+
+  .hub-step-title {
+    font-weight: 600;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
   .hub-next {
-    margin-left: auto;
-    text-align: right;
+    justify-content: flex-end;
+    text-align: end;
   }
-  @media (max-width: 479px) {
-    .hub-prevnext { flex-direction: column; gap: 0.5rem; }
-    .hub-next { margin-left: 0; text-align: left; }
+
+  .hub-next .hub-step-text {
+    align-items: flex-end;
+  }
+
+  @media (min-width: 480px) {
+    .hub-prevnext {
+      flex-direction: row;
+    }
+
+    .hub-step {
+      flex: 1;
+    }
+
+    .hub-next {
+      margin-inline-start: auto;
+    }
   }
 </style>

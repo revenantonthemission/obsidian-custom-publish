@@ -107,19 +107,9 @@ export default function LocalGraph({ slug, data }: Props) {
     };
   }, [data, slug]);
 
+  // PostLayout names this section with its "로컬 그래프" heading.
   return (
-    <div style={{ marginTop: "1.5rem" }}>
-      <h3
-        style={{
-          fontSize: "0.8rem",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          color: "var(--c-text-muted)",
-          marginBottom: "0.5rem",
-        }}
-      >
-        로컬 그래프
-      </h3>
+    <div class="local-graph">
       {!ready && (
         <div
           class="skeleton"

@@ -1,11 +1,87 @@
-.nav-tree { font-size: 0.875rem; line-height: 1.6; }
-.nav-tree-heading { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-text-muted, #666); margin: 0 0 8px 0; }
-.nav-tree-root, .nav-tree-children { list-style: none; padding: 0; margin: 0; }
-.nav-tree-children { padding-left: 16px; border-left: 1px solid var(--c-border, #e0e0e0); }
-.nav-tree-item { margin: 2px 0; }
-.nav-tree-label { display: flex; align-items: center; gap: 4px; padding: 2px 4px; border-radius: 4px; }
-.nav-tree-label.current { font-weight: 600; color: var(--c-accent, #2563eb); }
-.nav-tree-label a { text-decoration: none; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nav-tree-label a:hover { text-decoration: underline; }
-.nav-tree-toggle { background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--c-text-muted, #666); flex-shrink: 0; }
-.nav-tree-spacer { width: 16px; flex-shrink: 0; }
+/* The hub navigation tree in the outline's 탐색 tab (FR4.2, FR5.4, FR5.8;
+ * interaction-spec.md "Outline Panel and Outline Sheet"). Rows and toggles
+ * are 44 px; the chevron turns by transform; the current post is marked by
+ * weight and aria-current, with the tint as a second cue. */
+.nav-tree {
+  font-size: var(--text-callout);
+  line-height: 1.35;
+}
+
+.nav-tree-root,
+.nav-tree-children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-tree-children {
+  margin-inline-start: calc(var(--target) / 2);
+  padding-inline-start: var(--space-1);
+  border-inline-start: 1px solid var(--c-separator);
+}
+
+.nav-tree-label {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.nav-tree-label:hover {
+  background: var(--c-fill);
+}
+
+.nav-tree-label a {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-inline-size: var(--target);
+  min-block-size: var(--target);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  text-decoration: none;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.nav-tree-label a:hover {
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.nav-tree-label a[aria-current="page"] {
+  color: var(--c-tint);
+  font-weight: 600;
+}
+
+.nav-tree-label :focus-visible {
+  outline-offset: -2px;
+}
+
+.nav-tree-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target);
+  block-size: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+}
+
+.nav-tree-chevron {
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.nav-tree-toggle[aria-expanded="true"] .nav-tree-chevron {
+  transform: rotate(90deg);
+}
+
+.nav-tree-spacer {
+  flex: none;
+  inline-size: var(--target);
+}
