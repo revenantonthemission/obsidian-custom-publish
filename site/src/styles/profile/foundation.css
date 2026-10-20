@@ -8,9 +8,31 @@
 }
 
 .profile-shell {
+  /* The Lucide ChevronRight that every profile disclosure turns (FR5.9). */
+  --profile-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+
   min-inline-size: 0;
   color: var(--c-text);
   font-family: var(--c-profile-font-family);
+}
+
+/* A disclosure chevron at the end of a summary row, turned by transform. */
+.profile-shell :is(details.resume-entry, .case-study-details) > summary::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--space-4);
+  inline-size: 18px;
+  block-size: 18px;
+  background-color: var(--c-text-secondary);
+  -webkit-mask: var(--profile-chevron) center / contain no-repeat;
+  mask: var(--profile-chevron) center / contain no-repeat;
+  transform: translateY(-50%);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.profile-shell :is(details.resume-entry, .case-study-details)[open] > summary::after {
+  transform: translateY(-50%) rotate(90deg);
 }
 
 .profile-shell,
