@@ -13,17 +13,12 @@
  *   the panel takes over.
  */
 
-import { trapTab } from "../lib/focus-trap";
+import { isBackdropClick, trapTab } from "../lib/modal";
 import { selectedTab } from "./tabs";
 
 const PANEL_QUERY = "(min-width: 1100px)";
 
 type CloseReason = "dismiss" | "link" | "resize";
-
-function isOutside(dialog: HTMLDialogElement, event: MouseEvent): boolean {
-  const box = dialog.getBoundingClientRect();
-  return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
-}
 
 /** Moves focus to the heading a table of contents link points at. */
 function focusHeading(link: HTMLAnchorElement): void {
@@ -58,7 +53,7 @@ function setUpSheet(): void {
   dialog.addEventListener("keydown", (event) => trapTab(dialog, event));
 
   dialog.addEventListener("click", (event) => {
-    if (event.target === dialog && isOutside(dialog, event)) {
+    if (isBackdropClick(dialog, event)) {
       closeAs("dismiss");
       return;
     }

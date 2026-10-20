@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { Search as SearchIcon, X } from "lucide-preact";
-import { trapTab } from "../lib/focus-trap";
+import { isBackdropClick, trapTab } from "../lib/modal";
 import { prepareSearchIndex, searchIndex, type PreparedSearchIndex, type SearchResult } from "../lib/search";
 import { searchKeyAction } from "../lib/search-keys";
 
@@ -166,13 +166,7 @@ export default function Search() {
         if (dialogRef.current) trapTab(dialogRef.current, event);
       }}
       onClick={(event) => {
-        // A click on the dimmed page around the dialog closes it.
-        const dialog = dialogRef.current;
-        if (!dialog || event.target !== dialog) return;
-        const box = dialog.getBoundingClientRect();
-        const outside =
-          event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
-        if (outside) hide();
+        if (dialogRef.current && isBackdropClick(dialogRef.current, event)) hide();
       }}
     >
       <div class="search-bar">
