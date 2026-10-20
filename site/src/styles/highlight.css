@@ -1,0 +1,28 @@
+/* Highlights (==text==) in posts and in the homepage note (NFR1-b; review
+ * findings R-12 and R-17). PostLayout.astro and pages/index.astro both import
+ * this sheet, so the homepage note no longer falls back to the browser's
+ * yellow mark. An imported stylesheet is global, which the set:html content
+ * of both pages needs. */
+.post-content mark {
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+  background: var(--c-mark-fill);
+  color: inherit;
+}
+
+/* --c-mark-fill holds plain text at 7.30:1 or more on every ground, but a
+ * --c-tint link on it falls to 4.07:1 over a light callout and 4.27:1 over a
+ * dark table header. --c-tint-hover keeps it at 5.37:1 or more on the page,
+ * card, table-header and every callout ground (hig-tokens.test.ts). The
+ * underline, not the color, sets the link apart from the highlighted text. */
+.post-content mark a {
+  color: var(--c-tint-hover);
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.18em;
+}
+
+/* The color already is the hover color, so hover thickens the underline instead. */
+.post-content mark a:hover {
+  text-decoration-thickness: 2px;
+}
