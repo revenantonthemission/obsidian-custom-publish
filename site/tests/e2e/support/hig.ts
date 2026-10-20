@@ -197,6 +197,70 @@ export async function horizontalOverflow(page: Page): Promise<OverflowReport> {
   });
 }
 
+/**
+ * The light and dark values of --c-segment-indicator, the ring that marks a
+ * selected segment (NFR1; review finding R-05). hig-tokens.test.ts holds it
+ * at 3:1 against the track; the browser checks confirm it is drawn.
+ */
+export const SEGMENT_INDICATOR = Object.freeze({
+  light: 'rgb(99, 99, 102)',
+  dark: 'rgb(161, 161, 166)',
+} as const);
+
+export interface RenderedContrast {
+  readonly label: string;
+  readonly ratio: number;
+}
+
+/**
+ * The text contrast of every matching element as the browser paints it: its
+ * color over its own and its ancestors' background colors, composited down
+ * to the first opaque one. Backdrop filters are not modelled, so text on glass
+ * is held to the token test's worst case instead (C-03).
+ */
+export async function renderedContrast(page: Page, selector: string): Promise<RenderedContrast[]> {
+  return page.locator(selector).evaluateAll((elements) => {
+    // Computed colors arrive as rgb()/rgba() in 0–255, or, for a color-mix()
+    // value, as color(srgb r g b / a) in 0–1.
+    const parse = (value: string): number[] => {
+      if (value === 'transparent') return [0, 0, 0, 0];
+      const numbers = (value.match(/[\d.]+/g) ?? []).map(Number);
+      const [r = 0, g = 0, b = 0, alpha = 1] = numbers;
+      return value.startsWith('color(') ? [r * 255, g * 255, b * 255, alpha] : [r, g, b, alpha];
+    };
+    const over = (top: number[], back: number[]): number[] => {
+      const alpha = top[3] ?? 1;
+      return [0, 1, 2].map((index) => top[index]! * alpha + back[index]! * (1 - alpha)).concat(1);
+    };
+    const luminance = (rgb: number[]): number => {
+      const [r, g, b] = rgb.map((channel) => {
+        const value = channel / 255;
+        return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+    const backdrop = (element: Element): number[] => {
+      const layers: number[][] = [];
+      for (let node: Element | null = element; node !== null; node = node.parentElement) {
+        const layer = parse(getComputedStyle(node).backgroundColor);
+        if (layer[3]! > 0) layers.push(layer);
+        if (layer[3]! >= 1) break;
+      }
+      const base = layers.at(-1)?.[3] === 1 ? layers.pop()! : [255, 255, 255, 1];
+      return layers.reverse().reduce((under, layer) => over(layer, under), base);
+    };
+    return elements.map((element) => {
+      const ground = backdrop(element);
+      const text = over(parse(getComputedStyle(element).color), ground);
+      const [lighter, darker] = [luminance(text), luminance(ground)].sort((a, b) => b - a);
+      return {
+        label: `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 40)} "${(element.textContent ?? '').trim().slice(0, 24)}"`,
+        ratio: Math.round(((lighter! + 0.05) / (darker! + 0.05)) * 100) / 100,
+      };
+    });
+  });
+}
+
 /** C-14: doubles the root font size, which every rem-based type token follows. */
 export async function applyTextZoom(page: Page, factor: number): Promise<void> {
   await page.addStyleTag({ content: `html { font-size: ${16 * factor}px !important; }` });

@@ -78,10 +78,11 @@
   margin-block-start: 0;
 }
 
+/* --c-mark-fill keeps a --c-tint link inside the highlight at 4.5:1 (NFR1; R-12). */
 .post-content mark {
   padding: 0.1em 0.2em;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--c-orange) 28%, transparent);
+  background: var(--c-mark-fill);
   color: inherit;
 }
 
@@ -199,12 +200,16 @@
   background: transparent;
 }
 
+/* A highlighted line ({n} meta): a faint --c-code-highlight fill keeps every
+   Xcode color at 4.5:1, and a --c-tint bar at its start makes it visible
+   (NFR1; R-12). */
 .shiki .line.highlighted {
   display: inline-block;
   inline-size: calc(100% + var(--space-4) * 2);
   margin-inline: calc(var(--space-4) * -1);
   padding-inline: var(--space-4);
-  background-color: var(--c-fill);
+  background-color: var(--c-code-highlight);
+  box-shadow: inset 3px 0 0 var(--c-tint);
 }
 
 /* ── Tables: wide ones scroll inside their wrapper ── */

@@ -6,6 +6,7 @@ import {
   gotoSettled,
   horizontalOverflow,
   measureTargets,
+  renderedContrast,
   undersized,
   viewportFor,
 } from './support/hig';
@@ -329,6 +330,48 @@ test.describe('link preview (C-07, FR5.7)', () => {
     await page.mouse.move(5, 5);
     await expect(tooltip).toBeHidden();
   });
+});
+
+// Loop-back 1 (NFR1; review finding R-12). No fixture note holds a link inside
+// ==highlight== or a highlighted code line ({n} meta), so each test sets the
+// state up on the code post and measures what the browser paints.
+test.describe('highlights (NFR1; R-12)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  for (const appearance of ['light', 'dark'] as const) {
+    test(`a link inside a highlight reaches 4.5:1, ${appearance}`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: appearance });
+      await gotoSettled(page, CODE_POST);
+      await page
+        .locator('.post-content p a[href="/posts/simple-post"]')
+        .first()
+        .evaluate((link) => {
+          const mark = document.createElement('mark');
+          link.replaceWith(mark);
+          mark.append(link);
+        });
+      const pairs = await renderedContrast(page, '.post-content mark a');
+      expect(pairs).toHaveLength(1);
+      expect(pairs.filter(({ ratio }) => ratio < 4.5)).toEqual([]);
+    });
+
+    test(`every syntax color reaches 4.5:1 on a highlighted code line, ${appearance}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: appearance });
+      await gotoSettled(page, CODE_POST);
+      const lines = page.locator('pre.shiki[data-language="ts"] .line');
+      await lines.evaluateAll((elements) =>
+        elements.forEach((line) => line.classList.add('highlighted'))
+      );
+      const pairs = await renderedContrast(
+        page,
+        'pre.shiki[data-language="ts"] .line.highlighted span'
+      );
+      expect(pairs.length).toBeGreaterThan(10);
+      expect(pairs.filter(({ ratio }) => ratio < 4.5)).toEqual([]);
+    });
+  }
 });
 
 test.describe('link preview on touch', () => {

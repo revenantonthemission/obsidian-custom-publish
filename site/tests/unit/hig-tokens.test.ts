@@ -42,6 +42,11 @@ const COLOR_TOKENS = [
   '--c-glass-thick',
   '--c-bar-focus-ring',
   '--c-bar-indicator',
+  // Loop-back 1 state colors (NFR1; review findings R-05 and R-12).
+  '--c-segment-indicator',
+  '--c-selected-secondary-text',
+  '--c-code-highlight',
+  '--c-mark-fill',
   ...HUES.flatMap((hue) => [`--c-${hue}`, `--c-${hue}-text`]),
 ] as const;
 
@@ -374,6 +379,97 @@ describe('HIG token layer (tokens.css)', () => {
       return foregrounds.map(({ label, value }) => ({
         label: `${scheme} ${label}`,
         ratio: contrast(parseColor(value.toLowerCase()), panel),
+        minimum: TEXT_MIN,
+      }));
+    });
+    expect(failures(pairs)).toEqual([]);
+  });
+});
+
+/** The Xcode-style syntax colors of one appearance (src/lib/shiki-themes). */
+function syntaxColors(scheme: Scheme): { label: string; value: Rgba }[] {
+  const theme = JSON.parse(readFileSync(THEME_PATHS[scheme], 'utf8')) as {
+    colors: Record<string, string>;
+    tokenColors: { scope?: string | string[]; settings: { foreground?: string } }[];
+  };
+  return [
+    { label: 'editor.foreground', value: theme.colors['editor.foreground']! },
+    ...theme.tokenColors.flatMap((rule) =>
+      rule.settings.foreground === undefined
+        ? []
+        : [{ label: String(rule.scope), value: rule.settings.foreground }]
+    ),
+  ].map(({ label, value }) => ({ label, value: parseColor(value.toLowerCase()) }));
+}
+
+// Loop-back 1 (NFR1; Build and Test targets NFR1-b and NFR1-c; review findings
+// R-05 and R-12): state colors the first token set did not compute.
+describe('selection and highlight states (NFR1; R-05, R-12)', () => {
+  const tokens = loadTokens();
+  const byScheme: Record<Scheme, Map<string, string>> = { light: tokens.light, dark: tokens.dark };
+
+  test("the selected segment's indicator reaches 3:1 against its track on every ground (R-05)", () => {
+    const pairs = SCHEMES.flatMap((scheme) => {
+      const map = byScheme[scheme];
+      const grounds: Record<string, Rgba> = {
+        '--c-bg': color(map, '--c-bg'),
+        '--c-bg-grouped': color(map, '--c-bg-grouped'),
+        'worst-case thick glass': composite(color(map, '--c-glass-thick'), WORST_BACKDROP[scheme]),
+      };
+      return Object.entries(grounds).map(([ground, rgba]) => ({
+        label: `${scheme} --c-segment-indicator against the --c-fill track on ${ground}`,
+        ratio: contrast(
+          color(map, '--c-segment-indicator'),
+          composite(color(map, '--c-fill'), rgba)
+        ),
+        minimum: NON_TEXT_MIN,
+      }));
+    });
+    expect(failures(pairs)).toEqual([]);
+  });
+
+  test("the selected search option's secondary line reaches 4.5:1 on its fill over thick glass, with and without the scrim (R-12)", () => {
+    const pairs = SCHEMES.flatMap((scheme) => {
+      const map = byScheme[scheme];
+      const backdrops: Record<string, Rgba> = {
+        'no scrim': WORST_BACKDROP[scheme],
+        scrim: composite(color(map, '--c-scrim'), WORST_BACKDROP[scheme]),
+      };
+      return Object.entries(backdrops).map(([backdrop, rgba]) => {
+        const glass = composite(color(map, '--c-glass-thick'), rgba);
+        return {
+          label: `${scheme} --c-selected-secondary-text on --c-fill over thick glass, ${backdrop}`,
+          ratio: contrast(
+            color(map, '--c-selected-secondary-text'),
+            composite(color(map, '--c-fill'), glass)
+          ),
+          minimum: TEXT_MIN,
+        };
+      });
+    });
+    expect(failures(pairs)).toEqual([]);
+  });
+
+  test('every Xcode-style syntax color reaches 4.5:1 on a highlighted code line (R-12)', () => {
+    const pairs = SCHEMES.flatMap((scheme) => {
+      const map = byScheme[scheme];
+      const line = composite(color(map, '--c-code-highlight'), color(map, '--c-code-bg'));
+      return syntaxColors(scheme).map(({ label, value }) => ({
+        label: `${scheme} ${label} on --c-code-highlight`,
+        ratio: contrast(value, line),
+        minimum: TEXT_MIN,
+      }));
+    });
+    expect(failures(pairs)).toEqual([]);
+  });
+
+  test('a --c-tint link inside a highlight reaches 4.5:1 on --c-mark-fill (R-12)', () => {
+    const pairs = SCHEMES.flatMap((scheme) => {
+      const map = byScheme[scheme];
+      const mark = composite(color(map, '--c-mark-fill'), color(map, '--c-bg'));
+      return ['--c-tint', '--c-tint-hover', '--c-text'].map((text) => ({
+        label: `${scheme} ${text} on --c-mark-fill`,
+        ratio: contrast(color(map, text), mark),
         minimum: TEXT_MIN,
       }));
     });

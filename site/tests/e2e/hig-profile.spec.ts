@@ -5,6 +5,7 @@
 import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import {
+  SEGMENT_INDICATOR,
   gotoSettled,
   horizontalOverflow,
   measureTargets,
@@ -271,4 +272,26 @@ test.describe('résumé print (W14; R-09)', () => {
     expect(report.pages).toContainEqual({ size: 'a4', margin: '12mm' });
     expect(report.offenders).toEqual([]);
   });
+});
+
+// Loop-back 1 (NFR1; review finding R-05): the current page of a segmented
+// navigation is ringed in --c-segment-indicator, which hig-tokens.test.ts
+// holds at 3:1 against the track.
+test.describe('segmented navigation selection (NFR1; R-05)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  for (const scheme of ['light', 'dark'] as const) {
+    test(`the current local and role segment is ringed in --c-segment-indicator, ${scheme}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await gotoSettled(page, '/portfolio');
+      for (const navigation of ['nav.profile-local-navigation', 'nav.portfolio-role-navigation']) {
+        const shadow = await page
+          .locator(`${navigation} a[aria-current="page"]`)
+          .evaluate((link) => getComputedStyle(link).boxShadow);
+        expect(shadow, navigation).toContain(`${SEGMENT_INDICATOR[scheme]} 0px 0px 0px 1px inset`);
+      }
+    });
+  }
 });
