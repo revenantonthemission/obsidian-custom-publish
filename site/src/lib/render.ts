@@ -94,13 +94,29 @@ function isImage(node: unknown): node is Element {
 }
 
 /**
+ * How much text may come before the lead image, in non-space characters. A
+ * 320 px phone fits about 17 Korean characters to a line and 16–20 body lines
+ * below the post header, so an image after more text than this starts below
+ * the first screen. Real posts put a median of about 1,000 characters before
+ * their first image (review finding R-16).
+ */
+export const LEAD_IMAGE_MAX_PRECEDING_CHARS = 280;
+
+/**
  * The likeliest Largest Contentful Paint image: the first image of the
  * document, or both images of its light/dark diagram pair, only one of which
- * is visible in each appearance.
+ * is visible in each appearance. There is none when more than
+ * LEAD_IMAGE_MAX_PRECEDING_CHARS of text comes first: the page's LCP is then
+ * text, and a high-priority image download would only compete with it (R-16).
  */
 function leadImages(tree: Root): ReadonlySet<Element> {
+  let precedingChars = 0;
   let lead: ReadonlySet<Element> = new Set();
-  visit(tree, 'element', (node: Element, _index, parent) => {
+  visit(tree, (node, _index, parent) => {
+    if (node.type === 'text') {
+      precedingChars += node.value.replace(/\s/g, '').length;
+      return precedingChars > LEAD_IMAGE_MAX_PRECEDING_CHARS ? EXIT : undefined;
+    }
     if (!isImage(node)) return undefined;
     const container = parent?.type === 'element' ? parent : null;
     const classes = container?.properties.className;
