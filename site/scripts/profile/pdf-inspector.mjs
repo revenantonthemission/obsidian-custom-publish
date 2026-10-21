@@ -6,7 +6,9 @@ import { PROFILE_PATHS } from './profile-paths.mjs';
 const INSPECT_RULE = 'AC-U03-02/NFR-U1-006';
 const EVIDENCE_SCHEMA_VERSION = 1;
 const PERIOD_SEPARATOR = /\s*–\s*/u;
-const PERIOD_POINT = /^(?:\d{4}|\d{4}-(?:0[1-9]|1[0-2])|현재)$/u;
+// The displayed point (BR3.1): YYYY, YYYY.MM, YYYY.MM.DD or the open end.
+const PERIOD_POINT =
+  /^(?:\d{4}|\d{4}\.(?:0[1-9]|1[0-2])|\d{4}\.(?:0[1-9]|1[0-2])\.(?:0[1-9]|[12]\d|3[01])|현재)$/u;
 const GITHUB_PREFIX = 'https://github.com/';
 
 export class ResumePdfInspectorError extends Error {

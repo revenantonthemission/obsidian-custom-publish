@@ -157,6 +157,38 @@ describe('renderer-neutral profile presentation', () => {
     ]);
   });
 
+  // BR3.1: one dotted formatter for every period; the stored value stays ISO.
+  test.each([
+    [
+      { tag: 'date', value: '2025-09-06' },
+      { tag: 'date', value: '2027-09-06' },
+      '2025.09.06 – 2027.09.06',
+    ],
+    [
+      { tag: 'year-month', value: '2023-07' },
+      { tag: 'year-month', value: '2023-08' },
+      '2023.07 – 2023.08',
+    ],
+    [{ tag: 'year', value: '2019' }, { tag: 'year', value: '2026' }, '2019 – 2026'],
+    [{ tag: 'year-month', value: '2024-03' }, { tag: 'present' }, '2024.03 – 현재'],
+    [{ tag: 'date', value: '2026-07-17' }, { tag: 'present' }, '2026.07.17 – 현재'],
+  ])('displays the period %o – %o as %s', (start, end, text) => {
+    const fixture = cloneProfileFixture() as unknown as {
+      experiences: Array<{ period: { value: unknown } }>;
+    };
+    fixture.experiences[0]!.period.value = { start, end };
+    const resume = buildResumePresentation(
+      selectResumeProfile(validSource(fixture as unknown as ProfileData))
+    );
+    const highlights = resume.sections.find((section) => section.kind === 'highlights');
+    if (highlights?.kind !== 'highlights') throw new Error('Expected highlights section.');
+    const entry = highlights.groups[0]?.entries[0];
+    if (entry?.kind !== 'career') throw new Error('Expected a career entry.');
+
+    expect(entry.period.text).toBe(text);
+    expect(entry.period.value).toEqual({ start, end });
+  });
+
   test('omits absent optionals and preserves all portfolio dimensions without markup or client state fields', () => {
     const source = validSource();
     const resume = buildResumePresentation(selectResumeProfile(source), getResumeDocumentLink());

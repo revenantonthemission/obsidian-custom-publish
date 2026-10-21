@@ -93,7 +93,13 @@ export interface YearMonthPoint {
   readonly value: string;
 }
 
-export type DatePoint = YearPoint | YearMonthPoint;
+/** A real calendar day, stored as ISO `YYYY-MM-DD` and displayed with dots (BR1.1, BR3.1). */
+export interface FullDatePoint {
+  readonly tag: 'date';
+  readonly value: string;
+}
+
+export type DatePoint = YearPoint | YearMonthPoint | FullDatePoint;
 
 export interface PresentPeriodEnd {
   readonly tag: 'present';

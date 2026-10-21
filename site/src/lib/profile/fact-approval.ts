@@ -1,6 +1,6 @@
 import { createValidationIssue, profilePath, sortAndDedupeIssues } from './issues.js';
 import { normalizeText } from './normalization.js';
-import { hasValidatedProfileCapability } from './validation.js';
+import { hasValidatedProfileCapability, isValidDatePoint } from './validation.js';
 import type {
   ContentBlock,
   DeepReadonly,
@@ -1332,11 +1332,7 @@ function isDatePoint(value: unknown): value is Period['start'] {
     return false;
   }
 
-  if (value.tag === 'year') {
-    return /^\d{4}$/.test(value.value);
-  }
-
-  return value.tag === 'year-month' && /^\d{4}-(?:0[1-9]|1[0-2])$/.test(value.value);
+  return isValidDatePoint(value.tag, value.value);
 }
 
 function isFactReviewEvidence(value: unknown): value is FactReviewEvidence {

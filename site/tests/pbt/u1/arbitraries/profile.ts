@@ -16,7 +16,13 @@ type SourcePermutation = 'identity' | 'reverse' | 'rotate';
 type RelationChoice = 'none' | 'experience' | 'achievement';
 type HighlightMode = 'experience-only' | 'achievement-only' | 'both';
 type DetailMode = 'paragraph' | 'list' | 'both';
-type PeriodMode = 'year' | 'year-month' | 'present';
+type PeriodMode = 'year' | 'year-month' | 'date' | 'present';
+
+/** A month and a requested day; `validPeriod` clamps the day to a real one. */
+interface PeriodDay {
+  readonly month: number;
+  readonly day: number;
+}
 type EvidenceDestinationMode = 'external' | 'internal';
 
 interface ProfileBlueprint {
@@ -57,6 +63,7 @@ interface ProfileBlueprint {
   readonly certificationDetailMode: DetailMode;
   readonly certificationEvidence: boolean;
   readonly certificationEvidenceDestination: EvidenceDestinationMode;
+  readonly periodDay: PeriodDay;
   readonly relation: RelationChoice;
 }
 
@@ -129,7 +136,7 @@ const profileBlueprintArbitrary = fc.record({
   experienceEvidence: fc.boolean(),
   experienceEvidenceDestination: fc.constantFrom<EvidenceDestinationMode>('external', 'internal'),
   experienceDetailMode: fc.constantFrom<DetailMode>('paragraph', 'list', 'both'),
-  experiencePeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'present'),
+  experiencePeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'date', 'present'),
   achievementEvidence: fc.boolean(),
   achievementEvidenceDestination: fc.constantFrom<EvidenceDestinationMode>('external', 'internal'),
   achievementDetailMode: fc.constantFrom<DetailMode>('paragraph', 'list', 'both'),
@@ -138,13 +145,13 @@ const profileBlueprintArbitrary = fc.record({
   projectDetailMode: fc.constantFrom<DetailMode>('paragraph', 'list', 'both'),
   highlightMode: fc.constantFrom<HighlightMode>('experience-only', 'achievement-only', 'both'),
   achievementPeriod: fc.boolean(),
-  achievementPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'present'),
+  achievementPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'date', 'present'),
   projectPeriod: fc.boolean(),
-  projectPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'present'),
+  projectPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'date', 'present'),
   education: fc.boolean(),
   educationSubtitle: fc.boolean(),
   educationPeriod: fc.boolean(),
-  educationPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'present'),
+  educationPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'date', 'present'),
   educationDetails: fc.boolean(),
   educationDetailMode: fc.constantFrom<DetailMode>('paragraph', 'list', 'both'),
   educationEvidence: fc.boolean(),
@@ -152,7 +159,7 @@ const profileBlueprintArbitrary = fc.record({
   certification: fc.boolean(),
   certificationIssuer: fc.boolean(),
   certificationPeriod: fc.boolean(),
-  certificationPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'present'),
+  certificationPeriodMode: fc.constantFrom<PeriodMode>('year', 'year-month', 'date', 'present'),
   certificationDetails: fc.boolean(),
   certificationDetailMode: fc.constantFrom<DetailMode>('paragraph', 'list', 'both'),
   certificationEvidence: fc.boolean(),
@@ -160,6 +167,10 @@ const profileBlueprintArbitrary = fc.record({
     'external',
     'internal'
   ),
+  periodDay: fc.record({
+    month: fc.integer({ min: 1, max: 12 }),
+    day: fc.integer({ min: 1, max: 31 }),
+  }),
   relation: fc.constantFrom<RelationChoice>('none', 'experience', 'achievement'),
 });
 
@@ -235,7 +246,7 @@ function buildProfile(blueprint: ProfileBlueprint): ProfileData {
               ? {
                   period: fact(
                     'achievement-one-period',
-                    validPeriod(blueprint.achievementPeriodMode, 2022)
+                    validPeriod(blueprint.achievementPeriodMode, 2022, blueprint.periodDay)
                   ),
                 }
               : {}),
@@ -349,7 +360,7 @@ function buildProfile(blueprint: ProfileBlueprint): ProfileData {
               role: fact('experience-one-role', '소프트웨어 엔지니어'),
               period: fact(
                 'experience-one-period',
-                validPeriod(blueprint.experiencePeriodMode, 2021)
+                validPeriod(blueprint.experiencePeriodMode, 2021, blueprint.periodDay)
               ),
               summary: fact('experience-one-summary', `${text} 품질 경계를 개선했습니다.`),
               details: detailBlocks(
@@ -387,7 +398,7 @@ function buildProfile(blueprint: ProfileBlueprint): ProfileData {
               ? {
                   period: fact(
                     'education-one-period',
-                    validPeriod(blueprint.educationPeriodMode, 2017)
+                    validPeriod(blueprint.educationPeriodMode, 2017, blueprint.periodDay)
                   ),
                 }
               : {}),
@@ -427,7 +438,7 @@ function buildProfile(blueprint: ProfileBlueprint): ProfileData {
               ? {
                   period: fact(
                     'certification-one-period',
-                    validPeriod(blueprint.certificationPeriodMode, 2020)
+                    validPeriod(blueprint.certificationPeriodMode, 2020, blueprint.periodDay)
                   ),
                 }
               : {}),
@@ -469,7 +480,10 @@ function project(
   const text = blueprint.text;
   const period = blueprint.projectPeriod
     ? {
-        period: fact(`${base}-period`, validPeriod(blueprint.projectPeriodMode, 2023)),
+        period: fact(
+          `${base}-period`,
+          validPeriod(blueprint.projectPeriodMode, 2023, blueprint.periodDay)
+        ),
       }
     : {};
   const evidence = blueprint.projectEvidence
@@ -808,7 +822,25 @@ function fact<Id extends string, Value>(factId: Id, value: Value) {
   return { factId, value };
 }
 
-function validPeriod(mode: PeriodMode, startYear: number) {
+const DEFAULT_PERIOD_DAY: PeriodDay = Object.freeze({ month: 2, day: 28 });
+
+/**
+ * A real calendar day in `year`: the requested day is clamped to the month's
+ * length, so 29 February appears only in leap years (BR1.1).
+ */
+function realDate(year: number, { month, day }: PeriodDay): string {
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const clamped = Math.min(day, lastDay);
+  return `${year}-${String(month).padStart(2, '0')}-${String(clamped).padStart(2, '0')}`;
+}
+
+function validPeriod(mode: PeriodMode, startYear: number, periodDay = DEFAULT_PERIOD_DAY) {
+  if (mode === 'date') {
+    return {
+      start: { tag: 'date' as const, value: realDate(startYear, periodDay) },
+      end: { tag: 'date' as const, value: realDate(startYear + 2, periodDay) },
+    };
+  }
   if (mode === 'year') {
     return {
       start: { tag: 'year' as const, value: String(startYear) },

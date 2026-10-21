@@ -45,8 +45,9 @@ interface ValidationContext {
 const CONTROL_OR_WHITESPACE_PATTERN = /[\u0000-\u0020\u007f]/;
 const EMAIL_LOCAL_PATTERN = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
 const DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
-const YEAR_PATTERN = /^\d{4}$/;
+const YEAR_PATTERN = /^(\d{4})$/;
 const YEAR_MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
+const FULL_DATE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const GITHUB_PROFILE_PATTERN =
   /^https:\/\/github\.com\/([A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?)$/;
 
@@ -1558,7 +1559,7 @@ function validateDatePoint(
 ):
   | Readonly<{
       valid: true;
-      precision: 'year' | 'year-month';
+      precision: DatePoint['tag'];
       ordinal: number;
     }>
   | Readonly<{
@@ -1576,7 +1577,7 @@ function validateDatePoint(
   if (typeof candidate.tag !== 'string') {
     return { valid: false };
   }
-  if (candidate.tag !== 'year' && candidate.tag !== 'year-month') {
+  if (!isDatePointTag(candidate.tag)) {
     context.issues.push(createValidationIssue('period.precision', path));
     return { valid: false };
   }
@@ -1584,28 +1585,67 @@ function validateDatePoint(
     return { valid: false };
   }
 
-  if (candidate.tag === 'year') {
-    if (!YEAR_PATTERN.test(candidate.value) || Number(candidate.value) < 1) {
-      context.issues.push(createValidationIssue('period.value', path));
-      return { valid: false };
-    }
-    return {
-      valid: true,
-      precision: 'year',
-      ordinal: Number(candidate.value),
-    };
-  }
-
-  const match = YEAR_MONTH_PATTERN.exec(candidate.value);
-  if (!match || Number(match[1]) < 1) {
+  const ordinal = datePointOrdinal(candidate.tag, candidate.value);
+  if (ordinal === undefined) {
     context.issues.push(createValidationIssue('period.value', path));
     return { valid: false };
   }
-  return {
-    valid: true,
-    precision: 'year-month',
-    ordinal: Number(match[1]) * 12 + Number(match[2]),
-  };
+  return { valid: true, precision: candidate.tag, ordinal };
+}
+
+function isDatePointTag(tag: string): tag is DatePoint['tag'] {
+  return tag === 'year' || tag === 'year-month' || tag === 'date';
+}
+
+/**
+ * The one stored-value rule for a period point (BR1.1, BR2.1), shared by the
+ * fact approval inventory check and the résumé manifest serializer so the
+ * calendar is not restated. The PDF readers parse displayed text instead and
+ * keep their own patterns (see `resume-evidence.ts`).
+ */
+export function isValidDatePoint(tag: unknown, value: unknown): boolean {
+  return (
+    typeof tag === 'string' &&
+    typeof value === 'string' &&
+    isDatePointTag(tag) &&
+    datePointOrdinal(tag, value) !== undefined
+  );
+}
+
+/**
+ * A monotonic ordinal within one precision, or undefined when the value is not
+ * a real point of that precision. Year zero does not exist, and a full date
+ * must name a day that exists in its month and year (BR1.1), so `2026-02-29`
+ * and `2025-09-31` are refused here rather than rolled over by `Date`.
+ */
+function datePointOrdinal(tag: DatePoint['tag'], value: string): number | undefined {
+  const pattern =
+    tag === 'year' ? YEAR_PATTERN : tag === 'year-month' ? YEAR_MONTH_PATTERN : FULL_DATE_PATTERN;
+  const match = pattern.exec(value);
+  const year = Number(match?.[1]);
+  if (!match || year < 1) {
+    return undefined;
+  }
+  if (tag === 'year') {
+    return year;
+  }
+  const month = Number(match[2]);
+  if (tag === 'year-month') {
+    return year * 12 + month;
+  }
+  const day = Number(match[3]);
+  if (day > daysInMonth(year, month)) {
+    return undefined;
+  }
+  return (year * 12 + month) * 31 + day;
+}
+
+const DAYS_IN_MONTH = Object.freeze([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]);
+
+/** Gregorian rule, computed directly: `Date.UTC` maps years 0–99 onto 1900–1999. */
+function daysInMonth(year: number, month: number): number {
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return month === 2 && isLeapYear ? 29 : (DAYS_IN_MONTH[month - 1] ?? 0);
 }
 
 function validateContentBlocks(
