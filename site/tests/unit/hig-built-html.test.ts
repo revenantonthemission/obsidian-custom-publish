@@ -148,14 +148,18 @@ describe('built HTML: Korean names and hidden decoration', () => {
     const isNamedImage = (node: Element): boolean =>
       attribute(node, 'role') === 'img' &&
       (attribute(node, 'ariaLabel') ?? attribute(node, 'ariaLabelledBy') ?? '').trim() !== '';
+    // aria-hidden hides the whole subtree: KaTeX draws stretchy symbols as svg
+    // inside `.katex-html[aria-hidden="true"]` and exposes the MathML copy.
+    const isHidden = (node: Element, ancestors: readonly Element[]): boolean =>
+      [...ancestors, node].some((element) => attribute(element, 'ariaHidden') === 'true');
     const exposed = pages.flatMap(({ route, tree }) =>
       findAll(
         tree,
-        (node) =>
+        (node, ancestors) =>
           node.tagName === 'svg' &&
           !isNamedImage(node) &&
           !node.children.some((child) => child.type === 'element' && child.tagName === 'title') &&
-          attribute(node, 'ariaHidden') !== 'true'
+          !isHidden(node, ancestors)
       ).map(({ ancestors }) => {
         const parent = ancestors.at(-1);
         return `${route}: svg in ${parent?.tagName ?? 'root'}.${String(parent?.properties.className ?? '')}`;
