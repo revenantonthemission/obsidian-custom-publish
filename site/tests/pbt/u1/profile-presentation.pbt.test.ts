@@ -50,6 +50,7 @@ test.prop([validProfileProjectionsArbitrary])(
       'highlights',
       'projects',
       ...(resume.education === undefined ? [] : ['education']),
+      ...(resume.credentials === undefined ? [] : ['credentials']),
       ...(resume.certifications === undefined ? [] : ['certifications']),
     ]);
 
@@ -351,15 +352,8 @@ function assertOptionalResumeSections(
       readonly details: readonly ContentBlock[];
       readonly evidence: readonly EvidenceLink[];
     }[];
-    readonly certifications?: readonly {
-      readonly id: string;
-      readonly order: number;
-      readonly title: PublicFact<string>;
-      readonly issuer?: PublicFact<string>;
-      readonly period?: PublicFact<Period>;
-      readonly details: readonly ContentBlock[];
-      readonly evidence: readonly EvidenceLink[];
-    }[];
+    readonly credentials?: readonly CertificationSource[];
+    readonly certifications?: readonly CertificationSource[];
   }
 ): void {
   const education = presentation.sections.find(({ kind }) => kind === 'education');
@@ -382,24 +376,42 @@ function assertOptionalResumeSections(
     }
   }
 
-  const certifications = presentation.sections.find(({ kind }) => kind === 'certifications');
-  if (resume.certifications === undefined) {
-    expect(certifications).toBeUndefined();
-  } else {
-    expect(certifications?.kind).toBe('certifications');
-    if (certifications?.kind === 'certifications') {
-      expect(itemVector(certifications.entries)).toEqual(itemVector(resume.certifications));
-      for (const [index, entry] of certifications.entries.entries()) {
-        const source = resume.certifications[index];
-        expect(entry.title).toEqual(textFact(source.title));
-        expect(entry.issuer).toEqual(
-          source.issuer === undefined ? undefined : textFact(source.issuer)
-        );
-        assertPeriod(entry.period, source.period);
-        assertTextBlocks(entry.details, source.details);
-        assertEvidenceActions(entry.evidence, source.evidence);
-      }
-    }
+  assertCertificationSection(presentation, 'credentials', '자격증', resume.credentials);
+  assertCertificationSection(presentation, 'certifications', '어학 자격', resume.certifications);
+}
+
+interface CertificationSource {
+  readonly id: string;
+  readonly order: number;
+  readonly title: PublicFact<string>;
+  readonly issuer?: PublicFact<string>;
+  readonly period?: PublicFact<Period>;
+  readonly details: readonly ContentBlock[];
+  readonly evidence: readonly EvidenceLink[];
+}
+
+/** BR4.2/BR4.3: both certification sections share one entry layout. */
+function assertCertificationSection(
+  presentation: ResumePresentation,
+  kind: 'credentials' | 'certifications',
+  heading: string,
+  sources: readonly CertificationSource[] | undefined
+): void {
+  const section = presentation.sections.find((candidate) => candidate.kind === kind);
+  if (sources === undefined) {
+    expect(section).toBeUndefined();
+    return;
+  }
+  if (section?.kind !== kind) throw new Error(`expected the ${kind} section`);
+  expect(section.heading).toBe(heading);
+  expect(itemVector(section.entries)).toEqual(itemVector(sources));
+  for (const [index, entry] of section.entries.entries()) {
+    const source = sources[index]!;
+    expect(entry.title).toEqual(textFact(source.title));
+    expect(entry.issuer).toEqual(source.issuer === undefined ? undefined : textFact(source.issuer));
+    assertPeriod(entry.period, source.period);
+    assertTextBlocks(entry.details, source.details);
+    assertEvidenceActions(entry.evidence, source.evidence);
   }
 }
 
@@ -451,6 +463,7 @@ function stripOptionalPresentationData(input: ProfileData): ProfileData {
       relatedProfileEntity?: unknown;
     }>;
     education: unknown[];
+    credentials: unknown[];
     certifications: unknown[];
   };
 
@@ -468,6 +481,7 @@ function stripOptionalPresentationData(input: ProfileData): ProfileData {
     delete item.relatedProfileEntity;
   });
   profile.education = [];
+  profile.credentials = [];
   profile.certifications = [];
 
   return profile as unknown as ProfileData;
@@ -476,7 +490,11 @@ function stripOptionalPresentationData(input: ProfileData): ProfileData {
 function removeOptionalResumeNodes(presentation: ResumePresentation): ResumePresentation {
   const sections: ResumePresentation['sections'][number][] = [];
   for (const section of presentation.sections) {
-    if (section.kind === 'education' || section.kind === 'certifications') {
+    if (
+      section.kind === 'education' ||
+      section.kind === 'credentials' ||
+      section.kind === 'certifications'
+    ) {
       continue;
     }
     if (section.kind === 'intro') {

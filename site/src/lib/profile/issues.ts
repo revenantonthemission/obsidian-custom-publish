@@ -99,11 +99,12 @@ const ROOT_FIELD_RANK = new Map<string, number>([
   ['achievements', 5],
   ['projects', 6],
   ['education', 7],
-  ['certifications', 8],
-  ['facts', 9],
-  ['metadata', 10],
-  ['navigation', 11],
-  ['document', 12],
+  ['credentials', 8],
+  ['certifications', 9],
+  ['facts', 10],
+  ['metadata', 11],
+  ['navigation', 12],
+  ['document', 13],
 ]);
 
 export interface IssueMessageParameters {

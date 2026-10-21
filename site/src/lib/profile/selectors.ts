@@ -30,6 +30,7 @@ const PROFILE_ROUTES = Object.freeze({
 export function selectResumeProfile(profile: ValidatedProfile): ResumeProfile {
   const source = profile as unknown as ProfileData;
   const education = frozenArray(numericOrder(source.education).map(copyEducation));
+  const credentials = frozenArray(numericOrder(source.credentials).map(copyCertification));
   const certifications = frozenArray(numericOrder(source.certifications).map(copyCertification));
   const resumeProjectIds =
     source.resumeProjectIds === undefined ? undefined : new Set(source.resumeProjectIds);
@@ -54,6 +55,12 @@ export function selectResumeProfile(profile: ValidatedProfile): ResumeProfile {
       ? {}
       : {
           education: education as NonEmptyReadonlyArray<Education>,
+        }),
+    // An empty collection takes no section (BR4.2).
+    ...(credentials.length === 0
+      ? {}
+      : {
+          credentials: credentials as NonEmptyReadonlyArray<Certification>,
         }),
     ...(certifications.length === 0
       ? {}

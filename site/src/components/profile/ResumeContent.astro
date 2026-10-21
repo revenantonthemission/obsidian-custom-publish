@@ -9,6 +9,15 @@ interface Props {
 }
 
 const { presentation } = Astro.props;
+
+/**
+ * Every section kind has its own branch: a kind added to `ResumeSectionView`
+ * without one fails the type check and the build instead of rendering with
+ * another section's markup.
+ */
+function assertNever(section: never): never {
+  throw new Error(`Unhandled résumé section: ${JSON.stringify(section)}`);
+}
 ---
 
 <div class="resume-content" data-testid="resume-content">
@@ -139,8 +148,8 @@ const { presentation } = Astro.props;
           </article>
         ))}
       </section>
-    ) : (
-      <section class="profile-section resume-certifications" data-profile-section="certifications">
+    ) : section.kind === 'credentials' || section.kind === 'certifications' ? (
+      <section class={`profile-section resume-${section.kind}`} data-profile-section={section.kind}>
         <h2>{section.heading}</h2>
         {section.entries.map((entry) => (
           <article
@@ -170,6 +179,8 @@ const { presentation } = Astro.props;
           </article>
         ))}
       </section>
+    ) : (
+      assertNever(section)
     )
   )}
 </div>

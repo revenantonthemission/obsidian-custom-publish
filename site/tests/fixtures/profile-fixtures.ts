@@ -147,6 +147,7 @@ export const validProfileFixture = {
     projectFixture('project-gamma', 20, '감마'),
   ],
   education: [],
+  credentials: [],
   certifications: [],
 } as unknown as ProfileData;
 

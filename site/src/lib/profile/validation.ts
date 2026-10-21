@@ -221,7 +221,8 @@ function inspectShape(input: unknown): ShapeContext {
   inspectProjects(input, context);
   inspectResumeProjectSelection(input, context);
   inspectEducation(input, context);
-  inspectCertifications(input, context);
+  inspectCertifications(input, 'credentials', context);
+  inspectCertifications(input, 'certifications', context);
 
   return context;
 }
@@ -449,14 +450,19 @@ function inspectEducation(root: UnknownRecord, context: ShapeContext): void {
   });
 }
 
-function inspectCertifications(root: UnknownRecord, context: ShapeContext): void {
-  const certifications = requiredArray(root, 'certifications', 'profile.certifications', context);
+/** Both certification collections, 자격증 and 어학 자격, share one entity shape (BR4.3). */
+function inspectCertifications(
+  root: UnknownRecord,
+  key: 'credentials' | 'certifications',
+  context: ShapeContext
+): void {
+  const certifications = requiredArray(root, key, `profile.${key}`, context);
   if (!certifications) {
     return;
   }
 
   certifications.forEach((candidate, index) => {
-    const path = `profile.certifications[${index}]`;
+    const path = `profile.${key}[${index}]`;
     const item = arrayElementRecord(candidate, path, context);
     if (!item) {
       return;
@@ -945,19 +951,23 @@ function validateDiscoverableUnsafeBranches(input: unknown): readonly Validation
     }
   );
 
-  validateUnsafeOrderedCollection(
-    input.certifications,
-    'profile.certifications',
-    context.entityIds.certification,
-    context,
-    (certification, path) => {
-      validateUnsafeStringFact(certification, 'title', `${path}.title`, 'single-line', context);
-      validateUnsafeStringFact(certification, 'issuer', `${path}.issuer`, 'single-line', context);
-      validateUnsafePeriodFact(certification, 'period', `${path}.period`, context);
-      validateUnsafeContentBlocks(certification.details, `${path}.details`, context);
-      validateUnsafeEvidenceLinks(certification.evidence, `${path}.evidence`, context);
-    }
-  );
+  // Both sections record ids in the one `certification` map, so an id placed in
+  // both is reported as a duplicate (BR4.1).
+  for (const key of ['credentials', 'certifications'] as const) {
+    validateUnsafeOrderedCollection(
+      input[key],
+      `profile.${key}`,
+      context.entityIds.certification,
+      context,
+      (certification, path) => {
+        validateUnsafeStringFact(certification, 'title', `${path}.title`, 'single-line', context);
+        validateUnsafeStringFact(certification, 'issuer', `${path}.issuer`, 'single-line', context);
+        validateUnsafePeriodFact(certification, 'period', `${path}.period`, context);
+        validateUnsafeContentBlocks(certification.details, `${path}.details`, context);
+        validateUnsafeEvidenceLinks(certification.evidence, `${path}.evidence`, context);
+      }
+    );
+  }
 
   addDuplicateIssues(context.factIds, 'fact.identifier.duplicate', context.issues);
   for (const occurrences of Object.values(context.entityIds)) {
@@ -1283,13 +1293,15 @@ function validateNormalizedProfile(profile: ProfileData): readonly ValidationIss
     context,
     (education, path) => validateEducation(education, path, context)
   );
-  validateOrderedCollection(
-    profile.certifications,
-    'profile.certifications',
-    context.entityIds.certification,
-    context,
-    (certification, path) => validateCertification(certification, path, context)
-  );
+  for (const key of ['credentials', 'certifications'] as const) {
+    validateOrderedCollection(
+      profile[key],
+      `profile.${key}`,
+      context.entityIds.certification,
+      context,
+      (certification, path) => validateCertification(certification, path, context)
+    );
+  }
 
   addDuplicateIssues(context.factIds, 'fact.identifier.duplicate', context.issues);
   for (const occurrences of Object.values(context.entityIds)) {

@@ -187,6 +187,11 @@ export type ResumeSectionView =
       entries: readonly EducationView[];
     }>
   | Readonly<{
+      kind: 'credentials';
+      heading: '자격증';
+      entries: readonly CertificationView[];
+    }>
+  | Readonly<{
       kind: 'certifications';
       heading: '어학 자격';
       entries: readonly CertificationView[];
@@ -303,6 +308,18 @@ export function buildResumePresentation(
         kind: 'education',
         heading: '학력',
         entries: frozenArray(profile.education.map(educationView)),
+      })
+    );
+  }
+
+  // BR4.2: 자격증 directly after 학력, then 어학 자격; an absent collection
+  // renders no section.
+  if (profile.credentials !== undefined) {
+    sections.push(
+      Object.freeze({
+        kind: 'credentials',
+        heading: '자격증',
+        entries: frozenArray(profile.credentials.map(certificationView)),
       })
     );
   }

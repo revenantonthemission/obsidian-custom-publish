@@ -55,6 +55,7 @@ interface ProfileBlueprint {
   readonly educationDetailMode: DetailMode;
   readonly educationEvidence: boolean;
   readonly educationEvidenceDestination: EvidenceDestinationMode;
+  readonly credential: boolean;
   readonly certification: boolean;
   readonly certificationIssuer: boolean;
   readonly certificationPeriod: boolean;
@@ -156,6 +157,7 @@ const profileBlueprintArbitrary = fc.record({
   educationDetailMode: fc.constantFrom<DetailMode>('paragraph', 'list', 'both'),
   educationEvidence: fc.boolean(),
   educationEvidenceDestination: fc.constantFrom<EvidenceDestinationMode>('external', 'internal'),
+  credential: fc.boolean(),
   certification: fc.boolean(),
   certificationIssuer: fc.boolean(),
   certificationPeriod: fc.boolean(),
@@ -420,6 +422,29 @@ function buildProfile(blueprint: ProfileBlueprint): ProfileData {
                   ),
                 ]
               : [],
+          },
+        ]
+      : [],
+    // 자격증 (BR4.2): present or empty independently of 어학 자격, always with
+    // an issuer, a full-date validity window and one verification link.
+    credentials: blueprint.credential
+      ? [
+          {
+            id: 'credential-one',
+            order: 40,
+            title: fact('credential-one-title', '예시 전문 자격'),
+            issuer: fact('credential-one-issuer', '예시 인증 기관'),
+            period: fact('credential-one-period', validPeriod('date', 2024, blueprint.periodDay)),
+            details: [],
+            evidence: [
+              evidenceLink(
+                'credential-one-link',
+                10,
+                'credential-one-link-label',
+                'credential-one-link-destination',
+                evidenceDestination(blueprint.certificationEvidenceDestination, 'credential-one')
+              ),
+            ],
           },
         ]
       : [],

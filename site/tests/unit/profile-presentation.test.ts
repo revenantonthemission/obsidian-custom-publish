@@ -157,6 +157,40 @@ describe('renderer-neutral profile presentation', () => {
     ]);
   });
 
+  // BR4.2: 자격증 (credentials) sits between 학력 and 어학 자격, and an empty
+  // collection renders no section.
+  test('places 자격증 after 학력 and before 어학 자격', () => {
+    const resume = buildResumePresentation(
+      selectResumeProfile(validSource(profileWithCertificationSections(true, true)))
+    );
+    const kinds = resume.sections.map(({ kind }) => kind);
+    expect(kinds.slice(-3)).toEqual(['education', 'credentials', 'certifications']);
+
+    const credentials = resume.sections.find((section) => section.kind === 'credentials');
+    if (credentials?.kind !== 'credentials') throw new Error('Expected a credentials section.');
+    expect(credentials.heading).toBe('자격증');
+    expect(credentials.entries.map(({ id, issuer }) => [id, issuer?.value])).toEqual([
+      ['aws-example', 'Amazon Web Services'],
+    ]);
+    const certifications = resume.sections.find((section) => section.kind === 'certifications');
+    expect(certifications?.kind === 'certifications' && certifications.heading).toBe('어학 자격');
+  });
+
+  test.each([
+    [false, true, 'credentials'],
+    [true, false, 'certifications'],
+  ])(
+    'omits a section whose collection is empty (credentials %s, certifications %s)',
+    (withCredentials, withCertifications, absent) => {
+      const resume = buildResumePresentation(
+        selectResumeProfile(
+          validSource(profileWithCertificationSections(withCredentials, withCertifications))
+        )
+      );
+      expect(resume.sections.map(({ kind }) => kind)).not.toContain(absent);
+    }
+  );
+
   // BR3.1: one dotted formatter for every period; the stored value stays ISO.
   test.each([
     [
@@ -280,6 +314,7 @@ describe('production Astro profile output', () => {
       '경력·대표 성과',
       '프로젝트',
       '학력',
+      '자격증',
       '어학 자격',
     ]);
     assertLogicalHeadingOrder(resumeHtml);
@@ -552,6 +587,49 @@ describe('production Astro profile output', () => {
     }
   });
 });
+
+function exampleCertification(id: string, title: string, issuer: string) {
+  return {
+    id,
+    order: 10,
+    title: { factId: `${id}-title`, value: title },
+    issuer: { factId: `${id}-issuer`, value: issuer },
+    period: {
+      factId: `${id}-period`,
+      value: {
+        start: { tag: 'date', value: '2025-09-06' },
+        end: { tag: 'date', value: '2027-09-06' },
+      },
+    },
+    details: [],
+    evidence: [],
+  };
+}
+
+function profileWithCertificationSections(
+  withCredentials: boolean,
+  withCertifications: boolean
+): ProfileData {
+  const fixture = cloneProfileFixture();
+  return {
+    ...fixture,
+    education: [
+      {
+        id: 'example-university',
+        order: 10,
+        title: { factId: 'education-example-title', value: '예시 대학교' },
+        details: [],
+        evidence: [],
+      },
+    ],
+    credentials: withCredentials
+      ? [exampleCertification('aws-example', 'AWS 예시 자격', 'Amazon Web Services')]
+      : [],
+    certifications: withCertifications
+      ? [exampleCertification('language-example', '어학 예시 자격', 'ACTFL')]
+      : [],
+  } as unknown as ProfileData;
+}
 
 function validSource(input: ProfileData = cloneProfileFixture()): ValidatedProfile {
   const result = validateProfile(input);
