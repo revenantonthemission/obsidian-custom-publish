@@ -1,5 +1,7 @@
 # Business Overview: obsidian-blog (obsidian-press)
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 ## Business Context
 
 obsidian-blog, also called obsidian-press, is a self-hosted replacement for Obsidian Publish built by one person. It publishes the `Areas/Notes` folder of a personal Obsidian vault in iCloud to https://rvnnt.dev as a static, Korean-language knowledge site, and it also hosts that person's professional profile: a web résumé, a portfolio with role-specific editions, and a downloadable PDF résumé.
@@ -31,7 +33,7 @@ Publishing is automatic and daily. A Jenkins job builds the `develop` branch eve
 | Hubs and navigation tree | preprocessor/src/nav_tree.rs; site/src/islands/NavTree.tsx | Hubs act as curated tables of contents. Hub child dates are injected automatically |
 | Homepage composition | site/src/pages/index.astro, site/src/lib/homepage.ts | Vault homepage note plus a profile slot plus "오늘 발행된 글" (today's posts) |
 | Automatic light and dark theme | site/src/layouts/BaseLayout.astro, site/src/islands/ThemeToggle.tsx, site/src/lib/solar.ts | Follows sunrise and sunset at the reader's location, with a temporary manual override |
-| Approved profile, résumé and portfolio | site/src/lib/profile/, site/src/components/profile/ | 120 approved facts mapped to evidence. Role editions select facts by ID |
+| Approved profile, résumé and portfolio | site/src/lib/profile/, site/src/components/profile/ | 120 approved facts mapped to evidence E01–E15 (receipt `profile-fact-approval-2026-09-27-r2`, inventory `profile-facts-r8`). Role editions select facts by ID. The résumé has six fixed sections, the last being `어학 자격` (certifications) |
 | PDF résumé release | site/scripts/profile/ (cli, coordinator, renderer, inspector, release store) | Two-phase prepare and promote with a human review record |
 | Daily auto-publish | Jenkinsfile, Justfile | Nightly build of `develop`. Deploy gated by `RUN_DEPLOY` |
 
@@ -41,6 +43,8 @@ Publishing is automatic and daily. A Jenkins job builds the `develop` branch eve
 - **Homepage integrity.** The homepage artifact must exist (`HP001`/`HP002`) and must contain exactly one standalone `<!-- profile:slot -->` line (`HP003` none, `HP004` duplicates).
 - **Daily publication dates.** The deploy preprocess runs with `--stamp-published`, which writes a `published` date into vault notes that lack one. This is the only place the system writes to the vault.
 - **Truthful profile.** Profile facts are code-defined (site/src/lib/profile/profile-data.ts) and accepted only when their digests match the approval receipt (`profile-fact-approval-2026-09-27-r2` in site/verification/profile/fact-approval.json). Receipt metadata must never leak into public output (`assertNoProfileApprovalLeak`).
+- **Every fact names its evidence.** Each fact ID belongs to exactly one evidence source (E01–E15) in a hand-written allowlist (production-profile.ts `createEvidenceMembership`). Adding or removing a fact without updating the allowlist fails the build with `PROFILE_APPROVAL_EVIDENCE_INVALID`. The inventory behind a receipt is saved as JSON under docs/resume/product-engineer/, and its digest can be reproduced outside the build.
+- **Dates are coarse by design.** Every profile period is a start and an end at one shared precision: a year (`2019`), a year and month (`2023-07`), or an open end (`현재`). Day precision does not exist in the model (types.ts:86-107). Certification periods today repeat the issue month as both start and end (`2025-09 – 2025-09`).
 - **PDF currency.** The résumé page shows the PDF download link only when the released PDF bytes, source identity and manifest match the current approved profile (site/src/lib/profile/current-resume-document.ts). The tracked release dates from 2026-08-27 and the source changed on 2026-09-28, so the link is currently withheld. This is by design and recorded in docs/resume/product-engineer/publication-record.md; it was inferred, not observed in a build.
 - **Profile isolation.** Profile routes stay out of search and the navigation tree, load no third-party resources, and ship no new client JavaScript (asserted in tests and the asset budget).
 - **Accessibility as a release gate.** Profile pages must pass axe WCAG 2.2 AA checks across a browser and viewport matrix plus a human 16-state review bound to a source digest. See code-quality-assessment.md.
@@ -53,11 +57,15 @@ Publishing is automatic and daily. A Jenkins job builds the `develop` branch eve
 
 ## Relevance to the Active Intent
 
-The intent "Cleanup worktrees and branches, and Redesign the blog by Apple's Human Interface Guidelines" touches two areas:
+Active intent `resume-certifications` (2026-10-21, scope `refactor`): "Update the résumé certifications. Keep OPIc IH with issue date 2025-09-06 and expiry 2027-09-06. Remove the expired 新HSK 6급. Add AWS Certified Solutions Architect - Associate, issued 2026-07-17, expiring 2029-07-17, in a new separate 자격증 section, keeping 어학 자격 for language certificates. Show exact day-precision dates (issue to expiry), which the profile date types do not support yet. Facts need a new fact inventory revision and approval receipt, and a new PDF candidate."
 
-- **Repository cleanup.** The worktree and branch inventory is in code-quality-assessment.md.
-- **Visual redesign.** Every reader-facing surface is affected: the shared chrome (header, navigation, footer, search, theme toggle), post reading layout and sidebars, hubs, tags, graph, homepage and the profile pages. The current presentation system is described in code-structure.md and component-inventory.md.
-  - The profile pages carry verification constraints that make visual change expensive: a review digest, an asset budget, a font request ledger and PDF parity. The redesign scope should state explicitly whether profile pages are included.
+What this touches, in business terms:
+- **Content.** The résumé loses one certification (新HSK 6급), changes one (the OPIc dates become an issue-to-expiry range) and gains a professional certification in a new section. `어학 자격` keeps the language certificate.
+- **The date model.** The profile can state years and months, not days. Showing exact dates means teaching every layer a third precision: validation, approval, the PDF manifest and the PDF reader (architecture.md KD-9).
+- **Truthfulness gates.** Every changed fact needs evidence. The existing evidence for certifications (E01, a 2025 portfolio PDF) supported month precision only. The change also needs a new inventory revision, a new approval receipt pinned in two places, and a new materialized digest in the tests.
+- **PDF and accessibility.** The public PDF is already withheld. A new candidate needs a human review before promotion. The résumé components and stylesheets are accessibility review subjects, so the 16-state review recorded on 2026-10-21 has to be redone after the change.
+
+The previous intent (`hig-redesign`, 2026-10-19) concerned repository cleanup and the HIG visual redesign. Its relevance notes are superseded. The redesign has since merged into `develop`.
 
 ## Glossary
 
@@ -72,3 +80,6 @@ The intent "Cleanup worktrees and branches, and Redesign the blog by Apple's Hum
 | Review subject | The set of source files whose digest a human accessibility review is bound to |
 | U1, U2, U3 | Units of the previous AI-DLC intent: U1 profile domain and native experience, U2 homepage publication boundary, U3 cross-unit quality gates. The identifiers survive in code comments and test names |
 | Role edition | A curated portfolio page per job role (`/portfolio/product-engineer`, `/portfolio/infra-engineer`) |
+| Period | A profile fact holding a start and an end. Each point is a `year` or `year-month` value, and the end may be `present` (shown as `현재`) |
+| Inventory revision | A numbered snapshot of every reviewed fact (`profile-facts-r8` today), saved as the exact JSON whose canonical digest the receipt pins |
+| Evidence source | A numbered justification (E01–E15) that each fact is assigned to: a user-provided record or a checked public URL |

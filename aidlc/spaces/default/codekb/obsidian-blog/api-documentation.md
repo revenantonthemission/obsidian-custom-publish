@@ -1,5 +1,7 @@
 # API Documentation: obsidian-blog
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 This artifact owns these inventories: routes, static data endpoints, the preprocessor CLI and output contract, build-time module APIs, the command surface, environment variables, error codes, client storage keys and external calls. The HTML class vocabulary shared by the preprocessor, render.ts and CSS is in code-structure.md (Emitted HTML Contract).
 
 ## Public HTTP Surface
@@ -110,7 +112,52 @@ Slugs come from the file name: lowercased, spaces turned into hyphens, and only 
 | layout/profile-resources.ts | `LEGACY_BASE_LAYOUT_RESOURCES`, `LEGACY_ROUTE_RESOURCE_POLICY`, `PROFILE_ROUTE_RESOURCE_POLICY`, `resolveRouteResourcePolicy`, `validateRouteResourcePolicy` | Route-to-head-resource policy |
 | layout/json-ld.ts | `serializeJsonLdDocuments`, `extractJsonLdDocuments`, `verifyJsonLdRoundTrip` | Escapes `<`, `>`, `&`, U+2028 and U+2029 and verifies the round trip |
 | profile/index.ts | `assembleFactApprovedProfile`, validation exports, `buildApprovedResumeManifest`, domain types | Pages also import `getProductionProfileAssembly` (production-profile.ts), `buildApprovedResumeMetadata` and `buildApprovedPortfolioMetadata` (metadata.ts), `getCurrentResumeDocumentLink`, `PORTFOLIO_ROLES` |
-| components/profile/presentation.ts | `buildResumePresentation`, `buildPortfolioPresentation` | Renderer-neutral view models: section headings, dimensions, period text (`YYYY-MM – 현재`) |
+| components/profile/presentation.ts | `buildResumePresentation(profile, documentLink?)`, `buildPortfolioPresentation(profile, roleId = 'data-engineer-ai')` | Renderer-neutral, frozen view models: section headings, dimensions, period text `<start value> – <end value>` with U+2013 and `현재` for an open end (presentation.ts:603-617). It does not validate, sort or repair facts |
+
+### Profile Data Contracts (2026-10-21)
+
+These internal contracts bind profile source, approval, rendering and PDF parity. Changing any of them changes digests, receipts or tests.
+
+**Period value** (site/src/lib/profile/types.ts:86-107)
+
+```ts
+type DatePoint = { tag: 'year'; value: string } | { tag: 'year-month'; value: string };
+type PeriodEnd = DatePoint | { tag: 'present' };
+interface Period { start: DatePoint; end: PeriodEnd }
+// carried as PublicFact<Period> = { factId, value }
+```
+
+Optional on achievements, projects, education and certifications. Required on experiences.
+
+**Certification entity** (types.ts:231-239): `{ id, order, title: PublicFact<SingleLineText>, issuer?: PublicFact<SingleLineText>, period?: PublicFact<Period>, details: ContentBlock[], evidence: EvidenceLink[] }`. It has no category field and no separate issue or expiry date. The production data has two certifications and no issuers (`opic-ih` order 10, `hsk-6` order 20, profile-data.ts:565-588).
+
+**Period issue codes** (issues.ts:15-17, 56-58)
+
+| Code | Raised when |
+|---|---|
+| `period.precision` | a point tag is not `year` or `year-month`, or start and end use different precisions |
+| `period.value` | a value does not match its tag's pattern, or the start is `present` |
+| `period.range` | the end comes before the start |
+
+**Résumé manifest period token** (resume-manifest.ts:783-812): `start:year:2019|end:year:2026`, `start:year-month:2023-07|end:year-month:2023-08` or `start:year-month:2023-07|end:present`. The PDF evidence reader produces the same token from the printed text (resume-evidence.ts `parsePeriodDisplayText`). The resume-pdf unit test rebuilds the printed text from the token by taking the last `:` segment of each half.
+
+**Résumé section order** (resume-manifest.ts:36-43): `intro-contact` 1, `skills` 2, `highlights` 3, `project-summaries` 4, `education` 5, `certifications` 6. Section headings and DOM markers are in code-structure.md (Résumé Section Structure).
+
+**Fact approval receipt** (site/verification/profile/fact-approval.json, mirrored by `EXPECTED_RECEIPT` in production-profile.ts:40-52; the build requires the exact key set and equal values):
+
+| Field | Current value |
+|---|---|
+| `schemaVersion` | 1 |
+| `receiptId` | `profile-fact-approval-2026-09-27-r2` |
+| `inventoryRevision` / `inventoryDigest` | `profile-facts-r8` / `5bcfa474…200c1` (canonical digest of docs/resume/product-engineer/inventory-r8.json; reproduced 2026-10-21 by hashing the sorted-key compact JSON with SHA-256) |
+| `productionDiffRevision` / `productionDiffDigest` | `profile-production-diff-r8` / `e6aa8ea7…5f3e4b` |
+| `approvedRecordsDigest` | `2161243c…c5313` (computed at build time over the review records) |
+| `materializedProfileDigest` | `2511983e…6b65c` (computed at build time over the facts and structural decisions; also pinned in site/tests/unit/production-profile.test.ts:17) |
+| `decision`, `decisionAuditId`, `decisionRecordedAt` | `Approved`, `PROFILE-RESUME-TRUTHFUL-20260927T140225005Z`, `2026-09-27T14:02:25.005Z` |
+
+**Inventory JSON** (docs/resume/product-engineer/inventory-r<N>.json): top-level keys are `domain` (`obsidian-press:profile-fact-inventory`), `schemaVersion`, `revision`, `evidenceSources`, `publicationAuthorization`, `publicSourceChecks`, `records` (120 in r8) and `structuralDecisions`. Each record holds `factId`, `canonicalPath` (for example `profile.certifications[id=opic-ih].period`), `normalizedValue`, `evidence`, `targetSurfaces` (`["resume","pdf"]` for certifications), `requirement` (`optional` for certifications), `status` and `decisionRecord`. `structuralDecisions.certifications` lists `{ id, order, issuer: "absent"|"present", details, evidence }` per certification.
+
+**Production errors** (production-profile.ts `ProfileProductionErrorCode`): `PROFILE_APPROVAL_RECEIPT_INVALID`, `PROFILE_APPROVAL_SOURCE_INVALID`, `PROFILE_APPROVAL_EVIDENCE_INVALID`, `PROFILE_APPROVAL_DIGEST_MISMATCH`, `PROFILE_APPROVAL_REVIEW_INVALID`, `PROFILE_APPROVAL_OUTPUT_LEAK`.
 
 Homepage gateway errors:
 
@@ -166,7 +213,7 @@ The profile CLI accepts exactly five stable commands (`test:unit`, `test:pbt`, `
 | Request ledger (request-ledger.mjs) | `NON_LOOPBACK_REQUEST_ATTEMPTED`, `NON_LOOPBACK_RESPONSE_OBSERVED`, `EMITTED_ASSET_IDENTITY_MISSING`, `PROFILE_ROUTE_REQUEST_EVIDENCE_MISSING`, `REQUEST_INTERCEPTION_BYPASSED` |
 | Evidence aggregation (verification-provider.mjs) | `BROWSER_EVIDENCE_INCOMPLETE`, `LINK_METADATA_EVIDENCE_INCOMPLETE`, `ASSET_BUDGET_EVIDENCE_INCOMPLETE`, `REQUEST_LEDGER_EVIDENCE_INCOMPLETE`, `MANUAL_WEB_ACCESSIBILITY_RECORD_INCOMPLETE`, and `RELEASE_*` codes from `verifyCurrentRelease` |
 | Preview and startup (preview-supervisor.mjs, browser-launch-preflight.mjs, owned-node-bootstrap.mjs) | `PREVIEW_CHILD_EXITED`, `PREVIEW_CHILD_EXITED_DURING_LAUNCH`, `PREVIEW_CHILD_START_TIMEOUT`, `PREVIEW_CHILD_LAUNCH_FAILED`, `PREVIEW_CHILD_IDENTITY_INVALID`, `PREVIEW_CHILD_SPAWN_FAILED`, `PREVIEW_CHILD_IPC_DISCONNECTED`, `PREVIEW_READINESS_TIMEOUT`, `PREVIEW_STATIC_STATUS_INVALID`, `PREVIEW_STATIC_MIME_INVALID`, `PREVIEW_STATIC_BODY_EMPTY`, `PREVIEW_START_FAILED`, `PREVIEW_CLEANUP_FAILED`, `BROWSER_ENGINE_LAUNCH_FAILED`, `BROWSER_PREFLIGHT_CLEANUP_FAILED`, `OWNED_BOOTSTRAP_REAPER_FAILED` |
-| PDF and release (pdf-renderer.mjs, pdf-viewer.mjs, resume-coordinator.mjs, release-store.mjs) | `PDF_RENDER_SURFACE_FACT_AMBIGUOUS`, `PDF_RENDER_SURFACE_FACT_UNKNOWN`, `PDF_VIEWER_CANDIDATE_MISSING`, `RESUME_PREPARE_RELEASE_ACTIVE`; release journal states `PREPARED`, `PROMOTION_VALIDATED`, `RECOVERY_SNAPSHOTTED`, `RECEIPT_PROMOTED`, `PDF_COMMITTED`, `FINAL_VERIFIED`, `ROLLBACK_REQUIRED`, `ROLLBACK_PDF_RESTORED`, `ROLLBACK_RECEIPT_RESTORED`, `ROLLED_BACK` |
+| PDF and release (pdf-renderer.mjs, pdf-viewer.mjs, resume-coordinator.mjs, release-store.mjs) | `PDF_RENDER_SHELL_MISSING`, `PDF_RENDER_SURFACE_FACT_AMBIGUOUS` (one approved fact rendered by more than one element), `PDF_RENDER_SURFACE_FACT_UNKNOWN` (a rendered fact the manifest does not approve), `PDF_VIEWER_CANDIDATE_MISSING`, `RESUME_PREPARE_RELEASE_ACTIVE`; release journal states `PREPARED`, `PROMOTION_VALIDATED`, `RECOVERY_SNAPSHOTTED`, `RECEIPT_PROMOTED`, `PDF_COMMITTED`, `FINAL_VERIFIED`, `ROLLBACK_REQUIRED`, `ROLLBACK_PDF_RESTORED`, `ROLLBACK_RECEIPT_RESTORED`, `ROLLED_BACK` |
 | Font (font-materializer.mjs) | `FONT_*` family (lock mismatch, hash mismatch, missing or non-regular source, traversal, CSS URL order) |
 
 Only the stages `startup.preview.launch`, `startup.preview.readiness` and `startup.browser.launch` are retry-eligible, with at most two attempts and only after cleanup is proven (startup-retry.mjs:1-8).
