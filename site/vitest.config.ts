@@ -17,5 +17,14 @@ export default getViteConfig({
     // stack on every core.
     testTimeout: 30_000,
     maxWorkers: '50%',
+    // `npm run test:coverage` only. The team reports coverage but enforces no
+    // minimum (team.md, Testing Posture), so there are no thresholds.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx,astro,js,mjs}', 'scripts/**/*.{ts,js,mjs}'],
+      exclude: ['**/*.d.ts', '**/*.d.mts'],
+      reporter: ['text-summary', 'html', 'json-summary'],
+      reportsDirectory: '.artifacts/coverage',
+    },
   },
 });
