@@ -17,7 +17,8 @@
     "test:e2e": "node scripts/profile/cli.mjs test:e2e",
     "resume:pdf": "node scripts/profile/cli.mjs resume:pdf",
     "resume:pdf:verify": "node scripts/profile/cli.mjs resume:pdf:verify",
-    "test:pbt:framework": "vitest run tests/pbt/framework-selection.pbt.test.ts"
+    "test:pbt:framework": "vitest run tests/pbt/framework-selection.pbt.test.ts",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage tests/unit"
   },
   "dependencies": {
     "@astrojs/preact": "^5.0.0",
@@ -61,6 +62,7 @@
     "@types/d3-selection": "^3.0.11",
     "@types/d3-zoom": "^3.0.8",
     "@types/hast": "^3.0.4",
+    "@vitest/coverage-v8": "^4.1.10",
     "fast-check": "^4.9.0",
     "pdfjs-dist": "5.4.624",
     "prettier": "3.9.9",
