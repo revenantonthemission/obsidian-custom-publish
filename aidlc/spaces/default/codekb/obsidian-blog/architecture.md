@@ -1,5 +1,7 @@
 # Architecture: obsidian-blog (obsidian-press)
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 ## Architecture Analysis
 
 ### System Overview
@@ -13,8 +15,9 @@ The professional-profile subsystem is a separate concern inside the same Astro s
 Sizes measured by line count:
 - preprocessor/src: about 3,500 lines of Rust
 - blog presentation code (pages, layouts, components, islands, client scripts, stylesheets): about 5,000 lines
-- site/src/lib/profile: about 16,500 lines of TypeScript
-- site/scripts/profile: about 20,900 lines of JavaScript
+- site/src/lib/profile: 18 modules, about 13,350 lines of TypeScript (2026-10-21 count; the earlier 16,500 predates the Prettier reformat)
+- site/src/components/profile: presentation.ts (621 lines) plus 10 Astro components
+- site/scripts/profile: 22 `.mjs` modules, about 13,270 lines (2026-10-21 count; earlier 20,900)
 
 ### Architectural Style
 
@@ -92,6 +95,21 @@ flowchart LR
 1. **Content.** The scanner reads markdown from the vault (`VAULT_PATH`, defaulting to fixtures/vault/ in `just` dev recipes). It parses frontmatter (`tags`, `created`, `published`, `is_hub`, `hub_parent`, `description`, `visibility`) and derives `updated` from one batched `git log`. The catalog enforces the publication boundary. The linker resolves wikilinks into backlinks and forward links. The transform pass converts Obsidian syntax to HTML fragments and renders diagrams to SVG under `content/assets/`. The search pass builds a Korean inverted index. The output writer emits `content/posts/<slug>.md`, `content/meta/<slug>.json`, `content/homepage/`, and `graph.json`, `search-index.json`, `previews.json`, `nav-tree.json` and `manifest.json`. Contracts are in api-documentation.md.
 2. **Build.** `site/src/lib/data.ts` reads `../content` relative to the working directory. `getStaticPaths` in each page enumerates posts, hubs and tags. `renderMarkdown` (site/src/lib/render.ts) turns post markdown into HTML that layouts insert with `set:html`. Previews are read from `public/previews.json`.
 3. **Profile.** Approved facts (site/src/lib/profile/profile-data.ts) are normalized, validated against the approval receipt, assembled once per build (`getProductionProfileAssembly`), projected per surface (résumé, portfolio, homepage, metadata, PDF) and converted to renderer-neutral view models (site/src/components/profile/presentation.ts) consumed by Astro components.
+   - **Periods and certifications in detail (2026-10-21).** One period fact flows like this:
+     1. It is authored in profile-data.ts as `{ start: { tag, value }, end: { tag, value } | { tag: 'present' } }`.
+     2. Shape inspection checks it without regard to the tag (validation.ts:512-554).
+     3. Validation runs (validation.ts:1534-1608). Each point must be `year` (`^\d{4}$`) or `year-month` (`^\d{4}-(0[1-9]|1[0-2])$`). Start and end must share one precision (`period.precision`) and be in order, compared by year×12+month (`period.range`).
+     4. Normalization clones it (normalization.ts:283-295).
+     5. Fact approval collects it as a `period` review value. `isCanonicalPeriod` accepts the same two tags (fact-approval.ts:1313-1340).
+     6. The materialized digest and receipt check run (production-profile.ts).
+     7. The selectors copy the fact into `ResumeProfile.certifications` (selectors.ts:210-219).
+     8. presentation.ts renders the text `<start value> – <end value>`, with U+2013 and `현재` for an open end (presentation.ts:603-617).
+     9. ResumeContent.astro emits `p.profile-period[data-profile-fact-id]`.
+     10. resume-manifest.ts serializes the token `start:<tag>:<value>|end:<tag>:<value>`, requiring one shared tag and `end >= start` by string order (resume-manifest.ts:783-812).
+     11. The PDF reader inverts the printed text back into that token (resume-evidence.ts:813-840), and pdf-inspector.mjs:9 recognizes a period by the same two point patterns.
+
+     The web and print surfaces carry the manifest value itself, and only DOM presence is observed (pdf-renderer.mjs:558-660). The PDF is the one surface whose period text is parsed.
+   - The résumé has six sections in a fixed order: `intro-contact`, `skills`, `highlights`, `project-summaries`, `education`, `certifications` (resume-manifest.ts:36-43). The presentation and the DOM emit them in the same order, and the PDF skeleton maps `[data-profile-section]` elements to manifest ordinals in DOM order (pdf-renderer.mjs:474-519). Certifications appear only when the source list is non-empty, under the heading `어학 자격` (presentation.ts:310-318).
 4. **Client runtime.** Theme state lives in `localStorage` (`theme`, `theme-manual`, `solar`, `geo`, `geo-denied`) and is applied as `data-theme` on `<html>`. Islands fetch `/nav-tree.json` and `/search-index.json` lazily. The post pages embed the local graph data in the island props, while the graph page passes `graph.json` data as props.
 5. **PDF.** The release tooling renders `/resume` from a clean build to a private candidate under `site/.artifacts/profile/pdf/`. After human review it promotes the candidate to `site/public/resume.pdf` and writes `site/verification/resume/current-release.json`.
 
@@ -148,6 +166,20 @@ Each decision below was reconstructed from code and the repository's design reco
 - Consequences: very strong guarantees for profile pages. A benign edit to any review-subject file invalidates the human review. The tracked record (12 states) no longer satisfies the 16-state contract, and CI does not run this command, so the gate is currently red without anyone being notified (inferred from code).
 - Security: the ledger aborts any non-loopback request during verification, and process supervision prevents orphaned browsers and servers.
 
+**KD-9: A closed, duplicated period vocabulary**
+- Context: résumé dates must read the same on the web page, in print and in the PDF, and the PDF is checked by parsing its text back into the approved value (docs/resume/product-engineer/revision-r7.md, "surface parity").
+- Decision: a period is a tagged pair of coarse points (`year`, `year-month`, `present`). Each layer restates the accepted tags and patterns itself rather than importing one definition: types, validation, issues, fact approval, manifest, PDF evidence and PDF inspector. resume-evidence.ts:26-30 states that the duplication is deliberate, so that reading a PDF cannot pull the manifest builder into the observation path. The same module does import resume-manifest.ts at runtime (`compareResumeFactManifests`, resume-evidence.ts:2), so the isolation is a convention rather than a module boundary.
+- Alternatives considered:
+  - one shared period grammar module imported by every layer (inferred, rejected by that comment for the PDF path);
+  - free-text date labels with no structure (inferred);
+  - ISO dates with a date library (inferred).
+- Consequences:
+  - Strict, fail-closed parity: an unknown precision is rejected at validation, at approval, at manifest serialization and at PDF parsing.
+  - Adding a precision such as a day is a coordinated edit across at least eight production sites, the property-test generators and the PDF unit tests.
+  - The tag-agnostic layers (normalization, canonical digest, source-shape check, presentation) pass a new tag through unchanged. Its digests then change only for the facts that use it.
+  - Ordering uses an integer ordinal in validation and string comparison in the manifest. Zero-padded ISO `YYYY-MM-DD` strings would order correctly under both.
+- Security: none directly. The vocabulary is part of the truthfulness boundary: a period the PDF reader cannot parse fails parity rather than passing as plain text.
+
 ### Improvement Opportunities
 
 - Make appearance follow the operating system by default, as HIG expects. Keep a manual override, and make sunrise and sunset switching opt-in so the page-load geolocation prompt goes away. This removes the duplicated bootstrap logic as well.
@@ -155,6 +187,8 @@ Each decision below was reconstructed from code and the repository's design reco
 - Decide one font strategy. Either self-host the body font for all routes (removing the CDN dependency and adding integrity) or adopt the system stack for blog routes while keeping the verified local font where the profile gates require it.
 - Separate the redesign from the human review gate. Re-scope `REVIEW_SUBJECT_SOURCE_FILES` or plan a fresh 16-state review as part of the redesign. Run `test:e2e` in CI or at least before deploy.
 - Add browser and visual coverage for blog routes, which currently have none (see code-quality-assessment.md).
+- Give the profile period grammar one owner per side. Use one module for the build side (validation, approval, manifest) and one for the observation side (resume-evidence and pdf-inspector), with a shared test that the two agree. Adding a precision then touches two definitions instead of eight.
+- Make ResumeContent.astro dispatch on every section kind explicitly. Its final `else` branch renders certifications, so an unhandled new kind would render as certifications.
 - Restore security headers at the server or tunnel (CSP compatible with the inline bootstrap hashes, HSTS, Referrer-Policy, frame-ancestors). Add SRI to remaining CDN resources.
 
 ## Interaction Diagrams
@@ -307,3 +341,35 @@ sequenceDiagram
   S-->>U: site/public/resume.pdf and current-release.json replaced atomically
 ```
 <!-- Text fallback: The maintainer runs resume:pdf with the prepare flag. The coordinator refuses if an unresolved release journal exists, runs a clean profile build and loopback preview, renders /resume to an A4 tagged PDF candidate under site/.artifacts, inspects it against the fact manifest while the CLI obtains web and print observations from the verification provider for parity, and persists the prepared evidence, a draft receipt and a local review page. The maintainer reviews the exact SHA and writes a review record, then runs resume:pdf with promote, the candidate id and the review path. The release store walks the journal states PREPARED, PROMOTION_VALIDATED, RECOVERY_SNAPSHOTTED, RECEIPT_PROMOTED, PDF_COMMITTED and FINAL_VERIFIED. If any step fails it moves to ROLLBACK_REQUIRED, restores the PDF and receipt and ends ROLLED_BACK. On success site/public/resume.pdf and current-release.json are replaced atomically. -->
+
+### Certification fact from source to PDF parity (2026-10-21)
+
+```mermaid
+sequenceDiagram
+  participant D as profile-data.ts
+  participant V as validation.ts
+  participant A as fact-approval.ts
+  participant P as production-profile.ts
+  participant R as fact-approval.json receipt
+  participant S as presentation.ts
+  participant C as ResumeContent.astro
+  participant M as resume-manifest.ts
+  participant F as PDF renderer and inspector
+  participant E as resume-evidence.ts
+  D->>V: certification with title, optional issuer, optional period
+  V->>V: each point year or year-month, one shared precision, start not after end
+  V->>A: validated profile
+  A->>A: collect title and period facts, check canonical period tags
+  A->>P: materialized facts
+  P->>P: every fact ID in the evidence membership, compute digests
+  P->>R: compare against the pinned receipt and EXPECTED_RECEIPT
+  R-->>P: match, or PROFILE_APPROVAL_DIGEST_MISMATCH or RECEIPT_INVALID
+  P->>S: résumé projection with certifications when non-empty
+  S->>C: section certifications with heading 어학 자격 and period text start – end
+  C->>C: final else branch emits data-profile-section certifications
+  M->>M: section 6 certifications, token start:tag:value|end:tag:value
+  F->>F: map data-profile-section elements to manifest ordinals in DOM order
+  F->>E: printed period text from the PDF
+  E-->>F: parsed token, or null when a point is not year, year-month or 현재
+```
+<!-- Text fallback: A certification is authored in profile-data.ts with a title, an optional issuer and an optional period. validation.ts accepts each point only as year or year-month, requires one shared precision and rejects an end before the start. fact-approval.ts collects the title and period facts and checks the period tags again. production-profile.ts requires every fact ID to belong to the evidence membership, computes the digests and compares them with the pinned receipt in fact-approval.json and EXPECTED_RECEIPT, failing the build on any mismatch. The résumé projection carries certifications only when the list is non-empty; presentation.ts turns them into a section with the heading 어학 자격 and a period text of start – end, and ResumeContent.astro renders it in its final else branch with data-profile-section="certifications". resume-manifest.ts places certifications as section 6 and serializes the period as start:tag:value|end:tag:value. The PDF renderer maps section elements to manifest ordinals in DOM order, and resume-evidence.ts parses the printed period text back into the token, returning null when a point is not a year, a year and month, or 현재. -->

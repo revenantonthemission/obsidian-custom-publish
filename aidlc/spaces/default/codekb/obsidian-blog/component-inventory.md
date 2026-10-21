@@ -1,5 +1,7 @@
 # Component Inventory: obsidian-blog
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 Each H3 heading below is one component. The headings are also the component names recorded in reverse-engineering-timestamp.md. Each entry gives location, responsibility, dependencies, styling approach, accessibility hooks and the constraints that matter for the HIG redesign.
 
 Cross-references:
@@ -258,12 +260,12 @@ HIG relevance: SF Symbols cannot be licensed for the web, so the Lucide set is t
 ## Profile Components
 
 ### Profile Domain
-- **Location**: site/src/lib/profile/ (18 modules, about 16,500 lines)
+- **Location**: site/src/lib/profile/ (18 modules, about 13,350 lines as of 2026-10-21; largest validation.ts 1,881, resume-evidence.ts 1,754, fact-approval.ts 1,541, resume-receipts.ts 1,437, resume-manifest.ts 1,387, production-profile.ts 1,114)
 - **Responsibility**: approved profile facts and their guarantees.
 
 | Module group | Modules | Role |
 |---|---|---|
-| Data and types | profile-data.ts, types.ts | approved identity, narrative, contact, skills, experience (hansono), projects (docsuri, mcp-local-reference, obsidian-custom-publish, adiubear), education, certifications; branded types |
+| Data and types | profile-data.ts, types.ts | approved identity, narrative, contact, skills, experience (hansono), projects (docsuri, mcp-local-reference, obsidian-custom-publish, adiubear), education (sogang-university), certifications (`opic-ih` OPIc IH, period 2025-09 to 2025-09; `hsk-6` 新HSK 6급, period 2024-09 to 2024-09; no issuers, details or evidence links); branded types. Periods use only `year` and `year-month` points (code-structure.md, Profile Period Model) |
 | Validation and normalization | validation.ts, normalization.ts, issues.ts | 3 to 6 projects, 1 to 6 résumé projects, kebab IDs, order and period rules; trim, LF and NFC normalization; diagnostics |
 | Approval | fact-approval.ts, production-profile.ts | receipt `profile-fact-approval-2026-09-27-r2`, 120 facts mapped to evidence E01 to E15, cached `getProductionProfileAssembly`, `assertNoProfileApprovalLeak` |
 | Projection | assembly.ts, selectors.ts, portfolio-roles.ts | per-surface projections (résumé, portfolio, homepage, metadata, PDF); role editions select fact IDs |
@@ -272,7 +274,11 @@ HIG relevance: SF Symbols cannot be licensed for the web, so the Lucide set is t
 | Barrel | index.ts | public exports |
 
 - **Used by**: Profile Pages, Homepage Composition, Profile Build Integration, Verification Provider, Resume PDF Release.
-- **Constraint for the redesign**: copy and fact changes require a new approval receipt. The period display is parsed back for PDF parity (resume-evidence.ts:923-934).
+- **Constraint for the redesign**: copy and fact changes require a new approval receipt. The period display is parsed back for PDF parity (resume-evidence.ts:813-840 as of 2026-10-21).
+- **Constraints for the certifications intent (2026-10-21)**:
+  - A day precision is rejected at validation (`period.precision`), at approval (`isDatePoint`), at manifest serialization (throws) and at PDF parsing (`null`), until each layer learns it.
+  - `Certification` has no category, so a separate `자격증` section needs either a category field or a new collection with its own entity kind and canonical path. Either option changes the source-shape key lists in production-profile.ts (lines 592 and 616), the structural decisions and the canonical digest.
+  - selectors.ts:58-61 omits `certifications` from the résumé projection when the list is empty, and presentation.ts adds the section only when it is present.
 
 ### Profile Presentation
 - **Location**: site/src/components/profile/ (presentation.ts plus 10 Astro components)
@@ -280,7 +286,7 @@ HIG relevance: SF Symbols cannot be licensed for the web, so the Lucide set is t
 
 | Component | Role and markup |
 |---|---|
-| presentation.ts | View models. Section headings 프로필, 핵심 역량, 경력·대표 성과 (with 경력 and 대표 성과 groups), 프로젝트, 학력, 어학 자격, 대표 프로젝트. Case-study dimensions 문제, 역할, 핵심 결정, 구조, 결과, 배운 점. Period text `start – end` with 현재 for present (lines 678-692) |
+| presentation.ts | View models (621 lines). Section headings are literal types: 프로필, 핵심 역량, 경력·대표 성과 (with 경력 and 대표 성과 groups), 프로젝트, 학력, 어학 자격 (the `certifications` kind, lines 189-193 and 310-318), 대표 프로젝트. Case-study dimensions 문제, 역할, 핵심 결정, 구조, 결과, 배운 점. `CertificationView` carries title, optional issuer, optional period, details and evidence (lines 149-157). Period text `start – end` with raw point values and 현재 for present (lines 603-617) |
 | ProfileShell.astro | `.profile-shell-<route>` wrapper with the h1 label and local navigation |
 | ProfileLocalNavigation.astro | `nav.profile-local-navigation` (`aria-label="프로필 탐색"`): 홈, Résumé, Portfolio |
 | PortfolioRoleNavigation.astro | `nav.portfolio-role-navigation` (`aria-label="직무별 포트폴리오"`): Data Engineer / AI, Product Engineer, Infra Engineer |
@@ -288,16 +294,35 @@ HIG relevance: SF Symbols cannot be licensed for the web, so the Lucide set is t
 | ContentBlocks.astro, ContentText.astro | paragraphs, lists, `h5.profile-content-subtitle` topic labels |
 | CaseStudy.astro | `article#project-<id>` with six dimensions; key decisions, architecture and lessons in `details.case-study-details` ("… 자세히 보기") when they have more than one block; decorative numbers `aria-hidden` |
 | PortfolioContent.astro | intro, eyebrow, summary, `nav.portfolio-project-navigation` ("프로젝트 바로가기") with ↘ arrows, case studies |
-| ResumeContent.astro, ResumeEntry.astro | résumé sections; entries as `details` whose summary holds `span.resume-entry-heading` with `role="heading" aria-level="4"` |
+| ResumeContent.astro, ResumeEntry.astro | résumé sections; entries as `details` whose summary holds `span.resume-entry-heading` with `role="heading" aria-level="4"`. ResumeContent dispatches on `section.kind` with a ternary chain whose final `else` renders certifications as `section.resume-certifications[data-profile-section="certifications"]` with `article.resume-certification-entry` (title as h3, issuer as `p`, period as `p.profile-period`). Any unhandled kind would fall into that branch |
 
 - **Styling**: only the five profile stylesheets plus the shared global CSS. Component-local CSS is rejected by the asset budget (`PROFILE_CSS_SOURCE_UNAPPROVED`).
 - **Constraints**: unit tests pin the class names, heading texts, heading order, closed disclosures, `aria-label` and `aria-current` values, the absence of em dashes in case studies, and the absence of `<form>`. E2E specs pin responsive behavior (no overflow, clipping, ellipsis or line clamp), print, axe, keyboard and focus.
 
 ### Profile Pages
-- **Location**: site/src/pages/resume.astro (39 lines), portfolio.astro (34), portfolio/[role].astro (39)
+- **Location**: site/src/pages/resume.astro (36 lines as of 2026-10-21), portfolio.astro (31), portfolio/[role].astro (39)
 - **Responsibility**: assemble shell, content, metadata and JSON-LD per route. `/resume` also decides whether to show the PDF link (`getCurrentResumeDocumentLink`).
 - **Styling**: frontmatter imports. `/resume` uses font.css, foundation.css, resume.css and print.css. The portfolio routes use font.css, foundation.css and portfolio.css.
-- **Notes**: resume.astro and portfolio.astro are review subjects. `infra-engineer` is uncommitted work.
+- **Notes**: resume.astro and portfolio.astro are review subjects. Since the HIG redesign both pass `surface="grouped"` to BaseLayout. `infra-engineer` is committed and live (it was uncommitted work at the 2026-10-19 scan). resume.astro composes `getProductionProfileAssembly()`, `buildApprovedResumeMetadata`, `getCurrentResumeDocumentLink` and `buildResumePresentation`. The role pages render case studies only, never certifications or education.
+
+### Profile Fact Approval Chain
+- **Location**: site/src/lib/profile/fact-approval.ts (1,541 lines), site/src/lib/profile/production-profile.ts (1,114), site/verification/profile/fact-approval.json, docs/resume/product-engineer/inventory-r7.json and inventory-r8.json, docs/resume/product-engineer/revision-r7.md and publication-record.md
+- **Responsibility**: make the build refuse any profile fact that a human-authorized receipt does not cover.
+  - fact-approval.ts collects every fact into `MaterializedFact` records with a canonical path, normalized value, target surfaces and requirement. Certifications target `resume` and `pdf` and are `optional`. It verifies the value kinds, including `isCanonicalPeriod`.
+  - production-profile.ts checks the exact source shape and validates the profile. It assigns each fact to one evidence source through `createEvidenceMembership` (lines 882-1000) and builds the review records stamped with the receipt's decision. It then computes three digests: `approvedRecordsDigest`, `materializedProfileDigest` over the facts plus `deriveStructuralDecisions` (lines 709-786), and `productionDiffDigest`. It requires all three to equal the receipt, and the receipt to equal `EXPECTED_RECEIPT` (lines 40-52) key for key.
+  - The inventory digest is not recomputed in the build. It is pinned, and its input is the tracked inventory JSON.
+- **Current state**:
+  - Receipt `profile-fact-approval-2026-09-27-r2`, inventory `profile-facts-r8`, 120 facts, evidence sources E01–E15.
+  - Certification facts: `certification-opic-ih-title`, `certification-opic-ih-period`, `certification-hsk-6-title` and `certification-hsk-6-period`, all in the E01 group (lines 900-919). E01 is the user-provided 2025 portfolio PDF.
+- **Change procedure** (revision-r7.md and publication-record.md):
+  1. Edit profile-data.ts and the evidence membership. Add an evidence source when a new justification is needed.
+  2. Save the new inventory JSON (`inventory-r<N>.json`) and compute its digest with `productionProfileTesting.canonicalDigest` (equivalently, the SHA-256 of the sorted-key compact JSON).
+  3. Compute the other digests.
+  4. Pin all values in `EXPECTED_RECEIPT` and fact-approval.json with a new receipt ID, decision audit ID and timestamp.
+  5. Update `EXPECTED_MATERIALIZED_DIGEST` and the fact count in site/tests/unit/production-profile.test.ts.
+  6. Record the revision in docs/resume/product-engineer/.
+- **Used by**: Profile Build Integration (every build), Profile Pages, Homepage Composition, Resume PDF Release (compiled copy).
+- **Constraints**: neither file is an accessibility review subject. A wrong digest fails every `astro build`, including blog-only builds, through the build integration.
 
 ### Profile Layout Policy
 - **Location**: site/src/lib/navigation.ts (345 lines), site/src/lib/layout/profile-resources.ts (355), site/src/lib/layout/json-ld.ts (495). All are review subjects (navigation.ts by name, lib/layout by directory).
@@ -321,8 +346,15 @@ HIG relevance: SF Symbols cannot be licensed for the web, so the Lucide set is t
   - **Browser matrix**: 48 keys over 6 required spec files and 10 obligations.
   - **Link and metadata evidence**.
   - **Manual accessibility record**: 16 states (`/resume` and `/portfolio` x 320x800 and 1440x900 x light and dark x details closed and all-open) bound to the review-subject digest. The digest covers authored source plus node, astro, vite, playwright and axe versions.
-- **Review subjects** (accessibility-review-contract.mjs:82-99): astro.config.mjs, package-lock.json, package.json, the contract file itself, astro-profile-integration.mjs, clean-profile-build.mjs, preview-supervisor.mjs, profile-paths.mjs, request-ledger.mjs, Header.astro, MobileNav.tsx, BaseLayout.astro, navigation.ts, portfolio.astro, resume.astro, global.css, and every file under src/components/profile, src/lib/layout and src/styles/profile.
-- **Current state**: the tracked record (site/verification/profile/manual-web-accessibility.json, 2026-07-28) has the older 12-state shape and a digest that predates later commits to review subjects. The gate therefore fails closed (inferred from code, not executed).
+- **Review subjects** (accessibility-review-contract.mjs:81-111, 2026-10-21):
+  - astro.config.mjs, package-lock.json, package.json, the contract file itself
+  - astro-profile-integration.mjs, clean-profile-build.mjs, preview-supervisor.mjs, profile-paths.mjs, request-ledger.mjs
+  - Header.astro, MobileNav.tsx, BaseLayout.astro, navigation.ts, portfolio.astro, resume.astro
+  - base.css, chrome.css, fonts.css, global.css, tokens.css
+  - every file under src/components/profile, src/lib/layout and src/styles/profile
+
+  site/src/lib/profile is deliberately not a subject.
+- **Current state (2026-10-21)**: site/verification/profile/manual-web-accessibility.json holds a 16-state record by 조준희, `reviewedAt` 2026-10-21T11:05:26.512Z, result `pass`. It is modified but uncommitted on branch `chore/manual-a11y-review`. Whether its digest matches the current subjects was not recomputed in this scan. Any edit to presentation.ts, ResumeContent.astro, resume.css, print.css or resume.astro invalidates it. The 2026-10-19 note that the record had a 12-state shape is superseded.
 - **Scope gap**: the asset budget analyzes `/resume` and `/portfolio` only. The role editions are not analyzed.
 
 ### Resume PDF Release

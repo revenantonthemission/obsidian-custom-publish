@@ -12,5 +12,13 @@
     "scope": "bugfix",
     "status": "complete",
     "request": "0e71e704"
+  },
+  {
+    "uuid": "01a15c66-9951-78ff-9713-8b773f6388b1",
+    "slug": "resume-certifications",
+    "dirName": "261021-resume-certifications",
+    "scope": "refactor",
+    "status": "complete",
+    "request": "e4e1c825"
   }
 ]

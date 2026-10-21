@@ -1,5 +1,7 @@
 # Technology Stack: obsidian-blog
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 Versions are the declared manifest ranges: caret ranges from site/package.json and major versions from preprocessor/Cargo.toml. Resolved versions are in site/package-lock.json and preprocessor/Cargo.lock, which this scan did not parse. The full package-by-package inventory is in dependencies.md.
 
 ## Languages
@@ -84,6 +86,15 @@ Versions are the declared manifest ranges: caret ranges from site/package.json a
 | Previous hosting | AWS S3, CloudFront, ACM, Terraform | decommissioned 2026-08-17; `infra/` removed |
 
 Local ports: blog 8080, Jenkins 8081 (loopback), `astro dev` 4321, crossunit preview 4326. The verification previews use kernel-chosen loopback ports.
+
+## Profile Data Handling (2026-10-21)
+
+| Concern | Technology | Notes |
+|---|---|---|
+| Dates | plain strings checked by regular expressions | No date library (no `Intl` date formatting, `Temporal` or third-party package) in site/src/lib/profile. Precisions are `year` and `year-month`, and validation orders periods by an integer ordinal |
+| Canonical digests (approval chain) | `node:crypto` SHA-256 over `JSON.stringify` of recursively key-sorted values (production-profile.ts `canonicalDigest`) | Reproducible outside Node: sorted-key, compact-separator JSON hashed with SHA-256 matched both tracked inventory digests (r7 and r8) on 2026-10-21 |
+| Canonical digests (résumé source and manifest) | WebCrypto SHA-256 over a tagged TLV-style canonical node tree (canonical-digest.ts) | domain-separated: `obsidian-press:profile-source`, `obsidian-press:resume-fact-manifest` |
+| Node-side profile tools | `tsc` with site/tsconfig.profile-tools.json into site/.artifacts/profile/tools | compiles canonical-digest, document-boundary, production-profile, resume-evidence, resume-manifest and resume-receipts for the PDF release flow |
 
 ## Version Pinning Notes
 

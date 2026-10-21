@@ -1,5 +1,7 @@
 # Code Structure: obsidian-blog
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 This artifact owns these inventories: the repository layout, the file classification, the stylesheet inventory and loading, design tokens, breakpoints, motion, print styles, and the emitted HTML class contract. Components and their styling approach are in component-inventory.md. Routes are in api-documentation.md.
 
 ## Repository Layout
@@ -70,19 +72,19 @@ Directories that are ignored or generated are listed under Generated and Derived
 | pages/ | `index.astro`, `404.astro`, `graph.astro`, `resume.astro`, `portfolio.astro`, `portfolio/[role].astro`, `posts/[slug].astro`, `hubs/[slug].astro`, `tags/index.astro`, `tags/[tag].astro`, `rss.xml.ts` | Build-time route handlers |
 | layouts/ | `BaseLayout.astro` (212 lines), `PostLayout.astro` (92), `HubLayout.astro` (64) | BaseLayout owns head, theme bootstrap, chrome and global CSS |
 | components/ | `Header`, `Footer`, `PostCard`, `BacklinkList`, `RelatedPosts`, `TableOfContents`, `HubNav`, `HubProgress` | Astro, mostly scoped styles |
-| components/profile/ | `ProfileShell`, `ProfileLocalNavigation`, `PortfolioRoleNavigation`, `ContactActions`, `ContentBlocks`, `ContentText`, `CaseStudy`, `PortfolioContent`, `ResumeContent`, `ResumeEntry`, `presentation.ts` (698 lines) | No component-local CSS (enforced by the asset budget) |
+| components/profile/ | `ProfileShell`, `ProfileLocalNavigation`, `PortfolioRoleNavigation`, `ContactActions`, `ContentBlocks`, `ContentText`, `CaseStudy`, `PortfolioContent`, `ResumeContent` (175 lines), `ResumeEntry`, `presentation.ts` (621 lines, 2026-10-21) | No component-local CSS (enforced by the asset budget). The whole directory is an accessibility review subject |
 | islands/ | `ThemeToggle`, `Search`, `MobileNav`, `MobileSidebar`, `NavTree`, `TreeNodeItem`, `GraphView`, `LocalGraph` | Preact. `MobileNav` is rendered without hydration |
 | scripts/ | `copy-button.ts`, `link-preview.ts`, `toc-highlight.ts`, `heading-fold.ts`, `diagram-wrap.ts` | Hoisted `<script>` modules in PostLayout |
 | lib/ | `data.ts`, `render.ts`, `homepage.ts`, `navigation.ts` (345), `solar.ts` (212), `graphUtils.ts`, `graphSim.ts`, `toc.ts`, `types.ts` | Build-time data and shared client helpers |
 | lib/layout/ | `profile-resources.ts` (355), `json-ld.ts` (495) | Head resource policy per route, safe JSON-LD serialization |
-| lib/profile/ | 18 modules, about 16,500 lines | Profile domain (see component-inventory.md) |
+| lib/profile/ | 18 modules, about 13,350 lines (2026-10-21) | Profile domain and fact-approval chain (see component-inventory.md and Profile Period Model below). Not an accessibility review subject |
 | styles/ | `global.css`, `callouts.css`, `diagrams.css`, `search.css`, `post.css`, `link-preview.css`, `nav-tree.css`, `mobile-sidebar.css`, `profile/{font,foundation,resume,portfolio,print}.css` | Inventory below |
 
 ### Site tooling (site/scripts)
 
 - `local-server.mjs` (150 lines): production server (see api-documentation.md).
 - `crossunit/link-sweep.mjs`, `crossunit/ensure-fixture-content.mjs`: U3 cross-unit gate helpers.
-- `profile/` (33 files, about 20,900 lines): `cli.mjs` command router; `verification-provider.mjs` (3,847 lines); `asset-budget.mjs`; `request-ledger.mjs`; `accessibility-review-contract.mjs`; `astro-profile-integration.mjs`; `font-materializer.mjs` with `font-allowlist.json`; `clean-profile-build.mjs`; `preview-supervisor.mjs`; `startup-retry.mjs`; `owned-process-registry.mjs`; `owned-node-bootstrap.mjs`; `browser-launch-preflight.mjs`; `compile-profile-tools.mjs`; `pbt-runner.mjs`; `resume-coordinator.mjs`; `pdf-renderer.mjs`; `pdf-inspector.mjs`; `pdf-viewer.mjs`; `release-store.mjs`; `profile-paths.mjs`; `homepage-fixture-content.mjs`; `.d.mts` declarations for typed imports from tests.
+- `profile/` (33 files; the 22 `.mjs` modules total about 13,270 lines as of 2026-10-21, verification-provider.mjs 3,412): `cli.mjs` command router; `verification-provider.mjs` (3,847 lines); `asset-budget.mjs`; `request-ledger.mjs`; `accessibility-review-contract.mjs`; `astro-profile-integration.mjs`; `font-materializer.mjs` with `font-allowlist.json`; `clean-profile-build.mjs`; `preview-supervisor.mjs`; `startup-retry.mjs`; `owned-process-registry.mjs`; `owned-node-bootstrap.mjs`; `browser-launch-preflight.mjs`; `compile-profile-tools.mjs`; `pbt-runner.mjs`; `resume-coordinator.mjs`; `pdf-renderer.mjs`; `pdf-inspector.mjs`; `pdf-viewer.mjs`; `release-store.mjs`; `profile-paths.mjs`; `homepage-fixture-content.mjs`; `.d.mts` declarations for typed imports from tests.
 
 ### Tests
 
@@ -215,6 +217,43 @@ The breakpoint system (480, 768 and 960) comes from docs/plans/2026-03-17-respon
 
 Reduced motion: global.css:329-336 sets `animation-duration` and `transition-duration` to 0.01 ms, one iteration and `scroll-behavior: auto` for all elements. The scripted smooth scroll in BaseLayout does not check the preference itself. site/tests/e2e/profile-accessibility.spec.ts asserts that no transition longer than 0.1 s survives reduced motion on profile routes. Blog routes have no such check.
 
+### Profile Period Model (2026-10-21)
+
+The profile represents dates only as period facts. Every place that defines or interprets the vocabulary:
+
+| Layer | Location | Behavior | Tag-specific? |
+|---|---|---|---|
+| Types | site/src/lib/profile/types.ts:86-107 | `DatePoint = YearPoint \| YearMonthPoint` (`{ tag, value: string }`); `PeriodEnd` adds `{ tag: 'present' }`; `Period = { start, end }` | yes |
+| Source data | site/src/lib/profile/profile-data.ts:95-97, 557-559, 570-583 | Four periods. `experience-hansono-period` 2023-07 to 2023-08 (year-month); `education-sogang-university-period` 2019 to 2026 (year); `certification-opic-ih-period` 2025-09 to 2025-09; `certification-hsk-6-period` 2024-09 to 2024-09 | data |
+| Shape inspection | validation.ts:512-554 | requires `tag` and, unless `present`, a string `value` | no |
+| Validation | validation.ts:48-49, 1525-1608 | `year` `^\d{4}$` (at least 1); `year-month` `^(\d{4})-(0[1-9]\|1[0-2])$`. Any other tag is `period.precision`. A start may not be `present` (`period.value`). Start and end must share one precision (`period.precision`). An end before the start is `period.range`, compared by year×12+month | yes |
+| Issue messages | issues.ts:56-58 | `period.precision` reads "기간은 year 또는 year-month의 같은 정밀도를 사용해야 합니다." | yes (text) |
+| Normalization | normalization.ts:276-295 | clones `{ tag, value }` | no |
+| Fact approval | fact-approval.ts:1100-1120, 1313-1340, 1386-1404 | collects `{ kind: 'period', value }`; `isDatePoint` accepts only `year` and `year-month`; value equality compares tag and value generically | partly |
+| Production source shape | production-profile.ts:447-458 | allows the keys `tag` and `value`, or only `tag` for `present` | no |
+| Résumé source digest | canonical-digest.ts:386-397 | `variant(tag, { value })`, or `variant('present')` | no |
+| Manifest | resume-manifest.ts:152-153, 783-812 | token `start:<tag>:<value>\|end:<tag>:<value>` or `…\|end:present`; start and end tags must match and `end.value >= start.value` by string comparison; unknown tags throw `Invalid résumé period point.` | yes |
+| Presentation | site/src/components/profile/presentation.ts:603-617 | `PeriodView.text = '<start> – <end>'` (U+2013, raw values, `현재` for present) | no |
+| Markup | ResumeContent.astro:86-89, 126-129, 157-160; ResumeEntry.astro | `p.profile-period` or `span.resume-entry-period` with `data-profile-fact-id` | no |
+| PDF evidence | resume-evidence.ts:31-33, 813-840 | `parsePeriodDisplayText` splits on `\s*–\s*` and maps each point back to `year:`, `year-month:` or `present`; anything else returns `null` | yes |
+| PDF inspector | site/scripts/profile/pdf-inspector.mjs:8-9, 355-370 | `inferValueKind` treats a fact as a period only when both halves match `^(?:\d{4}\|\d{4}-(?:0[1-9]\|1[0-2])\|현재)$` | yes |
+| Test generators | site/tests/pbt/u1/arbitraries/profile.ts:19, 132-155, 811-836; arbitraries/manifest.ts:572-575 | `PeriodMode = 'year' \| 'year-month' \| 'present'`; oracle token mirrors the manifest | yes |
+
+A day-precision point needs changes in every row marked yes or partly. A tag that sorts correctly as a string, such as zero-padded `YYYY-MM-DD`, keeps the manifest's string range check valid. Validation would need a new ordinal (for example days since an epoch) and a calendar check, because a pattern alone accepts `2025-02-30`.
+
+### Résumé Section Structure (2026-10-21)
+
+| Order | Manifest key (resume-manifest.ts:36-43) | View kind and heading (presentation.ts:159-193) | DOM (ResumeContent.astro) | Shown when |
+|---|---|---|---|---|
+| 1 | `intro-contact` | `intro`, 프로필 | `section.resume-intro[data-profile-section="intro"]` | always |
+| 2 | `skills` | `skills`, 핵심 역량 | `section.resume-skills` | always |
+| 3 | `highlights` | `highlights`, 경력·대표 성과 | `section.resume-highlights`, groups 경력 and 대표 성과 | always |
+| 4 | `project-summaries` | `projects`, 프로젝트 | `section.resume-projects` | always |
+| 5 | `education` | `education`, 학력 | `section.resume-education` | `education` non-empty |
+| 6 | `certifications` | `certifications`, 어학 자격 | `section.resume-certifications`, entries `article.resume-certification-entry` (final `else` branch, lines 142-172) | `certifications` non-empty |
+
+`addSection` (resume-manifest.ts:570-582) refuses any key whose position differs from `RESUME_SECTION_ORDER`. The heading `어학 자격` is a literal in the view type, so every certification is presented as a language qualification today.
+
 ### Print Styles
 
 - site/src/styles/profile/print.css (résumé only):
@@ -223,6 +262,7 @@ Reduced motion: global.css:329-336 sets `animation-duration` and `transition-dur
   - Hides `.site-header`, `.site-footer`, `.profile-local-navigation`, `.reading-progress`, `.back-to-top`, `.search-overlay`, `.skip-link` and `[data-profile-action-kind="document"]`.
   - Forces `details` content open; `break-inside: avoid-page` for entries; headings `break-after: avoid-page`.
   - The PDF renderer's `SCREEN_ONLY_SELECTORS` (site/scripts/profile/pdf-renderer.mjs:20-27) and print-contract checks mirror these rules.
+- Certification entries print as a two-column grid with the period in the right column (print.css:312-331); education and certification entries drop their card surfaces (print.css:162-164, 266-290). On screen, resume.css:190-222 styles projects, education and certifications as grouped cards, and foundation.css:134-138 sets `.profile-period` to tabular numerals in `--c-text-secondary`.
 - site/src/styles/profile/portfolio.css:256 adds print rules for case-study details (`::details-content`).
 - Blog routes have no print stylesheet.
 - tmp/pdfs/export-portfolio.mjs injects its own print CSS (A4 with 16/17/19 mm margins, 10.5 pt) to export a portfolio PDF outside the release tooling.
@@ -254,7 +294,7 @@ This is the class and markup vocabulary that CSS and client scripts depend on. C
 | Headings | render.ts (`rehype-slug`), heading-fold.ts (client) | `h2`–`h4` with `id`; `button.heading-fold-toggle` (▶, `aria-label` "섹션 접기/펼치기") prepended inside `h2` and `h3` | post.css; TableOfContents and toc-highlight depend on the ids |
 | Math | render.ts (`rehype-katex`, `strict: false`) | `.katex`, `.katex-display` | KaTeX CDN CSS; post.css sets inline math to `1em` |
 | Footnotes, task lists, definition lists, abbreviations, strikethrough | render.ts | GFM footnote section with `data-footnote-ref`; disabled checkboxes; `dl/dt/dd`; `abbr[title]`; `del` for `~~` only | post.css |
-| Profile DOM | components/profile/*.astro | `data-profile-section`, `data-profile-entity-kind`, `data-profile-entity-id`, `data-profile-entity-order`, `data-profile-fact-id`, `data-profile-label-fact-id`, `data-profile-destination-fact-id`, `data-profile-dimension`, `data-profile-action-kind`, `data-testid` | parity, PDF inspection and tests; the attributes are a contract |
+| Profile DOM | components/profile/*.astro | `data-profile-section` (résumé values `intro`, `skills`, `highlights`, `projects`, `education`, `certifications`; the PDF skeleton maps them to manifest ordinals in DOM order), `data-profile-entity-kind` (`certification` for certification entries), `data-profile-entity-id`, `data-profile-entity-order`, `data-profile-fact-id`, `data-profile-label-fact-id`, `data-profile-destination-fact-id`, `data-profile-dimension`, `data-profile-action-kind`, `data-testid` | parity, PDF inspection and tests; the attributes are a contract |
 
 ## Code Patterns
 

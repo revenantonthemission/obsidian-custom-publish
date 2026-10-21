@@ -1,5 +1,7 @@
 # Dependencies: obsidian-blog
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 This artifact owns the package-level dependency inventory, the external tools and services, and the internal module dependency graph. Framework-level summaries are in technology-stack.md.
 
 ## npm Runtime Dependencies
@@ -128,7 +130,15 @@ Circular reference flagged: transform.rs and hub_dates.rs reference each other. 
 | islands/ThemeToggle.tsx | lib/solar.ts, lucide-preact |
 | islands/GraphView.tsx, LocalGraph.tsx | lib/graphUtils.ts, lib/graphSim.ts, d3 modules |
 | islands/NavTree.tsx | islands/TreeNodeItem.tsx |
-| components/profile/presentation.ts | lib/profile selectors, types and document boundary |
+| components/profile/presentation.ts | lib/navigation.ts (`getProfileLocalNavigationState`), lib/profile/portfolio-roles.ts, lib/profile types and document-boundary types (2026-10-21) |
+| components/profile/ResumeContent.astro | ContactActions.astro, ContentBlocks.astro, ResumeEntry.astro, presentation.ts types |
+| pages/resume.astro | BaseLayout, ProfileShell, ResumeContent, presentation.ts, lib/profile/{current-resume-document,metadata,production-profile}, styles/profile/{font,foundation,resume,print}.css |
+| lib/profile/production-profile.ts | verification/profile/fact-approval.json (JSON import), profile-data.ts, validation.ts, fact-approval.ts, assembly.ts, `node:crypto` |
+| lib/profile/fact-approval.ts | issues.ts, normalization.ts, validation.ts (`hasValidatedProfileCapability`) |
+| lib/profile/validation.ts | issues.ts, normalization.ts |
+| lib/profile/resume-manifest.ts | canonical-digest.ts, fact-approval.ts, issues.ts, selectors.ts, validation.ts, types; restates the period grammar locally |
+| lib/profile/resume-evidence.ts | issues.ts, resume-manifest.ts (a runtime import of `compareResumeFactManifests` and `RESUME_MANIFEST_SCHEMA_VERSION`), types. It restates the period grammar locally; its comment says this keeps the manifest builder out of the PDF path, but the module already imports resume-manifest.ts |
+| scripts/profile/pdf-inspector.mjs | profile-paths.mjs, `node:crypto`, `node:fs`; restates the period point pattern (line 9) |
 | scripts/profile/cli.mjs | verification-provider.mjs, resume-coordinator.mjs, release-store.mjs, pbt-runner.mjs |
 | verification-provider.mjs | asset-budget, request-ledger, accessibility-review-contract, clean-profile-build, preview-supervisor, startup-retry, browser-launch-preflight, homepage-fixture-content, profile-paths |
 | resume-coordinator.mjs | clean-profile-build, compile-profile-tools, pdf-renderer, pdf-inspector, pdf-viewer, preview-supervisor, release-store |
@@ -139,7 +149,8 @@ Circular reference flagged: transform.rs and hub_dates.rs reference each other. 
 - **The site depends on preprocessor output files, not on the Rust crate.** `content/` must exist before `astro build` (data.ts reads `../content`). `public/previews.json` is read at build time relative to the working directory. `npm run test:unit` builds the site, so it also needs `content/` and the copied JSON. Jenkins provides them by preprocessing the fixture vault first. site/scripts/crossunit/ensure-fixture-content.mjs fills a homepage fixture when one is absent.
 - **The profile tooling depends on the site.** It compiles six pure profile modules into `site/.artifacts/profile/tools` (compile-profile-tools.mjs) so Node can load them, and it drives `astro build` with `PROFILE_VERIFICATION_BUILD=1`.
 - **Tracked records bind code to human decisions.**
-  - site/verification/profile/fact-approval.json binds the profile data digests.
+  - site/verification/profile/fact-approval.json binds the profile data digests. It must equal `EXPECTED_RECEIPT` in production-profile.ts key for key, so a receipt change is always a two-file change plus the test pin in production-profile.test.ts.
+  - docs/resume/product-engineer/inventory-r<N>.json is the exact input of the pinned `inventoryDigest`. The build does not read it; reproducibility is by convention (revision-r7.md).
   - site/verification/profile/manual-web-accessibility.json binds the review-subject digest.
   - site/verification/resume/current-release.json binds the public PDF.
 
@@ -153,4 +164,5 @@ Circular reference flagged: transform.rs and hub_dates.rs reference each other. 
 | Version-specific `mmdc` fallback path | mermaid.rs:22-26 | when PATH lacks `mmdc`, a Node upgrade breaks diagram rendering and the preprocessor fails the run |
 | Pre-1.0 `serde_yml` | Cargo.toml | frontmatter parsing changes on upgrade |
 | Root node_modules/ without a manifest | repository root (ignored) | unknown provenance; candidate for cleanup |
+| Period grammar restated in eight production sites plus test generators | types.ts, validation.ts, issues.ts, fact-approval.ts, resume-manifest.ts, resume-evidence.ts, pdf-inspector.mjs, tests/pbt/u1/arbitraries | a new date precision must be added everywhere at once, or parity fails closed (2026-10-21) |
 | Lockfiles not analyzed | site/package-lock.json, preprocessor/Cargo.lock | resolved transitive versions and advisories are unknown in this scan |

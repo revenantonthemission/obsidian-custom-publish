@@ -1,5 +1,7 @@
 # Code Quality Assessment: obsidian-blog
 
+> **Freshness (2026-10-21).** The profile sections below were refreshed by the focused `resume-certifications` scan at commit `96a6066`. Everything outside the profile subsystem comes from the 2026-10-19 full scan at `265b38a`, before the HIG redesign merged. It is stale in places: the theme system, tokens, fonts, chrome and the blog e2e coverage have changed since (see CLAUDE.md). The scope block in reverse-engineering-timestamp.md records which paths were verified.
+
 This artifact owns these inventories: tests and coverage, verification gates, accessibility gaps, security posture, documentation drift, the technical debt register, and the branch and worktree inventory. No tests, builds or servers were executed during this scan. Results quoted below come from the repository's own records and are attributed to them, and statements about current gate outcomes are inferred from code.
 
 ## Summary Ratings
@@ -9,7 +11,7 @@ Ratings use the three-point scale (good, fair, poor) from the analysis guide.
 | Dimension | Preprocessor (Rust) | Blog presentation (site/src outside profile) | Profile domain and presentation | Profile tooling (site/scripts/profile) |
 |---|---|---|---|---|
 | Naming clarity | good | good | good | good |
-| Function and file size | fair (transform.rs 826 lines) | good | fair (validation.ts 2,371; resume-evidence.ts 2,036; fact-approval.ts 1,704) | poor (verification-provider.mjs 3,847; asset-budget.mjs 1,730; font-materializer.mjs 1,494) |
+| Function and file size | fair (transform.rs 826 lines) | good | fair (2026-10-21: validation.ts 1,881; resume-evidence.ts 1,754; fact-approval.ts 1,541) | poor (verification-provider.mjs 3,847; asset-budget.mjs 1,730; font-materializer.mjs 1,494) |
 | Error handling | good (diagnostics, run fails closed) | fair (islands and scripts swallow fetch and clipboard errors) | good (typed results, fail closed) | good (coded errors with stage and rule) |
 | Test presence | good (110 tests plus property suites) | poor (helpers and rendering only; no browser tests for blog routes) | good (unit, property, e2e, human gates) | good (unit tests for supervision, retry, release) |
 | Duplication | good (shared regexes in syntax.rs) | fair (theme logic in two languages, duplicated tag styles, two ThemeToggle instances) | good | fair |
@@ -97,7 +99,8 @@ Not run: `npm run test:e2e`, `just crossunit`, `npm run resume:pdf:verify`, `ast
 | Browser matrix | verification-provider.mjs:2371-2407 | missing specs, skipped tests, failed axe, overflow or clipping, print contract violations | Requires the 6 profile spec files |
 | PDF parity | resume-evidence.ts:923-934, pdf-inspector.mjs:8-9, pdf-renderer.mjs:20-27 | changed period format (`YYYY-MM – 현재`), renamed screen-only selectors, print layout that drops or reorders facts | The public PDF is from 2026-08-27, and the link is withheld until a new human-reviewed release |
 | Markup assertions | site/tests/unit/profile-presentation.test.ts:190-497 and its helpers | renamed classes (`desktop-nav`, `mobile-nav-dropdown`, `mobile-nav-disclosure`, `profile-local-navigation`, `portfolio-role-navigation`, `portfolio-project-navigation`, `case-study-details`, `resume-entry-heading`, `profile-content-subtitle`, `portfolio-eyebrow`, `portfolio-summary`, `resume-summary`), changed Korean heading texts or `aria-label` values, a hydrated MobileNav, open-by-default disclosures, `<form>` elements, em dashes in case studies | Runs in CI through `test:unit` |
-| Fact approval | site/verification/profile/fact-approval.json, production-profile.ts | any change to approved profile text or structure | Current receipt r2 of 2026-09-27 |
+| Fact approval | site/verification/profile/fact-approval.json, production-profile.ts, site/tests/unit/production-profile.test.ts | any change to approved profile text, structure, fact membership or evidence | Current receipt r2 of 2026-09-27 (inventory r8, 120 facts). The test pins `EXPECTED_MATERIALIZED_DIGEST`, the 120-fact count, the top-level source keys and the absence of certification issuers |
+| Period grammar | validation.ts, fact-approval.ts, resume-manifest.ts, resume-evidence.ts, pdf-inspector.mjs | any period point other than `year`, `year-month` or `present` | Day precision is unsupported at every layer (2026-10-21) |
 
 A redesign of the shared chrome or profile pages therefore implies:
 - refreshing the inline script baselines when BaseLayout scripts change
@@ -106,6 +109,24 @@ A redesign of the shared chrome or profile pages therefore implies:
 - updating the unit-test class and label expectations together with the markup
 - a new 16-state human accessibility review
 - if print styling changes, a new PDF release with human review
+
+### Tests that pin the profile period and certification model (2026-10-21)
+
+| Test | What it pins | Lines |
+|---|---|---|
+| site/tests/unit/production-profile.test.ts | materialized digest, 120 facts, top-level source keys including `certifications`, no certification issuer | 17, 43-61, 119-142 |
+| site/tests/unit/profile-presentation.test.ts | résumé h2 order ending `학력`, `어학 자격` (full Astro build) | 244-252 |
+| site/tests/unit/resume-document.test.ts | manifest period token example; `parsePeriodDisplayText` accepted and refused forms | about 308-311, 405-433 |
+| site/tests/unit/resume-pdf.test.ts | `periodDisplay` reconstruction from the token; `inferValueKind` period cases | 18-30, 206-207 |
+| site/tests/unit/profile-domain.test.ts | mixed precision yields `period.precision` | 169-195 |
+| site/tests/unit/profile-projections.test.ts | synthetic certification with issuer projected to the résumé | 64-73, 183-195 |
+| site/tests/pbt/u1/arbitraries/profile.ts | `PeriodMode` (`year`, `year-month`, `present`), `validPeriod`, single certification blueprint, period mutations (`mixed-project-period-precision`, `reversed-project-period`) | 19, 132-160, 415-440, 586-587, 636-642, 811-836 |
+| site/tests/pbt/u1/arbitraries/manifest.ts | oracle section 6 `certifications`, oracle period token | 268-310, 572-575 |
+| site/tests/pbt/u1/profile-presentation.pbt.test.ts | section kind list, `assertPeriod` text, certification section presence | 53, 232-250, 384-400 |
+| site/tests/pbt/u1/profile-domain.pbt.test.ts | certification projection keeps issuer and period presence | 145, 192-200 |
+| site/tests/e2e/profile-routes.spec.ts | every manifest fact is rendered; period values are checked for presence only | 205-238 |
+
+site/tests/fixtures/profile-fixtures.ts (outside this scan's snapshot) also builds a year-month period and an empty certification list.
 
 ## Accessibility Assessment
 
@@ -169,7 +190,7 @@ No hardcoded secrets were found. Environment-dependent paths are machine paths, 
 
 | ID | Signal | Location | Impact | Suggested direction |
 |---|---|---|---|---|
-| TD-01 | Manual accessibility record in the old 12-state shape with a stale digest; `test:e2e` cannot pass | site/verification/profile/manual-web-accessibility.json | profile verification is red with no alert | redo the 16-state review after the redesign settles |
+| TD-01 | Manual accessibility record. On 2026-10-19 it was in the old 12-state shape with a stale digest. On 2026-10-21 a new 16-state record (result `pass`) is in the working tree, uncommitted, on `chore/manual-a11y-review` | site/verification/profile/manual-web-accessibility.json | any edit to a review subject, including the résumé components and stylesheets, invalidates it again | commit the new record; batch profile presentation changes before the next review |
 | TD-02 | E2E, crossunit and `astro check` not in CI; no coverage measurement | Jenkinsfile, vitest configs | regressions in visual and accessibility behavior go unnoticed | add a pre-deploy verification stage and coverage reporting |
 | TD-03 | No lint or format configuration | repository | style drift, no CSS linting | add Prettier, ESLint and Stylelint (rustfmt and clippy for Rust) |
 | TD-04 | Theme logic duplicated (ES5 and TypeScript), two ThemeToggle instances, OS appearance ignored after the first visit | BaseLayout.astro:112-169, ThemeToggle.tsx, solar.ts | inconsistency and conflict with HIG | single appearance model that follows the system, with a manual override |
@@ -188,6 +209,9 @@ No hardcoded secrets were found. Environment-dependent paths are machine paths, 
 | TD-17 | Working-directory-dependent data paths | data.ts (`../content`, `public/previews.json`) | builds must run from site/ | resolve paths from the module location |
 | TD-18 | Module cycle transform.rs and hub_dates.rs | preprocessor/src | coupling | extract `transform_outside_fences` into syntax.rs |
 | TD-19 | Public `/resume.pdf` predates the current profile; the link is withheld | site/public/resume.pdf, current-release.json | stale public document still reachable by URL | run the release flow after the redesign |
+| TD-21 | Period grammar duplicated across eight production sites; only `year` and `year-month` | see code-structure.md Profile Period Model | a new precision is a wide, coordinated change | one grammar per side (build and observation) with a cross-check test |
+| TD-22 | ResumeContent.astro renders certifications in a catch-all `else` branch | site/src/components/profile/ResumeContent.astro:142-172 | a new section kind renders silently as certifications | exhaustive dispatch on `section.kind` |
+| TD-23 | Certification has no category, and its period means "issue month" by convention (start equals end) | types.ts:231-239, profile-data.ts:565-588 | professional and language certificates cannot be told apart; expiry cannot be expressed distinctly from an issue range | model the category and the issue/expiry meaning explicitly |
 | TD-20 | Branching policy conflict and divergent `main` | CLAUDE.md (git flow) versus aidlc org.md (trunk-based, squash into `main`) | ambiguous merge target for this intent | decide before Construction |
 
 ## Repository Hygiene: Branches and Worktrees
