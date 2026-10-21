@@ -15,11 +15,14 @@ let manifest: AnyRecord;
 let skeleton: AnyRecord;
 let baseline: AnyRecord;
 
-/** Rebuilds the label a period renders as from the token the manifest holds. */
+/**
+ * Rebuilds the label a period renders as from the token the manifest holds.
+ * The page shows the stored ISO value with dots (BR3.1).
+ */
 function periodDisplay(token: string): string {
   const point = (part: string): string => {
     const segments = part.split(':');
-    return segments.length <= 2 ? '현재' : (segments.at(-1) ?? '');
+    return segments.length <= 2 ? '현재' : (segments.at(-1) ?? '').replaceAll('-', '.');
   };
   const [start, end] = token.split('|');
   return `${point(start ?? '')} – ${point(end ?? '')}`;
@@ -203,9 +206,22 @@ describe('pdf inspector structure', () => {
     const kind = resumePdfInspectorTesting.inferValueKind;
     expect(kind({ text: '이메일', href: 'mailto:a@b.c' })).toBe('email');
     expect(kind({ text: 'GitHub', href: 'https://github.com/someone' })).toBe('github-url');
-    expect(kind({ text: '2023-07 – 2023-08', href: null })).toBe('period');
+    expect(kind({ text: '2023.07 – 2023.08', href: null })).toBe('period');
     expect(kind({ text: '2019 – 현재', href: null })).toBe('period');
     expect(kind({ text: 'Rust', href: null })).toBe('text');
+  });
+
+  // BR3.2: the inspector reads the dotted display of all three precisions,
+  // and the hyphenated stored form is no longer a displayed period.
+  test('reads dotted periods of every precision and nothing else as a period', () => {
+    const kind = resumePdfInspectorTesting.inferValueKind;
+    expect(kind({ text: '2025.09.06 – 2027.09.06', href: null })).toBe('period');
+    expect(kind({ text: '2026.07.17 – 현재', href: null })).toBe('period');
+    expect(kind({ text: '2019 – 2026', href: null })).toBe('period');
+    expect(kind({ text: '2023-07 – 2023-08', href: null })).toBe('text');
+    expect(kind({ text: '2025-09-06 – 2027-09-06', href: null })).toBe('text');
+    expect(kind({ text: '2025.13.01 – 2027.09.06', href: null })).toBe('text');
+    expect(kind({ text: '2025.9.6 – 2027.09.06', href: null })).toBe('text');
   });
 
   test('claims a run only when the mapper would read the same value back', () => {

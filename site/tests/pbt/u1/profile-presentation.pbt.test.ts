@@ -245,8 +245,9 @@ function assertPeriod(
   });
 }
 
+/** BR3.1: the stored ISO value is displayed with dots; `현재` is the open end. */
 function datePointText(point: Period['start'] | Period['end']): string {
-  return point.tag === 'present' ? '현재' : point.value;
+  return point.tag === 'present' ? '현재' : point.value.replaceAll('-', '.');
 }
 
 function assertTextBlocks(actual: readonly TextBlockView[], source: readonly ContentBlock[]): void {

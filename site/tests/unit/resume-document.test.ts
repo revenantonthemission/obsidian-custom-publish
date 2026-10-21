@@ -405,15 +405,35 @@ function failureCodes(
 describe('pdf period observation', () => {
   const { parsePeriodDisplayText } = resumeEvidenceTesting;
 
+  // BR3.1/BR3.2: the page shows dots, the manifest keeps the stored ISO value,
+  // and the reader maps one to the other for each of the three precisions.
   test('inverts the rendered period into the approved manifest token', () => {
-    expect(parsePeriodDisplayText('2023-07 – 2023-08')).toBe(
+    expect(parsePeriodDisplayText('2023.07 – 2023.08')).toBe(
       'start:year-month:2023-07|end:year-month:2023-08'
     );
     expect(parsePeriodDisplayText('2019 – 2026')).toBe('start:year:2019|end:year:2026');
   });
 
+  test('inverts a full-date range into date tokens', () => {
+    expect(parsePeriodDisplayText('2025.09.06 – 2027.09.06')).toBe(
+      'start:date:2025-09-06|end:date:2027-09-06'
+    );
+    expect(parsePeriodDisplayText('2026.07.17 – 현재')).toBe('start:date:2026-07-17|end:present');
+  });
+
   test('reads an open-ended period as the present point', () => {
-    expect(parsePeriodDisplayText('2023-07 – 현재')).toBe('start:year-month:2023-07|end:present');
+    expect(parsePeriodDisplayText('2023.07 – 현재')).toBe('start:year-month:2023-07|end:present');
+  });
+
+  test('refuses the hyphenated stored form, which the page no longer displays', () => {
+    expect(parsePeriodDisplayText('2023-07 – 2023-08')).toBeNull();
+    expect(parsePeriodDisplayText('2025-09-06 – 2027-09-06')).toBeNull();
+  });
+
+  test('refuses a dotted date that is not a real day or is not zero-padded', () => {
+    expect(parsePeriodDisplayText('2026.02.29 – 2027.02.28')).toBeNull();
+    expect(parsePeriodDisplayText('2025.9.6 – 2027.09.06')).toBeNull();
+    expect(parsePeriodDisplayText('2025.09.31 – 2027.09.06')).toBeNull();
   });
 
   test('tolerates the layout whitespace PDF extraction produces', () => {
@@ -424,8 +444,8 @@ describe('pdf period observation', () => {
   });
 
   test('refuses a period it cannot read rather than passing it through', () => {
-    expect(parsePeriodDisplayText('2023-07')).toBeNull();
-    expect(parsePeriodDisplayText('2023-13 – 2023-14')).toBeNull();
+    expect(parsePeriodDisplayText('2023.07')).toBeNull();
+    expect(parsePeriodDisplayText('2023.13 – 2023.14')).toBeNull();
     expect(parsePeriodDisplayText('2019 - 2026')).toBeNull();
     expect(parsePeriodDisplayText('2019 – 2020 – 2021')).toBeNull();
   });

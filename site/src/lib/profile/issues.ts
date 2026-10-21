@@ -53,7 +53,7 @@ const STATIC_ISSUE_MESSAGES = {
   'identifier.duplicate': '같은 entity 종류 안에서 ID가 중복됩니다.',
   'order.positive-integer': '표시 순서는 양의 정수여야 합니다.',
   'order.duplicate': '같은 collection 안에서 표시 순서가 중복됩니다.',
-  'period.precision': '기간은 year 또는 year-month의 같은 정밀도를 사용해야 합니다.',
+  'period.precision': '기간은 year, year-month 또는 date 중 같은 정밀도를 사용해야 합니다.',
   'period.value': '유효한 기간 값이 아닙니다.',
   'period.range': '기간 종료가 시작보다 이를 수 없습니다.',
   'reference.kind': '허용된 relation 종류가 아닙니다.',

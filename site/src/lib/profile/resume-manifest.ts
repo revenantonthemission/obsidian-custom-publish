@@ -14,7 +14,7 @@ import {
 import type { FactCanonicalPath } from './fact-approval.js';
 import { createValidationIssue } from './issues.js';
 import { selectResumeProfile } from './selectors.js';
-import { validateProfile } from './validation.js';
+import { isValidDatePoint, validateProfile } from './validation.js';
 import type {
   ContentBlock,
   DisplayOrder,
@@ -149,8 +149,6 @@ const RESUME_BASE_KEYS = [
 ] as const;
 const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
-const YEAR_PATTERN = /^\d{4}$/;
-const YEAR_MONTH_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])$/;
 
 /**
  * Production manifest boundary. A caller cannot substitute a merely
@@ -802,13 +800,10 @@ function serializeDatePoint(point: Period['start']): string {
   assertPlainRecord(point);
   assertExactKeys(point, ['tag', 'value']);
 
-  if (point.tag === 'year' && YEAR_PATTERN.test(point.value)) {
-    return `year:${point.value}`;
+  if (!isValidDatePoint(point.tag, point.value)) {
+    throw new TypeError('Invalid résumé period point.');
   }
-  if (point.tag === 'year-month' && YEAR_MONTH_PATTERN.test(point.value)) {
-    return `year-month:${point.value}`;
-  }
-  throw new TypeError('Invalid résumé period point.');
+  return `${point.tag}:${point.value}`;
 }
 
 function assertResumeProfileShape(profile: ResumeProfile): void {

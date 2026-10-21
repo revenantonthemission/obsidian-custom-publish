@@ -26,11 +26,15 @@ export const RESUME_EVIDENCE_SCHEMA_VERSION = 1 as const;
 /**
  * The rendered vocabulary of a period, mirrored from `presentation.ts` and
  * `resume-manifest.ts`. Kept local rather than imported so that reading a PDF
- * cannot pull the manifest builder into the observation path.
+ * cannot pull the manifest builder into the observation path. It reads the
+ * displayed text, which is dotted (BR3.1), not the stored ISO value: the
+ * stored-value rule in `validation.ts` would accept the wrong surface.
  */
 const PERIOD_PRESENT_LABEL = '현재';
-const PERIOD_YEAR_PATTERN = /^\d{4}$/u;
-const PERIOD_YEAR_MONTH_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])$/u;
+const PERIOD_YEAR_PATTERN = /^(\d{4})$/u;
+const PERIOD_YEAR_MONTH_PATTERN = /^(\d{4})\.(0[1-9]|1[0-2])$/u;
+const PERIOD_DATE_PATTERN = /^(\d{4})\.(0[1-9]|1[0-2])\.(0[1-9]|[12]\d|3[01])$/u;
+const PERIOD_DAYS_IN_MONTH = Object.freeze([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]);
 
 export const RESUME_TOOL_VERSIONS = Object.freeze({
   playwright: '1.61.1',
@@ -823,18 +827,35 @@ function parsePeriodDisplayText(text: string): string | null {
   return `start:${start}|end:${end}`;
 }
 
+/**
+ * Maps one displayed point back to its manifest token: `2023.07` reads as
+ * `year-month:2023-07` and `2025.09.06` as `date:2025-09-06`. The mapping is
+ * one-to-one, and a dotted date that names no real day is refused.
+ */
 function periodPointToken(displayed: string): string | null {
   const point = displayed.trim();
   if (point === PERIOD_PRESENT_LABEL) {
     return 'present';
   }
-  if (PERIOD_YEAR_PATTERN.test(point)) {
-    return `year:${point}`;
+  const year = PERIOD_YEAR_PATTERN.exec(point);
+  if (year) {
+    return `year:${year[1]}`;
   }
-  if (PERIOD_YEAR_MONTH_PATTERN.test(point)) {
-    return `year-month:${point}`;
+  const yearMonth = PERIOD_YEAR_MONTH_PATTERN.exec(point);
+  if (yearMonth) {
+    return `year-month:${yearMonth[1]}-${yearMonth[2]}`;
+  }
+  const date = PERIOD_DATE_PATTERN.exec(point);
+  if (date && isDisplayedDay(Number(date[1]), Number(date[2]), Number(date[3]))) {
+    return `date:${date[1]}-${date[2]}-${date[3]}`;
   }
   return null;
+}
+
+function isDisplayedDay(year: number, month: number, day: number): boolean {
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const lastDay = month === 2 && isLeapYear ? 29 : (PERIOD_DAYS_IN_MONTH[month - 1] ?? 0);
+  return day <= lastDay;
 }
 
 function occurrenceMatches(

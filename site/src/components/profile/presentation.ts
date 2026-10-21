@@ -612,8 +612,14 @@ function periodView(fact: PublicFact<Period>): PeriodView {
   });
 }
 
+/**
+ * The one period formatter for every profile page (BR3.1): the stored ISO
+ * value is shown with dots (`2025-09-06` → `2025.09.06`, `2023-07` →
+ * `2023.07`, `2019` unchanged) and the open end as `현재`. The PDF readers in
+ * `resume-evidence.ts` and `pdf-inspector.mjs` invert exactly this text.
+ */
 function datePointText(point: Period['start'] | Period['end']): string {
-  return point.tag === 'present' ? '현재' : point.value;
+  return point.tag === 'present' ? '현재' : point.value.replaceAll('-', '.');
 }
 
 function frozenArray<Value>(values: readonly Value[]): readonly Value[] {
