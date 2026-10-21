@@ -33,8 +33,10 @@ const INHERITED_INLINE_STYLE_BASELINES = Object.freeze([
 // [data-search-open] dispatcher (FR5.2: it passes its control so focus can
 // return to it) and the reading progress and back-to-top script (FR5.10:
 // scaleX once per frame, no smooth scroll under reduced motion). The other
-// three are Astro's island loaders, unchanged. Prettier (FR7.1) then
-// reformatted the bootstrap and the scroll script: same statements, new bytes.
+// three are Astro's island loaders. Prettier (FR7.1) then reformatted the
+// bootstrap and the scroll script: same statements, new bytes. The security
+// update to Astro 6.4.8 replaced the 3,483-byte island runtime with its own
+// 4,403-byte one, byte for byte `astro/dist/runtime/server/astro-island.prebuilt.js`.
 const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   Object.freeze({
     type: null,
@@ -48,8 +50,8 @@ const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   }),
   Object.freeze({
     type: null,
-    rawBytes: 3_483,
-    sha256: '409643525a3fa9ae40242ac6eaf1f259c6ad8f009e5a27441d07c973ad35973c',
+    rawBytes: 4_403,
+    sha256: '49a0a415f3ebb887535d3f3ff7b240ad0986c622402f6a386c10ef4a0279cb74',
   }),
   Object.freeze({
     type: 'module',

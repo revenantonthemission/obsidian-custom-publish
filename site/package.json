@@ -68,7 +68,10 @@
     "prettier": "3.9.9",
     "prettier-plugin-astro": "1.1.0",
     "typescript": "^5.9.3",
-    "vite": "7.3.2",
+    "vite": "7.3.7",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "sharp": "^0.35.5"
   }
 }
