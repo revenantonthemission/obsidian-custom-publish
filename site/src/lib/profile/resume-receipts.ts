@@ -23,7 +23,7 @@ import type {
   ResumeToolVersions,
   SurfaceManifestComparison,
 } from './resume-evidence.js';
-import { compareResumeFactManifests } from './resume-manifest.js';
+import { compareResumeFactManifests, isPairedLinkDestination } from './resume-manifest.js';
 import type { ResumeFactManifest, ResumeManifestEntry } from './resume-manifest.js';
 import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
 import type {
@@ -1052,7 +1052,12 @@ function validateFullMapping(value: readonly unknown[], manifest: ResumeFactMani
       !isMappingReferenceArray(mapping.fragmentReferences, false) ||
       !isMappingReferenceArray(mapping.urlAnnotationReferences, true) ||
       !isNonEmptyNonNegativeIntegerArray(mapping.structurePath) ||
-      !mappingReferencesMatchExpected(mapping, expectedEntry)
+      !mappingReferencesMatchExpected(
+        mapping,
+        expectedEntry,
+        isPairedLinkDestination(manifest.entries, index),
+        value[index - 1]
+      )
     ) {
       return false;
     }
@@ -1146,7 +1151,12 @@ function isNonEmptyNonNegativeIntegerArray(value: unknown): value is readonly nu
   return Array.isArray(value) && value.length > 0 && value.every(isNonNegativeInteger);
 }
 
-function mappingReferencesMatchExpected(mapping: OwnRecord, entry: ResumeManifestEntry): boolean {
+function mappingReferencesMatchExpected(
+  mapping: OwnRecord,
+  entry: ResumeManifestEntry,
+  pairedDestination: boolean,
+  previous: unknown
+): boolean {
   const fragments = mapping.fragmentReferences as readonly OwnRecord[];
   const annotations = mapping.urlAnnotationReferences as readonly OwnRecord[];
   if (!isLinkValueKind(entry.valueKind)) {
@@ -1158,7 +1168,21 @@ function mappingReferencesMatchExpected(mapping: OwnRecord, entry: ResumeManifes
 
   const expectedDestination =
     entry.valueKind === 'email' ? `mailto:${entry.normalizedValue}` : entry.normalizedValue;
-  return annotations[0]?.destination === expectedDestination;
+  if (annotations[0]?.destination !== expectedDestination) {
+    return false;
+  }
+  // Option A: only an evidence link's destination, paired with its label on
+  // one element, claims no text, and its URI sits on the label's page.
+  if (!pairedDestination) {
+    return fragments.length > 0;
+  }
+  const labelPage =
+    isOwnRecord(previous) && Array.isArray(previous.fragmentReferences)
+      ? (previous.fragmentReferences[0] as OwnRecord | undefined)?.pageNumber
+      : undefined;
+  return (
+    fragments.length === 0 && labelPage !== undefined && annotations[0]?.pageNumber === labelPage
+  );
 }
 
 function isLinkValueKind(value: ResumeManifestEntry['valueKind']): boolean {
@@ -1435,3 +1459,8 @@ function failure(issues: readonly ValidationIssue[]): ValidationResult<never> {
 function issue(code: ValidationIssue['code'], path: string): ValidationIssue {
   return createValidationIssue(code, path as ProfilePath);
 }
+
+/** @internal Pure seams for unit tests; production calls the receipt validators above. */
+export const resumeReceiptsTesting = Object.freeze({
+  validateFullMapping,
+});

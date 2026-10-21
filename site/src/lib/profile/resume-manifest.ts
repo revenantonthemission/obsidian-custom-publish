@@ -68,6 +68,35 @@ interface ResumeSectionIdentity {
   readonly order: number;
 }
 
+/**
+ * Whether entry `index` is the destination half of an evidence link whose label
+ * is entry `index - 1`. Both facts render on one `<a>`: the label is the link
+ * text and the destination is the link's URI (option A, 2026-10-21). This is
+ * the only case where a fact claims no visible text; every other link fact
+ * claims its own text.
+ */
+export function isPairedLinkDestination(
+  entries: readonly Pick<ResumeManifestEntry, 'path' | 'entity' | 'valueKind'>[],
+  index: number
+): boolean {
+  const entry = entries[index];
+  const previous = entries[index - 1];
+  if (
+    entry === undefined ||
+    previous === undefined ||
+    !String(entry.path).endsWith('.destination')
+  ) {
+    return false;
+  }
+  return (
+    entry.entity?.kind === 'evidence-link' &&
+    previous.entity?.kind === 'evidence-link' &&
+    previous.entity.id === entry.entity.id &&
+    previous.valueKind === 'text' &&
+    previous.path === String(entry.path).replace(/\.destination$/u, '.label')
+  );
+}
+
 /** The section order a manifest of `schemaVersion` is read against, or undefined. */
 export function resumeSectionOrderForSchema(
   schemaVersion: unknown
