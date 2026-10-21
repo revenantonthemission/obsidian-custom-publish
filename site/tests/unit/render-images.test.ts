@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
-import { renderMarkdown } from '../../src/lib/render.js';
+import { LEAD_IMAGE_MAX_PRECEDING_CHARS, renderMarkdown } from '../../src/lib/render.js';
 
 let root: string;
 let assetsDir: string;
@@ -348,5 +348,76 @@ describe('post image loading (NFR2: the likeliest LCP image is not lazy)', () =>
       ['/assets/mermaid-light.svg', 'lazy', null],
       ['/assets/mermaid-dark.svg', 'lazy', null],
     ]);
+  });
+});
+
+// Review finding R-16: on real posts the first image usually follows about
+// 1,000 characters of text, several screens down. Loading it eagerly at high
+// priority would put a download on the critical path of a page whose LCP is
+// text, so the first image is the lead image only when it opens the post.
+describe('post image loading by position (R-16: an image below the fold is not the lead)', () => {
+  const paragraph = (length: number): string => '가'.repeat(length);
+
+  async function loadingOf(markdown: string): Promise<(string | null)[][]> {
+    const html = await renderMarkdown(markdown, { assetsDir });
+    return images(html).map((image) => [
+      image.src,
+      image.attribute('loading'),
+      image.attribute('fetchpriority'),
+    ]);
+  }
+
+  test('loads a first image that follows a long text lazily, without high priority', async () => {
+    const markdown = [
+      paragraph(600),
+      '',
+      paragraph(600),
+      '',
+      '<img src="/assets/photo.png" alt="" />',
+      '',
+      '<img src="/assets/second.png" alt="" />',
+      '',
+    ].join('\n');
+    expect(await loadingOf(markdown)).toEqual([
+      ['/assets/photo.png', 'lazy', null],
+      ['/assets/second.png', 'lazy', null],
+    ]);
+  });
+
+  test('loads a first diagram pair that follows a long text lazily', async () => {
+    const markdown = [
+      paragraph(1000),
+      '',
+      '<div class="diagram-container"><img src="/assets/d2-light.svg" class="diagram diagram-d2 diagram-light" alt="" />',
+      '<img src="/assets/d2-dark.svg" class="diagram diagram-d2 diagram-dark" alt="" /></div>',
+      '',
+    ].join('\n');
+    expect(await loadingOf(markdown)).toEqual([
+      ['/assets/d2-light.svg', 'lazy', null],
+      ['/assets/d2-dark.svg', 'lazy', null],
+    ]);
+  });
+
+  test('keeps the first image eager up to the limit of preceding text, and lazy one character past it', async () => {
+    const at = `${paragraph(LEAD_IMAGE_MAX_PRECEDING_CHARS)}\n\n<img src="/assets/photo.png" alt="" />\n`;
+    const past = `${paragraph(LEAD_IMAGE_MAX_PRECEDING_CHARS + 1)}\n\n<img src="/assets/photo.png" alt="" />\n`;
+    expect(await loadingOf(at)).toEqual([['/assets/photo.png', 'eager', 'high']]);
+    expect(await loadingOf(past)).toEqual([['/assets/photo.png', 'lazy', null]]);
+  });
+
+  test('counts headings, lists and code before the image as preceding text', async () => {
+    const markdown = [
+      `## ${paragraph(100)}`,
+      '',
+      `- ${paragraph(100)}`,
+      '',
+      '```',
+      paragraph(100),
+      '```',
+      '',
+      '<img src="/assets/photo.png" alt="" />',
+      '',
+    ].join('\n');
+    expect(await loadingOf(markdown)).toEqual([['/assets/photo.png', 'lazy', null]]);
   });
 });
