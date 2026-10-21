@@ -34,7 +34,11 @@ pipeline {
             parallel {
                 stage('npm ci') {
                     steps {
-                        sh 'cd site && npm ci'
+                        // The workspace persists between runs. The font
+                        // materializer fails closed on generated output that a
+                        // different materializer version wrote, so start every
+                        // run from fresh .generated/ output, like node_modules.
+                        sh 'cd site && rm -rf .generated && npm ci'
                     }
                 }
                 stage('cargo build') {
