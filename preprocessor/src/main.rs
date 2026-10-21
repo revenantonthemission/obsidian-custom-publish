@@ -58,13 +58,11 @@ fn main() -> anyhow::Result<()> {
     // inspect exactly what was produced. But a run that dropped diagrams must
     // not report success — 65 missing diagrams reached production behind a
     // green build precisely because these were warnings and nothing read them.
-    let failures = obsidian_press::transform::diagram_failure_count();
-    if failures > 0 {
-        anyhow::bail!(
-            "{failures} diagram render(s) failed; output is incomplete and must not be published. \
-             mmdc needs a browser: set PUPPETEER_EXECUTABLE_PATH, or run \
-             `npx puppeteer browsers install chrome-headless-shell`."
-        );
+    let failures = obsidian_press::transform::diagram_failures();
+    if !failures.is_empty() {
+        anyhow::bail!(obsidian_press::transform::diagram_failure_message(
+            &failures
+        ));
     }
 
     println!("Done.");
