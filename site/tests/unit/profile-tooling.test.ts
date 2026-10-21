@@ -227,7 +227,13 @@ describe('verified Pretendard materialization', () => {
     ).toBe(true);
 
     const emittedCss = await readFile(cssOutputs[0], 'utf8');
-    expect(emittedCss.startsWith(materialized.licenseMetadata)).toBe(true);
+    // The notice opens the CSS. Vite 8's Lightning CSS keeps the `/*!` legal
+    // comment ahead of the metadata (esbuild dropped it); either way the
+    // metadata itself ships byte for byte.
+    const afterLegalComment = emittedCss.startsWith('/*!')
+      ? emittedCss.slice(emittedCss.indexOf('*/') + 2).trimStart()
+      : emittedCss;
+    expect(afterLegalComment.startsWith(materialized.licenseMetadata)).toBe(true);
     expect(emittedCss.split(materialized.licenseMetadata).length - 1).toBe(1);
     expect(emittedCss).toContain('with Reserved Font Name Pretendard');
     expect(emittedCss).toContain('https://github.com/orioncactus/pretendard');

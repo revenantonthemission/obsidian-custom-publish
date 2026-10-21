@@ -454,12 +454,17 @@ function extractLegalComment(css) {
   return legalComment;
 }
 
+// The canonical CSS string form is double-quoted with each inner `"` escaped
+// as `\"`: Vite 8's Lightning CSS minifier rewrites any at-rule string into
+// exactly that form, so writing it here makes the shipped notice this metadata
+// byte for byte. The OFL text quotes its defined terms ("Font Software"), and
+// a raw backslash would make the escaping ambiguous, so it stays refused.
 function createBrowserLicenseMetadata(legalComment, licenseText) {
   const evidence = `${legalComment.slice(3, -2)}\n${licenseText}`.trim().replace(/\s+/gu, ' ');
-  if (evidence.includes("'") || evidence.includes('\\')) {
+  if (evidence.includes('\\')) {
     fail('FONT_LICENSE_INVALID', 'font license evidence cannot be encoded canonically in CSS');
   }
-  return `@license '${evidence}';`;
+  return `@license "${evidence.replaceAll('"', '\\"')}";`;
 }
 
 function createOutputSet(allowlist, sourceSet) {

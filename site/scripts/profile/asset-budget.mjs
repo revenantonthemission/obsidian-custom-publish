@@ -34,9 +34,12 @@ const INHERITED_INLINE_STYLE_BASELINES = Object.freeze([
 // return to it) and the reading progress and back-to-top script (FR5.10:
 // scaleX once per frame, no smooth scroll under reduced motion). The other
 // three are Astro's island loaders. Prettier (FR7.1) then reformatted the
-// bootstrap and the scroll script: same statements, new bytes. The security
-// update to Astro 6.4.8 replaced the 3,483-byte island runtime with its own
-// 4,403-byte one, byte for byte `astro/dist/runtime/server/astro-island.prebuilt.js`.
+// bootstrap and the scroll script: same statements, new bytes. Astro 7 (Vite 8)
+// replaced the three loaders with its own, byte for byte the strings exported
+// by `astro/dist/runtime/server/astro-island.prebuilt.js` and
+// `astro/dist/runtime/client/{load,idle}.prebuilt.js`, and Vite 8's minifier
+// writes the search dispatcher's strings in backticks: with them read as
+// double quotes it is the earlier approved b70631db… byte for byte.
 const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   Object.freeze({
     type: null,
@@ -45,23 +48,23 @@ const INHERITED_INLINE_SCRIPT_BASELINES = Object.freeze([
   }),
   Object.freeze({
     type: null,
-    rawBytes: 130,
-    sha256: '433585662f852c8c76ded9e6f52054e1a120c78c7c0ecb8048fd3b99faa897f7',
+    rawBytes: 135,
+    sha256: 'd41bc35562ebdd0082db4b878540e2dbb783155269935b8c40918858a524b362',
   }),
   Object.freeze({
     type: null,
-    rawBytes: 4_403,
-    sha256: '49a0a415f3ebb887535d3f3ff7b240ad0986c622402f6a386c10ef4a0279cb74',
+    rawBytes: 4_896,
+    sha256: '508ac5a9c6a2b6303738a6bd98729a8e0dcdfb463bb56f7ecb4a374263057994',
   }),
   Object.freeze({
     type: 'module',
     rawBytes: 170,
-    sha256: 'b70631db2e7ab2972387bef5a188b47d56c0cf9b0e017cd15cbc7f4796d5dc85',
+    sha256: '2bfce70a61a239fc9c4b7dc37fc2578df39e51f6b365062cfd36dc65a04ef950',
   }),
   Object.freeze({
     type: null,
-    rawBytes: 316,
-    sha256: '045d36f74a646f78f142c13bcf4d3147c226a7c5f7e052c2f3c2f4964327ac6c',
+    rawBytes: 321,
+    sha256: 'c486ff3daec552c840bb88a1c2372161c429c8223c792f24b78d06a4e0180b3f',
   }),
   Object.freeze({
     type: null,
