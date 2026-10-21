@@ -69,7 +69,8 @@ test.prop([resumeManifestSourceArbitrary])(
 
     const repeated = await buildResumeManifestForTest(resume);
     expect(repeated).toEqual(built);
-    expect(manifest.schemaVersion).toBe(1);
+    // Schema 2: 자격증 at 6, 어학 자격 at 7 (BR6.2).
+    expect(manifest.schemaVersion).toBe(2);
     expect(manifest.sectionOrder).toEqual(oracle.sectionOrder);
     expect(manifest.entityOrder).toEqual(oracle.entityOrder);
     expect(manifest.entries).toEqual(oracle.entries);

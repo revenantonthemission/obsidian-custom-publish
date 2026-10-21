@@ -72,6 +72,7 @@ export function normalizeProfile(input: ProfileData): NormalizedProfile {
       ? {}
       : { resumeProjectIds: copyResumeProjectIds(resumeSelection.value) }),
     education: input.education.map(normalizeEducation),
+    credentials: input.credentials.map(normalizeCertification),
     certifications: input.certifications.map(normalizeCertification),
   };
 

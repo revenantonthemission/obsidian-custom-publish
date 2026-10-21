@@ -255,6 +255,9 @@ export interface ProfileData {
   /** Optional résumé subset; source project order remains authoritative. */
   readonly resumeProjectIds?: readonly EntityId<'project'>[];
   readonly education: readonly Education[];
+  /** Professional certificates, rendered as 자격증 (BR4.2). */
+  readonly credentials: readonly Certification[];
+  /** Language certificates, rendered as 어학 자격. An id is unique across both (BR4.1). */
   readonly certifications: readonly Certification[];
 }
 
@@ -342,6 +345,7 @@ export interface ResumeProfile {
   readonly achievements: readonly Achievement[];
   readonly projectSummaries: readonly ResumeProjectSummary[];
   readonly education?: NonEmptyReadonlyArray<Education>;
+  readonly credentials?: NonEmptyReadonlyArray<Certification>;
   readonly certifications?: NonEmptyReadonlyArray<Certification>;
 }
 

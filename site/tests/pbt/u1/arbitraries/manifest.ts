@@ -265,60 +265,13 @@ export function buildResumeManifestOracle(profile: ResumeProfile): ResumeManifes
     }
   }
 
+  // Manifest schema 2 (BR4.2, BR6.2): 자격증 (`credentials`) takes rank 6 and
+  // 어학 자격 (`certifications`) rank 7, whether or not the other is present.
+  if (profile.credentials !== undefined) {
+    oracleCertificationSection(state, 'credentials', 6, profile.credentials);
+  }
   if (profile.certifications !== undefined) {
-    const certificationSection = oracleSection(state, 'certifications', 6);
-    for (const certification of profile.certifications) {
-      const entity = oracleEntity(
-        state,
-        certificationSection,
-        'certification',
-        certification.id,
-        certification.order,
-        null
-      );
-      const base = `profile.certifications[id=${certification.id}]`;
-      oracleStringFact(
-        state,
-        certificationSection,
-        entity,
-        certification.title,
-        `${base}.title`,
-        'text'
-      );
-      if (certification.issuer !== undefined) {
-        oracleStringFact(
-          state,
-          certificationSection,
-          entity,
-          certification.issuer,
-          `${base}.issuer`,
-          'text'
-        );
-      }
-      if (certification.period !== undefined) {
-        oraclePeriodFact(
-          state,
-          certificationSection,
-          entity,
-          certification.period,
-          `${base}.period`
-        );
-      }
-      oracleContentBlocks(
-        state,
-        certificationSection,
-        entity,
-        certification.details,
-        `${base}.details`
-      );
-      oracleEvidenceLinks(
-        state,
-        certificationSection,
-        certification.evidence,
-        `${base}.evidence`,
-        oracleParent(entity)
-      );
-    }
+    oracleCertificationSection(state, 'certifications', 7, profile.certifications);
   }
 
   return Object.freeze({
@@ -326,6 +279,41 @@ export function buildResumeManifestOracle(profile: ResumeProfile): ResumeManifes
     entityOrder: Object.freeze(state.entityOrder),
     entries: Object.freeze(state.entries),
   });
+}
+
+function oracleCertificationSection(
+  state: MutableResumeManifestOracle,
+  key: 'credentials' | 'certifications',
+  rank: ResumeSectionRank,
+  certifications: NonNullable<ResumeProfile['certifications']>
+): void {
+  const section = oracleSection(state, key, rank);
+  for (const certification of certifications) {
+    const entity = oracleEntity(
+      state,
+      section,
+      'certification',
+      certification.id,
+      certification.order,
+      null
+    );
+    const base = `profile.${key}[id=${certification.id}]`;
+    oracleStringFact(state, section, entity, certification.title, `${base}.title`, 'text');
+    if (certification.issuer !== undefined) {
+      oracleStringFact(state, section, entity, certification.issuer, `${base}.issuer`, 'text');
+    }
+    if (certification.period !== undefined) {
+      oraclePeriodFact(state, section, entity, certification.period, `${base}.period`);
+    }
+    oracleContentBlocks(state, section, entity, certification.details, `${base}.details`);
+    oracleEvidenceLinks(
+      state,
+      section,
+      certification.evidence,
+      `${base}.evidence`,
+      oracleParent(entity)
+    );
+  }
 }
 
 /**

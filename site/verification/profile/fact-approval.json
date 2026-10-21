@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "receiptId": "profile-fact-approval-2026-09-27-r2",
-  "inventoryRevision": "profile-facts-r8",
-  "inventoryDigest": "5bcfa4743718a00b5c802e6ee842da27e22671409909ea6adacaa0872c8200c1",
-  "productionDiffRevision": "profile-production-diff-r8",
-  "productionDiffDigest": "e6aa8ea7935abbccdf4de1c1bc22c8eb38c2d3e2b63874a3c9e36ffc005f3e4b",
-  "approvedRecordsDigest": "2161243cca522ef5c0e9178a747741906bab771459e69fb01c48e91efab5c313",
-  "materializedProfileDigest": "2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c",
+  "receiptId": "profile-fact-approval-2026-10-21-r1",
+  "inventoryRevision": "profile-facts-r9",
+  "inventoryDigest": "fba4c029a07f904eb91dc5b5bb920f33ea0ba0b41de07bd695f58323a34bd89c",
+  "productionDiffRevision": "profile-production-diff-r9",
+  "productionDiffDigest": "2259e535c0fdece8a1a8f89021a8e639be3ecc18ef7911ed7410c8631a2f4c56",
+  "approvedRecordsDigest": "db9270e308a8da9e666c63ecfc3357b9feeb799bde29e5c8ed71d2176cb25ddf",
+  "materializedProfileDigest": "1299d4f2fbc8f0b8c53e7c6792c21faa4863fd5d32b0919d2139d75dbb6f88a0",
   "decision": "Approved",
-  "decisionAuditId": "PROFILE-RESUME-TRUTHFUL-20260927T140225005Z",
-  "decisionRecordedAt": "2026-09-27T14:02:25.005Z"
+  "decisionAuditId": "PROFILE-RESUME-CERTIFICATIONS-20261021T042430000Z",
+  "decisionRecordedAt": "2026-10-21T04:24:30.000Z"
 }

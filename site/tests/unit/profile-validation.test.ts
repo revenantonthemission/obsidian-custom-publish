@@ -69,6 +69,48 @@ describe('full-date periods (BR1.1, BR2.1)', () => {
   });
 });
 
+describe('certification sections (BR4.1)', () => {
+  function certification(id: string, order: number) {
+    return {
+      id,
+      order,
+      title: { factId: `${id}-${order}-title`, value: '예시 자격' },
+      details: [],
+      evidence: [],
+    };
+  }
+
+  function withSections(credentials: unknown[], certifications: unknown[]): ProfileData {
+    return { ...cloneProfileFixture(), credentials, certifications } as unknown as ProfileData;
+  }
+
+  test('accepts distinct certifications in the two sections', () => {
+    expect(
+      issueKeys(withSections([certification('aws-example', 10)], [certification('opic', 10)]))
+    ).toEqual([]);
+  });
+
+  test('rejects one certification id placed in both sections', () => {
+    const keys = issueKeys(
+      withSections([certification('shared-id', 10)], [certification('shared-id', 20)])
+    );
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'identifier.duplicate@profile.credentials[0].id',
+        'identifier.duplicate@profile.certifications[0].id',
+      ])
+    );
+  });
+
+  test('requires the credentials collection', () => {
+    const candidate = cloneProfileFixture() as unknown as Record<string, unknown>;
+    delete candidate.credentials;
+    expect(issueKeys(candidate as unknown as ProfileData)).toContain(
+      'field.required@profile.credentials'
+    );
+  });
+});
+
 describe('full-date period ranges (BR1.2, BR1.3)', () => {
   test('rejects a full-date start with a year-month end as mixed precision', () => {
     expect(

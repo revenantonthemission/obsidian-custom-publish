@@ -31,7 +31,12 @@ import type {
   ValidationResult,
 } from './types.js';
 
-export const RESUME_MANIFEST_SCHEMA_VERSION = 1 as const;
+/**
+ * Schema 2 inserts 자격증 (`credentials`) at rank 6 and moves 어학 자격
+ * (`certifications`) to 7 (BR4.2). The section order is versioned so a stored
+ * record is read against the order of its own schema (BR6.2; review R-01).
+ */
+export const RESUME_MANIFEST_SCHEMA_VERSION = 2 as const;
 
 export const RESUME_SECTION_ORDER = Object.freeze([
   Object.freeze({ key: 'intro-contact' as const, order: 1 as const }),
@@ -39,12 +44,36 @@ export const RESUME_SECTION_ORDER = Object.freeze([
   Object.freeze({ key: 'highlights' as const, order: 3 as const }),
   Object.freeze({ key: 'project-summaries' as const, order: 4 as const }),
   Object.freeze({ key: 'education' as const, order: 5 as const }),
+  Object.freeze({ key: 'credentials' as const, order: 6 as const }),
+  Object.freeze({ key: 'certifications' as const, order: 7 as const }),
+]);
+
+/** The schema-1 order of the r8 release and earlier: six sections, certifications at 6. */
+const RESUME_SECTION_ORDER_V1 = Object.freeze([
+  ...RESUME_SECTION_ORDER.slice(0, 5),
   Object.freeze({ key: 'certifications' as const, order: 6 as const }),
+]);
+
+const RESUME_SECTION_ORDERS: ReadonlyMap<number, readonly ResumeSectionIdentity[]> = new Map([
+  [1, RESUME_SECTION_ORDER_V1],
+  [RESUME_MANIFEST_SCHEMA_VERSION, RESUME_SECTION_ORDER],
 ]);
 
 export type ResumeSectionKey = (typeof RESUME_SECTION_ORDER)[number]['key'];
 
 export type ResumeSectionRank = (typeof RESUME_SECTION_ORDER)[number]['order'];
+
+interface ResumeSectionIdentity {
+  readonly key: string;
+  readonly order: number;
+}
+
+/** The section order a manifest of `schemaVersion` is read against, or undefined. */
+export function resumeSectionOrderForSchema(
+  schemaVersion: unknown
+): readonly ResumeSectionIdentity[] | undefined {
+  return typeof schemaVersion === 'number' ? RESUME_SECTION_ORDERS.get(schemaVersion) : undefined;
+}
 
 export interface ResumeSectionOrder {
   readonly key: ResumeSectionKey;
@@ -507,55 +536,11 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
     }
   }
 
+  if (profile.credentials !== undefined) {
+    addCertificationSection(state, addSection(state, 'credentials', 6), profile.credentials);
+  }
   if (profile.certifications !== undefined) {
-    const certificationSection = addSection(state, 'certifications', 6);
-    for (const certification of profile.certifications) {
-      const entity = addEntity(
-        state,
-        certificationSection,
-        'certification',
-        certification.id,
-        certification.order,
-        null
-      );
-      const base = `profile.certifications[id=${certification.id}]`;
-      addStringFact(
-        state,
-        certificationSection,
-        entity,
-        certification.title,
-        `${base}.title`,
-        'text'
-      );
-      if (certification.issuer !== undefined) {
-        addStringFact(
-          state,
-          certificationSection,
-          entity,
-          certification.issuer,
-          `${base}.issuer`,
-          'text'
-        );
-      }
-      if (certification.period !== undefined) {
-        addPeriodFact(state, certificationSection, entity, certification.period, `${base}.period`);
-      }
-      addContentBlocks(
-        state,
-        certificationSection,
-        entity,
-        certification.details,
-        `${base}.details`,
-        false
-      );
-      addEvidenceLinks(
-        state,
-        certificationSection,
-        certification.evidence,
-        `${base}.evidence`,
-        entityParent(entity)
-      );
-    }
+    addCertificationSection(state, addSection(state, 'certifications', 7), profile.certifications);
   }
 
   return Object.freeze({
@@ -563,6 +548,61 @@ function buildManifestParts(profile: ResumeProfile): ManifestParts {
     entityOrder: freezeArray(state.entities),
     entries: freezeArray(state.entries),
   });
+}
+
+/** 자격증 and 어학 자격 share one entry layout and fact order (BR4.3). */
+function addCertificationSection(
+  state: MutableManifest,
+  certificationSection: SectionContext,
+  certifications: NonNullable<ResumeProfile['certifications']>
+): void {
+  for (const certification of certifications) {
+    const entity = addEntity(
+      state,
+      certificationSection,
+      'certification',
+      certification.id,
+      certification.order,
+      null
+    );
+    const base = `profile.${certificationSection.key}[id=${certification.id}]`;
+    addStringFact(
+      state,
+      certificationSection,
+      entity,
+      certification.title,
+      `${base}.title`,
+      'text'
+    );
+    if (certification.issuer !== undefined) {
+      addStringFact(
+        state,
+        certificationSection,
+        entity,
+        certification.issuer,
+        `${base}.issuer`,
+        'text'
+      );
+    }
+    if (certification.period !== undefined) {
+      addPeriodFact(state, certificationSection, entity, certification.period, `${base}.period`);
+    }
+    addContentBlocks(
+      state,
+      certificationSection,
+      entity,
+      certification.details,
+      `${base}.details`,
+      false
+    );
+    addEvidenceLinks(
+      state,
+      certificationSection,
+      certification.evidence,
+      `${base}.evidence`,
+      entityParent(entity)
+    );
+  }
 }
 
 function addSection(
@@ -809,11 +849,10 @@ function serializeDatePoint(point: Period['start']): string {
 function assertResumeProfileShape(profile: ResumeProfile): void {
   assertPlainRecord(profile);
   const optionalKeys: string[] = [];
-  if (hasOwn(profile, 'education')) {
-    optionalKeys.push('education');
-  }
-  if (hasOwn(profile, 'certifications')) {
-    optionalKeys.push('certifications');
+  for (const key of ['education', 'credentials', 'certifications'] as const) {
+    if (hasOwn(profile, key)) {
+      optionalKeys.push(key);
+    }
   }
   assertExactKeys(profile, [...RESUME_BASE_KEYS, ...optionalKeys]);
 
@@ -899,15 +938,25 @@ function assertResumeProfileShape(profile: ResumeProfile): void {
     }
   }
 
-  if (hasOwn(profile, 'certifications')) {
-    if (profile.certifications === undefined) {
+  for (const key of ['credentials', 'certifications'] as const) {
+    assertCertificationSectionShape(profile, key);
+  }
+}
+
+function assertCertificationSectionShape(
+  profile: ResumeProfile,
+  key: 'credentials' | 'certifications'
+): void {
+  if (hasOwn(profile, key)) {
+    const certifications = profile[key];
+    if (certifications === undefined) {
       throw new TypeError('Résumé certifications cannot be explicitly undefined.');
     }
-    assertStrictOrder(profile.certifications);
-    if (profile.certifications.length === 0) {
+    assertStrictOrder(certifications);
+    if (certifications.length === 0) {
       throw new TypeError('Résumé certification section is empty.');
     }
-    for (const certification of profile.certifications) {
+    for (const certification of certifications) {
       assertOptionalEntityKeys(
         certification,
         ['id', 'order', 'title', 'details', 'evidence'],
@@ -1011,7 +1060,7 @@ function isResumeManifestSnapshot(value: unknown): boolean {
       'entries',
       'fingerprint',
     ]) ||
-    value.schemaVersion !== RESUME_MANIFEST_SCHEMA_VERSION ||
+    resumeSectionOrderForSchema(value.schemaVersion) === undefined ||
     !isCanonicalDigestSnapshot(value.sourceIdentity, PROFILE_SOURCE_DIGEST_DOMAIN) ||
     !isCanonicalDigestSnapshot(value.fingerprint, RESUME_FACT_MANIFEST_DIGEST_DOMAIN) ||
     !Array.isArray(value.sectionOrder) ||
@@ -1021,8 +1070,10 @@ function isResumeManifestSnapshot(value: unknown): boolean {
     return false;
   }
 
+  // A record is read against the order of its own schema version (BR6.2).
+  const schemaOrder = resumeSectionOrderForSchema(value.schemaVersion) ?? [];
   const sections = value.sectionOrder;
-  if (sections.length < 4 || sections.length > 6) {
+  if (sections.length < 4 || sections.length > schemaOrder.length) {
     return false;
   }
   const presentSections = new Map<string, number>();
@@ -1033,7 +1084,7 @@ function isResumeManifestSnapshot(value: unknown): boolean {
       !hasExactKeys(section, ['key', 'order']) ||
       typeof section.key !== 'string' ||
       typeof section.order !== 'number' ||
-      !isResumeSection(section.key, section.order)
+      !isResumeSection(schemaOrder, section.key, section.order)
     ) {
       return false;
     }
@@ -1169,8 +1220,12 @@ function isManifestValueKind(value: unknown): value is ResumeManifestValueKind {
   );
 }
 
-function isResumeSection(key: string, order: unknown): boolean {
-  return RESUME_SECTION_ORDER.some((section) => section.key === key && section.order === order);
+function isResumeSection(
+  schemaOrder: readonly ResumeSectionIdentity[],
+  key: string,
+  order: unknown
+): boolean {
+  return schemaOrder.some((section) => section.key === key && section.order === order);
 }
 
 function snapshotOwnedData(value: unknown): SnapshotResult {

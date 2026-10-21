@@ -39,21 +39,26 @@ const RECEIPT_KEYS = [
 
 const EXPECTED_RECEIPT = Object.freeze({
   schemaVersion: 1,
-  receiptId: 'profile-fact-approval-2026-09-27-r2',
-  inventoryRevision: 'profile-facts-r8',
-  inventoryDigest: '5bcfa4743718a00b5c802e6ee842da27e22671409909ea6adacaa0872c8200c1',
-  productionDiffRevision: 'profile-production-diff-r8',
-  productionDiffDigest: 'e6aa8ea7935abbccdf4de1c1bc22c8eb38c2d3e2b63874a3c9e36ffc005f3e4b',
-  approvedRecordsDigest: '2161243cca522ef5c0e9178a747741906bab771459e69fb01c48e91efab5c313',
-  materializedProfileDigest: '2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c',
+  // r9 (docs/resume/product-engineer/revision-r9.md): the certification facts
+  // the maintainer confirmed on 2026-10-21.
+  receiptId: 'profile-fact-approval-2026-10-21-r1',
+  inventoryRevision: 'profile-facts-r9',
+  inventoryDigest: 'fba4c029a07f904eb91dc5b5bb920f33ea0ba0b41de07bd695f58323a34bd89c',
+  productionDiffRevision: 'profile-production-diff-r9',
+  productionDiffDigest: '2259e535c0fdece8a1a8f89021a8e639be3ecc18ef7911ed7410c8631a2f4c56',
+  approvedRecordsDigest: 'db9270e308a8da9e666c63ecfc3357b9feeb799bde29e5c8ed71d2176cb25ddf',
+  materializedProfileDigest: '1299d4f2fbc8f0b8c53e7c6792c21faa4863fd5d32b0919d2139d75dbb6f88a0',
   decision: 'Approved',
-  decisionAuditId: 'PROFILE-RESUME-TRUTHFUL-20260927T140225005Z',
-  decisionRecordedAt: '2026-09-27T14:02:25.005Z',
+  decisionAuditId: 'PROFILE-RESUME-CERTIFICATIONS-20261021T042430000Z',
+  decisionRecordedAt: '2026-10-21T04:24:30.000Z',
 } as const satisfies FactApprovalReceipt);
 
 const PUBLIC_SOURCE_CHECKED_AT = '2026-07-25T03:15:19Z';
 const DOCSURI_SOURCE_CHECKED_AT = '2026-08-26T06:46:25Z';
 const PUBLICATION_SOURCE_CHECKED_AT = '2026-09-20T09:30:23Z';
+const MAINTAINER_CREDENTIAL_CHECKED_AT = '2026-10-21T04:24:30Z';
+const AWS_CREDENTIAL_VERIFICATION_URL =
+  'https://cp.certmetrics.com/amazon/en/public/verify/credential/eede0b68fb004a24bdcce600d3dd92cf';
 const PROJECT_FACT_SUFFIXES = [
   'title',
   'outcome-summary',
@@ -82,7 +87,9 @@ type EvidenceId =
   | 'E12'
   | 'E13'
   | 'E14'
-  | 'E15';
+  | 'E15'
+  | 'E16'
+  | 'E17';
 
 const EVIDENCE_SOURCES = deepFreeze({
   E01: {
@@ -180,6 +187,23 @@ const EVIDENCE_SOURCES = deepFreeze({
     kind: 'user-provided',
     reference:
       'User explicitly confirmed graduation from Sogang University in February 2026, a July-August 2023 Hansono internship, and a separate eZono collaboration in Germany on October 29-November 6, 2023 (2026-09-27 conversation).',
+  },
+  // r9: the maintainer's confirmation of the certification facts (BR6.1).
+  E16: {
+    kind: 'user-provided',
+    reference:
+      'User explicitly confirmed (2026-10-21 conversation) OPIc IH issued by ACTFL, valid 2025-09-06 to 2027-09-06; AWS Certified Solutions Architect – Associate issued by Amazon Web Services, valid 2026-07-17 to 2029-07-17, listed under 자격증 with the verification link labelled 인증 확인 링크; and the removal of the expired 新HSK 6급.',
+  },
+  // r9: the AWS verification link. An external URL must cite a public source
+  // whose destination is that URL; this one is the maintainer's own check of
+  // the page, not an automated collector (BR5.2).
+  E17: {
+    kind: 'public-source',
+    reference: AWS_CREDENTIAL_VERIFICATION_URL,
+    expectedDestination: AWS_CREDENTIAL_VERIFICATION_URL,
+    verifier:
+      'Maintainer manual check (opened the page; it shows the AWS Certified Solutions Architect – Associate credential, valid 2026-07-17 to 2029-07-17)',
+    checkedAt: MAINTAINER_CREDENTIAL_CHECKED_AT,
   },
 } satisfies Record<EvidenceId, FactReviewEvidence>);
 
@@ -613,6 +637,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
         'projects',
         'resumeProjectIds',
         'education',
+        'credentials',
         'certifications',
       ],
       (profile) => {
@@ -645,6 +670,7 @@ function assertExactProfileSourceShape(candidate: unknown): void {
           });
         }
         inspectArray(profile.education, inspectEducation);
+        inspectArray(profile.credentials, inspectCertification);
         inspectArray(profile.certifications, inspectCertification);
       }
     );
@@ -771,13 +797,20 @@ function deriveStructuralDecisions(validated: ValidatedProfile): unknown {
       details: education.details.map(describeIdentifiedBlock),
       evidence: ordered(education.evidence).map(describeEvidence),
     })),
-    certifications: ordered(source.certifications).map((certification) => ({
-      id: certification.id,
-      order: certification.order,
-      issuer: certification.issuer === undefined ? 'absent' : 'present',
-      details: certification.details.map(describeIdentifiedBlock),
-      evidence: ordered(certification.evidence).map(describeEvidence),
-    })),
+    // Section membership is structure: moving a certification between 자격증
+    // and 어학 자격 changes this digest even when no fact value changes.
+    credentials: ordered(source.credentials).map(describeCertification),
+    certifications: ordered(source.certifications).map(describeCertification),
+  };
+}
+
+function describeCertification(certification: ProfileData['certifications'][number]): unknown {
+  return {
+    id: certification.id,
+    order: certification.order,
+    issuer: certification.issuer === undefined ? 'absent' : 'present',
+    details: certification.details.map(describeIdentifiedBlock),
+    evidence: ordered(certification.evidence).map(describeEvidence),
   };
 }
 
@@ -913,9 +946,19 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       'experience-hansono-summary',
       'experience-hansono-details-0-text',
       'certification-opic-ih-title',
+    ],
+    // r9 (2026-10-21): the changed certification facts. The two HSK facts are
+    // removed and no longer appear in the approval inventory.
+    E16: [
+      'certification-opic-ih-issuer',
       'certification-opic-ih-period',
-      'certification-hsk-6-title',
-      'certification-hsk-6-period',
+      'certification-aws-solutions-architect-associate-title',
+      'certification-aws-solutions-architect-associate-issuer',
+      'certification-aws-solutions-architect-associate-period',
+    ],
+    E17: [
+      'certification-aws-solutions-architect-associate-evidence-label',
+      'certification-aws-solutions-architect-associate-evidence-destination',
     ],
     E02: [
       'contact-email',
@@ -1030,7 +1073,8 @@ function createEvidenceMembership(): ReadonlyMap<string, EvidenceId> {
       membership.set(factId, evidenceId);
     }
   }
-  if (membership.size !== 120) {
+  // r9: 120 − 2 HSK facts + the OPIc issuer + 5 AWS facts.
+  if (membership.size !== 124) {
     throw new ProfileProductionError('PROFILE_APPROVAL_EVIDENCE_INVALID', 'profile.facts');
   }
   return membership;
@@ -1109,6 +1153,11 @@ async function listOutputFiles(
 export const productionProfileTesting = Object.freeze({
   evaluate: evaluateProductionProfile,
   materialize: materializeSnapshot,
+  // A fact revision's inventory records and evidence table are built with the
+  // same code the build checks them with, so a pinned digest cannot drift
+  // from what the evaluator recomputes.
+  buildReviewRecords,
+  evidenceSources: EVIDENCE_SOURCES,
   canonicalDigest,
   assertNoProfileApprovalLeak,
 });

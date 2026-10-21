@@ -142,6 +142,7 @@ test.prop([validProfileProjectionsArbitrary])(
   'PBT-U1-DOMAIN: optional values are omitted exactly while required projections remain',
   ({ validated, resume, portfolio }) => {
     expect(Object.hasOwn(resume, 'education')).toBe(validated.education.length > 0);
+    expect(Object.hasOwn(resume, 'credentials')).toBe(validated.credentials.length > 0);
     expect(Object.hasOwn(resume, 'certifications')).toBe(validated.certifications.length > 0);
     expect(resume.contactActions.additionalLinks).toHaveLength(
       validated.contact.additionalLinks.length
@@ -189,8 +190,8 @@ test.prop([validProfileProjectionsArbitrary])(
       expect(education.evidence).toHaveLength(source?.evidence.length ?? -1);
     }
 
-    for (const certification of resume.certifications ?? []) {
-      const source = validated.certifications.find(
+    for (const certification of [...(resume.credentials ?? []), ...(resume.certifications ?? [])]) {
+      const source = [...validated.credentials, ...validated.certifications].find(
         (candidate) => candidate.id === certification.id
       );
       expect(source).toBeDefined();
@@ -446,12 +447,14 @@ function allSiblingOrdersArePositiveAndUnique(profile: ValidatedProfile): boolea
     profile.achievements,
     profile.projects,
     profile.education,
+    profile.credentials,
     profile.certifications,
     profile.contact.additionalLinks,
     ...profile.experiences.map((item) => item.evidence),
     ...profile.achievements.map((item) => item.evidence),
     ...profile.projects.map((item) => item.evidence),
     ...profile.education.map((item) => item.evidence),
+    ...profile.credentials.map((item) => item.evidence),
     ...profile.certifications.map((item) => item.evidence),
   ];
 
@@ -532,6 +535,7 @@ function reverseOrderedSources(profile: ProfileData): ProfileData {
     achievements: Array<{ evidence: unknown[] }>;
     projects: Array<{ evidence: unknown[] }>;
     education: Array<{ evidence: unknown[] }>;
+    credentials: Array<{ evidence: unknown[] }>;
     certifications: Array<{ evidence: unknown[] }>;
   };
 
@@ -546,6 +550,8 @@ function reverseOrderedSources(profile: ProfileData): ProfileData {
   reversed.projects.forEach((item) => item.evidence.reverse());
   reversed.education.reverse();
   reversed.education.forEach((item) => item.evidence.reverse());
+  reversed.credentials.reverse();
+  reversed.credentials.forEach((item) => item.evidence.reverse());
   reversed.certifications.reverse();
   reversed.certifications.forEach((item) => item.evidence.reverse());
 

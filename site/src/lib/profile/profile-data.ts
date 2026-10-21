@@ -562,25 +562,49 @@ const approvedProfileSource = {
       evidence: [],
     },
   ],
+  credentials: [
+    {
+      id: 'aws-solutions-architect-associate',
+      order: 10,
+      title: fact(
+        'certification-aws-solutions-architect-associate-title',
+        'AWS Certified Solutions Architect – Associate'
+      ),
+      issuer: fact('certification-aws-solutions-architect-associate-issuer', 'Amazon Web Services'),
+      period: fact('certification-aws-solutions-architect-associate-period', {
+        start: { tag: 'date', value: '2026-07-17' },
+        end: { tag: 'date', value: '2029-07-17' },
+      }),
+      details: [],
+      evidence: [
+        {
+          id: 'aws-credential-verification',
+          order: 10,
+          label: fact(
+            'certification-aws-solutions-architect-associate-evidence-label',
+            '인증 확인 링크'
+          ),
+          destination: fact(
+            'certification-aws-solutions-architect-associate-evidence-destination',
+            {
+              tag: 'external',
+              value:
+                'https://cp.certmetrics.com/amazon/en/public/verify/credential/eede0b68fb004a24bdcce600d3dd92cf',
+            }
+          ),
+        },
+      ],
+    },
+  ],
   certifications: [
     {
       id: 'opic-ih',
       order: 10,
       title: fact('certification-opic-ih-title', 'OPIc IH'),
+      issuer: fact('certification-opic-ih-issuer', 'ACTFL'),
       period: fact('certification-opic-ih-period', {
-        start: { tag: 'year-month', value: '2025-09' },
-        end: { tag: 'year-month', value: '2025-09' },
-      }),
-      details: [],
-      evidence: [],
-    },
-    {
-      id: 'hsk-6',
-      order: 20,
-      title: fact('certification-hsk-6-title', '新HSK 6급'),
-      period: fact('certification-hsk-6-period', {
-        start: { tag: 'year-month', value: '2024-09' },
-        end: { tag: 'year-month', value: '2024-09' },
+        start: { tag: 'date', value: '2025-09-06' },
+        end: { tag: 'date', value: '2027-09-06' },
       }),
       details: [],
       evidence: [],

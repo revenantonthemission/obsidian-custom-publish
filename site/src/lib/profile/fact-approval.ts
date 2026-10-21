@@ -568,11 +568,27 @@ export function collectMaterializedFacts(profile: ValidatedProfile): readonly Ma
     );
   }
 
-  for (const { item: certification, sourceIndex } of orderedWithSourceIndex(
-    source.certifications
-  )) {
-    const canonicalBase = `profile.certifications[id=${certification.id}]` as FactCanonicalPath;
-    const sourceBase = `profile.certifications[${sourceIndex}]`;
+  // 자격증 then 어학 자격, in display order; each section keeps its own
+  // canonical path, `profile.credentials[id=…]` or `profile.certifications[id=…]`.
+  const certificationSections = [
+    ['credentials', source.credentials],
+    ['certifications', source.certifications],
+  ] as const;
+  for (const [key, collection] of certificationSections) {
+    collectCertificationFacts(facts, key, collection);
+  }
+
+  return Object.freeze(facts);
+}
+
+function collectCertificationFacts(
+  facts: MaterializedFact[],
+  key: 'credentials' | 'certifications',
+  collection: ProfileData['certifications']
+): void {
+  for (const { item: certification, sourceIndex } of orderedWithSourceIndex(collection)) {
+    const canonicalBase = `profile.${key}[id=${certification.id}]` as FactCanonicalPath;
+    const sourceBase = `profile.${key}[${sourceIndex}]`;
 
     addTextFact(
       facts,
@@ -620,8 +636,6 @@ export function collectMaterializedFacts(profile: ValidatedProfile): readonly Ma
       'optional'
     );
   }
-
-  return Object.freeze(facts);
 }
 
 export function validateFactApproval(

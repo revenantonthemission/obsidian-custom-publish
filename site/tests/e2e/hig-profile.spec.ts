@@ -6,6 +6,7 @@ import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import {
   SEGMENT_INDICATOR,
+  axeViolations,
   gotoSettled,
   horizontalOverflow,
   measureTargets,
@@ -272,6 +273,72 @@ test.describe('résumé print (W14; R-09)', () => {
     expect(report.pages).toContainEqual({ size: 'a4', margin: '12mm' });
     expect(report.offenders).toEqual([]);
   });
+});
+
+// Résumé certifications (BR4.2, BR4.3, BR5.1, BR5.2, NFR1): 자격증 sits between
+// 학력 and 어학 자격, dates are dotted (BR3.1), 新HSK is gone, and the AWS
+// verification link is reachable by keyboard inside a group named for the
+// certificate.
+const AWS_TITLE = 'AWS Certified Solutions Architect – Associate';
+const AWS_URL =
+  'https://cp.certmetrics.com/amazon/en/public/verify/credential/eede0b68fb004a24bdcce600d3dd92cf';
+
+test.describe('résumé certifications (BR4.2, BR4.3, NFR1)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  test('places 자격증 between 학력 and 어학 자격 with the confirmed facts', async ({ page }) => {
+    await gotoSettled(page, '/resume');
+    const headings = await page.locator('.resume-content h2').allTextContents();
+    expect(headings.slice(-3).map((text) => text.trim())).toEqual(['학력', '자격증', '어학 자격']);
+
+    const credentials = page.locator('section[data-profile-section="credentials"]');
+    await expect(credentials.locator('h3')).toHaveText(AWS_TITLE);
+    await expect(credentials).toContainText('Amazon Web Services');
+    await expect(credentials.locator('.profile-period')).toHaveText('2026.07.17 – 2029.07.17');
+
+    const languages = page.locator('section[data-profile-section="certifications"]');
+    await expect(languages.locator('h3')).toHaveText(['OPIc IH']);
+    await expect(languages).toContainText('ACTFL');
+    await expect(languages.locator('.profile-period')).toHaveText('2025.09.06 – 2027.09.06');
+
+    await expect(page.locator('.resume-content')).not.toContainText('HSK');
+  });
+
+  test('reaches the verification link by keyboard, named for the certificate', async ({
+    page,
+    browserName,
+  }) => {
+    await gotoSettled(page, '/resume');
+    const link = page
+      .getByRole('group', { name: `${AWS_TITLE} 근거` })
+      .getByRole('link', { name: '인증 확인 링크' });
+    await expect(link).toHaveAttribute('href', AWS_URL);
+
+    const tab = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
+    let reached = false;
+    for (let presses = 0; presses < 120 && !reached; presses += 1) {
+      await page.keyboard.press(tab);
+      reached = await link.evaluate((element) => element === document.activeElement);
+    }
+    expect(reached, 'the link is in the tab order').toBe(true);
+    const ring = await link.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { outline: style.outlineStyle, shadow: style.boxShadow };
+    });
+    expect(ring.outline !== 'none' || ring.shadow !== 'none', JSON.stringify(ring)).toBe(true);
+  });
+
+  for (const scheme of ['light', 'dark'] as const) {
+    for (const width of [320, 768, 1024, 1440] as const) {
+      test(`has no axe violations at ${width} px, ${scheme}`, async ({ page }) => {
+        await page.setViewportSize(viewportFor(width));
+        await page.emulateMedia({ colorScheme: scheme });
+        await gotoSettled(page, '/resume');
+        await expect(page.locator('section[data-profile-section="credentials"]')).toBeVisible();
+        expect(await axeViolations(page)).toEqual([]);
+      });
+    }
+  }
 });
 
 // Loop-back 1 (NFR1; review finding R-05): the current page of a segmented

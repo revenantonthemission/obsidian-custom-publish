@@ -14,7 +14,7 @@ import { buildApprovedResumeDocumentRequest } from '../../src/lib/profile/docume
 import type { ProfileData } from '../../src/lib/profile/types.js';
 
 const EXPECTED_MATERIALIZED_DIGEST =
-  '2511983e344f58e0e575b8c7ca6dc03584381f4bc63b559d67d9749969d6b65c';
+  '1299d4f2fbc8f0b8c53e7c6792c21faa4863fd5d32b0919d2139d75dbb6f88a0';
 const FORBIDDEN_PROFILE_KEYS = new Set([
   'approvedRecordsDigest',
   'decision',
@@ -40,7 +40,7 @@ afterEach(async () => {
 });
 
 describe('approved production profile boundary', () => {
-  test('materializes all 120 publication-authorized facts with a zero-diff identity', () => {
+  test('materializes all 124 publication-authorized facts with a zero-diff identity', () => {
     const evaluation = productionProfileTesting.evaluate(profileData, receiptDocument);
     const factProjection = evaluation.facts.map((fact) => ({
       factId: fact.factId,
@@ -57,8 +57,8 @@ describe('approved production profile boundary', () => {
       requirement: record.requirement,
     }));
 
-    expect(evaluation.facts).toHaveLength(120);
-    expect(evaluation.records).toHaveLength(120);
+    expect(evaluation.facts).toHaveLength(124);
+    expect(evaluation.records).toHaveLength(124);
     expect(recordProjection).toEqual(factProjection);
     expect(evaluation.materializedProfileDigest).toBe(EXPECTED_MATERIALIZED_DIGEST);
     expect(evaluation.approvedRecordsDigest).toBe(receiptDocument.approvedRecordsDigest);
@@ -126,6 +126,7 @@ describe('approved production profile boundary', () => {
       'resumeProjectIds',
       'projects',
       'education',
+      'credentials',
       'certifications',
     ]);
     expect(profileData.achievements).toEqual([]);
@@ -136,9 +137,16 @@ describe('approved production profile boundary', () => {
           !Object.hasOwn(project, 'period') && !Object.hasOwn(project, 'relatedProfileEntity')
       )
     ).toBe(true);
+    // FR1.4 (r9): every certification names its issuer, as confirmed.
     expect(
-      profileData.certifications.every((certification) => !Object.hasOwn(certification, 'issuer'))
-    ).toBe(true);
+      [...profileData.credentials, ...profileData.certifications].map((certification) => [
+        certification.id,
+        certification.issuer?.value,
+      ])
+    ).toEqual([
+      ['aws-solutions-architect-associate', 'Amazon Web Services'],
+      ['opic-ih', 'ACTFL'],
+    ]);
   });
 
   test.each([
@@ -412,6 +420,139 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
   }
   return files;
 }
+
+/**
+ * r9 (BR5.1, BR5.2, BR6.1): the certification facts the maintainer confirmed on
+ * 2026-10-21. Changed facts cite E16; the AWS verification link cites E17, the
+ * maintainer's own check of that page, because an external URL must cite a
+ * public source whose destination is that URL.
+ */
+const AWS_ID = 'aws-solutions-architect-associate';
+const AWS_URL =
+  'https://cp.certmetrics.com/amazon/en/public/verify/credential/eede0b68fb004a24bdcce600d3dd92cf';
+const E16_FACT_IDS = [
+  'certification-opic-ih-issuer',
+  'certification-opic-ih-period',
+  `certification-${AWS_ID}-title`,
+  `certification-${AWS_ID}-issuer`,
+  `certification-${AWS_ID}-period`,
+] as const;
+const E17_FACT_IDS = [
+  `certification-${AWS_ID}-evidence-label`,
+  `certification-${AWS_ID}-evidence-destination`,
+] as const;
+
+describe('r9 certification facts (BR5.1, BR5.2, BR6.1)', () => {
+  test('is approved under the r9 receipt', () => {
+    expect(receiptDocument).toMatchObject({
+      receiptId: 'profile-fact-approval-2026-10-21-r1',
+      inventoryRevision: 'profile-facts-r9',
+      productionDiffRevision: 'profile-production-diff-r9',
+      decision: 'Approved',
+    });
+  });
+
+  test('lists the AWS certificate under 자격증 exactly as confirmed', () => {
+    expect(profileData.credentials).toEqual([
+      {
+        id: AWS_ID,
+        order: 10,
+        title: {
+          factId: `certification-${AWS_ID}-title`,
+          value: 'AWS Certified Solutions Architect – Associate',
+        },
+        issuer: { factId: `certification-${AWS_ID}-issuer`, value: 'Amazon Web Services' },
+        period: {
+          factId: `certification-${AWS_ID}-period`,
+          value: {
+            start: { tag: 'date', value: '2026-07-17' },
+            end: { tag: 'date', value: '2029-07-17' },
+          },
+        },
+        details: [],
+        evidence: [
+          {
+            id: 'aws-credential-verification',
+            order: 10,
+            label: { factId: `certification-${AWS_ID}-evidence-label`, value: '인증 확인 링크' },
+            destination: {
+              factId: `certification-${AWS_ID}-evidence-destination`,
+              value: { tag: 'external', value: AWS_URL },
+            },
+          },
+        ],
+      },
+    ]);
+  });
+
+  test('keeps OPIc IH under 어학 자격 with its issuer and full dates', () => {
+    expect(profileData.certifications).toEqual([
+      {
+        id: 'opic-ih',
+        order: 10,
+        title: { factId: 'certification-opic-ih-title', value: 'OPIc IH' },
+        issuer: { factId: 'certification-opic-ih-issuer', value: 'ACTFL' },
+        period: {
+          factId: 'certification-opic-ih-period',
+          value: {
+            start: { tag: 'date', value: '2025-09-06' },
+            end: { tag: 'date', value: '2027-09-06' },
+          },
+        },
+        details: [],
+        evidence: [],
+      },
+    ]);
+  });
+
+  test('removes 新HSK 6급 from the source and the approved records', () => {
+    expect(JSON.stringify(profileData)).not.toMatch(/hsk|新HSK/i);
+    const evaluation = productionProfileTesting.evaluate(profileData, receiptDocument);
+    // Facts only: E16's evidence text records the removal by name, on purpose.
+    const facts = evaluation.records.map(({ factId, canonicalPath, normalizedValue }) => ({
+      factId,
+      canonicalPath,
+      normalizedValue,
+    }));
+    expect(facts).toHaveLength(124);
+    expect(JSON.stringify(facts)).not.toMatch(/hsk|新HSK/i);
+  });
+
+  test('cites E16, the 2026-10-21 confirmation, for every changed fact', () => {
+    const evaluation = productionProfileTesting.evaluate(profileData, receiptDocument);
+    const byFactId = new Map(evaluation.records.map((record) => [record.factId, record]));
+    for (const factId of E16_FACT_IDS) {
+      expect(byFactId.get(factId)?.evidence, factId).toEqual({
+        kind: 'user-provided',
+        reference: expect.stringContaining('2026-10-21'),
+      });
+    }
+    // An unchanged fact keeps its previous evidence.
+    expect(byFactId.get('certification-opic-ih-title')?.evidence).toMatchObject({
+      kind: 'user-provided',
+      reference: expect.stringContaining('포트폴리오'),
+    });
+  });
+
+  test('cites E17, the maintainer’s own check of the page, for the AWS link', () => {
+    const evaluation = productionProfileTesting.evaluate(profileData, receiptDocument);
+    const byFactId = new Map(evaluation.records.map((record) => [record.factId, record]));
+    for (const factId of E17_FACT_IDS) {
+      expect(byFactId.get(factId)?.evidence, factId).toEqual({
+        kind: 'public-source',
+        reference: AWS_URL,
+        expectedDestination: AWS_URL,
+        verifier: expect.stringMatching(/^Maintainer/),
+        checkedAt: '2026-10-21T04:24:30Z',
+      });
+    }
+    expect(getApprovedExternalDestinations()).toContainEqual({
+      url: AWS_URL,
+      verifier: expect.stringMatching(/^Maintainer/),
+      checkedAt: '2026-10-21T04:24:30.000Z',
+    });
+  });
+});
 
 describe('approved production source builds its résumé manifest', () => {
   // Regression for a defect found in Step 22: `isValidApprovalIdentity` used a

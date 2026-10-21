@@ -220,6 +220,10 @@ function resumeProfileNode(resume: ResumeProfile): CanonicalNode {
       optionalListNode(resume.education, (value) => educationNode(value))
     ),
     field(
+      'credentials',
+      optionalListNode(resume.credentials, (value) => certificationNode(value))
+    ),
+    field(
       'certifications',
       optionalListNode(resume.certifications, (value) => certificationNode(value))
     ),
