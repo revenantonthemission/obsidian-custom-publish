@@ -35,10 +35,17 @@ The maintainer confirmed all seven recorded departures as the design on 2026-10-
     - Five low advisories: the KaTeX chain, with no fix released, and an esbuild issue on the Windows dev server.
 - **Link sweep on real content:** with `VAULT_PATH` set to `Areas/Notes` and read only, without `--stamp-published`, all 11,473 internal references across 259 pages resolve, and the no-JS navigation checks pass 8 of 8.
 
+## Resolved after the first pass
+
+- **The vault note `Infrastructure as Code.md`:** its D2 diagram used the reserved keyword `vars` as a node. The maintainer fixed it, and the real folder now preprocesses with every diagram rendered.
+- **The diagram failure message:** the preprocessor now records each failed diagram's language and post, names them in the final error, and gives the Mermaid browser hint only when a Mermaid diagram failed. Merged as `671bd11`.
+- **Astro 7:** Astro 7.4.1, `@astrojs/preact` 6.1.0 and Vite 8.3.5, with Node at least 22.22. No critical or high advisory remains; production keeps only the four low ones in the KaTeX chain, which have no fix. Merged as `8c839b7`.
+  - Vite 8 minifies CSS with Lightning CSS, which rewrites at-rule strings to double quotes with `\"` escapes. The Pretendard `@license` metadata is now written in that form, so the OFL notice ships byte for byte.
+  - The three Astro island loaders took Astro 7's own bytes, and the search dispatcher took Vite 8's backtick strings, which are the same statements. Each was checked before its baseline moved.
+  - The C-13 check now counts an svg inside an `aria-hidden="true"` ancestor as hidden. KaTeX draws stretchy symbols that way, and the real content failed only on those.
+
 ## Open
 
-- **The manual 16-state review:** `site/package.json` and `scripts/profile/asset-budget.mjs` changed, so the record needs digest `d1dc47492c27136d18a640ba7ce7bb1bbfe4cba8f2e5b88140b93469d6174b98`.
-- **The vault note `Computer Engineering/Infrastructure/Infrastructure as Code.md`:**
-  - Its Ansible D2 diagram names a node `vars`, a reserved D2 keyword (`strategy -> vars`, D2 error 19:13). Preprocessing the real vault fails on it, and so would the nightly publish.
-  - The preprocessor's error message blames `mmdc` for every failed diagram, including this D2 one.
-- **Astro 7:** a major upgrade, needed only to clear the last critical advisory.
+- **The manual 16-state review:** the record needs digest `494dc4dfaa6f02521e9ef5c8624161c2d59c8e0bb8bb9c9ba6adaea0eb26956b`, after the Astro 7 upgrade.
+- **Dev-only advisories:** three moderate Vitest advisories, which only Vitest 5 fixes.
+- **The npm cache:** part of `~/.npm/_cacache` is owned by another user.
