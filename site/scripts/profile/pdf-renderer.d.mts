@@ -9,6 +9,10 @@ export class ResumePdfRendererError extends Error {
 export interface ResumeSurfaceFactObservation {
   readonly factOrder: number;
   readonly factId: string;
+  /** Which attribute bound the fact: an evidence link's label and destination share one `<a>`. */
+  readonly binding: 'value' | 'label' | 'destination';
+  /** The rendered element's order; facts on one element share it. */
+  readonly elementOrder: number;
   readonly sectionOrdinal: number;
   readonly entityOrdinal: number | null;
   readonly text: string;

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'vitest';
 import { resumePdfInspectorTesting } from '../../scripts/profile/pdf-inspector.mjs';
 import { mapPdfEvidence } from '../../src/lib/profile/resume-evidence.js';
+import { resumeReceiptsTesting } from '../../src/lib/profile/resume-receipts.js';
 import { buildResumeManifestForTest } from '../../src/lib/profile/resume-manifest.js';
 import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
 
@@ -47,6 +48,17 @@ function hrefFor(entry: AnyRecord): string | null {
   return null;
 }
 
+/** The destination half of an evidence link rendered on one `<a>` with its label. */
+function isPairedDestination(index: number): boolean {
+  const entry = manifest.entries[index];
+  const previous = manifest.entries[index - 1];
+  return (
+    entry?.entity?.kind === 'evidence-link' &&
+    String(entry.path).endsWith('.destination') &&
+    previous?.path === String(entry.path).replace(/\.destination$/u, '.label')
+  );
+}
+
 function sectionOrdinalOf(entry: AnyRecord): number {
   return manifest.sectionOrder.findIndex(
     (section: AnyRecord) => section.key === entry.sectionKey && section.order === entry.sectionOrder
@@ -87,15 +99,22 @@ function buildSkeleton(): AnyRecord {
                 candidate.id === entity.parent.id
             ),
     })),
-    facts: manifest.entries.map((entry: AnyRecord, index: number) => ({
-      factOrder: index + 1,
-      factId: entry.factId,
-      sectionOrdinal: sectionOrdinalOf(entry),
-      entityOrdinal: entityOrdinalOf(entry),
-      text: displayTextFor(entry),
-      href: hrefFor(entry),
-      rendered: true,
-    })),
+    facts: manifest.entries.map((entry: AnyRecord, index: number) => {
+      const paired = isPairedDestination(index);
+      const label = isPairedDestination(index + 1);
+      return {
+        factOrder: index + 1,
+        factId: entry.factId,
+        sectionOrdinal: sectionOrdinalOf(entry),
+        entityOrdinal: entityOrdinalOf(entry),
+        // A pair shares the label's text and the destination's href on one element.
+        text: paired ? manifest.entries[index - 1].normalizedValue : displayTextFor(entry),
+        href: label ? hrefFor(manifest.entries[index + 1]) : hrefFor(entry),
+        binding: paired ? 'destination' : label ? 'label' : 'value',
+        elementOrder: paired ? index : index + 1,
+        rendered: true,
+      };
+    }),
   };
 }
 
@@ -107,19 +126,24 @@ function buildSnapshot(): AnyRecord {
   const occurrences = manifest.entries.map((entry: AnyRecord, index: number) => {
     const href = hrefFor(entry);
     const node = factNodes.find((candidate: AnyRecord) => candidate.occurrenceOrder === index + 1);
+    // An evidence link renders its label as the link text; its destination is
+    // the link's URI only, so the destination claims no visible text.
+    const paired = isPairedDestination(index);
     return {
       occurrenceOrder: index + 1,
       sectionOrdinal: sectionOrdinalOf(entry),
       entityOrdinal: entityOrdinalOf(entry),
       valueKind: entry.valueKind,
-      fragments: [
-        {
-          pageNumber: 1,
-          itemIndex: index,
-          text: displayTextFor(entry),
-          lineWrapBefore: false,
-        },
-      ],
+      fragments: paired
+        ? []
+        : [
+            {
+              pageNumber: 1,
+              itemIndex: index,
+              text: displayTextFor(entry),
+              lineWrapBefore: false,
+            },
+          ],
       urlAnnotations:
         href === null
           ? []
@@ -354,5 +378,246 @@ describe('pdf evidence mapping', () => {
       }),
       'a candidate with no pages must fail'
     );
+  });
+});
+
+/**
+ * Option A (approved 2026-10-21): an evidence link renders its label fact and
+ * its destination fact on one `<a>`. The label claims the visible link text;
+ * the destination claims only the link annotation's URI. Every other element
+ * still carries one fact that claims its own text.
+ */
+const AWS_URL =
+  'https://cp.certmetrics.com/amazon/en/public/verify/credential/eede0b68fb004a24bdcce600d3dd92cf';
+
+function pairIndexes(): { label: number; destination: number } {
+  const destination = manifest.entries.findIndex(
+    (entry: AnyRecord) => entry.valueKind === 'external-url' && entry.normalizedValue === AWS_URL
+  );
+  return { label: destination - 1, destination };
+}
+
+describe('pdf inspector: an evidence link carrying a label and a destination', () => {
+  const LINK_TEXT = '인증 확인 링크';
+
+  function linkFact(factOrder: number, binding: string, elementOrder: number, href: string | null) {
+    return {
+      factOrder,
+      factId: `fact-${factOrder}`,
+      sectionOrdinal: 0,
+      entityOrdinal: 0,
+      text: LINK_TEXT,
+      href,
+      binding,
+      elementOrder,
+      rendered: true,
+    };
+  }
+
+  function pageWith(destination: string | null) {
+    return [
+      {
+        pageNumber: 1,
+        annotations:
+          destination === null ? [] : [{ pageNumber: 1, annotationIndex: 0, destination }],
+      },
+    ];
+  }
+
+  const stream = [...LINK_TEXT].map((text, itemIndex) => ({
+    pageNumber: 1,
+    itemIndex,
+    text,
+    hasEOL: false,
+  }));
+
+  function extract(facts: AnyRecord[], text = stream, destination: string | null = AWS_URL) {
+    return resumePdfInspectorTesting.extractOccurrences(text, pageWith(destination), {
+      sections: [{ sectionOrdinal: 0 }],
+      entities: [{ entityOrdinal: 0, sectionOrdinal: 0, parentEntityOrdinal: null }],
+      facts,
+    }) as AnyRecord[];
+  }
+
+  const pair = () => [linkFact(1, 'label', 1, AWS_URL), linkFact(2, 'destination', 1, AWS_URL)];
+
+  test('the label claims the link text and the destination claims only the URI', () => {
+    const [label, destination] = extract(pair());
+    expect(label).toMatchObject({ valueKind: 'text', urlAnnotations: [] });
+    expect(label.fragments.map(({ text }: AnyRecord) => text).join('')).toBe(LINK_TEXT);
+    expect(destination).toMatchObject({
+      valueKind: 'external-url',
+      fragments: [],
+      urlAnnotations: [{ pageNumber: 1, annotationIndex: 0, destination: AWS_URL }],
+    });
+  });
+
+  test('refuses a pair whose link text is wrong', () => {
+    const wrong = [...'다른 링크'].map((text, itemIndex) => ({
+      pageNumber: 1,
+      itemIndex,
+      text,
+      hasEOL: false,
+    }));
+    expect(() => extract(pair(), wrong)).toThrow(
+      expect.objectContaining({ code: 'PDF_INSPECT_FACT_TEXT_MISSING' })
+    );
+  });
+
+  test.each([
+    ['points elsewhere', 'https://example.invalid/'],
+    ['is missing', null],
+  ])('refuses a pair whose URI %s', (_label, destination) => {
+    expect(() => extract(pair(), stream, destination)).toThrow(
+      expect.objectContaining({ code: 'PDF_INSPECT_LINK_ANNOTATION_MISSING' })
+    );
+  });
+
+  test('refuses a third fact riding on the same element', () => {
+    const facts = [...pair(), linkFact(3, 'value', 1, AWS_URL)];
+    expect(() => extract(facts)).toThrow(
+      expect.objectContaining({ code: 'PDF_INSPECT_FACT_TEXT_MISSING' })
+    );
+  });
+
+  test('does not pair a destination rendered on a different element', () => {
+    const facts = [linkFact(1, 'label', 1, AWS_URL), linkFact(2, 'destination', 2, AWS_URL)];
+    expect(() => extract(facts)).toThrow(
+      expect.objectContaining({ code: 'PDF_INSPECT_FACT_TEXT_MISSING' })
+    );
+  });
+
+  test('keeps a single-fact link claiming its own text and its URI', () => {
+    const [link] = extract([linkFact(1, 'value', 1, AWS_URL)]);
+    expect(link).toMatchObject({
+      valueKind: 'external-url',
+      urlAnnotations: [{ destination: AWS_URL }],
+    });
+    expect(link.fragments).toHaveLength(LINK_TEXT.length);
+  });
+});
+
+describe('pdf evidence mapping: an evidence link pair', () => {
+  test('maps the label to its text and the destination to its URI', () => {
+    const { label, destination } = pairIndexes();
+    expect(label).toBeGreaterThan(0);
+    const result = mapPdfEvidence(manifest as never, baseline);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.mappings[label]).toMatchObject({
+      normalizedObservedValue: '인증 확인 링크',
+      urlAnnotationReferences: [],
+    });
+    expect(result.value.mappings[destination]).toMatchObject({
+      normalizedObservedValue: AWS_URL,
+      fragmentReferences: [],
+    });
+  });
+
+  test('rejects a destination that claims visible text', () => {
+    const { destination } = pairIndexes();
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.occurrences[destination].fragments = [
+          { pageNumber: 1, itemIndex: 9_000, text: '인증 확인 링크', lineWrapBefore: false },
+        ];
+      }),
+      'a destination claims only the URI'
+    );
+  });
+
+  test('rejects a destination that reuses the label’s text', () => {
+    const { label, destination } = pairIndexes();
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.occurrences[destination].fragments = structuredClone(
+          snapshot.occurrences[label].fragments
+        );
+      }),
+      'one fragment cannot answer two facts'
+    );
+  });
+
+  test('rejects a pair whose URI is wrong or missing', () => {
+    const { destination } = pairIndexes();
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.occurrences[destination].urlAnnotations[0].destination =
+          'https://example.invalid/';
+      }),
+      'a wrong URI must fail'
+    );
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.occurrences[destination].urlAnnotations = [];
+      }),
+      'a missing URI must fail'
+    );
+  });
+
+  test('rejects a label that claims the URI', () => {
+    const { label, destination } = pairIndexes();
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.occurrences[label].urlAnnotations =
+          snapshot.occurrences[destination].urlAnnotations;
+        snapshot.occurrences[destination].urlAnnotations = [];
+      }),
+      'the URI belongs to the destination'
+    );
+  });
+
+  test('rejects a destination annotation on another page than its label', () => {
+    const { destination } = pairIndexes();
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.pageCount = 2;
+        snapshot.renderedPages.push({ pageNumber: 2, evidenceId: 'f'.repeat(64) });
+        snapshot.occurrences[destination].urlAnnotations[0].pageNumber = 2;
+      }),
+      'the pair is one element on one page'
+    );
+  });
+
+  test('keeps every single-fact link claiming its own text', () => {
+    const single = manifest.entries.findIndex(
+      (entry: AnyRecord) => entry.valueKind === 'email' || entry.valueKind === 'github-url'
+    );
+    expect(single).toBeGreaterThanOrEqual(0);
+    expectRejected(
+      mutated((snapshot) => {
+        snapshot.occurrences[single].fragments = [];
+      }),
+      'a single-fact link must claim its text'
+    );
+  });
+});
+
+describe('release receipt full mapping: an evidence link pair', () => {
+  function mappings(): AnyRecord[] {
+    const result = mapPdfEvidence(manifest as never, baseline);
+    if (!result.ok) throw new Error('the baseline must map');
+    return structuredClone(result.value.mappings) as unknown as AnyRecord[];
+  }
+
+  test('accepts the mapped pair', () => {
+    expect(resumeReceiptsTesting.validateFullMapping(mappings(), manifest as never)).toBe(true);
+  });
+
+  test('rejects a destination mapping that references text', () => {
+    const { label, destination } = pairIndexes();
+    const value = mappings();
+    value[destination].fragmentReferences = [{ pageNumber: 1, itemIndex: 9_000 }];
+    expect(value[label].fragmentReferences.length).toBeGreaterThan(0);
+    expect(resumeReceiptsTesting.validateFullMapping(value, manifest as never)).toBe(false);
+  });
+
+  test('rejects a single-fact link mapping without text', () => {
+    const single = manifest.entries.findIndex(
+      (entry: AnyRecord) => entry.valueKind === 'email' || entry.valueKind === 'github-url'
+    );
+    const value = mappings();
+    value[single].fragmentReferences = [];
+    expect(resumeReceiptsTesting.validateFullMapping(value, manifest as never)).toBe(false);
   });
 });

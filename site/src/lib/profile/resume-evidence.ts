@@ -1,5 +1,9 @@
 import { createValidationIssue, sortAndDedupeIssues } from './issues.js';
-import { compareResumeFactManifests, RESUME_MANIFEST_SCHEMA_VERSION } from './resume-manifest.js';
+import {
+  compareResumeFactManifests,
+  isPairedLinkDestination,
+  RESUME_MANIFEST_SCHEMA_VERSION,
+} from './resume-manifest.js';
 import type {
   ProfileSourceIdentity,
   ResumeEntityOrder,
@@ -420,8 +424,9 @@ export function mapPdfEvidence(
         continue;
       }
 
+      const pairedDestination = isPairedLinkDestination(expectedSnapshot.entries, entryIndex);
       const candidates = parsed.filter((occurrence) =>
-        occurrenceMatches(occurrence, entry, sectionOrdinal, entityOrdinal)
+        occurrenceMatches(occurrence, entry, sectionOrdinal, entityOrdinal, pairedDestination)
       );
 
       if (candidates.length !== 1) {
@@ -433,7 +438,8 @@ export function mapPdfEvidence(
       if (
         occurrence === undefined ||
         occurrence.occurrenceOrder !== entryIndex + 1 ||
-        claimedOccurrenceOrders.has(occurrence.occurrenceOrder)
+        claimedOccurrenceOrders.has(occurrence.occurrenceOrder) ||
+        (pairedDestination && !pairSharesPage(mappings.at(-1), occurrence))
       ) {
         issues.push(issue('document.parity', `profile.document.pdf.occurrences[${entryIndex}]`));
         continue;
@@ -862,7 +868,8 @@ function occurrenceMatches(
   occurrence: ParsedPdfOccurrence,
   entry: ResumeManifestEntry,
   sectionOrdinal: number,
-  entityOrdinal: number | null
+  entityOrdinal: number | null,
+  pairedDestination: boolean
 ): boolean {
   if (
     occurrence.sectionOrdinal !== sectionOrdinal ||
@@ -876,11 +883,28 @@ function occurrenceMatches(
   if (!isLinkValueKind(entry.valueKind)) {
     return occurrence.urlAnnotations.length === 0;
   }
+  // A paired destination is the URI of its label's link and claims no text;
+  // every other link fact claims its own visible text (option A).
+  if (pairedDestination ? occurrence.fragments.length !== 0 : occurrence.fragments.length === 0) {
+    return false;
+  }
 
   const destination = occurrence.urlAnnotations[0]?.destination;
   const expectedDestination =
     entry.valueKind === 'email' ? `mailto:${entry.normalizedValue}` : entry.normalizedValue;
   return occurrence.urlAnnotations.length === 1 && destination === expectedDestination;
+}
+
+/**
+ * A paired destination's annotation sits on the page where its label's link
+ * text starts: the two facts are one rendered element.
+ */
+function pairSharesPage(
+  label: ResumeEvidenceMapping | undefined,
+  destination: ParsedPdfOccurrence
+): boolean {
+  const labelPage = label?.fragmentReferences[0]?.pageNumber;
+  return labelPage !== undefined && destination.urlAnnotations[0]?.pageNumber === labelPage;
 }
 
 function validateStructure(
@@ -1018,7 +1042,12 @@ function validateMappedEvidence(
       !isReferenceArray(mapping.fragmentReferences, false, renderedPageCount) ||
       !isReferenceArray(mapping.urlAnnotationReferences, true, renderedPageCount) ||
       !isNonEmptyIntegerArray(mapping.structurePath) ||
-      !mappingReferencesMatchEntry(mapping, expectedEntry) ||
+      !mappingReferencesMatchEntry(
+        mapping,
+        expectedEntry,
+        isPairedLinkDestination(expected.entries, index),
+        candidate.mappings[index - 1]
+      ) ||
       structurePaths.has((mapping.structurePath as readonly number[]).join('.'))
     ) {
       return evidenceFailure('document.parity', `profile.document.pdf.mappings[${index}]`);
@@ -1054,7 +1083,9 @@ function validateMappedEvidence(
 
 function mappingReferencesMatchEntry(
   mapping: OwnRecord,
-  entry: ResumeManifestEntry | undefined
+  entry: ResumeManifestEntry | undefined,
+  pairedDestination: boolean,
+  previous: unknown
 ): boolean {
   if (
     entry === undefined ||
@@ -1072,7 +1103,22 @@ function mappingReferencesMatchEntry(
   const annotation = mapping.urlAnnotationReferences[0];
   const expectedDestination =
     entry.valueKind === 'email' ? `mailto:${entry.normalizedValue}` : entry.normalizedValue;
-  return isOwnRecord(annotation) && annotation.destination === expectedDestination;
+  if (!isOwnRecord(annotation) || annotation.destination !== expectedDestination) {
+    return false;
+  }
+  // Option A: only a paired destination claims no text, on its label's page.
+  if (!pairedDestination) {
+    return mapping.fragmentReferences.length > 0;
+  }
+  const labelPage =
+    isOwnRecord(previous) && Array.isArray(previous.fragmentReferences)
+      ? (previous.fragmentReferences[0] as OwnRecord | undefined)?.pageNumber
+      : undefined;
+  return (
+    mapping.fragmentReferences.length === 0 &&
+    labelPage !== undefined &&
+    annotation.pageNumber === labelPage
+  );
 }
 
 function addUniqueReferences(

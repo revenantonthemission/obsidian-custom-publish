@@ -253,8 +253,25 @@ function extractOccurrences(stream, pages, skeleton) {
   const claimedAnnotations = new Set();
   let cursor = 0;
 
-  for (const fact of skeleton.facts) {
-    const valueKind = inferValueKind(fact);
+  skeleton.facts.forEach((fact, index) => {
+    if (isPairedDestination(skeleton.facts, index)) {
+      // The destination is the URI of the link its label already claimed.
+      occurrences.push({
+        occurrenceOrder: occurrences.length + 1,
+        sectionOrdinal: fact.sectionOrdinal,
+        entityOrdinal: fact.entityOrdinal,
+        valueKind: inferValueKind(fact),
+        fragments: [],
+        urlAnnotations: [claimAnnotation(pages, fact, claimedAnnotations)],
+        structurePath: [],
+      });
+      return;
+    }
+
+    // A paired label is the link's text, read as text, not as the link.
+    const valueKind = isPairedDestination(skeleton.facts, index + 1)
+      ? inferValueKind({ text: fact.text, href: null })
+      : inferValueKind(fact);
     const run = findTextRun(stream, cursor, fact.text);
     if (run === null) {
       throw inspectorError(
@@ -265,13 +282,13 @@ function extractOccurrences(stream, pages, skeleton) {
       );
     }
 
-    const fragments = stream.slice(run.start, run.end + 1).map((item, index) => ({
+    const fragments = stream.slice(run.start, run.end + 1).map((item, fragmentIndex) => ({
       pageNumber: item.pageNumber,
       itemIndex: item.itemIndex,
       text: item.text,
       // Set only where the wrap stands for a space in the rendered text; the
       // first fragment can never carry one, since nothing precedes it.
-      lineWrapBefore: run.wraps.has(index),
+      lineWrapBefore: run.wraps.has(fragmentIndex),
     }));
 
     const urlAnnotations = isLinkKind(valueKind)
@@ -288,9 +305,36 @@ function extractOccurrences(stream, pages, skeleton) {
       structurePath: [],
     });
     cursor = run.end + 1;
-  }
+  });
 
   return occurrences;
+}
+
+/**
+ * Option A (2026-10-21): an evidence link renders its label fact and its
+ * destination fact on one `<a>`. The pair is recognised only when that element
+ * carries exactly those two facts, label first, with one `href`; any other
+ * combination falls back to the one-fact-one-text-run rule and fails there.
+ */
+function isPairedDestination(facts, index) {
+  const fact = facts[index];
+  const label = facts[index - 1];
+  if (
+    fact?.binding !== 'destination' ||
+    label?.binding !== 'label' ||
+    !Number.isSafeInteger(fact.elementOrder) ||
+    typeof fact.href !== 'string' ||
+    fact.href.length === 0
+  ) {
+    return false;
+  }
+  return (
+    label.elementOrder === fact.elementOrder &&
+    label.href === fact.href &&
+    label.text === fact.text &&
+    facts[index - 2]?.elementOrder !== fact.elementOrder &&
+    facts[index + 1]?.elementOrder !== fact.elementOrder
+  );
 }
 
 function claimAnnotation(pages, fact, claimed) {
@@ -642,6 +686,7 @@ function deepFreeze(value) {
 
 export const resumePdfInspectorTesting = Object.freeze({
   buildStructureTree,
+  extractOccurrences,
   findTextRun,
   inferValueKind,
 });

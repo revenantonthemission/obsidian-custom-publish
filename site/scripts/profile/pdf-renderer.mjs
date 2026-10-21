@@ -493,14 +493,27 @@ async function observeSurfaceSkeleton(page) {
     };
     const visibleText = (element) => (element.textContent ?? '').replace(/\s+/gu, ' ').trim();
 
+    // Which attribute bound a fact, and to which element: an evidence link's
+    // label and destination share one `<a>`, and the inspector pairs them
+    // only when one element carries exactly those two (option A).
+    const BINDING = Object.freeze({
+      'data-profile-fact-id': 'value',
+      'data-profile-label-fact-id': 'label',
+      'data-profile-destination-fact-id': 'destination',
+    });
+
     const facts = [];
+    let elementOrder = 0;
     for (const element of shell.querySelectorAll(FACT)) {
+      elementOrder += 1;
       for (const attribute of FACT_ATTRIBUTES) {
         const factId = element.getAttribute(attribute);
         if (factId === null) continue;
         facts.push({
           factOrder: facts.length + 1,
           factId,
+          binding: BINDING[attribute],
+          elementOrder,
           sectionOrdinal: ordinalOf(element, SECTION, sectionOf),
           entityOrdinal: ordinalOf(element, ENTITY, entityOf),
           text: visibleText(element),
