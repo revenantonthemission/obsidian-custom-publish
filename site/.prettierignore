@@ -9,4 +9,5 @@ public/assets/
 
 # Approved records and the lockfile are never rewritten by a formatter (FR6.3)
 verification/
+tests/fixtures/resume/
 package-lock.json

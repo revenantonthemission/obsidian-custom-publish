@@ -9,11 +9,13 @@ import {
 import type { ResumeFactManifest } from '../../src/lib/profile/resume-manifest.js';
 
 /**
- * BR6.2 (review R-01): historical release records stay readable. The stored
- * r8 release (`verification/resume/current-release.json`) was approved under
- * manifest schema 1, whose six sections end with `certifications` at 6.
- * Schema 2 inserts `credentials` at 6, so a record is read against the
- * section order of its own schema version, never against the live one.
+ * BR6.2 (review R-01): historical release records stay readable. The r8
+ * release was approved under manifest schema 1, whose six sections end with
+ * `certifications` at 6. Schema 2 inserts `credentials` at 6, so a record is
+ * read against the section order of its own schema version, never against the
+ * live one. The record is a frozen copy (`tests/fixtures/resume/r8-release.json`,
+ * from commit 48ddc54), not the live `current-release.json`, which every
+ * promotion replaces.
  */
 type AnyRecord = Record<string, any>;
 
@@ -34,7 +36,7 @@ function r8Manifest(schemaVersion: number): ResumeFactManifest {
 
 beforeAll(async () => {
   r8Release = JSON.parse(
-    await readFile(resolve('verification/resume/current-release.json'), 'utf8')
+    await readFile(resolve('tests/fixtures/resume/r8-release.json'), 'utf8')
   ) as AnyRecord;
 });
 
