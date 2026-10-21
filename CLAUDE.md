@@ -73,7 +73,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
-- 113 Rust tests (36 unit + 77 integration) using `fixtures/vault/` (15 markdown files and one image)
+- 117 Rust tests (40 unit + 77 integration) using `fixtures/vault/` (15 markdown files and one image)
 - Tests run against real fixture data, not mocks
 - `cargo test` from `preprocessor/` directory (tests use relative path `../fixtures/vault`)
 - Diagram rendering tests use inline closures for `render_fn` parameter (no real CLI spawn) — see `test_render_themed_diagram_wraps_in_container`

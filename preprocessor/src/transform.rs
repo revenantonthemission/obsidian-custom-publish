@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::sync::LazyLock;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
 
 use regex::Regex;
 
@@ -672,22 +672,71 @@ fn render_single_diagram(
 /// operator can see what was produced, but the count makes the run
 /// unmistakably unsuccessful — 65 failures once reached production behind a
 /// green build because these were warnings and nothing else.
-static DIAGRAM_FAILURES: AtomicUsize = AtomicUsize::new(0);
+/// Each failure is kept with its language and post, so the run's final error
+/// can name them: a bare count once sent a D2 syntax error to the Mermaid
+/// browser hint, which the failure had nothing to do with.
+static DIAGRAM_FAILURES: Mutex<Vec<DiagramFailure>> = Mutex::new(Vec::new());
 
-fn record_diagram_failure() {
-    DIAGRAM_FAILURES.fetch_add(1, Ordering::Relaxed);
+/// One diagram that did not render: its fence language and its post's slug.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DiagramFailure {
+    pub lang: String,
+    pub slug: String,
+}
+
+fn failures_lock() -> std::sync::MutexGuard<'static, Vec<DiagramFailure>> {
+    // A poisoned lock still holds a usable list; losing failures would let a
+    // broken run report success.
+    DIAGRAM_FAILURES
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+fn record_diagram_failure(lang: &str, slug: &str) {
+    failures_lock().push(DiagramFailure {
+        lang: lang.to_string(),
+        slug: slug.to_string(),
+    });
+}
+
+/// Every diagram render that failed during this run, in the order they failed.
+pub fn diagram_failures() -> Vec<DiagramFailure> {
+    failures_lock().clone()
 }
 
 /// How many diagram renders failed. Zero means every diagram was produced.
 pub fn diagram_failure_count() -> usize {
-    DIAGRAM_FAILURES.load(Ordering::Relaxed)
+    failures_lock().len()
 }
 
-/// Resets the counter. Test-only: the counter is process-global, so tests that
+/// The run's final error: which diagrams failed, plus the browser hint only
+/// when a Mermaid diagram is among them (mmdc renders through Chrome; D2 and
+/// the other renderers do not, so their failures are source errors).
+pub fn diagram_failure_message(failures: &[DiagramFailure]) -> String {
+    let listed: Vec<String> = failures
+        .iter()
+        .map(|failure| format!("  - {} diagram in {}", failure.lang, failure.slug))
+        .collect();
+    let mut message = format!(
+        "{} diagram render(s) failed; output is incomplete and must not be published. \
+         The warnings above give each renderer's error.\n{}",
+        failures.len(),
+        listed.join("\n")
+    );
+    if failures.iter().any(|failure| failure.lang == "mermaid") {
+        message.push_str(
+            "\nmmdc needs a browser: set PUPPETEER_EXECUTABLE_PATH, or run \
+             `npx puppeteer browsers install chrome-headless-shell`.",
+        );
+    }
+    message
+}
+
+/// Resets the list. Test-only: the list is process-global, so tests that
 /// assert on it must not inherit another test's failures.
 #[cfg(test)]
 pub fn reset_diagram_failures() {
-    DIAGRAM_FAILURES.store(0, Ordering::Relaxed);
+    failures_lock().clear();
 }
 
 fn render_themed_diagram(
@@ -705,7 +754,7 @@ fn render_themed_diagram(
     // If both fail, fall back to source code
     if let (Err(e), Err(_)) = (&light_result, &dark_result) {
         eprintln!("warning: {lang} rendering failed for {slug}: {e}");
-        record_diagram_failure();
+        record_diagram_failure(lang, slug);
         return format!("```{lang}\n{source}```");
     }
 
@@ -732,7 +781,7 @@ fn render_themed_diagram(
             }
             Err(e) => {
                 eprintln!("warning: {lang} {variant} theme rendering failed for {slug}: {e}");
-                record_diagram_failure();
+                record_diagram_failure(lang, slug);
             }
         }
     }
@@ -746,6 +795,66 @@ fn render_themed_diagram(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn failure(lang: &str, slug: &str) -> DiagramFailure {
+        DiagramFailure {
+            lang: lang.to_string(),
+            slug: slug.to_string(),
+        }
+    }
+
+    #[test]
+    fn test_failure_message_names_each_failed_diagram() {
+        let message = diagram_failure_message(&[
+            failure("d2", "infrastructure-as-code"),
+            failure("d2", "gitops"),
+        ]);
+        assert!(
+            message.starts_with("2 diagram render(s) failed"),
+            "{message}"
+        );
+        assert!(
+            message.contains("d2 diagram in infrastructure-as-code"),
+            "{message}"
+        );
+        assert!(message.contains("d2 diagram in gitops"), "{message}");
+    }
+
+    #[test]
+    fn test_failure_message_blames_no_browser_for_a_d2_failure() {
+        let message = diagram_failure_message(&[failure("d2", "infrastructure-as-code")]);
+        assert!(!message.contains("mmdc"), "{message}");
+        assert!(!message.contains("PUPPETEER_EXECUTABLE_PATH"), "{message}");
+    }
+
+    #[test]
+    fn test_failure_message_gives_the_browser_hint_only_when_mermaid_failed() {
+        let message = diagram_failure_message(&[
+            failure("d2", "infrastructure-as-code"),
+            failure("mermaid", "gitops"),
+        ]);
+        assert!(message.contains("PUPPETEER_EXECUTABLE_PATH"), "{message}");
+    }
+
+    #[test]
+    fn test_render_themed_diagram_records_which_diagram_failed() {
+        // The list is process-global and tests run in parallel, so this test
+        // looks for its own uniquely named failure instead of an exact list.
+        render_themed_diagram(
+            "d2",
+            "source",
+            "records-which-diagram-failed",
+            1,
+            None,
+            &ThemePair {
+                light: "light",
+                dark: "dark",
+            },
+            |_src, _theme| anyhow::bail!("reserved keywords are prohibited in edges"),
+        );
+        assert!(diagram_failures().contains(&failure("d2", "records-which-diagram-failed")));
+        assert!(diagram_failure_count() >= 1);
+    }
 
     #[test]
     fn test_strip_frontmatter_removes_yaml() {
