@@ -3,6 +3,15 @@
  * the profile slot and "오늘 발행된 글" are the same grouped card. These
  * rules replace the page's former is:global overrides, so links in the note
  * keep the token tint and the underline from base.css. */
+/* From tablet width up the page widens with the viewport until it matches the
+ * 1100 px floating bar, so a desktop does not show a phone-width column in the
+ * middle of the screen. */
+@media (min-width: 768px) {
+  .site-main:has(.home-content) {
+    max-inline-size: clamp(calc(var(--max-width) + var(--space-6) * 2), 86vw, 1100px);
+  }
+}
+
 .home-title {
   margin-block: var(--space-2) var(--space-4);
 }

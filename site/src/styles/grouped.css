@@ -5,6 +5,15 @@
  * where groups are --c-surface; on a reading page they are --c-surface-2. */
 
 /* ── Page header: Large Title, then a count or chips ── */
+/* Listing pages widen with the viewport from tablet width up, stopping where
+ * the floating bar stops (1100 px), rather than keeping the phone measure on
+ * a desktop screen. */
+@media (min-width: 768px) {
+  .site-main:has(.listing-header) {
+    max-inline-size: clamp(calc(var(--max-width) + var(--space-6) * 2), 86vw, 1100px);
+  }
+}
+
 .listing-header {
   display: flex;
   flex-direction: column;
