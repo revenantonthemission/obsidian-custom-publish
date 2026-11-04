@@ -437,6 +437,23 @@ test.describe('highlights in the homepage note (NFR1-b; R-17)', () => {
   }
 });
 
+test.describe('desktop page width', () => {
+  test.use({ viewport: viewportFor(1440) });
+
+  for (const path of ['/', '/hubs/hub-page', '/tags', '/tags/test', '/posts/simple-post']) {
+    test(`${path} widens to the floating bar instead of keeping the phone measure`, async ({
+      page,
+    }) => {
+      await gotoSettled(page, path);
+      const width = await page
+        .locator('.site-main')
+        .evaluate((main) => main.getBoundingClientRect().width);
+      expect(width).toBeGreaterThan(1090);
+      expect(width).toBeLessThanOrEqual(1100);
+    });
+  }
+});
+
 test.describe('narrow widths', () => {
   test.use({ viewport: viewportFor(320) });
 
