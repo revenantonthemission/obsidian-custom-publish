@@ -170,15 +170,29 @@ function rehypeImageLoading(): Transformer<Root> {
   };
 }
 
-/** Wraps an image that has alt text in a figure with that caption. */
+/**
+ * Wraps an image that has alt text in a figure with that caption. An image
+ * alone in a Markdown paragraph becomes the figure itself; an image inline
+ * with other text, or inside a link, keeps only its alt text so the HTML never
+ * nests block content in a paragraph or a link.
+ */
 function rehypeImageCaption() {
   return (tree: Root) => {
     visit(tree, 'element', (node: Element, index, parent) => {
       if (!parent || index === undefined) return;
       if (node.tagName !== 'img') return;
 
-      const alt = node.properties.alt as string;
-      if (!alt || alt === 'image') return;
+      const alt = node.properties.alt;
+      if (typeof alt !== 'string' || !alt || alt === 'image') return;
+
+      // Inline images, including linked images, stay inline.
+      if (parent.type === 'element' && parent.tagName === 'a') return;
+      if (parent.type === 'element' && parent.tagName === 'p') {
+        const meaningful = parent.children.filter(
+          (child) => child.type !== 'text' || child.value.trim() !== ''
+        );
+        if (meaningful.length !== 1 || meaningful[0] !== node) return;
+      }
 
       const figure: Element = {
         type: 'element',
@@ -195,6 +209,20 @@ function rehypeImageCaption() {
         ],
       };
       parent.children[index] = figure;
+    });
+
+    // Markdown puts a standalone image in a paragraph. Move the figure out of
+    // that paragraph instead of leaving invalid <p><figure>…</figure></p>.
+    visit(tree, 'element', (node: Element, index, parent) => {
+      if (!parent || index === undefined) return;
+      if (node.tagName !== 'p') return;
+      const meaningful = node.children.filter(
+        (child) => child.type !== 'text' || child.value.trim() !== ''
+      );
+      if (meaningful.length !== 1) return;
+      const only = meaningful[0];
+      if (only?.type !== 'element' || only.tagName !== 'figure') return;
+      parent.children[index] = only;
     });
   };
 }

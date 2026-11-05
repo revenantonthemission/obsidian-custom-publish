@@ -4,7 +4,10 @@ use std::sync::Mutex;
 
 use regex::Regex;
 
-use crate::syntax::{BLOCK_ID_RE, IMAGE_EMBED_RE, TRANSCLUSION_RE, WIKILINK_RE, frontmatter_range};
+use crate::syntax::{
+    BLOCK_ID_RE, IMAGE_EMBED_RE, IMAGE_SIZE_RE, MARKDOWN_IMAGE_RE, TRANSCLUSION_RE, WIKILINK_RE,
+    frontmatter_range,
+};
 use crate::types::VaultIndex;
 
 /// Matches Obsidian comments: `%%inline%%` or block `%%\n...\n%%`.
@@ -62,8 +65,12 @@ pub fn transform_content_publication(
     let is_hub = index.posts[post_idx].is_hub;
     let content = strip_frontmatter(raw);
     let content = strip_comments(&content);
-    let (content, images) = convert_image_embeds(&content);
+    let (content, mut images) = convert_image_embeds(&content);
     let content = resolve_transclusions(&content, index);
+    let (content, markdown_images) = convert_markdown_images(&content);
+    images.extend(markdown_images);
+    images.sort();
+    images.dedup();
     let content = convert_wikilinks(&content, index, homepage_idx);
     let content = if is_hub {
         crate::hub_dates::augment_hub_child_links(&content, index)
@@ -206,7 +213,11 @@ fn inject_block_anchors(content: &str) -> String {
     })
 }
 
-/// Convert `![[image.png|size]]` embeds to HTML `<img>` tags.
+/// Convert `![[image.png]]`, `![[image.png|300]]`, `![[image.png|300x200]]`,
+/// and `![[image.png|caption]]` embeds to HTML `<img>` tags.
+///
+/// A numeric pipe value is a width or `widthxheight`; any other value is the
+/// image's alt text, which the site renders as a caption.
 ///
 /// Returns `(transformed_content, list_of_referenced_image_filenames)`.
 fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
@@ -217,23 +228,31 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
                 let filename = &caps[1];
                 images.push(filename.to_string());
                 let escaped = html_escape(filename);
-                let size = caps.get(3).map(|m| m.as_str());
-                match size {
-                    Some(s) if s.contains('x') => {
-                        if let Some((w, h)) = s.split_once('x') {
-                            format!(
-                                r#"<img src="/assets/{escaped}" alt="" width="{w}" height="{h}" />"#,
-                            )
-                        } else {
-                            format!(r#"<img src="/assets/{escaped}" alt="" />"#)
+                let suffix = caps
+                    .get(3)
+                    .map(|m| m.as_str().trim())
+                    .filter(|s| !s.is_empty());
+
+                match suffix {
+                    Some(value) => match IMAGE_SIZE_RE.captures(value) {
+                        Some(size) => {
+                            let width = &size[1];
+                            match size.get(2) {
+                                Some(height) => format!(
+                                    r#"<img src="/assets/{escaped}" alt="" width="{width}" height="{}" />"#,
+                                    height.as_str()
+                                ),
+                                None => format!(
+                                    r#"<img src="/assets/{escaped}" alt="" width="{width}" />"#
+                                ),
+                            }
                         }
-                    }
-                    Some(w) => {
-                        format!(r#"<img src="/assets/{escaped}" alt="" width="{w}" />"#)
-                    }
-                    None => {
-                        format!(r#"<img src="/assets/{escaped}" alt="" />"#)
-                    }
+                        None => format!(
+                            r#"<img src="/assets/{escaped}" alt="{}" />"#,
+                            html_escape(value)
+                        ),
+                    },
+                    None => format!(r#"<img src="/assets/{escaped}" alt="" />"#),
                 }
             })
             .to_string()
@@ -241,6 +260,56 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
     images.sort();
     images.dedup();
     (result, images)
+}
+
+/// Rewrite local Markdown image sources (`![alt](file.png)`) to `/assets/`
+/// and report the filenames so the caller copies them from the vault's
+/// attachment folder. External and root-relative sources are left alone.
+///
+/// Runs after transclusion resolution so images inside transcluded notes are
+/// rewritten too.
+fn convert_markdown_images(content: &str) -> (String, Vec<String>) {
+    let mut images = Vec::new();
+    let result = transform_outside_fences(content, |line| {
+        MARKDOWN_IMAGE_RE
+            .replace_all(line, |caps: &regex::Captures| {
+                let alt = &caps[1];
+                let src = &caps[2];
+                if is_external_image_src(src) {
+                    return caps[0].to_string();
+                }
+                let Some(filename) = Path::new(src).file_name().and_then(|name| name.to_str())
+                else {
+                    return caps[0].to_string();
+                };
+                if filename.is_empty() {
+                    return caps[0].to_string();
+                }
+                images.push(filename.to_string());
+                let title = caps.get(3).map(|m| m.as_str()).unwrap_or("");
+                format!("![{alt}]({}{title})", markdown_asset_url(filename))
+            })
+            .to_string()
+    });
+    images.sort();
+    images.dedup();
+    (result, images)
+}
+
+/// Returns true when a Markdown image source is not a vault-local attachment.
+fn is_external_image_src(src: &str) -> bool {
+    src.starts_with('/') || src.starts_with('#') || src.starts_with("data:") || src.contains("://")
+}
+
+/// Percent-encode characters that would end a Markdown link destination.
+fn markdown_asset_url(filename: &str) -> String {
+    let encoded = filename
+        .replace(' ', "%20")
+        .replace('(', "%28")
+        .replace(')', "%29")
+        .replace('#', "%23")
+        .replace('?', "%3F");
+    format!("/assets/{encoded}")
 }
 
 /// Replace `![[Note Name]]`, `![[Note Name#^block-id]]`, or `![[Note Name#Heading]]`
@@ -866,6 +935,29 @@ mod tests {
     fn test_strip_frontmatter_no_frontmatter() {
         let input = "Just content";
         assert_eq!(strip_frontmatter(input), "Just content");
+    }
+
+    #[test]
+    fn test_convert_markdown_images_rewrites_local_sources_and_collects_them() {
+        let (content, images) = convert_markdown_images(
+            "![Caption](figure.png)\n![Titled](../attachment/photo.jpg \"Title\")",
+        );
+        assert_eq!(
+            content,
+            "![Caption](/assets/figure.png)\n![Titled](/assets/photo.jpg \"Title\")"
+        );
+        assert_eq!(
+            images,
+            vec!["figure.png".to_string(), "photo.jpg".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_convert_markdown_images_leaves_external_sources_alone() {
+        let input = "![External](https://example.com/image.png)";
+        let (content, images) = convert_markdown_images(input);
+        assert_eq!(content, input);
+        assert!(images.is_empty());
     }
 
     #[test]

@@ -18,6 +18,7 @@ site/public/nav-tree.json
 site/public/assets/
 fixtures/vault/attachment/*.png
 !fixtures/vault/attachment/test-image.png
+!fixtures/vault/attachment/markdown-only.png
 
 # Written by Puppeteer's postinstall during `npm ci`, not authored here.
 .puppeteer-config.json

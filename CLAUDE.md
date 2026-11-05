@@ -44,7 +44,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Compile regexes with `LazyLock`, not inside functions
 - Regex transforms in `transform.rs` must use `transform_outside_fences()` to skip fenced code blocks
 - Korean (Hangul) is alphabetic, not logographic — don't count syllable blocks as individual words
-- `![[image.png]]` embeds → `<img>` tags with optional `|width` or `|widthxheight` sizing; only referenced images are copied from `attachment/` to output assets
+- `![[image.png]]` embeds → `<img>` tags; a numeric pipe value (`|width` or `|widthxheight`) sizes the image and any other pipe value becomes its caption; Markdown `![alt](file.png)` sources are rewritten to `/assets/` and copied too; only referenced images are copied from `attachment/` to output assets
 - Shared regexes (`WIKILINK_RE`, `BLOCK_ID_RE`, etc.) live in `syntax.rs` — never duplicate in other modules
 - Korean text is multi-byte UTF-8 (3 bytes/char) — use `char_indices()` not byte slicing for truncation
 
@@ -60,7 +60,7 @@ Image attachments live in `Areas/Notes/attachment/`.
 - `SVGSVGElement` has no `offsetHeight` — use `getBoundingClientRect()` to trigger reflow on SVG elements
 - `set:html` in PostLayout trusts vault content — revisit if vault ever accepts third-party content
 - BaseLayout uses `<style is:global>` — scoped styles don't match `set:html` content (callout divs, diagram imgs, code blocks)
-- Rehype wraps `<img>` with non-empty `alt` in `<figure>` + `<figcaption>` — use `alt=""` for decorative images (diagrams)
+- Rehype wraps `<img>` with non-empty `alt` in `<figure>` + `<figcaption>`; a standalone image's figure replaces its paragraph (no `<p><figure>` nesting), while inline or linked images keep alt only — use `alt=""` for decorative images (diagrams)
 - Icon libraries: `lucide-static` (build-time SVG via `set:html`, through `decorativeIcon()` in `src/lib/icons.ts`) + `lucide-preact` (interactive islands only). Post-page scripts build their icons with DOM APIs in `src/scripts/svg-icon.ts`, never `innerHTML`. Every icon is `aria-hidden` at a 1.75 stroke; the control around it carries the Korean name
 - Homepage renders `Passion Project.md` from vault; "이번주에 작성된 포스트" section is dynamically replaced with today's published posts ("오늘 발행된 글")
 - Design tokens (HIG) live in `src/styles/tokens.css`: light values on `:root`, dark values twice — under `@media (prefers-color-scheme: dark)` as `:root:not([data-theme='light'])` and as `:root[data-theme='dark']` — and the two dark blocks must agree (`tests/unit/hig-tokens.test.ts`, which also checks contrast). `global.css` only imports `tokens.css`, `base.css`, `chrome.css` and `search.css`; `fonts.css` is imported by BaseLayout's frontmatter (see the fonts note below)
@@ -73,11 +73,11 @@ Image attachments live in `Areas/Notes/attachment/`.
 - Package manager: npm/npx everywhere (Justfile, Jenkinsfile). Not bun.
 
 ## Testing
-- 117 Rust tests (40 unit + 77 integration) using `fixtures/vault/` (15 markdown files and one image)
+- 125 Rust tests (45 unit + 80 integration) using `fixtures/vault/` (15 markdown files and two images)
 - Tests run against real fixture data, not mocks
 - `cargo test` from `preprocessor/` directory (tests use relative path `../fixtures/vault`)
 - Diagram rendering tests use inline closures for `render_fn` parameter (no real CLI spawn) — see `test_render_themed_diagram_wraps_in_container`
-- Site, from `site/`: `npm run test:unit` (Vitest, 442 tests), `npm run test:pbt` (fast-check, 37), `npx astro check`, `npm run format:check`
+- Site, from `site/`: `npm run test:unit` (Vitest, 446 tests), `npm run test:pbt` (fast-check, 37), `npx astro check`, `npm run format:check`
 - `npm run test:coverage` runs the unit suite with v8 coverage of `src/` and `scripts/` and writes `.artifacts/coverage/` (text summary, HTML, `coverage-summary.json`). Coverage is reported, never enforced: there are no thresholds. It counts only code the unit suite runs in-process, not the browser suites or the profile scripts the tests spawn as subprocesses
 - HIG browser checks: `npx playwright test --config playwright.hig.config.ts` preprocesses `fixtures/vault`, builds, serves `dist/` through `local-server.mjs` on 127.0.0.1:4329 and runs `tests/e2e/hig-*.spec.ts` in Chromium, Firefox and WebKit (1,047 tests: 982 pass; 65 skip where an engine cannot run them, such as the Chromium-only Core Web Vitals checks, CPU-throttled and on Lighthouse's mobile network profile, and the six-width overflow matrix; four WebKit page-load timeouts pass when rerun alone). The overflow checks also open the search dialog, the navigation sheet, both outline-sheet tabs and the `/graph` list (`OPEN_STATES` in `tests/e2e/support/hig.ts`). Select one project with `--project=chromium`: `--project chromium <file>` reads the file as a second project name. `HIG_SKIP_BUILD=1` reuses the current `dist/`. The run overwrites the gitignored `content/` and `site/public/*.json` with fixture output; `just preprocess` restores real vault output
 - `just crossunit`: the link sweep plus no-JS navigation checks. On the fixture build the sweep reports exactly one broken link, the fixture's deliberate `nonexistent-image.png` in `Post With Image.md`
