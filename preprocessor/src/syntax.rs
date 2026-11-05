@@ -15,12 +15,22 @@ pub static WIKILINK_RE: LazyLock<Regex> =
 pub static BLOCK_ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\s\^([a-zA-Z0-9-]+)\s*$").unwrap());
 
-/// Matches image embeds: `![[file.png]]`, `![[file.jpg|300]]`, `![[file.png|300x200]]`.
-/// Groups: 1=filename, 2=extension, 3=size (optional).
+/// Matches image embeds: `![[file.png]]`, `![[file.jpg|300]]`,
+/// `![[file.png|300x200]]`, or `![[file.png|caption]]`.
+/// Groups: 1=filename, 2=extension, 3=pipe value (optional).
 pub static IMAGE_EMBED_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"!\[\[([^\]|]+?\.(?i:(png|jpg|jpeg|gif|svg|webp)))(?:\|(\d+(?:x\d+)?))?\]\]")
-        .unwrap()
+    Regex::new(r"!\[\[([^\]|]+?\.(?i:(png|jpg|jpeg|gif|svg|webp)))(?:\|([^\]\n]+))?\]\]").unwrap()
 });
+
+/// Matches an image embed's size suffix: `300` or `300x200`.
+/// Groups: 1=width, 2=height (optional).
+pub static IMAGE_SIZE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(\d+)(?:x(\d+))?$").unwrap());
+
+/// Matches Markdown images `![alt](src)` with an optional `"title"` or `'title'`.
+/// Groups: 1=alt text, 2=source, 3=title with leading whitespace (optional).
+pub static MARKDOWN_IMAGE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"!\[([^\]]*)\]\(([^)\s]+)(\s+(?:"[^"]*"|'[^']*'))?\)"#).unwrap());
 
 /// Matches transclusions: `![[Note Name]]`, `![[Note Name#^block-id]]`, or `![[Note Name#Heading]]`.
 /// Groups: 1=note name, 2=block ID (optional, with `^` prefix stripped), 3=heading (optional).
@@ -71,7 +81,7 @@ pub fn frontmatter_range(content: &str) -> Option<std::ops::Range<usize>> {
 
 #[cfg(test)]
 mod tests {
-    use super::IMAGE_EMBED_RE;
+    use super::{IMAGE_EMBED_RE, IMAGE_SIZE_RE, MARKDOWN_IMAGE_RE};
 
     #[test]
     fn image_embed_extensions_are_case_insensitive() {
@@ -87,5 +97,43 @@ mod tests {
                 "expected image embed: {input}"
             );
         }
+    }
+
+    #[test]
+    fn image_embed_captures_a_non_size_pipe_value() {
+        let caps = IMAGE_EMBED_RE
+            .captures("![[figure.png|A caption with 300 numbers]]")
+            .expect("expected image embed");
+        assert_eq!(&caps[1], "figure.png");
+        assert_eq!(
+            caps.get(3).map(|m| m.as_str()),
+            Some("A caption with 300 numbers")
+        );
+        assert!(IMAGE_SIZE_RE.captures(&caps[3]).is_none());
+    }
+
+    #[test]
+    fn image_size_matches_number_and_dimensions() {
+        let width = IMAGE_SIZE_RE.captures("300").expect("expected width");
+        assert_eq!(&width[1], "300");
+        assert!(width.get(2).is_none());
+
+        let dimensions = IMAGE_SIZE_RE
+            .captures("300x200")
+            .expect("expected dimensions");
+        assert_eq!(&dimensions[1], "300");
+        assert_eq!(dimensions.get(2).map(|m| m.as_str()), Some("200"));
+
+        assert!(IMAGE_SIZE_RE.captures("300px").is_none());
+    }
+
+    #[test]
+    fn markdown_image_captures_alt_source_and_title() {
+        let caps = MARKDOWN_IMAGE_RE
+            .captures(r#"![A caption](figure.png "title")"#)
+            .expect("expected Markdown image");
+        assert_eq!(&caps[1], "A caption");
+        assert_eq!(&caps[2], "figure.png");
+        assert_eq!(caps.get(3).map(|m| m.as_str()), Some(r#" "title""#));
     }
 }

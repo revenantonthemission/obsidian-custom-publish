@@ -49,6 +49,42 @@ fn test_image_embed_with_dimensions() {
 }
 
 #[test]
+fn test_image_embed_with_caption() {
+    let (index, _graph) = fixture_setup();
+    let post_idx = index.slug_map["post-with-transclusion"];
+    let result = transform_content(&index, post_idx);
+    assert!(
+        result.contains(r#"<img src="/assets/test-image.png" alt="A test caption" />"#),
+        "Expected a caption alt attribute, got:\n{result}"
+    );
+}
+
+#[test]
+fn test_markdown_image_is_rewritten_to_assets() {
+    let (index, _graph) = fixture_setup();
+    let post_idx = index.slug_map["post-with-transclusion"];
+    let result = transform_content(&index, post_idx);
+    assert!(
+        result.contains("![A Markdown caption](/assets/markdown-only.png)"),
+        "Expected the Markdown image source to be rewritten, got:\n{result}"
+    );
+}
+
+#[test]
+fn test_markdown_image_file_is_copied_to_assets() {
+    let (index, _graph) = fixture_setup();
+    let tmp = TempDir::new().unwrap();
+    let catalog = PublicationCatalog::build(index).unwrap();
+    write_output(&catalog, tmp.path()).unwrap();
+
+    let asset_path = tmp.path().join("assets/markdown-only.png");
+    assert!(
+        asset_path.exists(),
+        "Markdown image should be copied to assets/ directory by write_output"
+    );
+}
+
+#[test]
 fn test_image_embed_not_treated_as_transclusion() {
     let (index, _graph) = fixture_setup();
     let post_idx = index.slug_map["post-with-transclusion"];
