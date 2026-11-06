@@ -10,6 +10,7 @@ import {
   validateRouteResourcePolicy,
 } from '../lib/layout/profile-resources.js';
 import type { ProfilePageMetadata } from '../lib/profile/metadata.js';
+import { SITE_DESCRIPTION, SITE_LOCALE, SITE_NAME, SITE_URL, documentTitle } from '../lib/site.js';
 // The self-hosted Pretendard (FR2.2). Imported here, not through global.css:
 // only a stylesheet imported from a module gets its nested url()s resolved,
 // so only this way does Vite emit the font files (hig-built-assets.test.ts).
@@ -31,10 +32,10 @@ interface Props {
 }
 
 const props = Astro.props;
-const defaultTitle = 'obsidian-press';
-const defaultDescription = 'obsidian-press — personal knowledge base';
+const defaultTitle = SITE_NAME;
+const defaultDescription = SITE_DESCRIPTION;
 const defaultOgType = 'website';
-const siteUrl = 'https://rvnnt.dev';
+const siteUrl = SITE_URL;
 const legacyTitle = props.title ?? defaultTitle;
 const legacyDescription = props.description ?? defaultDescription;
 const legacyOgType = props.ogType ?? defaultOgType;
@@ -84,8 +85,12 @@ const twitter = metadata?.twitter;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
+    <title>{documentTitle(title)}</title>
     <meta name="description" content={description} />
+    <meta name="application-name" content={SITE_NAME} />
+    <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content={SITE_LOCALE} />
     <meta property="og:title" content={openGraph?.title ?? title} />
     <meta property="og:description" content={openGraph?.description ?? description} />
     <meta property="og:type" content={ogType} />
@@ -94,8 +99,11 @@ const twitter = metadata?.twitter;
     <meta name="twitter:title" content={twitter?.title ?? title} />
     <meta name="twitter:description" content={twitter?.description ?? description} />
     <link rel="canonical" href={fullUrl} />
-    <link rel="alternate" type="application/rss+xml" title="obsidian-press RSS" href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} RSS`} href="/rss.xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preload" href={pretendardCommonSubset} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={pretendardHangulSubset} as="font" type="font/woff2" crossorigin />
     {resourcePolicy.headResources.map((resource) => (

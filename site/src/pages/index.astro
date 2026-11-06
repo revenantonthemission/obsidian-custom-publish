@@ -10,6 +10,7 @@ import {
   resolveBuildDate,
 } from '../lib/homepage';
 import { getProductionProfileAssembly } from '../lib/profile/production-profile.js';
+import { SITE_NAME } from '../lib/site.js';
 // The homepage note can hold math too; KaTeX is self-hosted (NFR4).
 import 'katex/dist/katex.min.css';
 import '../styles/callouts.css';
@@ -25,7 +26,7 @@ import '../styles/home.css';
 // splits, so no split cuts through a section; the vault note never changes.
 const HOMEPAGE_SOURCE = 'content/homepage/index.md';
 
-const { title, body } = getHomepage();
+const { body } = getHomepage();
 assertExactlyOneSlot(body, HOMEPAGE_SOURCE);
 
 const htmlContent = await renderMarkdown(body);
@@ -41,8 +42,8 @@ const recentPosts = filterTodayPosts(getAllPostMeta(), today);
 const homepageProfile = getProductionProfileAssembly().homepage;
 ---
 
-<BaseLayout title={title} surface="grouped">
-  <h1 class="home-title">obsidian-press</h1>
+<BaseLayout title={SITE_NAME} surface="grouped">
+  <h1 class="home-title">{SITE_NAME}</h1>
   {chunks.map((chunk) =>
     chunk.kind === 'html' ? (
       <div class="home-content post-content" set:html={chunk.html} />

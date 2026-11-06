@@ -9,6 +9,7 @@ import { profileEnvironment, readBuildManifest } from './support/environment.js'
 import { recordEvidenceFragment, writeJsonFile } from './support/evidence.js';
 import { PROFILE_ROUTES, type ProfileRoute } from './support/matrix.js';
 import { PROFILE_SHELL, playwrightVersion, settle } from './support/profile-page.js';
+import { documentTitle } from '../../src/lib/site.js';
 
 const SPEC_FILE = 'profile-routes.spec.ts';
 const CANONICAL_ORIGIN = 'https://rvnnt.dev';
@@ -186,6 +187,7 @@ test.describe('profile route readiness', () => {
             hrefSet.has(fact) ||
             [...hrefSet].some((href) => href.endsWith(fact)) ||
             fact === observation.title ||
+            documentTitle(fact) === observation.title ||
             fact === observation.description ||
             fact === `${CANONICAL_ORIGIN}${observation.route}` ||
             // A self-identifier only counts if the anchor it names is really

@@ -1,6 +1,7 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { getAllPostMeta, getPreviewSummary } from '../lib/data';
+import { SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
 
 export function GET(context: APIContext) {
   const posts = getAllPostMeta().filter(
@@ -8,8 +9,9 @@ export function GET(context: APIContext) {
   );
 
   return rss({
-    title: 'obsidian-press',
-    description: '개인 지식 베이스 — rvnnt.dev',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    customData: '<language>ko-KR</language>',
     site: context.site!,
     items: posts.map((post) => ({
       title: post.title,
