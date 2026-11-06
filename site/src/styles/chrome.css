@@ -317,7 +317,7 @@
 /* While the sheet is open, the page behind it is hidden from view and from
    focus, so no focus trap is needed and nothing scrolls away underneath. */
 @media (width < 768px) {
-  body:has(.mobile-nav-disclosure[open]) :is(.site-main, .site-footer, .back-to-top) {
+  body:has(.mobile-nav-disclosure[open]) :is(.site-main, .back-to-top) {
     visibility: hidden;
   }
 }
@@ -341,22 +341,6 @@
   .search-shortcut {
     display: inline-flex;
   }
-}
-
-/* ── Footer ── */
-.site-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-8) var(--space-4) var(--space-12);
-  color: var(--c-text-secondary);
-  font-size: var(--text-footnote);
-  line-height: 1.45;
-}
-
-.site-footer p {
-  margin: 0;
 }
 
 /* ── Reading progress: a 2 px line along the bar's bottom edge (FR5.10) ──

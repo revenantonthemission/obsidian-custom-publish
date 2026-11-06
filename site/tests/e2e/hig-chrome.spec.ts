@@ -22,10 +22,10 @@ import {
 const T1 = { width: 44, height: 44 };
 /**
  * T1 chrome controls (C-04, R-06): bar buttons and links, the sheet summary,
- * footer links, the site mark. Scoped to the site chrome; the page's own
+ * the site mark. Scoped to the site chrome; the page's own
  * header elements (post and profile headers) are measured by their page specs.
  */
-const CHROME_CONTROLS = '.site-header a, .site-header button, .site-header summary, .site-footer a';
+const CHROME_CONTROLS = '.site-header a, .site-header button, .site-header summary';
 
 /** Computes what a token resolves to on this page, as the browser reports colors. */
 async function tokenColor(page: Page, token: string): Promise<string> {
@@ -59,7 +59,7 @@ for (const width of HIG_WIDTHS) {
   }
 }
 
-// C-04 (chrome part): every T1 control in the bar, the sheet and the footer.
+// C-04 (chrome part): every T1 control in the bar and the sheet.
 for (const width of [320, 1024] as const) {
   test.describe(`chrome targets at ${width} px`, () => {
     test.use({ viewport: viewportFor(width) });
@@ -89,7 +89,7 @@ test.describe('navigation sheet and bar on phones', () => {
     const rows = await measureTargets(page, 'nav.mobile-nav-dropdown a');
     expect(rows).toHaveLength(4);
     expect(undersized(rows, { width: 200, height: 52 })).toEqual([]);
-    for (const selector of ['main', 'footer']) {
+    for (const selector of ['main', '.back-to-top']) {
       expect(
         await page.locator(selector).evaluate((element) => getComputedStyle(element).visibility),
         `${selector} must be hidden from view and focus`
