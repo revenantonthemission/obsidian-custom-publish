@@ -4,6 +4,7 @@ import MobileNav from '../islands/MobileNav.tsx';
 import { Search, Split } from 'lucide-static';
 import { decorativeIcon } from '../lib/icons';
 import { getPrimaryNavigationState } from '../lib/navigation.js';
+import { SITE_NAME } from '../lib/site.js';
 
 interface Props {
   pathname?: string;
@@ -30,7 +31,7 @@ const primaryNavigation = navigationResult.value;
     <span class="site-bar-material" data-material="regular" aria-hidden="true"></span>
     <a href="/" class="site-title" aria-current={pathname === '/' ? 'page' : undefined}>
       <span class="site-mark" set:html={decorativeIcon(Split, 20)} />
-      <span class="site-title-text">obsidian-press</span>
+      <span class="site-title-text">{SITE_NAME}</span>
     </a>
     <nav class="desktop-nav" aria-label="주요 탐색">
       {primaryNavigation.map((item) => (

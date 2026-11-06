@@ -71,7 +71,7 @@ test.describe('homepage (W5)', () => {
     page,
   }) => {
     await gotoSettled(page, '/');
-    await expect(page.getByRole('heading', { level: 1, name: 'obsidian-press' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Passion Project' })).toBeVisible();
     expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
     await expect(page.locator('.home-card')).toHaveCount(2);
     const looks = await page
