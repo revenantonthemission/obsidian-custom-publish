@@ -1,6 +1,5 @@
 ---
 import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
 import Search from '../islands/Search.tsx';
 import { ArrowUp } from 'lucide-static';
 import { decorativeIcon } from '../lib/icons';
@@ -164,7 +163,6 @@ const twitter = metadata?.twitter;
       <slot />
     </main>
     <Search client:idle />
-    <Footer />
 
     <button type="button" class="back-to-top" aria-label="맨 위로" data-material="regular">
       <Fragment set:html={decorativeIcon(ArrowUp, 20)} />
