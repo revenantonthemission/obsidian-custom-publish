@@ -141,7 +141,7 @@ fn write_posts(
             format!("catalog invariant broken: {} not in full index", post.slug)
         })?;
         let (content, images) =
-            transform_content_publication(full, full_idx, catalog.retired_idx(), Some(assets_dir));
+            transform_content_publication(full, full_idx, Some(catalog.kinds()), Some(assets_dir));
 
         let md_path = posts_dir.join(format!("{}.md", post.slug));
         fs::write(&md_path, &content).map_err(|e| pub007(&md_path, e))?;
@@ -201,7 +201,7 @@ fn write_homepage(
     let (content, images) = transform_content_publication(
         catalog.link_targets(),
         homepage_idx,
-        Some(homepage_idx),
+        Some(catalog.kinds()),
         Some(assets_dir),
     );
 

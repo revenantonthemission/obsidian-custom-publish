@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use regex::Regex;
 
+use crate::catalog::EntryKind;
 use crate::syntax::{
     BLOCK_ID_RE, IMAGE_EMBED_RE, IMAGE_SIZE_RE, MARKDOWN_IMAGE_RE, TRANSCLUSION_RE, WIKILINK_RE,
     frontmatter_range,
@@ -51,13 +52,13 @@ pub fn transform_content_with_assets(
     transform_content_publication(index, post_idx, None, asset_dir)
 }
 
-/// Publication-aware transform: wikilinks targeting `homepage_idx` resolve to
-/// `/` with the same alias/fragment rules as post links (BR-U2-013~017).
-/// `None` preserves the legacy behavior byte-for-byte (FD-P-C08-03 oracle).
+/// Publication-aware transform. `kinds` (parallel to `index.posts`, from the
+/// catalog) decides how each wikilink renders (BR3.1–BR3.3). `None` treats
+/// every target as a post, the legacy behaviour (FD-P-C08-03 oracle).
 pub fn transform_content_publication(
     index: &VaultIndex,
     post_idx: usize,
-    homepage_idx: Option<usize>,
+    kinds: Option<&[EntryKind]>,
     asset_dir: Option<&Path>,
 ) -> (String, Vec<String>) {
     let raw = &index.posts[post_idx].raw_content;
@@ -71,7 +72,7 @@ pub fn transform_content_publication(
     images.extend(markdown_images);
     images.sort();
     images.dedup();
-    let content = convert_wikilinks(&content, index, homepage_idx);
+    let content = convert_wikilinks(&content, index, kinds);
     let content = if is_hub {
         crate::hub_dates::augment_hub_child_links(&content, index)
     } else {
@@ -400,9 +401,14 @@ pub fn extract_heading_section(content: &str, heading: &str) -> Option<String> {
     }
 }
 
-/// Convert `[[wikilinks]]` to HTML anchor tags or plain text for unresolved links.
-/// Supports heading fragments: `[[Note#Heading]]` and `[[Note#Heading|alias]]`.
-fn convert_wikilinks(content: &str, index: &VaultIndex, homepage_idx: Option<usize>) -> String {
+/// Convert `[[wikilinks]]` to HTML anchor tags or plain text (W3 link table):
+/// - post → `/posts/<slug>` with heading or block fragment (BR3.1);
+/// - retired homepage note → `/` with no fragment, since its headings no
+///   longer exist on `/`; the alias, if any, is the link text (BR3.2);
+/// - site page → plain text, alias or target name, with no anchor (BR3.3);
+/// - unresolved → plain text, as before.
+fn convert_wikilinks(content: &str, index: &VaultIndex, kinds: Option<&[EntryKind]>) -> String {
+    let kind_of = |idx: usize| kinds.map_or(EntryKind::Post, |k| k[idx]);
     transform_outside_fences(content, |line| {
         WIKILINK_RE
             .replace_all(line, |caps: &regex::Captures| {
@@ -410,55 +416,68 @@ fn convert_wikilinks(content: &str, index: &VaultIndex, homepage_idx: Option<usi
                 let heading_raw = caps.get(2).map(|m| m.as_str().trim());
                 let alias = caps.get(3).map(|m| m.as_str().trim());
 
-                if let Some(&target_idx) = index.name_map.get(target_name) {
-                    let slug = &index.posts[target_idx].slug;
-
-                    // Determine fragment: block reference (^id) or heading reference
-                    let (fragment, is_block_ref) = match heading_raw {
-                        Some(h) if h.starts_with('^') => {
-                            // Block reference — use as-is, no slugification needed
-                            (Some(format!("#{h}")), true)
-                        }
-                        Some(h) => {
-                            // Heading reference — slugify and validate
-                            let h_slug = crate::scanner::slugify_heading(h);
-                            let valid = index
-                                .heading_map
-                                .get(target_name)
-                                .is_some_and(|headings| headings.contains(&h_slug));
-                            if !valid {
-                                eprintln!("warning: heading '{h}' not found in '{target_name}'");
-                            }
-                            (valid.then(|| format!("#{h_slug}")), false)
-                        }
-                        None => (None, false),
-                    };
-
-                    let base = if homepage_idx == Some(target_idx) {
-                        String::from("/")
-                    } else {
-                        format!("/posts/{slug}")
-                    };
-                    let href = match &fragment {
-                        Some(frag) => format!("{base}{frag}"),
-                        None => base,
-                    };
-                    let display = match (alias, heading_raw, is_block_ref) {
-                        (Some(a), _, _) => html_escape(a),
-                        (None, Some(h), false) if fragment.is_some() => {
-                            format!("{} &gt; {}", html_escape(target_name), html_escape(h))
-                        }
-                        (None, Some(_), _) => html_escape(target_name), // block ref or invalid heading: show note name only
-                        (None, None, _) => html_escape(target_name),
-                    };
-                    format!(r#"<a href="{href}">{display}</a>"#)
-                } else {
-                    // Unresolved link — render as plain text
-                    alias.unwrap_or(target_name).to_string()
+                let Some(&target_idx) = index.name_map.get(target_name) else {
+                    return alias.unwrap_or(target_name).to_string();
+                };
+                match kind_of(target_idx) {
+                    EntryKind::SitePage => alias.unwrap_or(target_name).to_string(),
+                    EntryKind::RetiredHomepage => {
+                        format!(
+                            r#"<a href="/">{}</a>"#,
+                            html_escape(alias.unwrap_or(target_name))
+                        )
+                    }
+                    EntryKind::Post => {
+                        post_link(index, target_idx, target_name, heading_raw, alias)
+                    }
                 }
             })
             .to_string()
     })
+}
+
+/// Anchor to a post, with a validated heading fragment or a block fragment.
+fn post_link(
+    index: &VaultIndex,
+    target_idx: usize,
+    target_name: &str,
+    heading_raw: Option<&str>,
+    alias: Option<&str>,
+) -> String {
+    let slug = &index.posts[target_idx].slug;
+
+    // Determine fragment: block reference (^id) or heading reference
+    let (fragment, is_block_ref) = match heading_raw {
+        // Block reference — use as-is, no slugification needed
+        Some(h) if h.starts_with('^') => (Some(format!("#{h}")), true),
+        Some(h) => {
+            // Heading reference — slugify and validate
+            let h_slug = crate::scanner::slugify_heading(h);
+            let valid = index
+                .heading_map
+                .get(target_name)
+                .is_some_and(|headings| headings.contains(&h_slug));
+            if !valid {
+                eprintln!("warning: heading '{h}' not found in '{target_name}'");
+            }
+            (valid.then(|| format!("#{h_slug}")), false)
+        }
+        None => (None, false),
+    };
+
+    let href = match &fragment {
+        Some(frag) => format!("/posts/{slug}{frag}"),
+        None => format!("/posts/{slug}"),
+    };
+    let display = match (alias, heading_raw, is_block_ref) {
+        (Some(a), _, _) => html_escape(a),
+        (None, Some(h), false) if fragment.is_some() => {
+            format!("{} &gt; {}", html_escape(target_name), html_escape(h))
+        }
+        // Block ref or invalid heading: show the note name only.
+        (None, Some(_), _) | (None, None, _) => html_escape(target_name),
+    };
+    format!(r#"<a href="{href}">{display}</a>"#)
 }
 
 /// Convert Obsidian callout syntax to HTML divs.

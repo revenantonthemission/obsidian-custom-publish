@@ -170,6 +170,12 @@ impl PublicationCatalog {
         &self.posts_only
     }
 
+    /// Kind of every entry, parallel to `link_targets().posts`. The transform
+    /// uses it to decide how a wikilink renders (BR3.1–BR3.3).
+    pub fn kinds(&self) -> &[EntryKind] {
+        &self.kinds
+    }
+
     /// Kind of the entry at `idx` within `link_targets().posts`.
     pub fn kind_of(&self, idx: usize) -> EntryKind {
         self.kinds[idx]

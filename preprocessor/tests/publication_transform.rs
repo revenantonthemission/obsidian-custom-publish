@@ -1,74 +1,199 @@
-//! U2 reference/transclusion semantics: examples + properties
-//! (FD-P-C08-01~04, DE-P-U2-04 Rust half, PUB004~006, BR-U2-013~022).
+//! Link rendering and transclusion semantics: U1 rules (BR3.1–BR3.4; FR1.2,
+//! FR2.2) on top of the U2 examples and properties (FD-P-C08-01~04,
+//! DE-P-U2-04 Rust half, PUB004~006).
 
 mod common;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use common::{make_index, make_post};
 use obsidian_press::catalog::{DiagnosticCode, PublicationCatalog};
-use obsidian_press::scanner::scan_vault;
+use obsidian_press::linker::resolve_links;
+use obsidian_press::scanner::{scan_sources, scan_vault};
 use obsidian_press::transform::transform_content_publication;
-use obsidian_press::types::RawVisibility;
+use obsidian_press::types::{NoteSource, PostMeta, RawVisibility};
 use proptest::prelude::*;
 
 fn hp_scalar() -> Option<RawVisibility> {
     Some(RawVisibility::Scalar("homepage".to_string()))
 }
 
+fn site_page(slug: &str, title: &str, body: &str) -> PostMeta {
+    let mut note = make_post(slug, title, None, body);
+    note.source = NoteSource::Pages;
+    note.file_path = PathBuf::from(format!("pages/{slug}.md"));
+    note
+}
+
+/// Transform one note of a catalog with link kinds applied.
+fn render(catalog: &PublicationCatalog, slug: &str) -> String {
+    let targets = catalog.link_targets();
+    let idx = targets.slug_map[slug];
+    transform_content_publication(targets, idx, Some(catalog.kinds()), None).0
+}
+
+fn fixture_pair_catalog() -> PublicationCatalog {
+    let scan = scan_sources(
+        Path::new("../fixtures/vault/Notes"),
+        Some(Path::new("../fixtures/vault/Pages")),
+        false,
+    )
+    .unwrap();
+    PublicationCatalog::build(scan.index).unwrap()
+}
+
 // ---------------------------------------------------------------- examples
 
-/// BR-U2-013~017: the fixture truth table, end to end through the transform.
+/// BR3.2: links to the retired note go to `/` with no fragment (its headings
+/// no longer exist on `/`); an alias stays the link text.
 #[test]
-fn fixture_truth_table_resolves_homepage_links_to_root() {
-    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
-    let catalog = PublicationCatalog::build(index).unwrap();
-    let full = catalog.link_targets();
-    let idx = full.slug_map["post-linking-homepage"];
-
-    let (content, _) = transform_content_publication(full, idx, catalog.retired_idx(), None);
+fn links_to_the_retired_note_go_to_root_without_a_fragment() {
+    let content = render(&fixture_pair_catalog(), "post-linking-homepage");
 
     assert!(
-        content.contains(r##"<a href="/">Fixture Homepage</a>"##),
-        "bare link (BR-U2-013): {content}"
+        content.contains("기본 링크: <a href=\"/\">Fixture Homepage</a>"),
+        "bare link: {content}"
     );
     assert!(
-        content.contains(r##"<a href="/">홈으로</a>"##),
-        "alias preserved (BR-U2-014): {content}"
+        content.contains("별칭 링크: <a href=\"/\">홈으로</a>"),
+        "alias kept: {content}"
     );
     assert!(
-        content.contains(r##"<a href="/#소개">Fixture Homepage &gt; 소개</a>"##),
-        "heading fragment via existing anchor rule (BR-U2-015): {content}"
+        !content.contains("href=\"/#"),
+        "no fragment on /: {content}"
     );
-    assert!(
-        content.contains(r##"<a href="/#^intro-block">Fixture Homepage</a>"##),
-        "block fragment via existing rule (BR-U2-016): {content}"
-    );
-    // BR-U2-022: fenced references stay untouched.
+    // Fenced references stay untouched.
     assert!(
         content.contains("[[Fixture Homepage]]\n<!-- profile:slot -->"),
         "fence content must be byte-preserved: {content}"
     );
 }
 
-/// BR-U2-017: an unresolvable heading fragment degrades exactly like a post link
-/// (no fragment, note-name display), just with the `/` base.
+/// BR3.2: heading and block links to the retired note also lose the fragment.
 #[test]
-fn unresolved_homepage_fragment_matches_legacy_degradation() {
-    let posts = vec![
+fn heading_and_block_links_to_the_retired_note_go_to_root() {
+    let content = render(&fixture_pair_catalog(), "post-linking-homepage");
+
+    assert!(
+        content.contains("제목 조각: <a href=\"/\">Fixture Homepage</a>"),
+        "heading link: {content}"
+    );
+    assert!(
+        content.contains("블록 조각: <a href=\"/\">Fixture Homepage</a>"),
+        "block link: {content}"
+    );
+}
+
+/// BR3.3: a link to a site page renders as plain text, alias or name.
+#[test]
+fn links_to_a_site_page_render_as_plain_text() {
+    let catalog = PublicationCatalog::build(make_index(vec![
+        site_page("about", "About", "소개.\n"),
+        make_post(
+            "p1",
+            "P1",
+            None,
+            "a [[About]] b [[About|소개]] c [[About#절]] d\n",
+        ),
+    ]))
+    .unwrap();
+
+    let content = render(&catalog, "p1");
+
+    assert_eq!(content.trim_end(), "a About b 소개 c About d");
+}
+
+/// BR3.1: post links are unchanged, from a post or from a site page.
+#[test]
+fn post_links_are_unchanged() {
+    let catalog = fixture_pair_catalog();
+    let post = render(&catalog, "post-with-links");
+    let page = render(&catalog, "about");
+
+    assert!(
+        post.contains(r#"<a href="/posts/simple-post">Simple Post</a>"#),
+        "{post}"
+    );
+    assert!(
+        page.contains(r#"<a href="/posts/simple-post">Simple Post</a>"#),
+        "{page}"
+    );
+    assert!(page.contains(r#"<a href="/">첫 화면</a>"#), "{page}");
+}
+
+/// BR3.4: a link from a site page adds no backlink to the post it targets.
+#[test]
+fn a_link_from_a_site_page_adds_no_backlink() {
+    let catalog = fixture_pair_catalog();
+    let posts = catalog.posts_only();
+    let graph = resolve_links(posts);
+
+    let simple = posts.slug_map["simple-post"];
+    assert!(
+        !graph.backlinks[simple].iter().any(|s| s == "about"),
+        "{:?}",
+        graph.backlinks[simple]
+    );
+    assert!(!graph.backlinks[simple].is_empty(), "post backlinks stay");
+}
+
+/// BR3.4: the graph holds posts only: no site-page or retired-note node.
+#[test]
+fn the_graph_has_no_site_page_or_retired_node() {
+    let catalog = fixture_pair_catalog();
+    let posts = catalog.posts_only();
+    let json = resolve_links(posts).to_graph_json(posts);
+
+    for hidden in ["about", "fixture-homepage"] {
+        assert!(
+            !json.nodes.iter().any(|n| n.slug == hidden),
+            "{hidden} node"
+        );
+        assert!(
+            !json
+                .edges
+                .iter()
+                .any(|e| e.source == hidden || e.target == hidden),
+            "{hidden} edge"
+        );
+    }
+    assert!(json.nodes.iter().any(|n| n.slug == "simple-post"));
+}
+
+/// NFR1-b fixture (infra R-01): the highlighted Markdown link survives the
+/// highlight pass as `<mark>[…](…)</mark>`, which the site renders as
+/// `<mark><a …>`.
+#[test]
+fn a_highlighted_markdown_link_is_wrapped_in_mark() {
+    let content = render(&fixture_pair_catalog(), "post-with-formatting");
+    assert!(
+        content.contains("<mark>[Simple Post](/posts/simple-post/)</mark>"),
+        "{content}"
+    );
+}
+
+/// An unresolvable heading fragment to the retired note degrades to `/` with
+/// the note name, as before.
+#[test]
+fn unresolved_homepage_fragment_still_goes_to_root() {
+    let catalog = PublicationCatalog::build(make_index(vec![
         make_post("hp", "HP", hp_scalar(), "홈 본문.\n"),
         make_post("p1", "P1", None, "x [[HP#missing-heading]] y\n"),
-    ];
-    let index = make_index(posts);
-    let catalog = PublicationCatalog::build(index).unwrap();
-    let full = catalog.link_targets();
-    let idx = full.slug_map["p1"];
-
-    let (content, _) = transform_content_publication(full, idx, catalog.retired_idx(), None);
+    ]))
+    .unwrap();
+    let content = render(&catalog, "p1");
     assert!(
         content.contains(r##"<a href="/">HP</a>"##),
         "invalid heading drops the fragment, keeps the root href: {content}"
     );
+}
+
+/// The legacy fixture still renders: posts-folder scan only.
+#[test]
+fn the_posts_folder_alone_still_builds() {
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
+    let catalog = PublicationCatalog::build(index).unwrap();
+    assert!(render(&catalog, "simple-post").contains("simple post"));
 }
 
 // -------------------------------------------------------------- properties
@@ -130,7 +255,7 @@ proptest! {
         let full = catalog.link_targets();
         let idx = full.slug_map["p1"];
         let (out, _) =
-            transform_content_publication(full, idx, catalog.retired_idx(), None);
+            transform_content_publication(full, idx, Some(catalog.kinds()), None);
         prop_assert!(out.contains(&reference));
         prop_assert!(out.contains("[[HP]]"));
         prop_assert!(out.contains("<!-- profile:slot -->"));
@@ -157,7 +282,7 @@ proptest! {
         let idx = full.slug_map["p1"];
 
         let (with_pub, _) =
-            transform_content_publication(full, idx, catalog.retired_idx(), None);
+            transform_content_publication(full, idx, Some(catalog.kinds()), None);
         let (without_pub, _) = transform_content_publication(full, idx, None, None);
         prop_assert_eq!(with_pub, without_pub);
     }
@@ -178,7 +303,7 @@ proptest! {
         let idx = full.slug_map["p1"];
 
         let (out, _) =
-            transform_content_publication(full, idx, catalog.retired_idx(), None);
+            transform_content_publication(full, idx, Some(catalog.kinds()), None);
         prop_assert!(out.contains(r##"<a href="/">HP</a>"##), "bare: {out}");
         prop_assert!(
             out.contains(&format!(r##"<a href="/">{alias}</a>"##)),
