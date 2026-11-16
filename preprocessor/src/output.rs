@@ -134,18 +134,14 @@ fn write_posts(
     manifest: &mut Vec<String>,
 ) -> Result<()> {
     let posts = catalog.posts_only();
-    let full = catalog.full();
+    let full = catalog.link_targets();
 
     for (i, post) in posts.posts.iter().enumerate() {
         let full_idx = *full.slug_map.get(&post.slug).with_context(|| {
             format!("catalog invariant broken: {} not in full index", post.slug)
         })?;
-        let (content, images) = transform_content_publication(
-            full,
-            full_idx,
-            Some(catalog.homepage_idx()),
-            Some(assets_dir),
-        );
+        let (content, images) =
+            transform_content_publication(full, full_idx, catalog.retired_idx(), Some(assets_dir));
 
         let md_path = posts_dir.join(format!("{}.md", post.slug));
         fs::write(&md_path, &content).map_err(|e| pub007(&md_path, e))?;
@@ -198,10 +194,14 @@ fn write_homepage(
     assets_dir: &Path,
     manifest: &mut Vec<String>,
 ) -> Result<()> {
+    let Some(homepage_idx) = catalog.retired_idx() else {
+        return Ok(());
+    };
+    let homepage = &catalog.link_targets().posts[homepage_idx];
     let (content, images) = transform_content_publication(
-        catalog.full(),
-        catalog.homepage_idx(),
-        Some(catalog.homepage_idx()),
+        catalog.link_targets(),
+        homepage_idx,
+        Some(homepage_idx),
         Some(assets_dir),
     );
 
@@ -209,10 +209,10 @@ fn write_homepage(
     fs::write(&body_path, &content).map_err(|e| pub007(&body_path, e))?;
     manifest.push("homepage/index.md".to_string());
 
-    copy_referenced_images(catalog.homepage(), &images, assets_dir, manifest);
+    copy_referenced_images(homepage, &images, assets_dir, manifest);
 
     let meta = HomepageMeta {
-        title: catalog.homepage().title.clone(),
+        title: homepage.title.clone(),
     };
     let meta_path = homepage_dir.join("meta.json");
     let json = serde_json::to_string_pretty(&meta).map_err(|e| pub007(&meta_path, e))?;

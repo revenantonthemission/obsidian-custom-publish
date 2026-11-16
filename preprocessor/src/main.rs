@@ -74,9 +74,8 @@ fn main() -> anyhow::Result<()> {
     }
     let index = scan.index;
 
-    // Stage 1: scope + cardinality. Stage 2: homepage-target references.
-    // Each stage reports its full batch and fails before any output write
-    // (BR-U2-023/024); a failed run leaves the previous output untouched.
+    // Every catalog finding is reported in one sorted batch and fails before
+    // any output write (BR2.7); a failed run leaves the previous output intact.
     let catalog = match PublicationCatalog::build(index) {
         Ok(catalog) => catalog,
         Err(diags) => {
@@ -84,12 +83,6 @@ fn main() -> anyhow::Result<()> {
             std::process::exit(1);
         }
     };
-    let reference_diags = catalog.validate_references();
-    if !reference_diags.is_empty() {
-        report_diagnostics(&reference_diags);
-        std::process::exit(1);
-    }
-    println!("Homepage source: {}", catalog.homepage().title);
 
     println!("Writing output to {:?}", cli.output);
     if let Err(e) = write_output(&catalog, &cli.output) {

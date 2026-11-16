@@ -23,10 +23,10 @@ fn hp_scalar() -> Option<RawVisibility> {
 fn fixture_truth_table_resolves_homepage_links_to_root() {
     let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
-    let full = catalog.full();
+    let full = catalog.link_targets();
     let idx = full.slug_map["post-linking-homepage"];
 
-    let (content, _) = transform_content_publication(full, idx, Some(catalog.homepage_idx()), None);
+    let (content, _) = transform_content_publication(full, idx, catalog.retired_idx(), None);
 
     assert!(
         content.contains(r##"<a href="/">Fixture Homepage</a>"##),
@@ -61,10 +61,10 @@ fn unresolved_homepage_fragment_matches_legacy_degradation() {
     ];
     let index = make_index(posts);
     let catalog = PublicationCatalog::build(index).unwrap();
-    let full = catalog.full();
+    let full = catalog.link_targets();
     let idx = full.slug_map["p1"];
 
-    let (content, _) = transform_content_publication(full, idx, Some(catalog.homepage_idx()), None);
+    let (content, _) = transform_content_publication(full, idx, catalog.retired_idx(), None);
     assert!(
         content.contains(r##"<a href="/">HP</a>"##),
         "invalid heading drops the fragment, keeps the root href: {content}"
@@ -98,9 +98,7 @@ proptest! {
             make_post("hp", "HP", hp_scalar(), "홈 본문.\n"),
             make_post("p1", "P1", None, &content),
         ];
-        let catalog = PublicationCatalog::build(make_index(posts)).unwrap();
-
-        let diags = catalog.validate_references();
+        let diags = PublicationCatalog::build(make_index(posts)).unwrap_err();
         prop_assert_eq!(diags.len(), 1, "one variant, one diagnostic");
         let expected = match kind {
             0 => DiagnosticCode::Pub004,
@@ -126,14 +124,13 @@ proptest! {
             make_post("hp", "HP", hp_scalar(), "홈 본문.\n"),
             make_post("p1", "P1", None, &content),
         ];
+        // A clean build means no diagnostics: the fenced embed was not inspected.
         let catalog = PublicationCatalog::build(make_index(posts)).unwrap();
 
-        prop_assert!(catalog.validate_references().is_empty());
-
-        let full = catalog.full();
+        let full = catalog.link_targets();
         let idx = full.slug_map["p1"];
         let (out, _) =
-            transform_content_publication(full, idx, Some(catalog.homepage_idx()), None);
+            transform_content_publication(full, idx, catalog.retired_idx(), None);
         prop_assert!(out.contains(&reference));
         prop_assert!(out.contains("[[HP]]"));
         prop_assert!(out.contains("<!-- profile:slot -->"));
@@ -156,11 +153,11 @@ proptest! {
             make_post("p2", "P2", None, "다른 글.\n"),
         ];
         let catalog = PublicationCatalog::build(make_index(posts)).unwrap();
-        let full = catalog.full();
+        let full = catalog.link_targets();
         let idx = full.slug_map["p1"];
 
         let (with_pub, _) =
-            transform_content_publication(full, idx, Some(catalog.homepage_idx()), None);
+            transform_content_publication(full, idx, catalog.retired_idx(), None);
         let (without_pub, _) = transform_content_publication(full, idx, None, None);
         prop_assert_eq!(with_pub, without_pub);
     }
@@ -177,11 +174,11 @@ proptest! {
             make_post("p1", "P1", None, &body),
         ];
         let catalog = PublicationCatalog::build(make_index(posts)).unwrap();
-        let full = catalog.full();
+        let full = catalog.link_targets();
         let idx = full.slug_map["p1"];
 
         let (out, _) =
-            transform_content_publication(full, idx, Some(catalog.homepage_idx()), None);
+            transform_content_publication(full, idx, catalog.retired_idx(), None);
         prop_assert!(out.contains(r##"<a href="/">HP</a>"##), "bare: {out}");
         prop_assert!(
             out.contains(&format!(r##"<a href="/">{alias}</a>"##)),
