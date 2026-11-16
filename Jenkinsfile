@@ -91,8 +91,9 @@ pipeline {
                 sh 'cp content/graph.json site/public/graph.json'
                 sh 'cp content/previews.json site/public/previews.json'
                 sh 'cp content/nav-tree.json site/public/nav-tree.json'
-                sh 'mkdir -p site/public/assets'
-                sh 'cp -r content/assets/* site/public/assets/ 2>/dev/null || true'
+                // Replace, not add: a withdrawn post or page image must not be
+                // redeployed (U1 infra R-02). One script for every caller.
+                sh 'node site/scripts/sync-public-assets.mjs content/assets site/public/assets'
             }
         }
 

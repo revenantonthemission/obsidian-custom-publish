@@ -15,8 +15,7 @@ preprocess:
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
     cp {{content}}/previews.json {{site_dir}}/public/previews.json
     cp {{content}}/nav-tree.json {{site_dir}}/public/nav-tree.json
-    mkdir -p {{site_dir}}/public/assets
-    cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
+    node {{site_dir}}/scripts/sync-public-assets.mjs {{content}}/assets {{site_dir}}/public/assets
 
 dev: preprocess
     cd {{site_dir}} && npx astro dev
@@ -38,8 +37,7 @@ deploy-preprocess:
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
     cp {{content}}/previews.json {{site_dir}}/public/previews.json
     cp {{content}}/nav-tree.json {{site_dir}}/public/nav-tree.json
-    mkdir -p {{site_dir}}/public/assets
-    cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
+    node {{site_dir}}/scripts/sync-public-assets.mjs {{content}}/assets {{site_dir}}/public/assets
 
 test:
     cd preprocessor && cargo test
