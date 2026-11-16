@@ -1,8 +1,8 @@
 // Verification support: before a verification build, materialize one
-// deterministic discoverable post so the homepage's "오늘 발행된 글" e2e case
-// has a post on the pinned date — but only when it is absent, so output from a
-// real preprocessor run always wins. This writes test-fixture inputs for
-// verification builds only.
+// deterministic discoverable post dated 2024-03-01, so the Writing lists have
+// a same-day title tiebreak and a second year — but only when it is absent, so
+// output from a real preprocessor run always wins. This writes test-fixture
+// inputs for verification builds only.
 //
 // U1 (BR7.2): the site no longer reads a homepage artifact, so this script no
 // longer writes `content/homepage/`.

@@ -9,7 +9,6 @@ import { afterEach, describe, expect, test } from 'vitest';
 
 import * as data from '../../src/lib/data.js';
 import { getAllPostMeta, getHubs, getOrdinaryPosts } from '../../src/lib/data.js';
-import { filterTodayPosts, resolveBuildDate } from '../../src/lib/homepage.js';
 import type { PostMeta } from '../../src/lib/types.js';
 
 const SOURCE_ROOT = resolve('src');
@@ -61,22 +60,6 @@ describe('no homepage artifact (BR6.1; FR2.4)', () => {
       /content\/homepage|homepage\/(index\.md|meta\.json)/.test(readFileSync(file, 'utf8'))
     );
     expect(offenders).toEqual([]);
-  });
-});
-
-describe('interim today list (BR6.5; NFR7.2)', () => {
-  test('filterTodayPosts over ordinary posts uses the build date override', () => {
-    const today = resolveBuildDate({ HOMEPAGE_TODAY_OVERRIDE: '2025-06-10' });
-    const picked = filterTodayPosts(getOrdinaryPosts(), today);
-
-    expect(today).toBe('2025-06-10');
-    expect(picked.map((p) => p.slug).sort()).toEqual([
-      'post-with-block-refs',
-      'post-with-footnotes',
-      'post-with-formatting',
-      'post-with-image',
-    ]);
-    expect(filterTodayPosts(getOrdinaryPosts(), '1999-01-01')).toEqual([]);
   });
 });
 

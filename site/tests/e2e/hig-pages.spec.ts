@@ -120,15 +120,15 @@ test.describe('homepage (W5)', () => {
     expect(looks[1]).toBe(looks[0]);
   });
 
-  test('오늘 발행된 글 keeps its empty message as secondary text inside the card (FR3.4)', async ({
+  test('이번 주 글 is a grouped card of full rows ending with 모든 글 보기 (FR3.4, BR2.1)', async ({
     page,
   }) => {
     await gotoSettled(page, '/');
-    const section = page.locator('.recent-posts');
-    await expect(section.getByRole('heading', { name: '오늘 발행된 글' })).toBeVisible();
-    const empty = section.getByText('오늘 발행된 글이 없습니다.');
-    await expect(empty).toBeVisible();
-    await expect(empty).toHaveCSS('color', LIGHT.textSecondary);
+    const section = page.getByTestId('week-list');
+    await expect(section.getByRole('heading', { level: 2, name: '이번 주 글' })).toBeVisible();
+    await expectGroupedRows(section.locator('ul.grouped-list'), 3);
+    await expect(section.getByTestId('all-posts-link')).toHaveText('모든 글 보기');
+    await expect(section.getByText('이번 주에 발행한 글이 없습니다.')).toHaveCount(0);
   });
 
   test('every request the homepage makes stays on its own origin (NFR2.1, NFR3.1)', async ({

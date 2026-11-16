@@ -34,6 +34,12 @@ for (const viewport of VIEWPORTS) {
         'href',
         '/portfolio'
       );
+      // U2 BR2.1: the weekly list is static markup too. This build sets no
+      // build date, so its empty state is the one that renders.
+      const week = page.getByTestId('week-list');
+      await expect(week.getByRole('heading', { level: 2, name: '이번 주 글' })).toBeVisible();
+      await expect(week.getByText('이번 주에 발행한 글이 없습니다.')).toBeVisible();
+      await expect(week.getByTestId('all-posts-link')).toHaveAttribute('href', '/writing/all');
     });
 
     test('header exposes every core navigation target without JavaScript', async ({ page }) => {

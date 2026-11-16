@@ -127,14 +127,19 @@ test.describe('discovery exclusion surfaces (BR-U2 §2.1)', () => {
     expect(notFound).not.toContain('/posts/fixture-homepage');
   });
 
-  test('오늘 발행 글 follows the injected build date (PD-U2-04)', async ({ page }) => {
+  test('an empty week is a plain secondary row, then 모든 글 보기 (BR2.1, US3.4)', async ({
+    page,
+  }) => {
+    // This e2e build sets no build date, so the fixture week holds no post.
+    test.skip(Boolean(TODAY_OVERRIDE), 'run without HOMEPAGE_TODAY_OVERRIDE');
     await page.goto('/');
-    const section = page.locator('.recent-posts');
-    await expect(section.getByRole('heading', { name: '오늘 발행된 글' })).toBeVisible();
-    if (TODAY_OVERRIDE === '2024-03-01') {
-      await expect(section.getByText('Fixture E2E Post')).toBeVisible();
-    } else {
-      await expect(section.getByText('오늘 발행된 글이 없습니다.')).toBeVisible();
-    }
+    const section = page.getByTestId('week-list');
+    await expect(section.getByRole('heading', { level: 2, name: '이번 주 글' })).toBeVisible();
+    const empty = section.getByText('이번 주에 발행한 글이 없습니다.');
+    await expect(empty).toBeVisible();
+    await expect(empty).toHaveCSS('color', 'rgb(99, 99, 102)');
+    await expect(section.locator('a.grouped-row')).toHaveCount(1);
+    await expect(section.getByTestId('all-posts-link')).toHaveAttribute('href', '/writing/all');
+    await expect(page.getByRole('heading', { name: '오늘 발행된 글' })).toHaveCount(0);
   });
 });

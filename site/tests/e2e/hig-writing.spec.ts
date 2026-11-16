@@ -58,6 +58,19 @@ function byNewest(a: PostMeta, b: PostMeta): number {
   return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
 }
 
+/** The Monday–Sunday range holding the fixed HIG build date (BR1.1). */
+function weekRange(iso: string): { start: string; end: string } {
+  const day = new Date(`${iso}T00:00:00Z`);
+  const monday = new Date(day);
+  monday.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return { start: monday.toISOString().slice(0, 10), end: sunday.toISOString().slice(0, 10) };
+}
+
+/** The fixed build date the HIG runner sets (scripts/hig/build-and-serve.mjs). */
+const HIG_BUILD_DATE = '2025-08-13';
+
 async function trackForeignRequests(page: Page, baseURL: string | undefined): Promise<string[]> {
   const own = new URL(baseURL ?? 'http://127.0.0.1:4329').origin;
   const foreign: string[] = [];
@@ -69,6 +82,53 @@ async function trackForeignRequests(page: Page, baseURL: string | undefined): Pr
   });
   return foreign;
 }
+
+test.describe('homepage "이번 주 글" (M1; BR2.1)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  test('lists the build week\'s ordinary posts newest first, then "모든 글 보기"', async ({
+    page,
+  }) => {
+    await gotoSettled(page, '/');
+    const week = weekRange(HIG_BUILD_DATE);
+    const expected = ordinaryPosts()
+      .filter(
+        (post) =>
+          post.published !== null && post.published >= week.start && post.published <= week.end
+      )
+      .sort(byNewest)
+      .map((post) => `/posts/${post.slug}`);
+    expect(expected.length).toBeGreaterThanOrEqual(2);
+    const section = page.getByTestId('week-list');
+    await expect(section.getByRole('heading', { level: 2, name: '이번 주 글' })).toBeVisible();
+    const hrefs = await section
+      .locator('a.grouped-row')
+      .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+    expect(hrefs).toEqual([...expected, '/writing/all']);
+    await expect(section.getByText('이번 주에 발행한 글이 없습니다.')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: '오늘 발행된 글' })).toHaveCount(0);
+  });
+
+  test('the last row is "모든 글 보기" and opens /writing/all', async ({ page }) => {
+    await gotoSettled(page, '/');
+    const all = page.getByTestId('all-posts-link');
+    await expect(all).toHaveText('모든 글 보기');
+    await expect(all).toHaveAttribute('href', '/writing/all');
+    await all.click();
+    await expect(page).toHaveURL(/\/writing\/all$/);
+    await expect(page.getByRole('heading', { level: 1, name: '모든 글' })).toBeVisible();
+  });
+
+  test('a row keeps its full post shape at 320 px', async ({ page }) => {
+    await page.setViewportSize(viewportFor(320));
+    await gotoSettled(page, '/');
+    const first = page.getByTestId('week-list').locator('a.grouped-row').first();
+    await expect(first.locator('.grouped-row-title')).toBeVisible();
+    await expect(first.locator('.grouped-row-summary')).toBeVisible();
+    await expect(first.locator('.grouped-row-meta time')).toHaveAttribute('datetime', '2025-08-14');
+    await expect(first.locator('.grouped-row-meta')).toContainText('분 읽기');
+  });
+});
 
 test.describe('/writing (M2; BR2.2)', () => {
   test.use({ viewport: viewportFor(1024) });
