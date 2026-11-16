@@ -7,7 +7,7 @@
  * 1100 px floating bar, so a desktop does not show a phone-width column in the
  * middle of the screen. */
 @media (min-width: 768px) {
-  .site-main:has(.home-content) {
+  .site-main:has(.home-title) {
     max-inline-size: clamp(calc(var(--max-width) + var(--space-6) * 2), 86vw, 1100px);
   }
 }
