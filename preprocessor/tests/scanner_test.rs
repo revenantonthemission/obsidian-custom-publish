@@ -3,7 +3,7 @@ use std::path::Path;
 
 #[test]
 fn test_scan_vault_finds_all_markdown_files() {
-    let vault = Path::new("../fixtures/vault");
+    let vault = Path::new("../fixtures/vault/Notes");
     let index = scan_vault(vault).unwrap();
     // Should find all 8 .md files in fixtures
     assert!(index.posts.len() >= 7);
@@ -11,7 +11,7 @@ fn test_scan_vault_finds_all_markdown_files() {
 
 #[test]
 fn test_scan_vault_parses_frontmatter() {
-    let vault = Path::new("../fixtures/vault");
+    let vault = Path::new("../fixtures/vault/Notes");
     let index = scan_vault(vault).unwrap();
     let simple = index
         .posts
@@ -25,7 +25,7 @@ fn test_scan_vault_parses_frontmatter() {
 
 #[test]
 fn test_scan_vault_generates_slugs_from_filename() {
-    let vault = Path::new("../fixtures/vault");
+    let vault = Path::new("../fixtures/vault/Notes");
     let index = scan_vault(vault).unwrap();
     let post = index
         .posts
@@ -37,7 +37,7 @@ fn test_scan_vault_generates_slugs_from_filename() {
 
 #[test]
 fn test_scan_vault_detects_hub_pages() {
-    let vault = Path::new("../fixtures/vault");
+    let vault = Path::new("../fixtures/vault/Notes");
     let index = scan_vault(vault).unwrap();
     let hub = index.posts.iter().find(|p| p.slug == "hub-page").unwrap();
     assert!(hub.is_hub);

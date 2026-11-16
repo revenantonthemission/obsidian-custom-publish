@@ -21,7 +21,7 @@ fn hp_scalar() -> Option<RawVisibility> {
 /// BR-U2-013~017: the fixture truth table, end to end through the transform.
 #[test]
 fn fixture_truth_table_resolves_homepage_links_to_root() {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
     let full = catalog.full();
     let idx = full.slug_map["post-linking-homepage"];

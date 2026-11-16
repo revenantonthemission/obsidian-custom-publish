@@ -119,7 +119,7 @@ fn unreadable_vault_is_a_blocker() {
 
 #[test]
 fn fixture_vault_builds_a_catalog_with_the_fixture_homepage() {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
 
     assert_eq!(catalog.homepage().title, "Fixture Homepage");

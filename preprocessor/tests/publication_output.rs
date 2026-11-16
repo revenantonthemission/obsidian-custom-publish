@@ -77,7 +77,7 @@ fn walkdir_files(dir: &Path) -> Vec<std::path::PathBuf> {
 /// FD-P-C09-02 + EDGE-007: the homepage is absent from every discovery surface.
 #[test]
 fn homepage_is_absent_from_every_discovery_surface() {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
     let tmp = TempDir::new().unwrap();
     write_output(&catalog, tmp.path()).unwrap();

@@ -1,4 +1,4 @@
-vault    := env("VAULT_PATH", "./fixtures/vault")
+vault    := env("VAULT_PATH", "./fixtures/vault/Notes")
 content  := "./content"
 site_dir := "./site"
 web_root := env("WEB_ROOT", env("HOME") / "Sites/obsidian-blog")

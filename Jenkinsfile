@@ -58,7 +58,7 @@ pipeline {
                 // search-index.json / nav-tree.json copied from site/public.
                 // Materialize them from the fixture vault first (no vault
                 // stamping); the real Preprocess stage overwrites them later.
-                sh './preprocessor/target/release/obsidian-press ./fixtures/vault ./content'
+                sh './preprocessor/target/release/obsidian-press ./fixtures/vault/Notes ./content'
                 sh 'cp content/search-index.json content/graph.json content/previews.json content/nav-tree.json site/public/'
                 // The fixture materializer writes only when absent, so real
                 // preprocessor output always wins.
