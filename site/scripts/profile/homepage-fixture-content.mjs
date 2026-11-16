@@ -7,7 +7,7 @@
 // U1 (BR7.2): the site no longer reads a homepage artifact, so this script no
 // longer writes `content/homepage/`.
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -52,4 +52,23 @@ export async function ensureE2eFixtureContent() {
       await writeFile(postBodyPath, 'e2e fixture 게시물 본문입니다.\n', 'utf8');
     }
   }
+  await registerInManifest(['meta/fixture-e2e-post.json', 'posts/fixture-e2e-post.md']);
+}
+
+/**
+ * The site fails closed with WR001 when `meta/*.json` differs from the
+ * preprocessor's `manifest.json` (U2 NFR5.19), so the files written above are
+ * listed there too, keeping the inventory sorted. Without a manifest nothing is
+ * added: the build then reports the missing preprocessor run itself.
+ */
+async function registerInManifest(entries) {
+  const manifestPath = resolve(contentRoot, 'manifest.json');
+  if (!existsSync(manifestPath)) return;
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  const missing = entries.filter(
+    (entry) => existsSync(resolve(contentRoot, entry)) && !manifest.includes(entry)
+  );
+  if (missing.length === 0) return;
+  const updated = [...manifest, ...missing].sort();
+  await writeFile(manifestPath, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
 }
