@@ -34,12 +34,25 @@ for (const viewport of VIEWPORTS) {
         'href',
         '/portfolio'
       );
-      // U2 BR2.1: the weekly list is static markup too. This build sets no
-      // build date, so its empty state is the one that renders.
+      // U2 BR2.1: the weekly list is static markup too; whichever week state
+      // the build carries, the section and its "모든 글 보기" row are present.
       const week = page.getByTestId('week-list');
       await expect(week.getByRole('heading', { level: 2, name: '이번 주 글' })).toBeVisible();
-      await expect(week.getByText('이번 주에 발행한 글이 없습니다.')).toBeVisible();
       await expect(week.getByTestId('all-posts-link')).toHaveAttribute('href', '/writing/all');
+    });
+
+    test('/writing and /writing/all render and link onward without JavaScript', async ({
+      page,
+    }) => {
+      await page.goto('/writing');
+      await expect(page.getByRole('heading', { level: 1, name: 'Writing' })).toBeVisible();
+      expect(await page.locator('main astro-island').count()).toBe(0);
+      await expect(page.getByTestId('recent-list')).toBeVisible();
+      await page.getByTestId('all-posts-link').click();
+      await expect(page).toHaveURL(/\/writing\/all$/);
+      await expect(page.getByRole('heading', { level: 1, name: '모든 글' })).toBeVisible();
+      expect(await page.getByTestId('compact-row').count()).toBeGreaterThan(0);
+      expect(await page.locator('main astro-island').count()).toBe(0);
     });
 
     test('header exposes every core navigation target without JavaScript', async ({ page }) => {

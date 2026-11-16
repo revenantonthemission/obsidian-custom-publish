@@ -205,7 +205,7 @@ How the contract's layers apply to this unit:
     - remove `.recent-posts` from `home.css`;
     - `writing.css` is imported on `/`.
 
-- [ ] **Step 8 — JS-off and checkpoint** (NFR3.2; AC7.1.3)
+- [x] **Step 8 — JS-off and checkpoint** (NFR3.2; AC7.1.3)
   - Extend `crossunit.spec.ts` to `/writing` and `/writing/all` with JavaScript off.
   - Run `npm run format:check` and `npx astro check`.
 
