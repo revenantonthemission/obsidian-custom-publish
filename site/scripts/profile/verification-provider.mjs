@@ -5,7 +5,7 @@ import { dirname, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { analyzeProfileAssets } from './asset-budget.mjs';
 import { cleanProfileBuild } from './clean-profile-build.mjs';
-import { ensureHomepageFixtureContent } from './homepage-fixture-content.mjs';
+import { ensureE2eFixtureContent } from './homepage-fixture-content.mjs';
 import { startStaticPreview } from './preview-supervisor.mjs';
 import {
   assertOwnedProcessObservationSupport,
@@ -161,7 +161,7 @@ export async function runE2EVerification({
   validatePositiveInteger(outputLimitBytes, 'outputLimitBytes');
   await clearPrivateRunEvidence();
 
-  await ensureHomepageFixtureContent();
+  await ensureE2eFixtureContent();
   const buildIdentity = await cleanProfileBuild();
   const assetBudgetEvidence = await analyzeProfileAssets();
   await writePrivateJson(PROFILE_PATHS.assetBudgetEvidencePath, assetBudgetEvidence);
@@ -3236,7 +3236,7 @@ async function reinspectTrackedRelease({ pair, manifest, tools, buildTimeoutMs, 
   const { renderResumePdfCandidate } = await import('./pdf-renderer.mjs');
   const { inspectResumePdfCandidate } = await import('./pdf-inspector.mjs');
 
-  await ensureHomepageFixtureContent();
+  await ensureE2eFixtureContent();
   const buildIdentity = await cleanProfileBuild(
     buildTimeoutMs === undefined ? {} : { timeoutMs: buildTimeoutMs }
   );

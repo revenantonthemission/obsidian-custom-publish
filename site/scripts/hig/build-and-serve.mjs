@@ -43,7 +43,11 @@ function prepareFixtureContent() {
   }
   // The preprocessor resolves .puppeteer-config.json from its cwd, so it runs
   // from the repository root like the Justfile and Jenkins do.
-  run(PREPROCESSOR, ['./fixtures/vault/Notes', './content'], REPO_ROOT);
+  run(
+    PREPROCESSOR,
+    ['./fixtures/vault/Notes', './content', '--pages', './fixtures/vault/Pages'],
+    REPO_ROOT
+  );
   for (const file of COPIED_JSON) {
     cpSync(resolve(REPO_ROOT, 'content', file), resolve(SITE_ROOT, 'public', file));
   }
