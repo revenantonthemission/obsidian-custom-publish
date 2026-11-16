@@ -209,14 +209,14 @@ How the contract's layers apply to this unit:
   - Extend `crossunit.spec.ts` to `/writing` and `/writing/all` with JavaScript off.
   - Run `npm run format:check` and `npx astro check`.
 
-- [ ] **Step 9 — Full verification and measurements** (NFR1.7, NFR1.8, NFR6.8, NFR6.9; AC7.1.4)
+- [x] **Step 9 — Full verification and measurements** (NFR1.7, NFR1.8, NFR6.8, NFR6.9; AC7.1.4)
   - Run the recorded verification command; it must exit 0.
   - Measure:
     - fixture build time (median of 3) against the Step 1 baseline;
     - `/` bytes against 229,036 B + 4,096 B per weekly row;
     - `/writing/all` HTML size on a real-content build: `VAULT_PATH` on a copy of `Areas/Notes`, no stamping, then restore the fixture content with `just preprocess`.
 
-- [ ] **Step 10 — Documentation**
+- [x] **Step 10 — Documentation**
   - `CLAUDE.md`: the new routes; `WR001`; the rule that `HOMEPAGE_TODAY_OVERRIDE` is test-only; `writing.css`.
   - Write `code-summary.md`, `source-manifest.json` and `traceability.json`.
 
