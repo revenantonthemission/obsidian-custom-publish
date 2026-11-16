@@ -13,6 +13,8 @@ This has ==highlighted text== in it.
 
 Multiple ==highlights== on ==one line== here.
 
+A highlighted link: ==[Simple Post](/posts/simple-post/)== stays a link.
+
 ## Comments
 
 Visible text %%inline comment%% more visible text.

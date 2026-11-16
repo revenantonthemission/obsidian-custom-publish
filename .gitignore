@@ -19,6 +19,8 @@ site/public/assets/
 fixtures/vault/Notes/attachment/*.png
 !fixtures/vault/Notes/attachment/test-image.png
 !fixtures/vault/Notes/attachment/markdown-only.png
+fixtures/vault/Pages/attachment/*.png
+!fixtures/vault/Pages/attachment/portrait.png
 
 # Written by Puppeteer's postinstall during `npm ci`, not authored here.
 .puppeteer-config.json
