@@ -4,10 +4,10 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use walkdir::WalkDir;
 
 use crate::syntax::{BLOCK_ID_RE, HEADING_RE, frontmatter_range};
-use crate::types::{PostMeta, RawVisibility, VaultIndex, is_korean};
+use crate::types::{NoteSource, PostMeta, RawVisibility, VaultIndex, is_korean};
+use crate::walker::{skipped_link_warning, walk_markdown};
 
 /// Raw frontmatter as it appears in the YAML block.
 /// Dates are kept as strings to avoid YAML date auto-parsing.
@@ -107,21 +107,17 @@ fn extract_blocks(content: &str) -> HashMap<String, String> {
 /// Stamp `published: YYYY-MM-DD` (today, local timezone) into vault files that either
 /// lack a `published` field or were modified after their existing `published` date.
 /// Returns the number of files stamped.
+///
+/// Walks with the shared BoundaryWalker, so it never writes through a link
+/// and never opens a dot entry or `Drafts` (BR1.4, BR4.2; NFR5.6). It prints
+/// no link warnings: the run prints them once, from the first scan.
 pub fn stamp_published_dates(vault_path: &Path) -> Result<usize> {
     let today = Local::now().format("%Y-%m-%d").to_string();
     let mut count = 0;
+    let (files, _skipped_links) = walk_markdown(vault_path)?;
 
-    for entry in WalkDir::new(vault_path)
-        .into_iter()
-        .filter_entry(|e| !is_excluded(e))
-    {
-        let entry = entry.context("failed to read directory entry")?;
-        let path = entry.path();
-
-        if !path.is_file() || path.extension().is_none_or(|ext| ext != "md") {
-            continue;
-        }
-
+    for path in &files {
+        let path = path.as_path();
         let content = std::fs::read_to_string(path)
             .with_context(|| format!("failed to read {}", path.display()))?;
 
@@ -187,72 +183,102 @@ fn file_modified_date(file_path: &Path) -> Option<String> {
     Some(local.format("%Y-%m-%d").to_string())
 }
 
-/// Scan an Obsidian vault directory and build an index of all posts.
+/// Scan one posts folder and build an index of its notes. Skipped links are
+/// reported on stderr here; the publishing run itself uses `scan_sources`,
+/// which returns them so they are printed once per run.
 pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
-    let mut posts = Vec::new();
+    let (notes, skipped_links) = scan_folder(vault_path, NoteSource::Notes)?;
+    for link in &skipped_links {
+        eprintln!("{}", skipped_link_warning(link));
+    }
+    Ok(build_index(notes))
+}
+
+/// Read every note the shared walker yields under `root`, tagged with its
+/// source folder (BR1.5). Returns the notes and the skipped links.
+fn scan_folder(root: &Path, source: NoteSource) -> Result<(Vec<ScannedNote>, Vec<PathBuf>)> {
+    // Batch-query git for all file modification dates (one subprocess instead of N)
+    let git_dates = git_last_modified_batch(root);
+    let (files, skipped_links) = walk_markdown(root)?;
+    let notes = files
+        .iter()
+        .map(|path| read_note(path, source, &git_dates))
+        .collect::<Result<Vec<_>>>()?;
+    Ok((notes, skipped_links))
+}
+
+/// Read and parse one note.
+fn read_note(
+    path: &Path,
+    source: NoteSource,
+    git_dates: &HashMap<PathBuf, String>,
+) -> Result<ScannedNote> {
+    let content = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read {}", path.display()))?;
+
+    let filename = path
+        .file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+
+    let slug = slugify(&filename);
+    let (frontmatter, body) = parse_frontmatter(&content);
+
+    // The walker yields canonical paths, so they match git's canonical keys.
+    let updated = git_dates.get(path).cloned();
+    let created = frontmatter.created.or_else(|| file_created_date(path));
+
+    // Extract headings and blocks during the scan to avoid re-parsing.
+    let headings = extract_headings(body);
+    let blocks = extract_blocks(body);
+
+    let post = PostMeta {
+        slug,
+        title: filename,
+        file_path: path.to_path_buf(),
+        tags: frontmatter.tags,
+        created,
+        published: frontmatter.published,
+        updated,
+        is_hub: frontmatter.is_hub,
+        hub_parent: frontmatter.hub_parent,
+        description: frontmatter.description,
+        visibility: raw_visibility(frontmatter.visibility),
+        source,
+        raw_content: content,
+    };
+    Ok(ScannedNote {
+        post,
+        headings,
+        blocks,
+    })
+}
+
+/// One scanned note with the fragments extracted from its body.
+struct ScannedNote {
+    post: PostMeta,
+    headings: Vec<String>,
+    blocks: HashMap<String, String>,
+}
+
+/// Sort notes into the fixed scan order (slug, source, path) and build the
+/// lookup maps (BR1.7).
+fn build_index(mut notes: Vec<ScannedNote>) -> VaultIndex {
+    notes.sort_by(|a, b| {
+        let ka = (&a.post.slug, a.post.source, &a.post.file_path);
+        let kb = (&b.post.slug, b.post.source, &b.post.file_path);
+        ka.cmp(&kb)
+    });
+
     let mut heading_map: HashMap<String, Vec<String>> = HashMap::new();
     let mut block_map: HashMap<String, HashMap<String, String>> = HashMap::new();
-
-    // Batch-query git for all file modification dates (one subprocess instead of N)
-    let git_dates = git_last_modified_batch(vault_path);
-
-    for entry in WalkDir::new(vault_path)
-        .into_iter()
-        .filter_entry(|e| !is_excluded(e))
-    {
-        let entry = entry.context("failed to read directory entry")?;
-        let path = entry.path();
-
-        if !path.is_file() || path.extension().is_none_or(|ext| ext != "md") {
-            continue;
-        }
-
-        let content = std::fs::read_to_string(path)
-            .with_context(|| format!("failed to read {}", path.display()))?;
-
-        let filename = path
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-
-        let slug = slugify(&filename);
-        let (frontmatter, body) = parse_frontmatter(&content);
-
-        let title = filename.clone();
-
-        let updated = path
-            .canonicalize()
-            .ok()
-            .and_then(|canonical| git_dates.get(&canonical).cloned());
-
-        let created = frontmatter.created.or_else(|| file_created_date(path));
-
-        // Extract headings and blocks during initial scan to avoid re-parsing
-        let headings = extract_headings(body);
-        let blocks = extract_blocks(body);
-
-        let post = PostMeta {
-            slug,
-            title,
-            file_path: path.to_path_buf(),
-            tags: frontmatter.tags,
-            created,
-            published: frontmatter.published,
-            updated,
-            is_hub: frontmatter.is_hub,
-            hub_parent: frontmatter.hub_parent,
-            description: frontmatter.description,
-            visibility: raw_visibility(frontmatter.visibility),
-            raw_content: content,
-        };
-        heading_map.insert(post.title.clone(), headings);
-        block_map.insert(post.title.clone(), blocks);
-        posts.push(post);
+    let mut posts = Vec::with_capacity(notes.len());
+    for note in notes {
+        heading_map.insert(note.post.title.clone(), note.headings);
+        block_map.insert(note.post.title.clone(), note.blocks);
+        posts.push(note.post);
     }
-
-    // Sort by slug for deterministic output across runs
-    posts.sort_by(|a, b| a.slug.cmp(&b.slug));
 
     let mut slug_map: HashMap<String, usize> = HashMap::new();
     for (i, p) in posts.iter().enumerate() {
@@ -270,13 +296,13 @@ pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
         .map(|(i, p)| (p.title.clone(), i))
         .collect();
 
-    Ok(VaultIndex {
+    VaultIndex {
         posts,
         slug_map,
         name_map,
         heading_map,
         block_map,
-    })
+    }
 }
 
 /// Convert a filename into a URL-safe slug.
@@ -361,12 +387,4 @@ fn file_created_date(file_path: &Path) -> Option<String> {
     let created = metadata.created().ok()?;
     let local: DateTime<Local> = created.into();
     Some(local.format("%Y-%m-%d").to_string())
-}
-
-/// Check if a walkdir entry should be skipped (hidden or drafts).
-fn is_excluded(entry: &walkdir::DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
-        .is_some_and(|s| s.starts_with('.') || s == "Drafts")
 }

@@ -14,3 +14,4 @@ pub mod syntax;
 pub mod transform;
 pub mod types;
 pub mod typst_render;
+pub mod walker;

@@ -8,7 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use obsidian_press::types::{PostMeta, RawVisibility, VaultIndex};
+use obsidian_press::types::{NoteSource, PostMeta, RawVisibility, VaultIndex};
 
 /// Write `body` to `root/rel`, creating parent folders.
 pub fn put(root: &Path, rel: &str, body: &str) -> PathBuf {
@@ -103,6 +103,7 @@ pub fn make_post(
         hub_parent: None,
         description: None,
         visibility,
+        source: NoteSource::Notes,
         raw_content: raw_content.to_string(),
     }
 }

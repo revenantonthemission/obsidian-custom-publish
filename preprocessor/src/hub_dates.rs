@@ -241,6 +241,7 @@ mod tests {
             hub_parent: None,
             description: None,
             visibility: None,
+            source: crate::types::NoteSource::Notes,
             raw_content: String::new(),
         }
     }
