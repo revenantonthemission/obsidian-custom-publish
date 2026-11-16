@@ -278,6 +278,46 @@ fn site_pages_and_the_retired_note_are_absent_from_post_indexes() {
     }
 }
 
+/// FR2.2 + BR2.4 (review R-01): a post and the retired homepage note sharing a
+/// slug stop the run with exit 1 before anything is written, so the retired
+/// note's body can never be published under the post's metadata.
+#[test]
+fn a_post_sharing_the_retired_notes_slug_publishes_nothing() {
+    let tmp = TempDir::new().unwrap();
+    let notes = tmp.path().join("Vault/Notes");
+    let out = tmp.path().join("out");
+    put(
+        &notes,
+        "Passion Project!.md",
+        "---\npublished: 2024-02-01\n---\n공개 글 POST-MARKER.\n",
+    );
+    put(
+        &notes,
+        "Passion Project.md",
+        "---\npublished: 2024-01-01\nvisibility: homepage\n---\n비공개 홈 노트 RETIRED-MARKER.\n",
+    );
+
+    let run = run_press(&[notes.as_os_str(), out.as_os_str()]);
+
+    assert_eq!(run.status.code(), Some(1), "stderr: {}", stderr_of(&run));
+    let stderr = stderr_of(&run);
+    assert!(
+        stderr.lines().any(|l| l.starts_with("PUB008 ")
+            && l.contains("Passion Project!.md")
+            && l.contains("Passion Project.md")),
+        "stderr: {stderr}"
+    );
+    let written = hash_tree(&out);
+    assert!(written.is_empty(), "nothing may be written: {written:?}");
+    for (rel, bytes) in &written {
+        assert!(
+            !String::from_utf8_lossy(bytes).contains("RETIRED-MARKER"),
+            "retired note leaked into {rel}"
+        );
+    }
+    assert!(!stdout_of(&run).contains("RETIRED-MARKER"));
+}
+
 /// BR1.6 + NFR5.2: the image lookup stops at the source root: an image found
 /// only in `<parent of NOTES>/attachment/` is not copied, with a warning.
 #[test]

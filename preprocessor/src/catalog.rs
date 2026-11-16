@@ -60,7 +60,8 @@ pub enum DiagnosticCode {
     Pub006,
     /// Output write failure (raised by the writer, not the catalog).
     Pub007,
-    /// A site page shares its slug with another note.
+    /// A site page shares its slug with another note, or a post shares its
+    /// slug with the retired homepage note.
     Pub008,
     /// Transclusion of a site page.
     Pub009,
@@ -82,7 +83,7 @@ impl DiagnosticCode {
 }
 
 /// One publication-boundary finding. `path` is the offending note (for
-/// PUB008 the site page); `other_path` is the clashing note (PUB008 only).
+/// PUB008 the site page, else the post); `other_path` is the clashing note (PUB008 only).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationDiagnostic {
     pub code: DiagnosticCode,
@@ -143,7 +144,7 @@ impl PublicationCatalog {
         let mut diags = Vec::new();
         let kinds = classify(&index, &mut diags);
         check_homepage_cardinality(&index, &kinds, &mut diags);
-        check_site_page_slugs(&index, &kinds, &mut diags);
+        check_slug_clashes(&index, &kinds, &mut diags);
         check_embeds(&index, &kinds, &mut diags);
 
         if !diags.is_empty() {
@@ -269,10 +270,14 @@ fn check_homepage_cardinality(
     });
 }
 
-/// BR2.4: a site page shares its slug with no other note. One PUB008 per
-/// clashing pair; for two site pages the earlier path is `path`. Two posts
-/// sharing a slug keep the scanner's warning and are not checked here.
-fn check_site_page_slugs(
+/// BR2.4: a site page shares its slug with no other note, and a post shares
+/// its slug with no retired homepage note. One PUB008 per clashing pair; the
+/// published note (site page, else post) is `path`, and for two site pages
+/// the earlier path is. A post/retired clash must fail: output looks bodies
+/// up by slug, so the private note's body could otherwise be published under
+/// the post's metadata (FR2.2, review R-01). Two posts sharing a slug keep
+/// the scanner's warning and are not checked here.
+fn check_slug_clashes(
     index: &VaultIndex,
     kinds: &[Option<EntryKind>],
     diags: &mut Vec<PublicationDiagnostic>,
@@ -285,30 +290,47 @@ fn check_site_page_slugs(
     for (slug, members) in by_slug {
         for (n, &a) in members.iter().enumerate() {
             for &b in &members[n + 1..] {
-                let (page, other) = match (kinds[a], kinds[b]) {
-                    (Some(EntryKind::SitePage), Some(EntryKind::SitePage)) => {
-                        if path_of(&index.posts[a]) <= path_of(&index.posts[b]) {
-                            (a, b)
-                        } else {
-                            (b, a)
-                        }
-                    }
-                    (Some(EntryKind::SitePage), _) => (a, b),
-                    (_, Some(EntryKind::SitePage)) => (b, a),
-                    _ => continue,
+                let Some((published, other)) = clash_pair(index, kinds, a, b) else {
+                    continue;
                 };
+                let published_kind = kinds[published].map_or("note", EntryKind::noun);
                 let other_kind = kinds[other].map_or("note", EntryKind::noun);
                 let other_path = path_of(&index.posts[other]);
                 diags.push(PublicationDiagnostic {
                     code: DiagnosticCode::Pub008,
-                    path: path_of(&index.posts[page]),
+                    path: path_of(&index.posts[published]),
                     detail: format!(
-                        "site page slug \"{slug}\" clashes with {other_kind} {other_path}"
+                        "{published_kind} slug \"{slug}\" clashes with {other_kind} {other_path}"
                     ),
                     other_path: Some(other_path),
                 });
             }
         }
+    }
+}
+
+/// The (published, other) order of two same-slug notes when they clash under
+/// BR2.4, or `None` when they may share the slug (post/post, or a pair where
+/// neither is a site page and no post meets the retired note).
+fn clash_pair(
+    index: &VaultIndex,
+    kinds: &[Option<EntryKind>],
+    a: usize,
+    b: usize,
+) -> Option<(usize, usize)> {
+    match (kinds[a], kinds[b]) {
+        (Some(EntryKind::SitePage), Some(EntryKind::SitePage)) => {
+            if path_of(&index.posts[a]) <= path_of(&index.posts[b]) {
+                Some((a, b))
+            } else {
+                Some((b, a))
+            }
+        }
+        (Some(EntryKind::SitePage), _) => Some((a, b)),
+        (_, Some(EntryKind::SitePage)) => Some((b, a)),
+        (Some(EntryKind::Post), Some(EntryKind::RetiredHomepage)) => Some((a, b)),
+        (Some(EntryKind::RetiredHomepage), Some(EntryKind::Post)) => Some((b, a)),
+        _ => None,
     }
 }
 

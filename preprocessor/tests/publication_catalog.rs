@@ -189,6 +189,58 @@ fn pub008_page_and_retired_note_name_both_files() {
     assert_eq!(diags.len(), 1);
 }
 
+/// A posts-folder note at `vault/<file>` with the given slug and visibility.
+fn note_at(file: &str, slug: &str, visibility: Option<RawVisibility>) -> PostMeta {
+    let mut note = make_post(slug, &format!("T {file}"), visibility, "본문\n");
+    note.file_path = PathBuf::from(format!("vault/{file}"));
+    note
+}
+
+/// BR2.4 / FR2.2 (review R-01): a post that shares its slug with the retired
+/// homepage note is PUB008 naming both, so the private note's body can never
+/// be published under the post's metadata. The post is `path`.
+#[test]
+fn pub008_post_and_retired_note_name_both_files() {
+    let diags = build_err(vec![
+        note_at("Passion Project!.md", "passion-project", None),
+        note_at("Passion Project.md", "passion-project", scalar("homepage")),
+    ]);
+    assert_eq!(
+        summary(&diags),
+        vec![(
+            DiagnosticCode::Pub008,
+            "vault/Passion Project!.md".into(),
+            some("vault/Passion Project.md")
+        )]
+    );
+    assert_eq!(
+        format_diagnostic(&diags[0]),
+        "PUB008 vault/Passion Project!.md: post slug \"passion-project\" clashes with retired homepage note vault/Passion Project.md"
+    );
+}
+
+/// BR2.4 / FR2.2: the same clash with the file names (and input order)
+/// swapped: the retired note is `Passion Project!.md` and comes first.
+#[test]
+fn pub008_post_and_retired_note_either_file_name_order() {
+    let diags = build_err(vec![
+        note_at("Passion Project!.md", "passion-project", scalar("homepage")),
+        note_at("Passion Project.md", "passion-project", None),
+    ]);
+    assert_eq!(
+        summary(&diags),
+        vec![(
+            DiagnosticCode::Pub008,
+            "vault/Passion Project.md".into(),
+            some("vault/Passion Project!.md")
+        )]
+    );
+    assert_eq!(
+        format_diagnostic(&diags[0]),
+        "PUB008 vault/Passion Project.md: post slug \"passion-project\" clashes with retired homepage note vault/Passion Project!.md"
+    );
+}
+
 /// BR2.4: post/post slug sharing keeps today's warning and is not a PUB code.
 #[test]
 fn two_posts_sharing_a_slug_are_not_a_diagnostic() {

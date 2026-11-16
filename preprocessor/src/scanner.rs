@@ -334,7 +334,8 @@ fn build_index(mut notes: Vec<ScannedNote>) -> VaultIndex {
     let mut slug_map: HashMap<String, usize> = HashMap::new();
     for (i, p) in posts.iter().enumerate() {
         // Two posts-folder notes sharing a slug keep this warning; a clash
-        // with a site page is PUB008, reported by the catalog (BR2.4).
+        // with a site page, or between a post and the retired homepage note,
+        // is PUB008, reported by the catalog (BR2.4).
         if let Some(prev) = slug_map.insert(p.slug.clone(), i)
             && p.source == NoteSource::Notes
             && posts[prev].source == NoteSource::Notes
