@@ -3,6 +3,7 @@
 // Local Graph", "Segmented Control"). Colors are the light tokens of
 // tokens.css unless a test emulates dark.
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
 import {
   SEGMENT_INDICATOR,
   gotoSettled,
@@ -64,30 +65,62 @@ async function graphNodeCount(page: Page): Promise<number> {
   return data.nodes.length;
 }
 
+// U1 homepage opening (BR6.2–BR6.6; FR3.1–FR3.3; AC3.1.1–AC3.2.4). The page
+// no longer renders a vault note: one Large Title, the owner's name and short
+// introduction from the approved profile facts, and two equal capsules.
+const OWNER = getProductionProfileAssembly().homepage;
+
 test.describe('homepage (W5)', () => {
   test.use({ viewport: viewportFor(1024) });
 
-  test('a Large Title, then the note sections and the profile as cards on the grouped background', async ({
+  test('exactly one h1, "Passion Project", which is also the document title', async ({ page }) => {
+    await gotoSettled(page, '/');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.getByRole('heading', { level: 1, name: 'Passion Project' })).toBeVisible();
+    await expect(page).toHaveTitle('Passion Project');
+    expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
+  });
+
+  test('shows the owner name and short introduction, never the headline (FR3.2)', async ({
     page,
   }) => {
     await gotoSettled(page, '/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Passion Project' })).toBeVisible();
-    expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
-    await expect(page.locator('.home-card')).toHaveCount(2);
-    const looks = await page
-      .locator('.home-card, .home-profile, .recent-posts')
-      .evaluateAll((elements) =>
-        elements.map((element) => {
-          const style = getComputedStyle(element);
-          return { background: style.backgroundColor, radius: style.borderTopLeftRadius };
-        })
-      );
-    expect(looks).toHaveLength(4);
-    for (const look of looks) expect(look).toEqual(looks[0]);
-    expect(looks[0]!.background).toBe(LIGHT.surface);
+    const opening = page.locator('.home-opening');
+    await expect(opening.getByText(OWNER.name.value, { exact: true })).toBeVisible();
+    await expect(opening.getByText(OWNER.shortIntro.value, { exact: true })).toBeVisible();
+    await expect(page.locator('main')).not.toContainText(OWNER.headline.value);
   });
 
-  test('오늘 발행된 글 keeps its empty message as secondary text inside the card (FR4.5)', async ({
+  test('Résumé and Portfolio are equal 44 px capsules to /resume and /portfolio (FR3.3)', async ({
+    page,
+  }) => {
+    await gotoSettled(page, '/');
+    const resume = page.getByTestId('home-opening-resume-link');
+    const portfolio = page.getByTestId('home-opening-portfolio-link');
+    await expect(resume).toHaveText('Résumé');
+    await expect(resume).toHaveAttribute('href', '/resume');
+    await expect(portfolio).toHaveText('Portfolio');
+    await expect(portfolio).toHaveAttribute('href', '/portfolio');
+    expect(undersized(await measureTargets(page, '.home-opening-actions a'), TARGET)).toEqual([]);
+    const looks = await page.locator('.home-opening-actions a').evaluateAll((links) =>
+      links.map((link) => {
+        const style = getComputedStyle(link);
+        return [
+          style.backgroundColor,
+          style.color,
+          style.borderRadius,
+          style.fontSize,
+          style.fontWeight,
+          style.minHeight,
+          style.paddingInline,
+        ].join('|');
+      })
+    );
+    expect(looks).toHaveLength(2);
+    expect(looks[1]).toBe(looks[0]);
+  });
+
+  test('오늘 발행된 글 keeps its empty message as secondary text inside the card (FR3.4)', async ({
     page,
   }) => {
     await gotoSettled(page, '/');
@@ -98,14 +131,19 @@ test.describe('homepage (W5)', () => {
     await expect(empty).toHaveCSS('color', LIGHT.textSecondary);
   });
 
-  test('the profile actions are 44 px capsules and note links keep the token tint', async ({
+  test('every request the homepage makes stays on its own origin (NFR2.1, NFR3.1)', async ({
     page,
+    baseURL,
   }) => {
+    const own = new URL(baseURL ?? 'http://127.0.0.1:4329').origin;
+    const foreign: string[] = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (url.protocol !== 'data:' && url.origin !== own) foreign.push(request.url());
+    });
     await gotoSettled(page, '/');
-    await expect(page.locator('.home-profile-actions a')).toHaveCount(2);
-    expect(undersized(await measureTargets(page, '.home-profile-actions a'), TARGET)).toEqual([]);
-    // The is:global override in index.astro painted these --c-tint-hover (FR4.3).
-    await expect(page.locator('.home-content a').first()).toHaveCSS('color', LIGHT.tint);
+    await page.waitForLoadState('networkidle');
+    expect(foreign).toEqual([]);
   });
 });
 
@@ -399,11 +437,12 @@ test.describe('selection states (NFR1; R-05, R-12)', () => {
   }
 });
 
-// Loop-back 2 (NFR1-b; review finding R-17). No fixture note highlights a link,
-// so the test wraps the homepage note's link in <mark>, the markup ==[[…]]==
-// renders to. The note must take the site's highlight, not the browser's
-// yellow, and its link must keep 4.5:1 on it.
-test.describe('highlights in the homepage note (NFR1-b; R-17)', () => {
+// Loop-back 2 (NFR1-b; review finding R-17; U1 infra R-01). The fixture post
+// "Post With Formatting" highlights a real link (==[…](/posts/simple-post/)==),
+// so the check runs on rendered markup with no DOM injection. The highlight
+// must take the site's fill, not the browser's yellow, and its link must keep
+// 4.5:1 on it.
+test.describe('a highlighted link in a post (NFR1-b; R-17)', () => {
   test.use({ viewport: viewportFor(1024) });
 
   for (const scheme of ['light', 'dark'] as const) {
@@ -411,16 +450,10 @@ test.describe('highlights in the homepage note (NFR1-b; R-17)', () => {
       page,
     }) => {
       await page.emulateMedia({ colorScheme: scheme });
-      await gotoSettled(page, '/');
-      await page
-        .locator('.home-content p a')
-        .first()
-        .evaluate((link) => {
-          const mark = document.createElement('mark');
-          link.replaceWith(mark);
-          mark.append(link);
-        });
-      const mark = page.locator('.home-content mark');
+      await gotoSettled(page, '/posts/post-with-formatting');
+      const mark = page.locator('.post-content mark:has(a)');
+      await expect(mark).toHaveCount(1);
+      await expect(mark.locator('a')).toHaveAttribute('href', '/posts/simple-post/');
       const expected = await page.evaluate(() => {
         const probe = document.createElement('span');
         probe.style.backgroundColor = 'var(--c-mark-fill)';
@@ -430,7 +463,7 @@ test.describe('highlights in the homepage note (NFR1-b; R-17)', () => {
         return value;
       });
       await expect(mark).toHaveCSS('background-color', expected);
-      const pairs = await renderedContrast(page, '.home-content mark a');
+      const pairs = await renderedContrast(page, '.post-content mark a');
       expect(pairs).toHaveLength(1);
       expect(pairs.filter(({ ratio }) => ratio < 4.5)).toEqual([]);
     });

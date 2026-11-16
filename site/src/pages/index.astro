@@ -8,29 +8,30 @@ import { SITE_NAME } from '../lib/site.js';
 import '../styles/grouped.css';
 import '../styles/home.css';
 
-// The homepage no longer reads a vault note (U1 BR6.1): the title, the profile
-// opening and the interim "오늘 발행된 글" list are built here.
+// The homepage (U1 W5; BR6.1–BR6.6): one Large Title, then an opening with
+// the owner's name, the short introduction and two equal capsules to the
+// profile pages, then the interim "오늘 발행된 글" list, which U2 replaces.
+// Nothing is read from a vault note; the facts come from the approved profile
+// and are rendered as text. The profile headline is never shown here (FR3.2).
+const owner = getProductionProfileAssembly().homepage;
+
 const today = resolveBuildDate(process.env);
 const recentPosts = filterTodayPosts(getOrdinaryPosts(), today);
-
-const homepageProfile = getProductionProfileAssembly().homepage;
 ---
 
 <BaseLayout title={SITE_NAME} surface="grouped">
   <h1 class="home-title">{SITE_NAME}</h1>
-  <section class="home-profile" aria-labelledby="home-profile-heading">
-    <h2 id="home-profile-heading">
-      {homepageProfile.name.value} — {homepageProfile.headline.value}
+  <section class="home-opening" aria-labelledby="home-opening-name">
+    <h2 id="home-opening-name" class="home-opening-name">
+      {owner.name.value}
     </h2>
-    <p class="home-profile-intro">{homepageProfile.shortIntro.value}</p>
-    <nav class="home-profile-actions" aria-label="프로필 바로가기">
-      <a href={homepageProfile.routes.resume} class="capsule capsule-filled">
-        {' '}
-        Résumé{' '}
+    <p class="home-opening-intro">{owner.shortIntro.value}</p>
+    <nav class="home-opening-actions" aria-label="프로필 바로가기">
+      <a href={owner.routes.resume} class="capsule" data-testid="home-opening-resume-link">
+        Résumé
       </a>
-      <a href={homepageProfile.routes.portfolio} class="capsule">
-        {' '}
-        Portfolio{' '}
+      <a href={owner.routes.portfolio} class="capsule" data-testid="home-opening-portfolio-link">
+        Portfolio
       </a>
     </nav>
   </section>

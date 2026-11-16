@@ -1,8 +1,8 @@
-/* The homepage (mockups W5; FR4.3; review finding R-04). The note's H2
- * sections arrive wrapped in section.home-card (lib/home-sections.ts); they,
- * the profile slot and "오늘 발행된 글" are the same grouped card. These
- * rules replace the page's former is:global overrides, so links in the note
- * keep the token tint and the underline from base.css. */
+/* The homepage (U1 W5; BR6.2–BR6.6). A Large Title, then the opening (owner
+ * name, short introduction, two equal capsules) and the interim
+ * "오늘 발행된 글" list as the same grouped card on the grouped background.
+ * Colors are --c- tokens only; the capsules reuse .capsule from grouped.css,
+ * both unfilled, so neither reads as the primary action (FR3.3). */
 /* From tablet width up the page widens with the viewport until it matches the
  * 1100 px floating bar, so a desktop does not show a phone-width column in the
  * middle of the screen. */
@@ -16,8 +16,7 @@
   margin-block: var(--space-2) var(--space-4);
 }
 
-.home-card,
-.home-profile,
+.home-opening,
 .recent-posts {
   margin-block: 0 var(--space-5);
   padding: var(--space-5) var(--space-5) var(--space-4);
@@ -25,22 +24,20 @@
   background: var(--c-surface);
 }
 
-.home-card > h2:first-child,
-.home-profile > h2,
+.home-opening > h2,
 .recent-posts > h2 {
   margin-block: 0 var(--space-3);
 }
 
-.home-card > :last-child,
-.home-profile > :last-child {
+.home-opening > :last-child {
   margin-block-end: 0;
 }
 
-.home-profile-intro {
+.home-opening-intro {
   color: var(--c-text-secondary);
 }
 
-.home-profile-actions {
+.home-opening-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
