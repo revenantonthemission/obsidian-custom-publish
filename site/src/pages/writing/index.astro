@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RecentPosts from '../../components/writing/RecentPosts.astro';
+import TopicList from '../../components/writing/TopicList.astro';
+import { getAllPostMeta, getPreviewSummary } from '../../lib/data';
+import { recentPosts, topics } from '../../lib/writing-lists';
+import '../../styles/grouped.css';
+import '../../styles/writing.css';
+
+// The Writing landing (mockups M2; BR2.2): one Large Title, the Tags and
+// Graph capsules at their current addresses (C3; U3 repoints them), "최근 글"
+// with the five newest dated ordinary posts, and "주제" with one row per hub.
+// Static markup only: no island, no client state.
+const meta = getAllPostMeta();
+const recent = recentPosts(meta, 5);
+const summaries = Object.freeze(
+  Object.fromEntries(recent.map((post) => [post.slug, getPreviewSummary(post.slug)]))
+);
+const topicRows = topics(meta);
+---
+
+<BaseLayout title="Writing" surface="grouped">
+  <header class="listing-header">
+    <h1>Writing</h1>
+  </header>
+  <nav class="writing-capsules" aria-label="태그와 그래프">
+    <a href="/tags" class="capsule">
+      Tags
+    </a>
+    <a href="/graph" class="capsule">
+      Graph
+    </a>
+  </nav>
+  <RecentPosts posts={recent} summaries={summaries} allHref="/writing/all" />
+  <TopicList topics={topicRows} />
+</BaseLayout>

@@ -46,6 +46,7 @@ export const HIG_ROUTES: readonly HigRoute[] = Object.freeze([
   { path: '/tags/test', kind: 'tag' },
   { path: '/graph', kind: 'graph' },
   // U2 (C3): the Writing section; a blog route, so under the 30 KiB CSS budget.
+  { path: '/writing', kind: 'writing' },
   { path: '/writing/all', kind: 'writing' },
   // local-server.mjs serves 404.html with a 404 status, the page under test.
   { path: '/404', kind: 'not-found', status: 404 },

@@ -1,0 +1,42 @@
+---
+import { ChevronRight } from 'lucide-static';
+import { decorativeIcon } from '../../lib/icons';
+import type { PostMeta } from '../../lib/types';
+import PostCard from '../PostCard.astro';
+
+interface Props {
+  /** The five newest dated posts (BR1.4); hubs are already excluded. */
+  posts: readonly PostMeta[];
+  /** slug → preview summary, so a row keeps its two-line summary. */
+  summaries: Readonly<Record<string, string>>;
+  allHref: string;
+}
+
+// "최근 글" on /writing (M2; BR2.2): full post rows, then the
+// "모든 글 보기" row. With no posts it is only the plain-text empty row, and
+// there is no "모든 글 보기" row to offer.
+const { posts, summaries, allHref } = Astro.props;
+---
+
+<section data-testid="recent-list" aria-labelledby="recent-heading">
+  <h2 id="recent-heading" class="writing-section-title">
+    최근 글
+  </h2>
+  <ul class="grouped-list">
+    {posts.map((post) => (
+      <PostCard post={post} summary={summaries[post.slug]} />
+    ))}
+    {posts.length === 0 ? (
+      <li class="grouped-empty" data-testid="empty-row">
+        아직 발행한 글이 없습니다.
+      </li>
+    ) : (
+      <li>
+        <a href={allHref} class="grouped-row" data-testid="all-posts-link">
+          <span class="grouped-row-title">모든 글 보기</span>
+          <span class="grouped-row-chevron" set:html={decorativeIcon(ChevronRight, 18)} />
+        </a>
+      </li>
+    )}
+  </ul>
+</section>

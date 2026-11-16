@@ -39,6 +39,25 @@ function expectedYearLabels(posts: readonly PostMeta[]): string[] {
   return posts.some((p) => p.published === null) ? [...years, '날짜 없음'] : years;
 }
 
+/** The hubs the fixture build published (BR1.6 reference set). */
+function hubs(): PostMeta[] {
+  return readdirSync(META_DIR)
+    .filter((file) => file.endsWith('.json'))
+    .map((file) => JSON.parse(readFileSync(`${META_DIR}/${file}`, 'utf8')) as PostMeta)
+    .filter((post) => post.is_hub);
+}
+
+/** BR1.3/BR1.4 order: published descending, then title, then slug. */
+function byNewest(a: PostMeta, b: PostMeta): number {
+  if (a.published !== b.published) {
+    if (a.published === null) return 1;
+    if (b.published === null) return -1;
+    return a.published < b.published ? 1 : -1;
+  }
+  if (a.title !== b.title) return a.title < b.title ? -1 : 1;
+  return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
+}
+
 async function trackForeignRequests(page: Page, baseURL: string | undefined): Promise<string[]> {
   const own = new URL(baseURL ?? 'http://127.0.0.1:4329').origin;
   const foreign: string[] = [];
@@ -50,6 +69,91 @@ async function trackForeignRequests(page: Page, baseURL: string | undefined): Pr
   });
   return foreign;
 }
+
+test.describe('/writing (M2; BR2.2)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  test('one h1 "Writing", its document title, and the grouped background', async ({ page }) => {
+    await gotoSettled(page, '/writing');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.getByRole('heading', { level: 1, name: 'Writing' })).toBeVisible();
+    await expect(page).toHaveTitle('Writing — Passion Project');
+    expect(
+      await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+    ).toBe(LIGHT_BG_GROUPED);
+  });
+
+  test('the Tags and Graph capsules point at /tags and /graph and open', async ({ page }) => {
+    await gotoSettled(page, '/writing');
+    const main = page.getByRole('main');
+    const tags = main.getByRole('link', { name: 'Tags', exact: true });
+    const graph = main.getByRole('link', { name: 'Graph', exact: true });
+    await expect(tags).toHaveAttribute('href', '/tags');
+    await expect(graph).toHaveAttribute('href', '/graph');
+    await tags.click();
+    await expect(page).toHaveURL(/\/tags$/);
+    await page.goBack();
+    await graph.click();
+    await expect(page).toHaveURL(/\/graph$/);
+  });
+
+  test('"최근 글" holds the five newest dated posts, then "모든 글 보기"', async ({ page }) => {
+    await gotoSettled(page, '/writing');
+    const recent = page.getByTestId('recent-list');
+    await expect(recent.getByRole('heading', { level: 2, name: '최근 글' })).toBeVisible();
+    const expected = ordinaryPosts()
+      .filter((post) => post.published !== null)
+      .sort(byNewest)
+      .slice(0, 5)
+      .map((post) => `/posts/${post.slug}`);
+    const hrefs = (
+      await recent
+        .locator('a.grouped-row')
+        .evaluateAll((links) => links.map((link) => link.getAttribute('href')))
+    ).filter((href) => href !== '/writing/all');
+    expect(hrefs).toEqual(expected);
+    const all = page.getByTestId('all-posts-link');
+    await expect(all).toHaveAttribute('href', '/writing/all');
+    await expect(all).toHaveText('모든 글 보기');
+  });
+
+  test('"주제" lists each hub by title with "글 N개" and a /hubs/<slug> link', async ({ page }) => {
+    await gotoSettled(page, '/writing');
+    const expected = hubs().sort((a, b) =>
+      a.title !== b.title ? (a.title < b.title ? -1 : 1) : a.slug < b.slug ? -1 : 1
+    );
+    const rows = page.getByTestId('topic-row');
+    await expect(rows).toHaveCount(expected.length);
+    for (const [index, hub] of expected.entries()) {
+      const row = rows.nth(index);
+      await expect(row).toHaveAttribute('href', `/hubs/${hub.slug}`);
+      await expect(row.locator('.grouped-row-title')).toHaveText(hub.title);
+      const known = new Set(ordinaryPosts().map((post) => post.slug));
+      const count = hub.forward_links.filter((slug) => known.has(slug)).length;
+      await expect(row.locator('.grouped-row-count')).toHaveText(`글 ${count}개`);
+    }
+  });
+
+  test('no hub or site page appears among the rows (BR1.1)', async ({ page }) => {
+    await gotoSettled(page, '/writing');
+    const hrefs = await page
+      .getByTestId('recent-list')
+      .locator('a.grouped-row')
+      .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+    expect(hrefs).not.toContain('/posts/hub-page');
+    expect(hrefs).not.toContain('/posts/empty-hub');
+    expect(hrefs.every((href) => href?.startsWith('/posts/') || href === '/writing/all')).toBe(
+      true
+    );
+  });
+
+  test('the click path /writing → 모든 글 보기 → /writing/all works', async ({ page }) => {
+    await gotoSettled(page, '/writing');
+    await page.getByTestId('all-posts-link').click();
+    await expect(page).toHaveURL(/\/writing\/all$/);
+    await expect(page.getByRole('heading', { level: 1, name: '모든 글' })).toBeVisible();
+  });
+});
 
 test.describe('/writing/all (M3; BR2.3–BR2.6)', () => {
   test.use({ viewport: viewportFor(1024) });

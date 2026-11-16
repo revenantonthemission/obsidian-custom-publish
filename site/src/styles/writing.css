@@ -2,6 +2,30 @@
  * Loaded by /, /writing and /writing/all only. Colours are --c- tokens only,
  * motion only on transform and opacity; global.css is not changed. */
 
+/* ── /writing: capsules, section titles, topic counts ── */
+.writing-capsules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-end: var(--space-6);
+}
+
+.writing-section-title {
+  margin-block: var(--space-6) var(--space-3);
+  font-size: var(--text-title-2);
+  line-height: var(--leading-title);
+}
+
+.writing-section-title:first-of-type {
+  margin-block-start: 0;
+}
+
+/* The count trails the topic title; the chevron stays on the row's edge. */
+.grouped-row-count {
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+}
+
 /* ── /writing/all: back link, sticky year headers, compact rows ── */
 .writing-all {
   /* The header's minimum block size: one 44 px target plus its padding. */
