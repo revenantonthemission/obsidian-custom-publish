@@ -1,0 +1,7 @@
+[
+  {
+    "page": "/posts/post-with-image/index.html",
+    "target": "/assets/nonexistent-image.png",
+    "reason": "deliberate fixture broken image (warning test)"
+  }
+]
