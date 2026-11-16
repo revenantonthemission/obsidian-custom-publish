@@ -1,10 +1,13 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-use obsidian_press::boundary::resolve_run_folders;
+use obsidian_press::boundary::{
+    PagesFolder, pages_empty_notice, pages_missing_notice, pages_not_given_notice,
+    resolve_run_folders,
+};
 use obsidian_press::catalog::{PublicationCatalog, report_diagnostics};
 use obsidian_press::output::write_output;
-use obsidian_press::scanner::{scan_vault, stamp_published_dates};
+use obsidian_press::scanner::{scan_sources, stamp_published_dates};
 
 #[derive(Parser)]
 #[command(name = "obsidian-press")]
@@ -28,7 +31,7 @@ fn main() -> anyhow::Result<()> {
 
     // BoundaryGuard first: nothing is read, stamped or deleted until the three
     // folders are known not to overlap (BR1.2, BR1.3; NFR5.4).
-    let _folders = match resolve_run_folders(&cli.vault, cli.pages.as_deref(), &cli.output) {
+    let folders = match resolve_run_folders(&cli.vault, cli.pages.as_deref(), &cli.output) {
         Ok(folders) => folders,
         Err(error) => {
             eprintln!("{error}");
@@ -36,15 +39,40 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
+    // At most one pages notice before the scan (BR1.3; NFR5.10, NFR5.15).
+    let pages_root = match &folders.pages {
+        PagesFolder::NotGiven => {
+            eprintln!("{}", pages_not_given_notice());
+            None
+        }
+        PagesFolder::Missing(path) => {
+            eprintln!("{}", pages_missing_notice(path));
+            None
+        }
+        PagesFolder::Present(path) => Some(path.as_path()),
+    };
+
     if cli.stamp_published {
         println!("Stamping published dates...");
-        let count = stamp_published_dates(&cli.vault)?;
+        let count = stamp_published_dates(&folders.notes)?;
         println!("Stamped {count} posts with published date");
     }
 
     println!("Scanning vault: {:?}", cli.vault);
-    let index = scan_vault(&cli.vault)?;
-    println!("Found {} sources", index.posts.len());
+    let scan = scan_sources(&folders.notes, pages_root, true)?;
+    println!(
+        "Found {} sources ({} site pages)",
+        scan.index.posts.len(),
+        scan.page_count
+    );
+    // "Empty" is decided after the PAGES walk, so it uses exactly the walker's
+    // skip rules (reliability-design §2).
+    if let Some(path) = pages_root
+        && scan.page_count == 0
+    {
+        eprintln!("{}", pages_empty_notice(path));
+    }
+    let index = scan.index;
 
     // Stage 1: scope + cardinality. Stage 2: homepage-target references.
     // Each stage reports its full batch and fails before any output write

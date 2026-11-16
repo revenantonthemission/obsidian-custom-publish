@@ -183,6 +183,26 @@ fn resolve_lenient(path: &Path) -> Result<PathBuf, BoundaryError> {
     )))
 }
 
+/// RunNotice texts (reliability-design §2; contract C1). Each is one stderr
+/// line; a run prints at most one of them.
+pub fn pages_not_given_notice() -> String {
+    "notice: no site pages folder given; publishing no site pages".to_string()
+}
+
+pub fn pages_missing_notice(path: &Path) -> String {
+    format!(
+        "notice: site pages folder {} not found; publishing no site pages",
+        path.display()
+    )
+}
+
+pub fn pages_empty_notice(path: &Path) -> String {
+    format!(
+        "notice: site pages folder {} is empty; publishing no site pages",
+        path.display()
+    )
+}
+
 /// Equal, or one a component-wise prefix of the other, after lowercasing.
 /// `Areas/Notes` never matches `Areas/NotesArchive`.
 pub fn overlaps(a: &Path, b: &Path) -> bool {

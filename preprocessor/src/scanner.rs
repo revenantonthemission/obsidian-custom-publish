@@ -183,28 +183,65 @@ fn file_modified_date(file_path: &Path) -> Option<String> {
     Some(local.format("%Y-%m-%d").to_string())
 }
 
-/// Scan one posts folder and build an index of its notes. Skipped links are
-/// reported on stderr here; the publishing run itself uses `scan_sources`,
-/// which returns them so they are printed once per run.
+/// Scan one posts folder and build an index of its notes, reporting skipped
+/// links on stderr. The publishing run uses `scan_sources` directly.
 pub fn scan_vault(vault_path: &Path) -> Result<VaultIndex> {
-    let (notes, skipped_links) = scan_folder(vault_path, NoteSource::Notes)?;
-    for link in &skipped_links {
-        eprintln!("{}", skipped_link_warning(link));
-    }
-    Ok(build_index(notes))
+    Ok(scan_sources(vault_path, None, true)?.index)
 }
 
-/// Read every note the shared walker yields under `root`, tagged with its
-/// source folder (BR1.5). Returns the notes and the skipped links.
-fn scan_folder(root: &Path, source: NoteSource) -> Result<(Vec<ScannedNote>, Vec<PathBuf>)> {
-    // Batch-query git for all file modification dates (one subprocess instead of N)
-    let git_dates = git_last_modified_batch(root);
-    let (files, skipped_links) = walk_markdown(root)?;
-    let notes = files
+/// The result of scanning both source folders.
+#[derive(Debug)]
+pub struct ScanOutcome {
+    /// Every note from NOTES and PAGES in (slug, source, path) order.
+    pub index: VaultIndex,
+    /// Links the walker skipped in either folder, NOTES first, each sorted.
+    pub skipped_links: Vec<PathBuf>,
+    /// Notes found under PAGES after the skip rules (0 = the folder is empty).
+    pub page_count: usize,
+}
+
+/// Scan NOTES and, when present, PAGES into one index (BR1.4, BR1.5, BR1.7).
+///
+/// Both folders are walked first. With `report_links`, each skipped link is
+/// printed once, before any note is read (observability-design §2 row 3); the
+/// stamping rescan passes `false` so a link is never reported twice.
+pub fn scan_sources(notes: &Path, pages: Option<&Path>, report_links: bool) -> Result<ScanOutcome> {
+    let mut roots = vec![(notes, NoteSource::Notes)];
+    if let Some(pages) = pages {
+        roots.push((pages, NoteSource::Pages));
+    }
+
+    let mut walked = Vec::new();
+    let mut skipped_links = Vec::new();
+    for (root, source) in roots {
+        let (files, links) = walk_markdown(root)?;
+        skipped_links.extend(links);
+        walked.push((root, source, files));
+    }
+    if report_links {
+        for link in &skipped_links {
+            eprintln!("{}", skipped_link_warning(link));
+        }
+    }
+
+    let mut notes_read = Vec::new();
+    for (root, source, files) in walked {
+        // Batch-query git for all file modification dates (one subprocess instead of N)
+        let git_dates = git_last_modified_batch(root);
+        for path in &files {
+            notes_read.push(read_note(path, source, &git_dates)?);
+        }
+    }
+
+    let page_count = notes_read
         .iter()
-        .map(|path| read_note(path, source, &git_dates))
-        .collect::<Result<Vec<_>>>()?;
-    Ok((notes, skipped_links))
+        .filter(|n| n.post.source == NoteSource::Pages)
+        .count();
+    Ok(ScanOutcome {
+        index: build_index(notes_read),
+        skipped_links,
+        page_count,
+    })
 }
 
 /// Read and parse one note.
