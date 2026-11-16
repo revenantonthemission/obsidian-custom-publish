@@ -43,6 +43,10 @@ pub struct PostMeta {
     pub visibility: Option<RawVisibility>,
     #[serde(default)]
     pub source: NoteSource,
+    /// Canonical root of the folder the note came from. The attachment lookup
+    /// never searches above it (BR1.6; NFR5.2).
+    #[serde(skip)]
+    pub source_root: PathBuf,
     pub raw_content: String,
 }
 

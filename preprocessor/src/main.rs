@@ -72,10 +72,13 @@ fn main() -> anyhow::Result<()> {
     }
 
     println!("Writing output to {:?}", cli.output);
-    if let Err(e) = write_output(&catalog, &folders.output) {
-        eprintln!("{e:#}");
-        std::process::exit(1);
-    }
+    let summary = match write_output(&catalog, &folders.output) {
+        Ok(summary) => summary,
+        Err(e) => {
+            eprintln!("{e:#}");
+            std::process::exit(1);
+        }
+    };
 
     // Output is written first on purpose: the operator should be able to
     // inspect exactly what was produced. But a run that dropped diagrams must
@@ -88,7 +91,9 @@ fn main() -> anyhow::Result<()> {
         ));
     }
 
-    println!("Done.");
+    // The summary is the last stdout line, printed only on success, after the
+    // diagram check (NFR4.4; observability-design §2 row 8).
+    println!("{}", summary.line());
     Ok(())
 }
 

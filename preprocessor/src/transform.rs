@@ -61,14 +61,46 @@ pub fn transform_content_publication(
     kinds: Option<&[EntryKind]>,
     asset_dir: Option<&Path>,
 ) -> (String, Vec<String>) {
+    let assets = AssetTarget {
+        dir: asset_dir,
+        url: POST_ASSET_URL,
+    };
+    transform_note(index, post_idx, kinds, &assets)
+}
+
+/// URL prefix of post images and diagrams (`assets/` in OUTPUT).
+pub const POST_ASSET_URL: &str = "/assets";
+/// URL prefix of site-page images and diagrams (`assets/pages/` in OUTPUT),
+/// so a page image never shadows a post image of the same name (NFR4.6).
+pub const PAGE_ASSET_URL: &str = "/assets/pages";
+
+/// Where a note's rendered diagrams are written and the URL prefix its image
+/// and diagram references get. The two always name the same namespace.
+#[derive(Debug, Clone, Copy)]
+pub struct AssetTarget<'a> {
+    /// Folder for rendered diagrams; `None` inlines them instead.
+    pub dir: Option<&'a Path>,
+    /// URL prefix without a trailing slash, such as `/assets`.
+    pub url: &'a str,
+}
+
+/// Transform one note for publication: links by `kinds` (BR3.1–BR3.3) and
+/// image and diagram URLs in the `assets` namespace. Returns the transformed
+/// body and the referenced image file names (final path component only).
+pub fn transform_note(
+    index: &VaultIndex,
+    post_idx: usize,
+    kinds: Option<&[EntryKind]>,
+    assets: &AssetTarget<'_>,
+) -> (String, Vec<String>) {
     let raw = &index.posts[post_idx].raw_content;
     let slug = &index.posts[post_idx].slug;
     let is_hub = index.posts[post_idx].is_hub;
     let content = strip_frontmatter(raw);
     let content = strip_comments(&content);
-    let (content, mut images) = convert_image_embeds(&content);
+    let (content, mut images) = convert_image_embeds(&content, assets.url);
     let content = resolve_transclusions(&content, index);
-    let (content, markdown_images) = convert_markdown_images(&content);
+    let (content, markdown_images) = convert_markdown_images(&content, assets.url);
     images.extend(markdown_images);
     images.sort();
     images.dedup();
@@ -81,7 +113,7 @@ pub fn transform_content_publication(
     let content = inject_block_anchors(&content);
     let content = convert_highlights(&content);
     let content = convert_callouts(&content);
-    let content = render_diagram_blocks(&content, slug, asset_dir);
+    let content = render_diagram_blocks(&content, slug, assets);
     (content, images)
 }
 
@@ -220,15 +252,22 @@ fn inject_block_anchors(content: &str) -> String {
 /// A numeric pipe value is a width or `widthxheight`; any other value is the
 /// image's alt text, which the site renders as a caption.
 ///
+/// The embed is reduced to its final file-name component for both the copy
+/// destination and the URL, so `![[../../x.png]]` can never point outside
+/// OUTPUT (NFR-design R-major; security-design §4 step 1).
+///
 /// Returns `(transformed_content, list_of_referenced_image_filenames)`.
-fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
+fn convert_image_embeds(content: &str, url: &str) -> (String, Vec<String>) {
     let mut images = Vec::new();
     let result = transform_outside_fences(content, |line| {
         IMAGE_EMBED_RE
             .replace_all(line, |caps: &regex::Captures| {
-                let filename = &caps[1];
+                let Some(filename) = Path::new(&caps[1]).file_name().and_then(|n| n.to_str())
+                else {
+                    return caps[0].to_string();
+                };
                 images.push(filename.to_string());
-                let escaped = html_escape(filename);
+                let src = format!("{url}/{}", html_escape(filename));
                 let suffix = caps
                     .get(3)
                     .map(|m| m.as_str().trim())
@@ -240,20 +279,17 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
                             let width = &size[1];
                             match size.get(2) {
                                 Some(height) => format!(
-                                    r#"<img src="/assets/{escaped}" alt="" width="{width}" height="{}" />"#,
+                                    r#"<img src="{src}" alt="" width="{width}" height="{}" />"#,
                                     height.as_str()
                                 ),
-                                None => format!(
-                                    r#"<img src="/assets/{escaped}" alt="" width="{width}" />"#
-                                ),
+                                None => {
+                                    format!(r#"<img src="{src}" alt="" width="{width}" />"#)
+                                }
                             }
                         }
-                        None => format!(
-                            r#"<img src="/assets/{escaped}" alt="{}" />"#,
-                            html_escape(value)
-                        ),
+                        None => format!(r#"<img src="{src}" alt="{}" />"#, html_escape(value)),
                     },
-                    None => format!(r#"<img src="/assets/{escaped}" alt="" />"#),
+                    None => format!(r#"<img src="{src}" alt="" />"#),
                 }
             })
             .to_string()
@@ -263,13 +299,14 @@ fn convert_image_embeds(content: &str) -> (String, Vec<String>) {
     (result, images)
 }
 
-/// Rewrite local Markdown image sources (`![alt](file.png)`) to `/assets/`
-/// and report the filenames so the caller copies them from the vault's
-/// attachment folder. External and root-relative sources are left alone.
+/// Rewrite local Markdown image sources (`![alt](file.png)`) to the note's
+/// asset namespace (`url`) and report the filenames so the caller copies them
+/// from the vault's attachment folder. External and root-relative sources are
+/// left alone.
 ///
 /// Runs after transclusion resolution so images inside transcluded notes are
 /// rewritten too.
-fn convert_markdown_images(content: &str) -> (String, Vec<String>) {
+fn convert_markdown_images(content: &str, url: &str) -> (String, Vec<String>) {
     let mut images = Vec::new();
     let result = transform_outside_fences(content, |line| {
         MARKDOWN_IMAGE_RE
@@ -288,7 +325,7 @@ fn convert_markdown_images(content: &str) -> (String, Vec<String>) {
                 }
                 images.push(filename.to_string());
                 let title = caps.get(3).map(|m| m.as_str()).unwrap_or("");
-                format!("![{alt}]({}{title})", markdown_asset_url(filename))
+                format!("![{alt}]({}{title})", markdown_asset_url(url, filename))
             })
             .to_string()
     });
@@ -303,14 +340,14 @@ fn is_external_image_src(src: &str) -> bool {
 }
 
 /// Percent-encode characters that would end a Markdown link destination.
-fn markdown_asset_url(filename: &str) -> String {
+fn markdown_asset_url(url: &str, filename: &str) -> String {
     let encoded = filename
         .replace(' ', "%20")
         .replace('(', "%28")
         .replace(')', "%29")
         .replace('#', "%23")
         .replace('?', "%3F");
-    format!("/assets/{encoded}")
+    format!("{url}/{encoded}")
 }
 
 /// Replace `![[Note Name]]`, `![[Note Name#^block-id]]`, or `![[Note Name#Heading]]`
@@ -610,8 +647,10 @@ const MERMAID_THEMES: ThemePair = ThemePair {
 /// - `pdf` / `pptx` — single render, written to asset file, `<a download>` link
 /// - `txt` / `ascii` — single render, wrapped in `<pre>` block
 ///
-/// Mermaid and Typst ignore the format specifier.
-fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) -> String {
+/// Mermaid and Typst ignore the format specifier. Rendered files go to
+/// `assets.dir` and their URLs use `assets.url`, so a site page's diagrams
+/// live under `assets/pages/` like its images.
+fn render_diagram_blocks(content: &str, slug: &str, assets: &AssetTarget<'_>) -> String {
     use crate::d2::D2Format;
     let mut counter = 0;
 
@@ -632,14 +671,14 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
                             source,
                             slug,
                             counter,
-                            asset_dir,
+                            assets,
                             &D2_THEMES,
                             |src, theme| crate::d2::render_d2(src, theme, None),
                         ),
                         _ if format.is_text_art() => render_d2_text(source, slug, counter, format),
                         _ => {
                             // Binary or download formats (png, gif, pdf, pptx)
-                            render_d2_binary(source, slug, counter, asset_dir, format)
+                            render_d2_binary(source, slug, counter, assets, format)
                         }
                     }
                 }
@@ -648,11 +687,11 @@ fn render_diagram_blocks(content: &str, slug: &str, asset_dir: Option<&Path>) ->
                     source,
                     slug,
                     counter,
-                    asset_dir,
+                    assets,
                     &MERMAID_THEMES,
                     |src, theme| crate::mermaid::render_mermaid(src, theme),
                 ),
-                "typst" => render_single_diagram(lang, source, slug, counter, asset_dir, |src| {
+                "typst" => render_single_diagram(lang, source, slug, counter, assets, |src| {
                     crate::typst_render::render_typst(src)
                 }),
                 _ => caps[0].to_string(),
@@ -667,15 +706,16 @@ fn render_d2_binary(
     source: &str,
     slug: &str,
     counter: usize,
-    asset_dir: Option<&Path>,
+    assets: &AssetTarget<'_>,
     format: crate::d2::D2Format,
 ) -> String {
+    let url = assets.url;
     match crate::d2::render_d2_bytes(source, format, None, None) {
         Ok(bytes) => {
             let ext = format.extension();
             let filename = format!("{slug}-d2-{counter}.{ext}");
 
-            if let Some(dir) = asset_dir {
+            if let Some(dir) = assets.dir {
                 let path = dir.join(&filename);
                 if let Err(e) = std::fs::write(&path, &bytes) {
                     eprintln!("warning: failed to write {}: {e}", path.display());
@@ -687,11 +727,11 @@ fn render_d2_binary(
                 crate::d2::D2Format::Pdf | crate::d2::D2Format::Pptx => {
                     let label = ext.to_uppercase();
                     format!(
-                        r#"<a href="/assets/{filename}" download class="diagram-download">{label} 다운로드</a>"#
+                        r#"<a href="{url}/{filename}" download class="diagram-download">{label} 다운로드</a>"#
                     )
                 }
                 _ => {
-                    format!(r#"<img src="/assets/{filename}" class="diagram diagram-d2" alt="" />"#)
+                    format!(r#"<img src="{url}/{filename}" class="diagram diagram-d2" alt="" />"#)
                 }
             }
         }
@@ -728,19 +768,20 @@ fn render_single_diagram(
     source: &str,
     slug: &str,
     counter: usize,
-    asset_dir: Option<&Path>,
+    assets: &AssetTarget<'_>,
     render_fn: impl Fn(&str) -> anyhow::Result<String>,
 ) -> String {
+    let url = assets.url;
     match render_fn(source) {
         Ok(svg) => {
-            if let Some(dir) = asset_dir {
+            if let Some(dir) = assets.dir {
                 let filename = format!("{slug}-{lang}-{counter}.svg");
                 let path = dir.join(&filename);
                 if let Err(e) = std::fs::write(&path, &svg) {
                     eprintln!("warning: failed to write {}: {e}", path.display());
                     return format!("<!-- {lang} render failed: {e} -->");
                 }
-                format!(r#"<img src="/assets/{filename}" class="diagram diagram-{lang}" alt="" />"#)
+                format!(r#"<img src="{url}/{filename}" class="diagram diagram-{lang}" alt="" />"#)
             } else {
                 format!(r#"<div class="diagram diagram-{lang}">{svg}</div>"#)
             }
@@ -832,10 +873,11 @@ fn render_themed_diagram(
     source: &str,
     slug: &str,
     counter: usize,
-    asset_dir: Option<&Path>,
+    assets: &AssetTarget<'_>,
     themes: &ThemePair,
     render_fn: impl Fn(&str, &str) -> anyhow::Result<String>,
 ) -> String {
+    let url = assets.url;
     let light_result = render_fn(source, themes.light);
     let dark_result = render_fn(source, themes.dark);
 
@@ -851,7 +893,7 @@ fn render_themed_diagram(
     for (variant, result) in [("light", light_result), ("dark", dark_result)] {
         match result {
             Ok(svg) => {
-                if let Some(dir) = asset_dir {
+                if let Some(dir) = assets.dir {
                     let filename = format!("{slug}-{lang}-{counter}-{variant}.svg");
                     let path = dir.join(&filename);
                     if let Err(e) = std::fs::write(&path, &svg) {
@@ -859,7 +901,7 @@ fn render_themed_diagram(
                         continue;
                     }
                     parts.push(format!(
-                        r#"<img src="/assets/{filename}" class="diagram diagram-{lang} diagram-{variant}" alt="" />"#
+                        r#"<img src="{url}/{filename}" class="diagram diagram-{lang} diagram-{variant}" alt="" />"#
                     ));
                 } else {
                     parts.push(format!(
@@ -883,6 +925,31 @@ fn render_themed_diagram(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// No asset folder: diagrams render inline.
+    const INLINE: AssetTarget<'static> = AssetTarget {
+        dir: None,
+        url: POST_ASSET_URL,
+    };
+
+    #[test]
+    fn test_page_namespace_rewrites_embeds_and_markdown_images() {
+        let (embeds, embedded) = convert_image_embeds("![[a b.png|200]]", PAGE_ASSET_URL);
+        assert_eq!(
+            embeds,
+            r#"<img src="/assets/pages/a b.png" alt="" width="200" />"#
+        );
+        assert_eq!(embedded, vec!["a b.png".to_string()]);
+        let (markdown, _) = convert_markdown_images("![x](p.png)", PAGE_ASSET_URL);
+        assert_eq!(markdown, "![x](/assets/pages/p.png)");
+    }
+
+    #[test]
+    fn test_image_embed_with_dot_dot_keeps_the_file_name_only() {
+        let (content, images) = convert_image_embeds("![[../../x.png]]", POST_ASSET_URL);
+        assert_eq!(content, r#"<img src="/assets/x.png" alt="" />"#);
+        assert_eq!(images, vec!["x.png".to_string()]);
+    }
 
     fn failure(lang: &str, slug: &str) -> DiagramFailure {
         DiagramFailure {
@@ -933,7 +1000,7 @@ mod tests {
             "source",
             "records-which-diagram-failed",
             1,
-            None,
+            &INLINE,
             &ThemePair {
                 light: "light",
                 dark: "dark",
@@ -960,6 +1027,7 @@ mod tests {
     fn test_convert_markdown_images_rewrites_local_sources_and_collects_them() {
         let (content, images) = convert_markdown_images(
             "![Caption](figure.png)\n![Titled](../attachment/photo.jpg \"Title\")",
+            POST_ASSET_URL,
         );
         assert_eq!(
             content,
@@ -974,7 +1042,7 @@ mod tests {
     #[test]
     fn test_convert_markdown_images_leaves_external_sources_alone() {
         let input = "![External](https://example.com/image.png)";
-        let (content, images) = convert_markdown_images(input);
+        let (content, images) = convert_markdown_images(input, POST_ASSET_URL);
         assert_eq!(content, input);
         assert!(images.is_empty());
     }
@@ -1019,7 +1087,7 @@ mod tests {
             "source",
             "my-slug",
             1,
-            None,
+            &INLINE,
             &ThemePair {
                 light: "light",
                 dark: "dark",

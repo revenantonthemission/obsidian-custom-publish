@@ -104,6 +104,7 @@ pub fn make_post(
         description: None,
         visibility,
         source: NoteSource::Notes,
+        source_root: PathBuf::from("vault"),
         raw_content: raw_content.to_string(),
     }
 }

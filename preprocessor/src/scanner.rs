@@ -228,8 +228,15 @@ pub fn scan_sources(notes: &Path, pages: Option<&Path>, report_links: bool) -> R
     for (root, source, files) in walked {
         // Batch-query git for all file modification dates (one subprocess instead of N)
         let git_dates = git_last_modified_batch(root);
+        let origin = NoteOrigin {
+            source,
+            // The walk succeeded, so the root canonicalises; the walker
+            // yields paths under this same canonical root.
+            root: std::fs::canonicalize(root)
+                .with_context(|| format!("failed to read folder {}", root.display()))?,
+        };
         for path in &files {
-            notes_read.push(read_note(path, source, &git_dates)?);
+            notes_read.push(read_note(path, &origin, &git_dates)?);
         }
     }
 
@@ -244,10 +251,16 @@ pub fn scan_sources(notes: &Path, pages: Option<&Path>, report_links: bool) -> R
     })
 }
 
+/// The folder a note is read from: its source tag and canonical root.
+struct NoteOrigin {
+    source: NoteSource,
+    root: PathBuf,
+}
+
 /// Read and parse one note.
 fn read_note(
     path: &Path,
-    source: NoteSource,
+    origin: &NoteOrigin,
     git_dates: &HashMap<PathBuf, String>,
 ) -> Result<ScannedNote> {
     let content = std::fs::read_to_string(path)
@@ -282,7 +295,8 @@ fn read_note(
         hub_parent: frontmatter.hub_parent,
         description: frontmatter.description,
         visibility: raw_visibility(frontmatter.visibility),
-        source,
+        source: origin.source,
+        source_root: origin.root.clone(),
         raw_content: content,
     };
     Ok(ScannedNote {
