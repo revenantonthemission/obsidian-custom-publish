@@ -1,9 +1,87 @@
-//! Shared synthetic-index helpers for the U2 publication test suites.
+//! Shared helpers for the publication test suites: synthetic indexes (U2) and
+//! real-binary runs over temporary on-disk vaults (U1 boundary). Each test
+//! crate uses a subset, hence the dead-code allowance.
+#![allow(dead_code)]
 
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::collections::{BTreeMap, HashMap};
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
 
 use obsidian_press::types::{PostMeta, RawVisibility, VaultIndex};
+
+/// Write `body` to `root/rel`, creating parent folders.
+pub fn put(root: &Path, rel: &str, body: &str) -> PathBuf {
+    let path = root.join(rel);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(&path, body).unwrap();
+    path
+}
+
+/// Relative path → bytes of every regular file under `root` (links are
+/// recorded by their own target text, never followed). Missing root → empty.
+pub fn hash_tree(root: &Path) -> BTreeMap<String, Vec<u8>> {
+    let mut map = BTreeMap::new();
+    if !root.exists() {
+        return map;
+    }
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        for entry in fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            let rel = path
+                .strip_prefix(root)
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            let meta = fs::symlink_metadata(&path).unwrap();
+            if meta.file_type().is_symlink() {
+                let target = fs::read_link(&path).unwrap();
+                map.insert(rel, target.to_string_lossy().as_bytes().to_vec());
+            } else if meta.is_dir() {
+                stack.push(path);
+            } else {
+                map.insert(rel, fs::read(&path).unwrap());
+            }
+        }
+    }
+    map
+}
+
+/// Run the release binary with the given arguments.
+pub fn run_press(args: &[&std::ffi::OsStr]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_obsidian-press"))
+        .args(args)
+        .output()
+        .unwrap()
+}
+
+pub fn stdout_of(output: &Output) -> String {
+    String::from_utf8_lossy(&output.stdout).to_string()
+}
+
+pub fn stderr_of(output: &Output) -> String {
+    String::from_utf8_lossy(&output.stderr).to_string()
+}
+
+/// The path the binary prints for `path`: canonical when it exists, else the
+/// canonical nearest existing ancestor joined with the missing tail.
+pub fn shown(path: &Path) -> String {
+    if let Ok(canonical) = fs::canonicalize(path) {
+        return canonical.display().to_string();
+    }
+    let mut tail = Vec::new();
+    let mut current = path.to_path_buf();
+    while fs::canonicalize(&current).is_err() {
+        tail.push(current.file_name().unwrap().to_os_string());
+        current = current.parent().unwrap().to_path_buf();
+    }
+    let mut resolved = fs::canonicalize(&current).unwrap();
+    for part in tail.iter().rev() {
+        resolved.push(part);
+    }
+    resolved.display().to_string()
+}
 
 /// Build a synthetic post. `slug` doubles as the file name so diagnostics carry
 /// a recognizable path.

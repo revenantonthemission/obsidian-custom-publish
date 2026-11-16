@@ -1,3 +1,4 @@
+pub mod boundary;
 pub mod catalog;
 pub mod d2;
 pub mod hub_dates;

@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 
+use obsidian_press::boundary::resolve_run_folders;
 use obsidian_press::catalog::{PublicationCatalog, report_diagnostics};
 use obsidian_press::output::write_output;
 use obsidian_press::scanner::{scan_vault, stamp_published_dates};
@@ -9,10 +10,14 @@ use obsidian_press::scanner::{scan_vault, stamp_published_dates};
 #[command(name = "obsidian-press")]
 #[command(about = "Obsidian vault to static site preprocessor")]
 struct Cli {
-    /// Path to the Obsidian vault
+    /// Posts folder of the Obsidian vault (Areas/Notes)
+    #[arg(value_name = "NOTES")]
     vault: PathBuf,
     /// Output directory
     output: PathBuf,
+    /// Site pages folder (Areas/Pages); optional, never stamped
+    #[arg(long, value_name = "PAGES")]
+    pages: Option<PathBuf>,
     /// Stamp today's date as `published` in vault files that lack it
     #[arg(long)]
     stamp_published: bool,
@@ -20,6 +25,16 @@ struct Cli {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
+    // BoundaryGuard first: nothing is read, stamped or deleted until the three
+    // folders are known not to overlap (BR1.2, BR1.3; NFR5.4).
+    let _folders = match resolve_run_folders(&cli.vault, cli.pages.as_deref(), &cli.output) {
+        Ok(folders) => folders,
+        Err(error) => {
+            eprintln!("{error}");
+            std::process::exit(error.exit_code());
+        }
+    };
 
     if cli.stamp_published {
         println!("Stamping published dates...");
