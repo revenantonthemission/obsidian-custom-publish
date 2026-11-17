@@ -39,6 +39,17 @@ async function tokenColor(page: Page, token: string): Promise<string> {
   }, token);
 }
 
+/** The aria-current values of the links a selector matches, in document order. */
+async function markedAriaCurrents(page: Page, selector: string): Promise<string[]> {
+  return page
+    .locator(selector)
+    .evaluateAll((elements) =>
+      elements
+        .map((element) => element.getAttribute('aria-current'))
+        .filter((value): value is string => value !== null)
+    );
+}
+
 // C-01: zero axe violations on every route, at every width, in both
 // appearances, with reduced motion (NFR1, A11Y-13).
 for (const width of HIG_WIDTHS) {
@@ -77,7 +88,7 @@ for (const width of [320, 1024] as const) {
 test.describe('navigation sheet and bar on phones', () => {
   test.use({ viewport: viewportFor(320) });
 
-  test('the open sheet lists the four sections at 52 px rows and hides the page behind it', async ({
+  test('the open sheet lists the Writing link at a 52 px row and hides the page behind it', async ({
     page,
   }) => {
     await gotoSettled(page, '/');
@@ -87,8 +98,12 @@ test.describe('navigation sheet and bar on phones', () => {
     // Full height below the bar, not collapsed into it.
     expect((await sheet.boundingBox())?.height ?? 0).toBeGreaterThan(600);
     const rows = await measureTargets(page, 'nav.mobile-nav-dropdown a');
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(1);
     expect(undersized(rows, { width: 200, height: 52 })).toEqual([]);
+    await expect(page.getByTestId('mobile-navigation-link-writing')).toHaveAttribute(
+      'href',
+      '/writing'
+    );
     for (const selector of ['main', '.back-to-top']) {
       expect(
         await page.locator(selector).evaluate((element) => getComputedStyle(element).visibility),
@@ -115,9 +130,91 @@ test.describe('navigation sheet and bar on phones', () => {
     expect(
       await page.locator('main').evaluate((element) => getComputedStyle(element).visibility)
     ).toBe('hidden');
-    await page.getByTestId('mobile-navigation-link-tags').click();
-    await expect(page).toHaveURL(/\/tags\/?$/);
+    await page.getByTestId('mobile-navigation-link-writing').click();
+    await expect(page).toHaveURL(/\/writing\/?$/);
     await context.close();
+  });
+});
+
+// The Writing marker (BR1.3): the route itself is 'page', every section below
+// it is 'true', and each surface marks at most one item (NFR1.11).
+test.describe('the Writing marker', () => {
+  test('the bar marks the Writing route as page and its sections as true', async ({ page }) => {
+    await page.setViewportSize(viewportFor(1024));
+
+    await gotoSettled(page, '/writing');
+    expect(await markedAriaCurrents(page, '.desktop-nav a')).toEqual(['page']);
+
+    await gotoSettled(page, '/writing/all');
+    expect(await markedAriaCurrents(page, '.desktop-nav a')).toEqual(['true']);
+
+    await gotoSettled(page, '/');
+    expect(await markedAriaCurrents(page, '.desktop-nav a')).toEqual([]);
+
+    await gotoSettled(page, '/resume');
+    expect(await markedAriaCurrents(page, '.desktop-nav a')).toEqual([]);
+  });
+
+  test('the sheet marks the Writing route as page and its sections as true', async ({ page }) => {
+    await page.setViewportSize(viewportFor(320));
+
+    await gotoSettled(page, '/writing');
+    await page.getByTestId('mobile-navigation-toggle').click();
+    expect(await markedAriaCurrents(page, 'nav.mobile-nav-dropdown a')).toEqual(['page']);
+
+    await gotoSettled(page, '/writing/all');
+    await page.getByTestId('mobile-navigation-toggle').click();
+    expect(await markedAriaCurrents(page, 'nav.mobile-nav-dropdown a')).toEqual(['true']);
+  });
+
+  test('the bar indicator is visible for both marker values, not by colour alone', async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewportFor(1024));
+
+    await gotoSettled(page, '/writing');
+    const pageLink = page.locator('.desktop-nav a[aria-current="page"]');
+    const pageStyle = await pageLink.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        weight: style.fontWeight,
+        line: style.textDecorationLine,
+        thickness: style.textDecorationThickness,
+      };
+    });
+
+    await gotoSettled(page, '/writing/all');
+    const sectionLink = page.locator('.desktop-nav a[aria-current="true"]');
+    const sectionStyle = await sectionLink.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        weight: style.fontWeight,
+        line: style.textDecorationLine,
+        thickness: style.textDecorationThickness,
+      };
+    });
+
+    for (const style of [pageStyle, sectionStyle]) {
+      expect(style.weight).toBe('600');
+      expect(style.line).toBe('underline');
+      expect(style.thickness).toBe('2px');
+    }
+  });
+
+  test('the sheet shows the current icon for both marker values', async ({ page }) => {
+    await page.setViewportSize(viewportFor(320));
+
+    await gotoSettled(page, '/writing');
+    await page.getByTestId('mobile-navigation-toggle').click();
+    await expect(page.locator('nav.mobile-nav-dropdown a svg.lucide-check')).toHaveCount(1);
+
+    await gotoSettled(page, '/writing/all');
+    await page.getByTestId('mobile-navigation-toggle').click();
+    const tint = await tokenColor(page, '--c-tint');
+    const iconColor = await page
+      .locator('nav.mobile-nav-dropdown a[aria-current="true"] svg')
+      .evaluate((element) => getComputedStyle(element).color);
+    expect(iconColor).toBe(tint);
   });
 });
 
@@ -129,7 +226,7 @@ test.describe('the floating glass bar', () => {
       page,
     }) => {
       await page.emulateMedia({ colorScheme: appearance });
-      await gotoSettled(page, '/tags');
+      await gotoSettled(page, '/writing');
       const primary = await tokenColor(page, '--c-text');
       const offenders = await page.locator('.site-bar').evaluate((bar, expected: string) => {
         const wrong: string[] = [];

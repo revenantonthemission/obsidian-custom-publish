@@ -28,7 +28,7 @@ export default function MobileNav({ items }: Props) {
             key={item.href}
             href={item.href}
             class="mobile-nav-link"
-            aria-current={item.current ? 'page' : undefined}
+            aria-current={item.ariaCurrent ?? undefined}
             data-testid={`mobile-navigation-link-${item.href.slice(1)}`}
           >
             <span>{item.label}</span>

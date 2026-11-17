@@ -157,8 +157,10 @@
 }
 
 /* The current section: weight 600 and a 2 px --c-text underline, never a
-   tinted pill on glass (R-02; changes mockup W1). */
-.site-nav-link[aria-current='page'] {
+   tinted pill on glass (R-02; changes mockup W1). The route itself and every
+   section below it share the indicator (BR1.3). */
+.site-nav-link[aria-current='page'],
+.site-nav-link[aria-current='true'] {
   font-weight: 600;
   text-decoration: underline 2px var(--c-bar-indicator);
   text-underline-offset: 0.5em;
@@ -310,7 +312,8 @@
   color: var(--c-text-secondary);
 }
 
-.mobile-nav-link[aria-current='page'] svg {
+.mobile-nav-link[aria-current='page'] svg,
+.mobile-nav-link[aria-current='true'] svg {
   color: var(--c-tint);
 }
 
