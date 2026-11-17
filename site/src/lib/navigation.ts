@@ -6,16 +6,21 @@ export interface NavigationItem {
   readonly label: string;
 }
 
+/**
+ * The Writing marker (BR1.2): 'page' for the Writing route itself, 'section'
+ * for its descendants, null everywhere else.
+ */
+export type NavigationMarker = 'page' | 'section' | null;
+
+/** The rendered attribute value (BR1.3): 'page', 'true', or no attribute. */
+export type NavigationAriaCurrent = 'page' | 'true' | null;
+
 export interface NavigationState extends NavigationItem {
   readonly current: boolean;
+  readonly ariaCurrent: NavigationAriaCurrent;
 }
 
-const PRIMARY_NAVIGATION = freezeNavigationModel([
-  { href: '/tags', label: 'Tags' },
-  { href: '/graph', label: 'Graph' },
-  { href: '/resume', label: 'Résumé' },
-  { href: '/portfolio', label: 'Portfolio' },
-]);
+const PRIMARY_NAVIGATION = freezeNavigationModel([{ href: '/writing', label: 'Writing' }]);
 
 const PROFILE_LOCAL_NAVIGATION = freezeNavigationModel([
   { href: '/', label: '홈' },
@@ -34,6 +39,24 @@ export function getPrimaryNavigation(): readonly NavigationItem[] {
 
 export function getProfileLocalNavigation(): readonly NavigationItem[] {
   return PROFILE_LOCAL_NAVIGATION;
+}
+
+/**
+ * The Writing marker as a pure function of the normalised path (BR1.2, BR1.4):
+ * the query and the fragment are dropped, one trailing slash is dropped, and
+ * the result is compared against the model's href, segment by segment and case
+ * sensitively. An unusable path yields no marker, never a guess; the build
+ * fails closed on the existing validation instead.
+ */
+export function resolveNavigationMarker(pathname: string): NavigationMarker {
+  const normalizedPathname = normalizePathname(pathname);
+  const href = PRIMARY_NAVIGATION[0]?.href;
+
+  if (normalizedPathname === undefined || href === undefined) {
+    return null;
+  }
+
+  return markerForPath(normalizedPathname, href);
 }
 
 export function getPrimaryNavigationState(
@@ -60,18 +83,15 @@ export function getNavigationState(
     issues.push(createValidationIssue('navigation.current.invalid', NAVIGATION_CURRENT_PATH));
   }
 
-  if (inspectedItems !== undefined && !isApprovedNavigationModel(inspectedItems)) {
+  const model = inspectedItems === undefined ? undefined : resolveApprovedModel(inspectedItems);
+  if (model === undefined) {
     issues.push(createValidationIssue('navigation.model.invalid', NAVIGATION_MODEL_PATH));
   }
 
   let states: readonly NavigationState[] | undefined;
-  if (inspectedItems !== undefined && normalizedPathname !== undefined) {
+  if (inspectedItems !== undefined && normalizedPathname !== undefined && model !== undefined) {
     states = freezeNavigationStates(
-      inspectedItems.map((item) => ({
-        href: item.href,
-        label: item.label,
-        current: matchesRoute(normalizedPathname, item.href),
-      }))
+      inspectedItems.map((item) => buildNavigationState(item, normalizedPathname, model))
     );
 
     if (states.filter((state) => state.current).length > 1) {
@@ -178,11 +198,19 @@ function inspectNavigationItemsSafely(
   return inspected;
 }
 
-function isApprovedNavigationModel(items: readonly NavigationItem[]): boolean {
-  return (
-    sameNavigationModel(items, PRIMARY_NAVIGATION) ||
-    sameNavigationModel(items, PROFILE_LOCAL_NAVIGATION)
-  );
+/** The approved model a state list was built from. */
+type NavigationModel = 'primary' | 'profile';
+
+function resolveApprovedModel(items: readonly NavigationItem[]): NavigationModel | undefined {
+  if (sameNavigationModel(items, PRIMARY_NAVIGATION)) {
+    return 'primary';
+  }
+
+  if (sameNavigationModel(items, PROFILE_LOCAL_NAVIGATION)) {
+    return 'profile';
+  }
+
+  return undefined;
 }
 
 function sameNavigationModel(
@@ -241,12 +269,60 @@ function normalizeNavigationHref(value: string): string | undefined {
   return normalized;
 }
 
-function matchesRoute(pathname: string, href: string): boolean {
-  if (href === '/') {
-    return pathname === '/';
+/**
+ * The marker of one path against one href (BR1.2): the exact route is the
+ * page itself, a descendant path belongs to that route's section, and every
+ * other path belongs to neither. The home route has no descendants.
+ */
+function markerForPath(normalizedPathname: string, href: string): NavigationMarker {
+  if (normalizedPathname === href) {
+    return 'page';
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (href !== '/' && normalizedPathname.startsWith(`${href}/`)) {
+    return 'section';
+  }
+
+  return null;
+}
+
+/** The rendered attribute value of a marker (BR1.3). */
+function ariaCurrentForMarker(marker: NavigationMarker): NavigationAriaCurrent {
+  if (marker === 'page') {
+    return 'page';
+  }
+
+  if (marker === 'section') {
+    return 'true';
+  }
+
+  return null;
+}
+
+function buildNavigationState(
+  item: NavigationItem,
+  normalizedPathname: string,
+  model: NavigationModel
+): NavigationState {
+  const marker = markerForPath(normalizedPathname, item.href);
+
+  if (model === 'primary') {
+    return {
+      href: item.href,
+      label: item.label,
+      current: marker !== null,
+      ariaCurrent: ariaCurrentForMarker(marker),
+    };
+  }
+
+  // The profile local view keeps its own 'page' marker for the current route
+  // family (BR1.5); the section vocabulary belongs to the primary model.
+  return {
+    href: item.href,
+    label: item.label,
+    current: marker !== null,
+    ariaCurrent: marker === null ? null : 'page',
+  };
 }
 
 function freezeNavigationModel(items: readonly NavigationItem[]): readonly NavigationItem[] {
@@ -267,6 +343,7 @@ function freezeNavigationStates(states: readonly NavigationState[]): readonly Na
         href: state.href,
         label: state.label,
         current: state.current,
+        ariaCurrent: state.ariaCurrent,
       })
     )
   );

@@ -28,6 +28,7 @@ export interface MetadataProjectionCase {
 export interface NavigationPathCase {
   readonly pathname: string;
   readonly primaryCurrentHref: string | null;
+  readonly primaryAriaCurrent: 'page' | 'true' | null;
   readonly localCurrentHref: string | null;
 }
 
@@ -139,44 +140,51 @@ const safeSegmentArbitrary = fc
   .array(fc.constantFrom('가', '나', 'é', 'x', 'y', '9', '-'), { minLength: 1, maxLength: 12 })
   .map((characters) => characters.join(''));
 
-const knownRouteArbitrary = fc.constantFrom('/tags', '/graph', '/resume', '/portfolio');
+const localRouteArbitrary = fc.constantFrom('/', '/resume', '/portfolio');
+
+const writingPathArbitrary = fc.oneof(
+  fc.constant('/writing'),
+  fc
+    .tuple(fc.constant('/writing'), safeSegmentArbitrary)
+    .map(([root, segment]) => `${root}/${segment}`)
+);
 
 export const navigationPathCaseArbitrary: fc.Arbitrary<NavigationPathCase> = fc.oneof(
-  knownRouteArbitrary.map((pathname) =>
-    navigationCase(
-      pathname,
-      pathname,
-      pathname === '/resume' || pathname === '/portfolio' ? pathname : null
-    )
+  writingPathArbitrary.map((pathname) =>
+    navigationCase(pathname, '/writing', pathname === '/writing' ? 'page' : 'true', null)
   ),
   fc
+    .constant('/writing?view=한글#section')
+    .map((pathname) => navigationCase(pathname, '/writing', 'page', null)),
+  localRouteArbitrary.map((pathname) => navigationCase(pathname, null, null, pathname)),
+  fc
     .tuple(fc.constantFrom('/resume', '/portfolio'), safeSegmentArbitrary)
-    .map(([root, segment]) => navigationCase(`${root}/${segment}`, root, root)),
-  knownRouteArbitrary.map((root) =>
-    navigationCase(
-      `${root}/?view=한글#section`,
-      root,
-      root === '/resume' || root === '/portfolio' ? root : null
-    )
-  ),
+    .map(([root, segment]) => navigationCase(`${root}/${segment}`, null, null, root)),
+  fc
+    .tuple(fc.constantFrom('/resume', '/portfolio'), fc.constant('?view=한글#section'))
+    .map(([root, query]) => navigationCase(`${root}${query}`, null, null, root)),
   fc
     .tuple(
       fc.constantFrom('/resume', '/portfolio', '/tags', '/graph'),
       fc.constantFrom('x', '-old', '2')
     )
-    .map(([root, suffix]) => navigationCase(`${root}${suffix}`, null, null)),
-  safeSegmentArbitrary.map((segment) => navigationCase(`/unknown-${segment}`, null, null)),
-  fc.constant(navigationCase('/', null, '/'))
+    .map(([root, suffix]) => navigationCase(`${root}${suffix}`, null, null, null)),
+  fc
+    .tuple(fc.constantFrom('/writing', '/tags', '/graph'), fc.constantFrom('x', '-old', '2'))
+    .map(([root, suffix]) => navigationCase(`${root}${suffix}`, null, null, null)),
+  safeSegmentArbitrary.map((segment) => navigationCase(`/unknown-${segment}`, null, null, null))
 );
 
 function navigationCase(
   pathname: string,
   primaryCurrentHref: string | null,
+  primaryAriaCurrent: 'page' | 'true' | null,
   localCurrentHref: string | null
 ): NavigationPathCase {
   return Object.freeze({
     pathname,
     primaryCurrentHref,
+    primaryAriaCurrent,
     localCurrentHref,
   });
 }

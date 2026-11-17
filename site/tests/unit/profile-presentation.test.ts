@@ -16,7 +16,7 @@ import type { ProfileData, ValidatedProfile } from '../../src/lib/profile/types.
 import { validateProfile } from '../../src/lib/profile/validation.js';
 import { cloneProfileFixture } from '../fixtures/profile-fixtures.js';
 
-const PRIMARY_NAVIGATION = ['/tags', '/graph', '/resume', '/portfolio'];
+const PRIMARY_NAVIGATION = ['/writing'];
 const PRODUCT_ENGINEER_PATH = '/portfolio/product-engineer';
 const PRODUCT_ENGINEER_PROJECTS = ['docsuri'] as const;
 const INFRA_ENGINEER_PATH = '/portfolio/infra-engineer';
@@ -669,8 +669,10 @@ function assertNavigation(html: string, currentHref: string): void {
 
   expect(anchorHrefs(desktop)).toEqual(PRIMARY_NAVIGATION);
   expect(anchorHrefs(mobile)).toEqual(PRIMARY_NAVIGATION);
-  expect(currentAnchorHrefs(desktop)).toEqual([currentHref]);
-  expect(currentAnchorHrefs(mobile)).toEqual([currentHref]);
+  // The primary navigation marks only the Writing route family (BR1.2), so it
+  // carries no current anchor on the profile routes (BR1.5).
+  expect(currentAnchorHrefs(desktop)).toEqual([]);
+  expect(currentAnchorHrefs(mobile)).toEqual([]);
   expect(anchorHrefs(local)).toEqual(['/', '/resume', '/portfolio']);
   expect(currentAnchorHrefs(local)).toEqual([currentHref]);
 
