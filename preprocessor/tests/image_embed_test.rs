@@ -10,7 +10,7 @@ fn fixture_setup() -> (
     obsidian_press::types::VaultIndex,
     obsidian_press::types::LinkGraph,
 ) {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let graph = resolve_links(&index);
     (index, graph)
 }

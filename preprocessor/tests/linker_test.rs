@@ -3,7 +3,7 @@ use obsidian_press::scanner::scan_vault;
 use std::path::Path;
 
 fn fixture_index() -> obsidian_press::types::VaultIndex {
-    scan_vault(Path::new("../fixtures/vault")).unwrap()
+    scan_vault(Path::new("../fixtures/vault/Notes")).unwrap()
 }
 
 #[test]

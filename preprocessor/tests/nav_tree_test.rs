@@ -6,7 +6,7 @@ use tempfile::TempDir;
 
 #[test]
 fn test_nav_tree_json_generated() {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let tmp = TempDir::new().unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
     write_output(&catalog, tmp.path()).unwrap();
@@ -26,7 +26,7 @@ fn test_nav_tree_json_generated() {
 
 #[test]
 fn test_nav_tree_hub_children() {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let tmp = TempDir::new().unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
     write_output(&catalog, tmp.path()).unwrap();

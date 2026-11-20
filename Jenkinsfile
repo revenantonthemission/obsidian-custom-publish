@@ -16,6 +16,9 @@ pipeline {
     environment {
         WEB_ROOT      = "${env.BLOG_WEB_ROOT ?: '/Users/revenantonthemission/Sites/obsidian-blog'}"
         VAULT_PATH    = "${env.OBSIDIAN_VAULT_PATH ?: '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes'}"
+        // Site pages (U1 BR7.1): read only, never stamped. Until the owner
+        // creates the folder, Preprocess prints a "not found" notice and goes on.
+        PAGES_PATH    = "${env.OBSIDIAN_PAGES_PATH ?: '/Users/revenantonthemission/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Pages'}"
         // mmdc renders Mermaid through puppeteer, which needs a browser. The
         // local checkout supplies one via `.puppeteer-config.json`, but that
         // file is gitignored, so a CI workspace never receives it and every
@@ -52,17 +55,15 @@ pipeline {
         stage('Verify') {
             steps {
                 sh 'cargo test --release --manifest-path preprocessor/Cargo.toml'
-                // A fresh workspace has no content/ before Preprocess; the U1
-                // isolated build inside test:unit fails closed at HP001 without
-                // a homepage artifact, and the isolated Astro build reads
+                // A fresh workspace has no content/ before Preprocess, and the
+                // isolated Astro build inside test:unit reads the posts and
                 // search-index.json / nav-tree.json copied from site/public.
-                // Materialize them from the fixture vault first (no vault
-                // stamping); the real Preprocess stage overwrites them later.
-                sh './preprocessor/target/release/obsidian-press ./fixtures/vault ./content'
+                // Materialize them from the fixture pair first (no vault
+                // stamping), the same inputs as the local gate; the real
+                // Preprocess stage overwrites them later.
+                sh './preprocessor/target/release/obsidian-press ./fixtures/vault/Notes ./content --pages ./fixtures/vault/Pages'
                 sh 'cp content/search-index.json content/graph.json content/previews.json content/nav-tree.json site/public/'
-                // The fixture materializer writes only when absent, so real
-                // preprocessor output always wins.
-                sh 'cd site && node scripts/crossunit/ensure-fixture-content.mjs && npm run test:unit && npm run test:pbt'
+                sh 'cd site && npm run test:unit && npm run test:pbt'
             }
             post {
                 failure {
@@ -85,14 +86,15 @@ pipeline {
                 sh '''
                     CHS=$(ls -d "$HOME"/.cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-mac-arm64/chrome-headless-shell 2>/dev/null | sort -V | tail -1)
                     export PUPPETEER_EXECUTABLE_PATH="${CHS:-$PUPPETEER_EXECUTABLE_PATH}"
-                    ./preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content
+                    ./preprocessor/target/release/obsidian-press --stamp-published "${VAULT_PATH}" ./content --pages "${PAGES_PATH}"
                 '''
                 sh 'cp content/search-index.json site/public/search-index.json'
                 sh 'cp content/graph.json site/public/graph.json'
                 sh 'cp content/previews.json site/public/previews.json'
                 sh 'cp content/nav-tree.json site/public/nav-tree.json'
-                sh 'mkdir -p site/public/assets'
-                sh 'cp -r content/assets/* site/public/assets/ 2>/dev/null || true'
+                // Replace, not add: a withdrawn post or page image must not be
+                // redeployed (U1 infra R-02). One script for every caller.
+                sh 'node site/scripts/sync-public-assets.mjs content/assets site/public/assets'
             }
         }
 

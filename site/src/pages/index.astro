@@ -1,80 +1,48 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
-import { getAllPostMeta, getHomepage, getPreviewSummary } from '../lib/data';
-import { renderMarkdown, wrapHomeSections } from '../lib/render';
-import {
-  assertExactlyOneSlot,
-  buildHomepageChunks,
-  filterTodayPosts,
-  resolveBuildDate,
-} from '../lib/homepage';
+import { getOrdinaryPosts, getPreviewSummary } from '../lib/data';
+import { filterTodayPosts, resolveBuildDate } from '../lib/homepage';
 import { getProductionProfileAssembly } from '../lib/profile/production-profile.js';
 import { SITE_NAME } from '../lib/site.js';
-// The homepage note can hold math too; KaTeX is self-hosted (NFR4).
-import 'katex/dist/katex.min.css';
-import '../styles/callouts.css';
-import '../styles/diagrams.css';
 import '../styles/grouped.css';
-import '../styles/highlight.css';
 import '../styles/home.css';
 
-// The homepage (mockups W5; FR4.3, FR4.5; review finding R-04): a Large
-// Title, the note's intro, then each H2 section of the note as a grouped card
-// on the grouped background. The profile slot and "오늘 발행된 글" get the
-// same card. The cards are wrapped per chunk, after the slot and recent-posts
-// splits, so no split cuts through a section; the vault note never changes.
-const HOMEPAGE_SOURCE = 'content/homepage/index.md';
-
-const { body } = getHomepage();
-assertExactlyOneSlot(body, HOMEPAGE_SOURCE);
-
-const htmlContent = await renderMarkdown(body);
-const chunks = await Promise.all(
-  buildHomepageChunks(htmlContent, HOMEPAGE_SOURCE).map(async (chunk) =>
-    chunk.kind === 'html' ? { ...chunk, html: await wrapHomeSections(chunk.html) } : chunk
-  )
-);
+// The homepage (U1 W5; BR6.1–BR6.6): one Large Title, then an opening with
+// the owner's name, the short introduction and two equal capsules to the
+// profile pages, then the interim "오늘 발행된 글" list, which U2 replaces.
+// Nothing is read from a vault note; the facts come from the approved profile
+// and are rendered as text. The profile headline is never shown here (FR3.2).
+const owner = getProductionProfileAssembly().homepage;
 
 const today = resolveBuildDate(process.env);
-const recentPosts = filterTodayPosts(getAllPostMeta(), today);
-
-const homepageProfile = getProductionProfileAssembly().homepage;
+const recentPosts = filterTodayPosts(getOrdinaryPosts(), today);
 ---
 
 <BaseLayout title={SITE_NAME} surface="grouped">
   <h1 class="home-title">{SITE_NAME}</h1>
-  {chunks.map((chunk) =>
-    chunk.kind === 'html' ? (
-      <div class="home-content post-content" set:html={chunk.html} />
-    ) : chunk.kind === 'recent' ? (
-      <section class="recent-posts" aria-labelledby="recent-posts-heading">
-        <h2 id="recent-posts-heading">오늘 발행된 글</h2>
-        <ul class="grouped-list">
-          {recentPosts.length > 0 ? (
-            recentPosts.map((post) => (
-              <PostCard post={post} summary={getPreviewSummary(post.slug)} />
-            ))
-          ) : (
-            <li class="grouped-empty">오늘 발행된 글이 없습니다.</li>
-          )}
-        </ul>
-      </section>
-    ) : (
-      <section class="home-profile" aria-labelledby="home-profile-heading">
-        <h2 id="home-profile-heading">
-          {homepageProfile.name.value} — {homepageProfile.headline.value}
-        </h2>
-        <p class="home-profile-intro">{homepageProfile.shortIntro.value}</p>
-        <nav class="home-profile-actions" aria-label="프로필 바로가기">
-          <a href={homepageProfile.routes.resume} class="capsule capsule-filled">
-            Résumé
-          </a>
-          <a href={homepageProfile.routes.portfolio} class="capsule">
-            Portfolio
-          </a>
-        </nav>
-      </section>
-    )
-  )}
+  <section class="home-opening" aria-labelledby="home-opening-name">
+    <h2 id="home-opening-name" class="home-opening-name">
+      {owner.name.value}
+    </h2>
+    <p class="home-opening-intro">{owner.shortIntro.value}</p>
+    <nav class="home-opening-actions" aria-label="프로필 바로가기">
+      <a href={owner.routes.resume} class="capsule" data-testid="home-opening-resume-link">
+        Résumé
+      </a>
+      <a href={owner.routes.portfolio} class="capsule" data-testid="home-opening-portfolio-link">
+        Portfolio
+      </a>
+    </nav>
+  </section>
+  <section class="recent-posts" aria-labelledby="recent-posts-heading">
+    <h2 id="recent-posts-heading">오늘 발행된 글</h2>
+    <ul class="grouped-list">
+      {recentPosts.length > 0 ? (
+        recentPosts.map((post) => <PostCard post={post} summary={getPreviewSummary(post.slug)} />)
+      ) : (
+        <li class="grouped-empty">오늘 발행된 글이 없습니다.</li>
+      )}
+    </ul>
+  </section>
 </BaseLayout>

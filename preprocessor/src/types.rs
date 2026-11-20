@@ -16,6 +16,17 @@ pub enum RawVisibility {
     NonScalar(String),
 }
 
+/// The vault folder a note was scanned from (BR1.5). `Notes` sorts before
+/// `Pages`, which gives the fixed scan order (slug, source, path) of BR1.7.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum NoteSource {
+    /// The posts folder (`Areas/Notes`): posts and the retired homepage note.
+    #[default]
+    Notes,
+    /// The site-pages folder (`Areas/Pages`): every note is a site page.
+    Pages,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostMeta {
     pub slug: String,
@@ -30,6 +41,12 @@ pub struct PostMeta {
     pub description: Option<String>,
     #[serde(default)]
     pub visibility: Option<RawVisibility>,
+    #[serde(default)]
+    pub source: NoteSource,
+    /// Canonical root of the folder the note came from. The attachment lookup
+    /// never searches above it (BR1.6; NFR5.2).
+    #[serde(skip)]
+    pub source_root: PathBuf,
     pub raw_content: String,
 }
 

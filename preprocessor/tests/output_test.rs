@@ -5,7 +5,7 @@ use std::path::Path;
 use tempfile::TempDir;
 
 fn run_pipeline(output_dir: &Path) {
-    let index = scan_vault(Path::new("../fixtures/vault")).unwrap();
+    let index = scan_vault(Path::new("../fixtures/vault/Notes")).unwrap();
     let catalog = PublicationCatalog::build(index).unwrap();
     write_output(&catalog, output_dir).unwrap();
 }

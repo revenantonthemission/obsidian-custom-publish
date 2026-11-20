@@ -11,8 +11,9 @@
 // restore real vault output for local work. HIG_SKIP_BUILD=1 reuses the current
 // dist/ (useful when only a spec changed).
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { cpSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { syncPublicAssets } from '../sync-public-assets.mjs';
 
 const SITE_ROOT = resolve(import.meta.dirname, '..', '..');
 const REPO_ROOT = resolve(SITE_ROOT, '..');
@@ -42,16 +43,15 @@ function prepareFixtureContent() {
   }
   // The preprocessor resolves .puppeteer-config.json from its cwd, so it runs
   // from the repository root like the Justfile and Jenkins do.
-  run(PREPROCESSOR, ['./fixtures/vault', './content'], REPO_ROOT);
+  run(
+    PREPROCESSOR,
+    ['./fixtures/vault/Notes', './content', '--pages', './fixtures/vault/Pages'],
+    REPO_ROOT
+  );
   for (const file of COPIED_JSON) {
     cpSync(resolve(REPO_ROOT, 'content', file), resolve(SITE_ROOT, 'public', file));
   }
-  const assets = resolve(REPO_ROOT, 'content', 'assets');
-  if (existsSync(assets)) {
-    const target = resolve(SITE_ROOT, 'public', 'assets');
-    mkdirSync(target, { recursive: true });
-    cpSync(assets, target, { recursive: true });
-  }
+  syncPublicAssets(resolve(REPO_ROOT, 'content', 'assets'), resolve(SITE_ROOT, 'public', 'assets'));
   run(process.execPath, ['scripts/crossunit/ensure-fixture-content.mjs'], SITE_ROOT);
 }
 

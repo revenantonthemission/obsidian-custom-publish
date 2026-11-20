@@ -1,9 +1,11 @@
-// U2 verification support: the fail-closed homepage gateway (HP001) means a
-// content-less clean build can no longer produce `/`. Before a verification
-// build, materialize a deterministic fixture homepage artifact — but only when
-// the artifact is absent, so output from a real preprocessor run always wins.
-// This writes test-fixture inputs for verification builds; the production
-// artifact path stays the preprocessor (FR-017).
+// Verification support: before a verification build, materialize one
+// deterministic discoverable post so the homepage's "오늘 발행된 글" e2e case
+// has a post on the pinned date — but only when it is absent, so output from a
+// real preprocessor run always wins. This writes test-fixture inputs for
+// verification builds only.
+//
+// U1 (BR7.2): the site no longer reads a homepage artifact, so this script no
+// longer writes `content/homepage/`.
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -15,23 +17,6 @@ const contentRoot = resolve(siteRoot, '..', 'content');
 
 /** The date the e2e "글 있음" case pins via HOMEPAGE_TODAY_OVERRIDE. */
 export const FIXTURE_POST_PUBLISHED = '2024-03-01';
-
-const HOMEPAGE_BODY = `환영합니다. 검증 빌드용 fixture 홈페이지입니다.
-
-<!-- profile:slot -->
-
-## 소개
-
-첫 화면 소개 문단입니다.
-
-## 이번주에 작성된 포스트
-
-이 절은 오늘 발행 글로 치환됩니다.
-
-## 마무리
-
-마지막 절입니다.
-`;
 
 const FIXTURE_POST_META = Object.freeze({
   slug: 'fixture-e2e-post',
@@ -51,24 +36,10 @@ const FIXTURE_POST_META = Object.freeze({
 });
 
 /**
- * Ensure the homepage artifact (and one discoverable post for the today-case)
- * exists before a verification build. Never overwrites existing content.
+ * Ensure the e2e fixture post exists before a verification build. Never
+ * overwrites existing content.
  */
-export async function ensureHomepageFixtureContent() {
-  const homepageDir = resolve(contentRoot, 'homepage');
-  const bodyPath = resolve(homepageDir, 'index.md');
-  const metaPath = resolve(homepageDir, 'meta.json');
-
-  if (!existsSync(bodyPath) || !existsSync(metaPath)) {
-    await mkdir(homepageDir, { recursive: true });
-    await writeFile(bodyPath, HOMEPAGE_BODY, 'utf8');
-    await writeFile(
-      metaPath,
-      `${JSON.stringify({ title: 'Fixture Homepage' }, null, 2)}\n`,
-      'utf8'
-    );
-  }
-
+export async function ensureE2eFixtureContent() {
   const metaDir = resolve(contentRoot, 'meta');
   const postMetaPath = resolve(metaDir, 'fixture-e2e-post.json');
   const postBodyDir = resolve(contentRoot, 'posts');

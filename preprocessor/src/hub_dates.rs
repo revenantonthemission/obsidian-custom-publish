@@ -241,6 +241,8 @@ mod tests {
             hub_parent: None,
             description: None,
             visibility: None,
+            source: crate::types::NoteSource::Notes,
+            source_root: PathBuf::new(),
             raw_content: String::new(),
         }
     }

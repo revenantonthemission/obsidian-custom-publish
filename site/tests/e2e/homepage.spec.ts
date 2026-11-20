@@ -1,6 +1,7 @@
-// U2 homepage smoke (LC-U2-12). Deliberately outside the U1 evidence-fragment
-// machinery: this spec writes no fragments, matrix keys or obligations — the
-// sealed U1 record rejects extra keys (BROWSER_EVIDENCE_INCOMPLETE).
+// Homepage smoke (U2 LC-U2-12, rewritten for the U1 site-built opening).
+// Deliberately outside the U1 evidence-fragment machinery: this spec writes no
+// fragments, matrix keys or obligations — the sealed U1 record rejects extra
+// keys (BROWSER_EVIDENCE_INCOMPLETE).
 
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -17,9 +18,7 @@ for (const viewport of VIEWPORTS) {
   test.describe(`homepage ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport: { ...viewport } });
 
-    test('profile fragment renders with internal CTAs and no external traffic', async ({
-      page,
-    }) => {
+    test('the opening renders with internal capsules and no external traffic', async ({ page }) => {
       // NFR-U2-009 requires zero NEW external origins. Since the HIG redesign
       // self-hosts KaTeX and the font (NFR4), no external host is allowed.
       const LEGACY_EXTERNAL_HOSTS = new Set<string>();
@@ -33,22 +32,25 @@ for (const viewport of VIEWPORTS) {
       });
 
       await page.goto('/');
-      const fragment = page.locator('.home-profile');
-      await expect(fragment).toBeVisible();
-      await expect(fragment.getByRole('link', { name: 'Résumé' })).toHaveAttribute(
+      // U1 BR6.2–BR6.4: one Large Title, then the opening with two capsules.
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.getByRole('heading', { level: 1, name: 'Passion Project' })).toBeVisible();
+      const opening = page.locator('.home-opening');
+      await expect(opening).toBeVisible();
+      await expect(opening.getByRole('link', { name: 'Résumé' })).toHaveAttribute(
         'href',
         '/resume'
       );
-      await expect(fragment.getByRole('link', { name: 'Portfolio' })).toHaveAttribute(
+      await expect(opening.getByRole('link', { name: 'Portfolio' })).toHaveAttribute(
         'href',
         '/portfolio'
       );
 
       // FR-008.2: the temporary external Notion link is gone.
       expect(await page.locator('a[href*="notion"]').count()).toBe(0);
-      // FE-P-U2-04: the fragment is static HTML — no island, no script.
-      expect(await fragment.locator('astro-island, script').count()).toBe(0);
-      // BR-U2-040: no slot-token residue.
+      // The opening is static HTML — no island, no script.
+      expect(await opening.locator('astro-island, script').count()).toBe(0);
+      // U1 BR6.1: nothing from the retired homepage note or its slot remains.
       expect(await page.content()).not.toContain('profile:slot');
       expect(external).toEqual([]);
     });
@@ -93,12 +95,12 @@ for (const viewport of VIEWPORTS) {
       expect(results.violations).toEqual([]);
     });
 
-    test('CTAs are keyboard reachable under reduced motion', async ({ page }) => {
+    test('capsules are keyboard reachable under reduced motion', async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto('/');
       // Focus each anchor directly: WebKit's Tab policy skips links, so a
       // Tab-walk would test the browser default, not our markup.
-      const actions = page.locator('.home-profile-actions a');
+      const actions = page.locator('.home-opening-actions a');
       for (const index of [0, 1]) {
         await actions.nth(index).focus();
         await expect(actions.nth(index)).toBeFocused();

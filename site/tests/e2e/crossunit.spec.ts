@@ -19,12 +19,21 @@ for (const viewport of VIEWPORTS) {
   test.describe(`no-JS core navigation ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
-    test('homepage renders its core content without JavaScript', async ({ page }) => {
+    test('homepage renders its opening and both capsules without JavaScript', async ({ page }) => {
+      // U1 BR6.4/BR6.6: the opening is static markup, so it is complete with
+      // JavaScript off.
       await page.goto('/');
       const main = page.locator('main');
       await expect(main).toBeVisible();
-      const text = (await main.innerText()).trim();
-      expect(text.length).toBeGreaterThan(0);
+      await expect(main.getByRole('heading', { level: 1, name: 'Passion Project' })).toBeVisible();
+      const opening = page.locator('.home-opening');
+      await expect(opening.locator('.home-opening-name')).not.toBeEmpty();
+      await expect(opening.locator('.home-opening-intro')).not.toBeEmpty();
+      await expect(page.getByTestId('home-opening-resume-link')).toHaveAttribute('href', '/resume');
+      await expect(page.getByTestId('home-opening-portfolio-link')).toHaveAttribute(
+        'href',
+        '/portfolio'
+      );
     });
 
     test('header exposes every core navigation target without JavaScript', async ({ page }) => {
@@ -41,9 +50,9 @@ for (const viewport of VIEWPORTS) {
       // The header's mobile menu toggle is JS-driven, so at 320px the header
       // links exist but are hidden without JavaScript (recorded cross-unit
       // fact, ST-E04 report). The no-JS navigation path at every width is the
-      // in-content homepage profile CTA — the U2 contract surface.
+      // in-content homepage Résumé capsule (U1 BR6.4).
       await page.goto('/');
-      await page.locator('.home-profile a[href="/resume"]').first().click();
+      await page.getByTestId('home-opening-resume-link').click();
       await expect(page).toHaveURL(/\/resume\/?$/);
       await expect(page.locator('main#main-content')).toBeVisible();
     });

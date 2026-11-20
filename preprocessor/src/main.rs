@@ -1,58 +1,84 @@
 use clap::Parser;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use obsidian_press::boundary::{
+    PagesFolder, pages_empty_notice, pages_missing_notice, pages_not_given_notice,
+    resolve_run_folders,
+};
 use obsidian_press::catalog::{PublicationCatalog, report_diagnostics};
 use obsidian_press::output::write_output;
-use obsidian_press::scanner::{scan_vault, stamp_published_dates};
+use obsidian_press::scanner::{scan_sources, stamp_published_dates};
 
 #[derive(Parser)]
 #[command(name = "obsidian-press")]
 #[command(about = "Obsidian vault to static site preprocessor")]
 struct Cli {
-    /// Path to the Obsidian vault
+    /// Posts folder of the Obsidian vault (Areas/Notes)
+    #[arg(value_name = "NOTES")]
     vault: PathBuf,
     /// Output directory
     output: PathBuf,
-    /// Stamp today's date as `published` in vault files that lack it
+    /// Site pages folder (Areas/Pages); optional, never stamped
+    #[arg(long, value_name = "PAGES")]
+    pages: Option<PathBuf>,
+    /// Stamp today's date as `published` in posts-folder notes that lack it
     #[arg(long)]
     stamp_published: bool,
 }
 
+/// RunCoordinator (U1 security-design §6, L5): guard → notice → scan →
+/// catalog → stamp → rescan if anything was stamped → catalog → write.
+/// No vault write or output deletion happens before the guard and the first
+/// full catalog pass succeed (BR4.1; NFR5.5).
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+    // BoundaryGuard first: nothing is read, stamped or deleted until the three
+    // folders are known not to overlap (BR1.2, BR1.3; NFR5.4).
+    let folders = match resolve_run_folders(&cli.vault, cli.pages.as_deref(), &cli.output) {
+        Ok(folders) => folders,
+        Err(error) => {
+            eprintln!("{error}");
+            std::process::exit(error.exit_code());
+        }
+    };
+
+    // At most one pages notice before the scan (BR1.3; NFR5.10, NFR5.15).
+    let pages_root = match &folders.pages {
+        PagesFolder::NotGiven => {
+            eprintln!("{}", pages_not_given_notice());
+            None
+        }
+        PagesFolder::Missing(path) => {
+            eprintln!("{}", pages_missing_notice(path));
+            None
+        }
+        PagesFolder::Present(path) => Some(path.as_path()),
+    };
+
+    let mut catalog = scan_and_check(&cli.vault, &folders.notes, pages_root, true)?;
+
     if cli.stamp_published {
+        // Stamping walks NOTES only and writes only files the walker yielded
+        // (BR4.2; NFR5.6). It reports how many files it rewrote, so the second
+        // scan runs only when something changed (performance-design §1).
         println!("Stamping published dates...");
-        let count = stamp_published_dates(&cli.vault)?;
+        let count = stamp_published_dates(&folders.notes)?;
         println!("Stamped {count} posts with published date");
+        if count > 0 {
+            // Silent rescan: skipped links were reported by the first scan.
+            catalog = scan_and_check(&cli.vault, &folders.notes, pages_root, false)?;
+        }
     }
 
-    println!("Scanning vault: {:?}", cli.vault);
-    let index = scan_vault(&cli.vault)?;
-    println!("Found {} sources", index.posts.len());
-
-    // Stage 1: scope + cardinality. Stage 2: homepage-target references.
-    // Each stage reports its full batch and fails before any output write
-    // (BR-U2-023/024); a failed run leaves the previous output untouched.
-    let catalog = match PublicationCatalog::build(index) {
-        Ok(catalog) => catalog,
-        Err(diags) => {
-            report_diagnostics(&diags);
+    println!("Writing output to {:?}", cli.output);
+    let summary = match write_output(&catalog, &folders.output) {
+        Ok(summary) => summary,
+        Err(e) => {
+            eprintln!("{e:#}");
             std::process::exit(1);
         }
     };
-    let reference_diags = catalog.validate_references();
-    if !reference_diags.is_empty() {
-        report_diagnostics(&reference_diags);
-        std::process::exit(1);
-    }
-    println!("Homepage source: {}", catalog.homepage().title);
-
-    println!("Writing output to {:?}", cli.output);
-    if let Err(e) = write_output(&catalog, &cli.output) {
-        eprintln!("{e:#}");
-        std::process::exit(1);
-    }
 
     // Output is written first on purpose: the operator should be able to
     // inspect exactly what was produced. But a run that dropped diagrams must
@@ -65,6 +91,43 @@ fn main() -> anyhow::Result<()> {
         ));
     }
 
-    println!("Done.");
+    // The summary is the last stdout line, printed only on success, after the
+    // diagram check (NFR4.4; observability-design §2 row 8).
+    println!("{}", summary.line());
     Ok(())
+}
+
+/// Scan both folders and build the catalog. Every catalog finding is reported
+/// in one sorted batch and exits 1 before anything is stamped or written
+/// (BR2.7). `first` marks the first scan: only it reports skipped links and
+/// the empty-pages notice, so a stamping run never repeats them.
+fn scan_and_check(
+    shown_vault: &Path,
+    notes: &Path,
+    pages_root: Option<&Path>,
+    first: bool,
+) -> anyhow::Result<PublicationCatalog> {
+    println!("Scanning vault: {shown_vault:?}");
+    let scan = scan_sources(notes, pages_root, first)?;
+    println!(
+        "Found {} sources ({} site pages)",
+        scan.index.posts.len(),
+        scan.page_count
+    );
+    // "Empty" is decided after the PAGES walk, so it uses exactly the walker's
+    // skip rules (reliability-design §2).
+    if first
+        && let Some(path) = pages_root
+        && scan.page_count == 0
+    {
+        eprintln!("{}", pages_empty_notice(path));
+    }
+
+    match PublicationCatalog::build(scan.index) {
+        Ok(catalog) => Ok(catalog),
+        Err(diags) => {
+            report_diagnostics(&diags);
+            std::process::exit(1);
+        }
+    }
 }

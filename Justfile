@@ -1,22 +1,23 @@
-vault    := env("VAULT_PATH", "./fixtures/vault")
+vault    := env("VAULT_PATH", "./fixtures/vault/Notes")
+pages    := env("PAGES_PATH", "./fixtures/vault/Pages")
 content  := "./content"
 site_dir := "./site"
 web_root := env("WEB_ROOT", env("HOME") / "Sites/obsidian-blog")
 
 # deploy publishes the real vault (dev/test recipes keep the fixtures default)
 publish_vault   := env("VAULT_PATH", env("HOME") / "Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Notes")
+publish_pages   := env("PAGES_PATH", env("HOME") / "Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Areas/Pages")
 puppeteer_chrome := env("PUPPETEER_EXECUTABLE_PATH", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 build: preprocess site-build
 
 preprocess:
-    cargo run --release --manifest-path preprocessor/Cargo.toml -- "{{vault}}" {{content}}
+    cargo run --release --manifest-path preprocessor/Cargo.toml -- "{{vault}}" {{content}} --pages "{{pages}}"
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
     cp {{content}}/previews.json {{site_dir}}/public/previews.json
     cp {{content}}/nav-tree.json {{site_dir}}/public/nav-tree.json
-    mkdir -p {{site_dir}}/public/assets
-    cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
+    node {{site_dir}}/scripts/sync-public-assets.mjs {{content}}/assets {{site_dir}}/public/assets
 
 dev: preprocess
     cd {{site_dir}} && npx astro dev
@@ -33,13 +34,12 @@ serve:
     node {{site_dir}}/scripts/local-server.mjs "{{web_root}}"
 
 deploy-preprocess:
-    PUPPETEER_EXECUTABLE_PATH="{{puppeteer_chrome}}" cargo run --release --manifest-path preprocessor/Cargo.toml -- --stamp-published "{{publish_vault}}" {{content}}
+    PUPPETEER_EXECUTABLE_PATH="{{puppeteer_chrome}}" cargo run --release --manifest-path preprocessor/Cargo.toml -- --stamp-published "{{publish_vault}}" {{content}} --pages "{{publish_pages}}"
     cp {{content}}/search-index.json {{site_dir}}/public/search-index.json
     cp {{content}}/graph.json {{site_dir}}/public/graph.json
     cp {{content}}/previews.json {{site_dir}}/public/previews.json
     cp {{content}}/nav-tree.json {{site_dir}}/public/nav-tree.json
-    mkdir -p {{site_dir}}/public/assets
-    cp -r {{content}}/assets/* {{site_dir}}/public/assets/ 2>/dev/null || true
+    node {{site_dir}}/scripts/sync-public-assets.mjs {{content}}/assets {{site_dir}}/public/assets
 
 test:
     cd preprocessor && cargo test

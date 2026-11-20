@@ -16,9 +16,11 @@ site/public/graph.json
 site/public/previews.json
 site/public/nav-tree.json
 site/public/assets/
-fixtures/vault/attachment/*.png
-!fixtures/vault/attachment/test-image.png
-!fixtures/vault/attachment/markdown-only.png
+fixtures/vault/Notes/attachment/*.png
+!fixtures/vault/Notes/attachment/test-image.png
+!fixtures/vault/Notes/attachment/markdown-only.png
+fixtures/vault/Pages/attachment/*.png
+!fixtures/vault/Pages/attachment/portrait.png
 
 # Written by Puppeteer's postinstall during `npm ci`, not authored here.
 .puppeteer-config.json
