@@ -83,6 +83,42 @@ async function trackForeignRequests(page: Page, baseURL: string | undefined): Pr
   return foreign;
 }
 
+/** `/_astro/Search.Bx1_c-9Z.js` → `/_astro/Search`: drops the build hash so two builds compare. */
+function logicalScriptName(url: string): string {
+  const { pathname } = new URL(url);
+  return pathname.replace(/\.[A-Za-z0-9_-]+\.js$/, '');
+}
+
+/** The logical names of every script the page requests while it loads and settles. */
+async function scriptSet(page: Page, path: string): Promise<string[]> {
+  const scripts = new Set<string>();
+  const record = (request: { resourceType(): string; url(): string }) => {
+    if (request.resourceType() === 'script') scripts.add(logicalScriptName(request.url()));
+  };
+  page.on('request', record);
+  await gotoSettled(page, path);
+  page.off('request', record);
+  return [...scripts].sort();
+}
+
+// NFR1.5 (review R-04): the Writing pages add no script of their own; they load
+// exactly the scripts an existing Writing page (/writing/tags) already loads.
+test.describe('Writing pages load no new script (NFR1.5)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  test('/writing and /writing/all request the same scripts as /writing/tags', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'one engine is enough to compare script sets');
+    const reference = await scriptSet(page, '/writing/tags');
+    expect(reference.length).toBeGreaterThan(0);
+    for (const path of ['/writing', '/writing/all']) {
+      expect(await scriptSet(page, path), path).toEqual(reference);
+    }
+  });
+});
+
 test.describe('homepage "이번 주 글" (M1; BR2.1)', () => {
   test.use({ viewport: viewportFor(1024) });
 
