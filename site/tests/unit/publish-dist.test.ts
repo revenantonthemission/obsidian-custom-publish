@@ -9,6 +9,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -126,6 +127,34 @@ describe('publish-dist.sh', () => {
     expect(tree(webRoot)).toEqual(['index.html']);
     expect(readFileSync(join(webRoot, 'index.html'), 'utf8')).toBe('home v1');
     expect(tree(dist)).toEqual(distBefore);
+  });
+
+  test('places the pages before the table: a failure after the mirror leaves the old table untouched', () => {
+    // Review R-01 (NFR5.25): stop the script between the mirror and the table
+    // placement with a `cp` that fails, found first on the child's PATH only.
+    // The tables differ in bytes and size, so rsync would copy the new one if
+    // the exclude were gone (`_` sorts before `w`, so it would land first).
+    const shim = join(scratch, 'shim');
+    put(shim, 'cp', '#!/bin/sh\nexit 1\n');
+    chmodSync(join(shim, 'cp'), 0o755);
+    const oldTable = '{"version":1,"rules":[{"from":"/tags","to":"/writing/tags"}]}';
+    put(webRoot, '_redirects.json', oldTable);
+    put(webRoot, 'tags/index.html', 'old tag index');
+    put(dist, '_redirects.json', '{"version":1,"rules":["new table, different bytes"]}');
+    put(dist, '.redirects.json.tmp', 'must not travel');
+    const run = spawnSync('bash', [SCRIPT, dist, webRoot], {
+      encoding: 'utf8',
+      timeout: 20_000,
+      env: { ...process.env, PATH: `${shim}:${process.env.PATH ?? ''}` },
+    });
+    expect(run.status, String(run.stderr)).not.toBe(0);
+    expect(readFileSync(join(webRoot, '_redirects.json'), 'utf8')).toBe(oldTable);
+    expect(readFileSync(join(webRoot, 'writing/tags/node.js/index.html'), 'utf8')).toBe(
+      'node.js v2'
+    );
+    expect(readFileSync(join(webRoot, 'writing/graph/index.html'), 'utf8')).toBe('graph v2');
+    expect(existsSync(join(webRoot, 'tags'))).toBe(false);
+    expect(existsSync(join(webRoot, '.redirects.json.tmp'))).toBe(false);
   });
 
   test('creates the web root when it is absent', () => {
