@@ -20,5 +20,13 @@
     "scope": "refactor",
     "status": "complete",
     "request": "e4e1c825"
+  },
+  {
+    "uuid": "01a1df1c-d475-7160-8751-7ad8c07bc399",
+    "slug": "personal-website",
+    "dirName": "261115-personal-website",
+    "scope": "feature",
+    "status": "in-flight",
+    "request": "1683dc62"
   }
 ]

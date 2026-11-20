@@ -1,0 +1,15 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "u1-publish-boundary",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    { "id": "NFR1", "status": "OK", "target": "NFR1.1, NFR1.2, NFR1.3, NFR1.4" },
+    { "id": "NFR2", "status": "OK", "target": "NFR2.1" },
+    { "id": "NFR3", "status": "OK", "target": "NFR3.1" },
+    { "id": "NFR4", "status": "OK", "target": "NFR4.4, NFR4.5, NFR4.6" },
+    { "id": "NFR5", "status": "OK", "target": "NFR5.1, NFR5.2, NFR5.3, NFR5.4, NFR5.5, NFR5.6, NFR5.7, NFR5.8, NFR5.9, NFR5.10, NFR5.11, NFR5.12, NFR5.13, NFR5.14, NFR5.15, NFR5.16, NFR5.17, NFR5.18" },
+    { "id": "NFR6", "status": "OK", "target": "NFR6.1, NFR6.2, NFR6.3, NFR6.4, NFR6.5, NFR6.6, NFR6.7" },
+    { "id": "NFR7", "status": "OK", "target": "NFR7.1, NFR7.2" },
+    { "id": "NFR8", "status": "N/A", "target": "Writing reach through /writing/all is delivered by u2-writing-section" }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "stage": "nfr-design",
+  "unit": "u3-writing-moves",
+  "upstream_ids": [
+    "NFR4.9",
+    "NFR4.10",
+    "NFR6.12",
+    "NFR6.13",
+    "NFR6.14",
+    "NFR5.22",
+    "NFR5.23",
+    "NFR5.24",
+    "NFR5.25",
+    "NFR2.4",
+    "NFR3.4",
+    "NFR1.15",
+    "NFR6.15",
+    "NFR6.16"
+  ],
+  "coverage": [
+    {
+      "id": "NFR4.9",
+      "status": "OK",
+      "target": "performance-design.md section 1.1 — the Astro build-done hook resolves the table's target from the hook's `dir` argument, writes one sorted unique table of decoded paths with one rule per built tag page plus the two fixed rules, fails the build rather than dropping a rule whose target page is missing, and the build-output check reads the table from an isolated build's own `--outDir`, never from the shared `site/dist`"
+    },
+    {
+      "id": "NFR4.10",
+      "status": "OK",
+      "target": "performance-design.md section 2.1 — one `stat` and one map lookup per request, the table file read only when its presence or modification time changes, through the `loadRedirectTable(tablePath, { readFile, stat })` seam; a matched request reads no file for its target"
+    },
+    {
+      "id": "NFR6.12",
+      "status": "OK",
+      "target": "performance-design.md section 3.1 — the repository's existing Core Web Vitals budgets (LCP 2500 ms, CLS 0.1, TBT 200 ms) hold on the routes the performance specification measures, with `/writing/graph` replacing `/graph`; the two tag routes stay out of those lists for the reason NFR6.12 states"
+    },
+    {
+      "id": "NFR6.13",
+      "status": "OK",
+      "target": "performance-design.md section 1.1 — the writer costs one directory listing, one existence check per rule and one file write; the build output gains exactly one file and no asset, inside the existing 60 s isolated-build budget"
+    },
+    {
+      "id": "NFR6.14",
+      "status": "OK",
+      "target": "performance-design.md sections 3.2 and 3.3 — the back-link rules move into the inlined `grouped.css`, so no hashed file is added, renamed or changed on any route, proved by a search of `_astro/` for the selectors only `grouped.css` defines (`.grouped-row`, `.tag-chip`, `.listing-header`, `.grouped-empty`, `.back-link`, `.back-link-chevron`); a unit check fails when the minified `grouped.css` reaches 4096 bytes (about 3912 bytes after the move); the per-route request collector compares logical resources and the request count with a fixed expectation"
+    },
+    {
+      "id": "NFR5.22",
+      "status": "OK",
+      "target": "security-design.md sections 2, 3 and 4 — on a match the raw query is tested against `%(?:[01][0-9a-f]|7f)` (case-insensitive) without decoding and refused with 400 before assembly; otherwise the `Location` value is the rule's once-encoded `to` plus the raw query appended byte-for-byte, checked against the header character set, and written inside a guard so the handler never throws"
+    },
+    {
+      "id": "NFR5.23",
+      "status": "OK",
+      "target": "security-design.md sections 5.1 and 5.2 — the server accepts the table only when its version is 1, `rules` is a list and every `from` and `to` satisfies the acceptance grammar G1–G8 (including no trailing slash and no percent-escape); a failing table is rejected whole with one error line and no redirect, and the writer's rules cannot loop because their `from` and `to` values live in disjoint path spaces"
+    },
+    {
+      "id": "NFR5.24",
+      "status": "OK",
+      "target": "security-design.md section 5.1 — the acceptance grammar admits no scheme and no authority, so a `to` that is not a decoded absolute path rejects the whole table, and the containment check still applies to the table and to every served file and index"
+    },
+    {
+      "id": "NFR5.25",
+      "status": "OK",
+      "target": "security-design.md section 6 — the clean-URL rewrite serves a resolved directory's `index.html` whatever the path's shape (BR3.6), and the writer checks every rule's target page in the build output and fails the build with `REDIRECT_TARGET_MISSING` on a miss, so the server answers 301 on a match without a request-time target check; section 6.1 hands the publish-window residual to Infrastructure Design as a deploy-ordering requirement"
+    },
+    {
+      "id": "NFR2.4",
+      "status": "OK",
+      "target": "security-design.md section 7 — the moved pages load nothing from another origin, the graph data file stays at the site's own root, and the table is served as `application/json; charset=utf-8` from that same root"
+    },
+    {
+      "id": "NFR3.4",
+      "status": "OK",
+      "target": "security-design.md section 7 — the pages are static Astro pages with no new island, the graph's list panel is revealed by the graph stylesheet, and the no-JavaScript crossunit run is extended to the three moved routes to assert it"
+    },
+    {
+      "id": "NFR1.15",
+      "status": "OK",
+      "target": "security-design.md sections 7 and 7.1 — the axe matrix covers the three moved routes at four widths in light and dark plus the reduced-motion check, and the back link's 44 x 44 px rule, focus style and chevron move into `grouped.css`, the stylesheet all four pages load"
+    },
+    {
+      "id": "NFR6.15",
+      "status": "OK",
+      "target": "security-design.md section 8 — the recorded Construction Verification Command stays green, the old-address expectations are updated rather than deleted, and a repository-wide grep of the `/tags` and `/graph` address text covers `site/`, `preprocessor/`, the Justfile and the Jenkinsfile"
+    },
+    {
+      "id": "NFR6.16",
+      "status": "OK",
+      "target": "security-design.md section 8 — every redirect criterion is proved at HTTP level against the production server the HIG suite runs (127.0.0.1:4329 over `site/dist`); the dotted key is proved by a server Vitest check that starts the production server on a free port from a port-0 listener on 127.0.0.1 (never 8080 or 4329) against a temporary web root holding a synthetic `writing/tags/node.js/index.html` and its rule, asserts 301 then 200, and tears the child down on success and failure"
+    }
+  ]
+}

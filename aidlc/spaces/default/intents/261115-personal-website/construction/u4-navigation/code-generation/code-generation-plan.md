@@ -77,7 +77,7 @@
       "Add E2E, performance, or security tests when requirements demand them."
     ],
     "scope_floor": [
-      "Meet an 80% line-coverage floor.",
+      "Report line coverage on the whole project and enforce no minimum percentage (team.md Testing Posture, affirmed 2026-10-20, re-run 2026-11-15). Maintainer decision 2026-11-20, recorded as a human-made requirement change: the team posture governs this scope floor.",
       "Run the selected tests in CI before merge."
     ],
     "combination_rule": "Apply every selected-strategy obligation and every scope-floor obligation; neither replaces the other, and a targeted scope regression may add the narrowest necessary test type beyond the strategy default."
@@ -205,6 +205,50 @@ How the contract's layers apply to this unit:
 - [x] **Step 10 — Documentation, source manifest and traceability**
   - `CLAUDE.md`: the one-item bar, the marker vocabulary and where the marker is derived, the `chrome.css` budget, and the fact that the four chrome files invalidate the manual accessibility record.
   - Write `code-summary.md`, `source-manifest.json` and `traceability.json`; every `OK` target is one existing workspace-relative file.
+
+### Repair from Build and Test loop-back 1 (2026-11-20)
+
+Build and Test graded U4-NFR5.21 Not Met (review R-02, Major) and U4-NFR1.11 Not Met (review R-03 and R-05). Branch: `feature/u3-writing-moves`, the assembled stack. Commit there with `git add <path>` per file.
+
+The page-weight items are the maintainer's decision and are not part of these steps: U4-PD-ROOT-BYTES, review R-01, and the `/` budget shared with U2-NFR1.8.
+
+The NFR1.11 wording is also the maintainer's decision, made at this plan's approval. The requirement says "at most once per page"; the design and the code mark one item per surface, and only one surface renders at a given width. The decision is either to amend NFR1.11 to "once per surface", which reopens U4's NFR Requirements stage (a separate, small step), or to accept the per-surface reading and record that in `code-summary.md`. Step 12 adds the test half whatever the decision.
+
+- [x] **Step 11 — Fail-closed paths and the hostile model (NFR5.21; review R-02): Red → Green**
+  - Red: in `site/tests/unit/profile-metadata-navigation.test.ts`, add the three missing fail-closed cases: a control or whitespace character in the path, a bad percent escape (`/writing%zz`), and a backslash (`/writing\all`). Each expects `navigation.current.invalid@profile.navigation.current`.
+  - Red: add a hostile-model build check. Feed the navigation validation an invalid primary model (two items, or Writing pointing anywhere other than `/writing`) through the same entry the site build uses, and assert that the build path fails with the coded navigation diagnostic. Prefer the existing validation entry point in a unit test. An isolated build through `buildSiteInto` is used only if no unit-level entry exists.
+  - Record the output. These cases are expected to pass against today's `navigation.ts`, because the patterns exist; the step adds the missing evidence. If one fails, fix the cause, never the test.
+  - Green: none beyond the tests unless one fails.
+  - Correct the "Test data" paragraph in `unit-test-instructions.md` so it lists exactly the paths the tests exercise.
+  - Commit: `test: 주요 탐색이 잘못된 경로와 모델에서 닫힌 채 실패함을 확인합니다`.
+- [x] **Step 12 — One link in the bar, asserted in Playwright (NFR1.11; review R-03): Red → Green**
+  - Red: in `site/tests/e2e/hig-chrome.spec.ts`, assert that `.desktop-nav` holds exactly one link, to `/writing`, on every route the chrome block already visits. On each surface (bar and sheet), assert that at most one element carries `aria-current`. Record the output.
+  - Green: none beyond the test unless it fails.
+  - Commit: `test: 상단 막대에 Writing 링크가 하나뿐임을 브라우저에서 확인합니다`.
+- [x] **Step 13 — Records**
+  - Correct the Rust row in `code-summary.md` to the number the suite reports (review R-04).
+  - Add a "Loop-back 1 repair" section, including the maintainer's NFR1.11 decision and its record.
+  - Update `source-manifest.json` (keep every entry; application-source paths only) and `traceability.json`.
+  - Run the full recorded verification command; it must exit 0.
+
+### Repair from Build and Test loop-back 2 (2026-11-20)
+
+Build and Test run 2 graded U4-NFR5.21 Not Met (review-02 R-07), and found the `code-summary.md` page-weight record still uncorrected (review-02 R-01; the record half of U4-PD-ROOT-BYTES). Branch: `feature/u3-writing-moves`. Commit with `git add <path>` per file.
+
+The `/` budget, the NFR1.11 wording and the U4-NFR6.11 design wording (`performance-design.md` §1, an NFR Design artifact) remain the maintainer's decisions and are not part of these steps. `site/src/components/Header.astro` is a subject of the manual 16-state accessibility review, so these steps must not change it.
+
+- [x] **Step 14 — A failed navigation state stops the build at `Header.astro` (NFR5.21; review-02 R-07): Red → Green**
+  - Red: a Vitest test (`site/tests/unit/header-navigation-failure.test.ts`) that renders `site/src/components/Header.astro` with a `pathname` that `getPrimaryNavigationState` rejects (for example `/writing%zz` and `/writing\all`), and expects the render to reject with the `TypeError` "Invalid primary navigation state.". A valid pathname (`/writing`) renders and contains one `aria-current` link to `/writing`, so the test does not pass for the wrong reason.
+    - Prefer the Astro container API (`experimental_AstroContainer` from `astro/container`) in a Vitest file that uses Astro's Vite config (`getViteConfig`), with a separate config file if the existing unit config cannot load `.astro` files. If the container cannot render `Header` (for example because of its islands), fall back to one isolated `buildSiteInto` build over a temporary test-only page that passes a hostile `pathname` to `Header`, expecting a non-zero exit whose output names the `TypeError`.
+    - Show the test catches the defect: temporarily replace the `throw` in `Header.astro` with a fallback, confirm the test fails, then restore the file byte-for-byte (`git diff --exit-code site/src/components/Header.astro`). Record both outputs.
+  - Green: none beyond the test unless it fails. Never change `Header.astro`.
+  - Commit: `test: 잘못된 탐색 상태가 Header 에서 빌드를 멈추는지 확인합니다`.
+- [x] **Step 15 — Page-weight record (review-02 R-01)**
+  - In `code-summary.md` Step 8, replace the page-weight explanation with like-for-like figures from Build and Test `test-results.md` §6.2: run 1 U2 head `/` 255,770 B and U4 head 255,675 B (U4's own delta on `/` is −99 B); the design baseline 255,351 B and the 3.63 s build time did not reproduce; the `/writing` one-request drop came from removing "Résumé" from the bar, which dropped the font subset that only its `é` needed. Keep the original text, marked superseded.
+- [x] **Step 16 — Records**
+  - Add a "Loop-back 2 repair" section to `code-summary.md`.
+  - Update `source-manifest.json` (keep every entry; application-source paths only; add any new config file) and `traceability.json` (NFR5.21 points at the new test file as a plain path).
+  - Run the full recorded verification command; it must exit 0.
 
 ## Story → step traceability
 

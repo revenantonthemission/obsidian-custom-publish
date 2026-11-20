@@ -101,7 +101,7 @@
     {
       "id": "NFR5.21",
       "status": "OK",
-      "target": "site/src/lib/navigation.ts"
+      "target": "site/tests/unit/header-navigation-failure.test.ts"
     },
     {
       "id": "NFR1.11",

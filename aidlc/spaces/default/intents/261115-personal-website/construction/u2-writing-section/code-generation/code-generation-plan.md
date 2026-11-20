@@ -71,7 +71,7 @@
       "Add E2E, performance, or security tests when requirements demand them."
     ],
     "scope_floor": [
-      "Meet an 80% line-coverage floor.",
+      "Report line coverage on the whole project and enforce no minimum percentage (team.md Testing Posture, affirmed 2026-10-20, re-run 2026-11-15). Maintainer decision 2026-11-20, recorded as a human-made requirement change: the team posture governs this scope floor.",
       "Run the selected tests in CI before merge."
     ],
     "combination_rule": "Apply every selected-strategy obligation and every scope-floor obligation; neither replaces the other, and a targeted scope regression may add the narrowest necessary test type beyond the strategy default."
@@ -219,6 +219,48 @@ How the contract's layers apply to this unit:
 - [x] **Step 10 — Documentation**
   - `CLAUDE.md`: the new routes; `WR001`; the rule that `HOMEPAGE_TODAY_OVERRIDE` is test-only; `writing.css`.
   - Write `code-summary.md`, `source-manifest.json` and `traceability.json`.
+
+### Repair from Build and Test loop-back 1 (2026-11-20)
+
+Build and Test graded U2-NFR1.5 and U2-PD-CSS3K Not Met and U2-AC4.1.3 Unverified. These come from review findings R-04 and R-01 and from a never-written test. The work is on branch `feature/u3-writing-moves`, the assembled stack; commit there with `git add <path>` per file.
+
+U2-NFR1.8 (the `/` byte budget) is the maintainer's decision, either re-planning the budget or building a custom font subset, and is not part of these steps. If the maintainer chooses the font subset at this plan's approval, it is added as its own step.
+
+- [x] **Step 11 — Script-set check (NFR1.5; review R-04): Red → Green**
+  - Red: a Playwright check in `site/tests/e2e/hig-writing.spec.ts` (Chromium only). It collects the script request URLs of `/writing` and `/writing/all`, maps each to its logical name (the hashed `/_astro/<name>.<hash>.js` reduced to `<name>`), and asserts both sets equal the set on `/writing/tags`. Run the test and record its output. It passes against today's code, because the sets are measured equal, so this step adds the missing evidence rather than changing behaviour.
+  - Green: none needed beyond the test. If it fails, fix the cause, never the test.
+  - Commit: `test: Writing 화면이 새 스크립트를 싣지 않음을 확인합니다`.
+- [x] **Step 12 — Empty `/writing` (AC4.1.3): Red → Green**
+  - Red: a Vitest test in `site/tests/unit/` that builds the site into its own `--outDir` with `buildSiteInto`, over a content tree holding no ordinary posts, and asserts that `/writing` shows "아직 발행한 글이 없습니다.".
+    - Build the empty tree with the same seam the existing build tests use; read `site/tests/unit/support/astro-build.ts` and `site/src/lib/data.ts` for how content is located.
+    - If the build cannot be pointed at another content tree without a code change, add the smallest documented seam (an environment variable read in `data.ts`, test-only, named in `CLAUDE.md`). Record the failing output first.
+  - Green: the smallest change that makes it pass.
+  - Commit: `test: 글이 없을 때 Writing 화면의 빈 상태를 확인합니다`.
+- [x] **Step 13 — `writing.css` within its 3 KiB design target (review R-01): Red → Green**
+  - Red: a Vitest check that reads `site/src/styles/writing.css` and asserts it is 3,072 B or less unminified, today 3,998 B. Record the failing output.
+  - Green: move each rule block used by only one page out of `writing.css` into that page's own stylesheet, or into a component `<style>`, without changing any rendered style. Candidates are the week-card rules used only by the homepage and the sticky year-header rules used only by `/writing/all`.
+  - The full HIG suite must stay green, including the axe matrix and the sticky-header checks.
+  - Commit: `refactor: writing.css 를 한 화면에서만 쓰는 규칙 없이 3 KiB 안으로 줄입니다`.
+- [x] **Step 14 — Records**
+  - Update `code-summary.md` with a "Loop-back 1 repair" section, `source-manifest.json` (keep every entry and add the files Steps 11–13 touch) and `traceability.json` (AC4.1.3 now points at its test).
+  - Run the full recorded verification command; it must exit 0.
+
+### Repair from Build and Test loop-back 2 (2026-11-20)
+
+Build and Test run 2 graded U2-NFR5.19 Not Met and U2-NFR1.5 Not Met, from U2 review-02's Minor findings. Branch: `feature/u3-writing-moves`. Commit with `git add <path>` per file.
+
+- [x] **Step 15 — `CONTENT_DIR_OVERRIDE` cannot reach a production build (NFR5.19): Red → Green**
+  - Red: a Vitest test in `site/tests/unit/content-data.test.ts`. With `CONTENT_DIR_OVERRIDE` set outside a test run (simulate by calling the data module's resolver with an environment where the Vitest marker is absent), reading content throws a coded error that names the variable. With the Vitest marker present, the override still points the build at the temporary tree, so the Step 12 test keeps passing. Record the failing output.
+  - Green: `site/src/lib/data.ts` honours the override only when the run is a Vitest run. That means the `VITEST` environment variable for in-process tests, or an explicit second variable set by `buildSiteInto` only, chosen and documented in `CLAUDE.md`. Anywhere else, a set override fails the build closed with the coded error.
+  - Commit: `fix: 콘텐츠 경로 덮어쓰기를 시험 실행에서만 받아들이도록 합니다`.
+- [x] **Step 16 — Inline scripts in the script-set check (NFR1.5): Red → Green**
+  - Red: extend the Step 11 Playwright check in `site/tests/e2e/hig-writing.spec.ts`. On `/writing`, `/writing/all` and `/writing/tags`, collect every inline `<script>` element (no `src`), with its count and a SHA-256 of each body. Assert that the Writing pages carry the same set as `/writing/tags`. Show the check fails by temporarily adding an inline script to `site/src/pages/writing/index.astro`, then revert. Record both outputs.
+  - Green: none needed unless it fails.
+  - Commit: `test: Writing 화면의 인라인 스크립트도 태그 화면과 같은지 확인합니다`.
+- [x] **Step 17 — Records**
+  - Add a "Loop-back 2 repair" section to `code-summary.md`.
+  - Update `source-manifest.json` (keep every entry; application-source paths only) and `traceability.json`.
+  - Run the full recorded verification command; it must exit 0.
 
 ## Story → step traceability
 

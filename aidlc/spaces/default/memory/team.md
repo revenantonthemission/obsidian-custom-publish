@@ -15,7 +15,7 @@
 - AI-DLC Construction worktrees start from `develop` and merge back into `develop` with a merge commit: base `develop`, target `develop`, strategy `merge`. Hotfix work uses the same mapping, because nothing branches from `main`.
 - As soon as a branch has merged, we delete it and remove its worktree, if it has one. Session worktrees live under `.claude/worktrees/` and AI-DLC Bolt worktrees live under `.aidlc/worktrees/`. Neither is ever committed.
 - Feature branches stay local. Only `develop` and `main` live on `origin`, and we do not use pull requests.
-- Commit messages use `<type>: <description>` with the types `feat`, `fix`, `docs`, `chore`, `ci`, `refactor` and `test`. The description is written in Korean, in declarative `…합니다` form.
+- Commit messages use `<type>: <description>` with the types `feat`, `fix`, `docs`, `chore`, `ci`, `refactor` and `test`. The description is written in Korean, in declarative `…합니다` form. A hotfix uses `fix:`; there is no `hotfix` type.
 - One maintainer owns the repository. They write the content, approve the profile facts and carry out every human review gate.
 
 ## Walking Skeleton
@@ -27,7 +27,7 @@
 ## Testing Posture
 
 - **Methodology**: tdd
-- **Methodology evidence**: The maintainer chose test-first development in the practices interview (Question 4, answer B). It matches the failing-test-first plans of March–April 2026 and the maintainer's global agent rules, and it replaces the build-first order of the July 2026 work.
+- **Methodology evidence**: The maintainer chose test-first development in the 2026-10-20 practices interview (Question 4, answer B). It matches the failing-test-first plans of March–April 2026 and the maintainer's global agent rules, and it replaces the build-first order of the July 2026 work. The 2026-11-15 re-run found nothing that contradicts it, and the initiative brief for the personal-website work restates "test-first".
 - **Ordering**: For each behaviour, write a failing test first, implement until it passes, refactor, and run the full existing suite before committing; for UI work, the failing tests are the Playwright browser and accessibility acceptance checks for the pages being changed.
 - The existing suites stay green on every change, and Jenkins runs them before every nightly deploy. They are `cargo test --release` (preprocessor unit, integration and proptest suites), `npm run test:unit` (Vitest examples and the obligation map) and `npm run test:pbt` (seeded fast-check properties).
 - Rust tests run against the real fixture vault in `fixtures/vault/`, never against mocks. The site's unit suite builds the site, so `content/` and the copied JSON files must exist first. `just preprocess` creates them, as do the fixture steps of the Jenkins Verify stage.
@@ -35,11 +35,12 @@
 - When a property test finds a shrunk counterexample, we fix the defect and keep the counterexample as a permanent example regression next to the unchanged property.
 - Each UI change adds Playwright checks for the pages it touches. These are axe accessibility scans (WCAG 2.2 AA tags) at 320, 768, 1024 and 1440 px wide, in light and dark themes, plus a reduced-motion check. We do not keep screenshot comparison baselines.
 - Jenkins does not run every check, so before merging UI work we run the rest locally:
+  - `npm run format:check`
   - `npx astro check`
   - `just crossunit`, the JavaScript-off smoke test and link sweep over a built site
   - the Playwright browser checks, including `npm run test:e2e` when the profile routes change
 - Some files are subjects of the human 16-state accessibility review: `site/src/styles/global.css`, `BaseLayout.astro`, `Header.astro`, `MobileNav.tsx`, `navigation.ts`, `site/package.json` and everything under `site/src/styles/profile/`, among others. Changing them invalidates the review record. For a large change such as a redesign, the maintainer redoes the review once, after the change settles, not after every merge.
-- We report test coverage but enforce no minimum percentage.
+- We report test coverage (`npm run test:coverage`, v8, written to `.artifacts/coverage/`) but enforce no minimum percentage.
 
 ## Guard Policy
 
@@ -59,7 +60,8 @@
 ## Code Style
 
 - Rust changes must pass `cargo fmt --check`: default `rustfmt` style, edition 2024.
-- The site has no formatter or linter yet. Prettier comes after the redesign, and ESLint and Stylelint may follow later. Until then we match the style of the file being edited: two-space indentation and semicolons everywhere, single quotes in `site/src/lib` and the config files, and double quotes in the islands.
+- Prettier formats `site/`: changes there must pass `npm run format:check` (`npm run format` fixes them), run locally before merging alongside `npx astro check`. The settings in `site/.prettierrc` are two-space indentation, semicolons, single quotes, print width 100 and `trailingComma: "es5"`, with `prettier-plugin-astro` for `.astro` files. `site/.prettierignore` keeps generated output, `verification/`, the résumé fixtures and the lockfile out of its reach. The site has no ESLint or Stylelint yet; they may follow later.
+- Where two inline nodes in an `.astro` file must touch, put `{/* prettier-ignore */}` on the line before, because the Astro plugin splits mixed inline children onto separate lines and that whitespace renders. Any reformat of the ES5 `<script is:inline>` blocks in `BaseLayout.astro` needs a new inline-script baseline from a `PROFILE_VERIFICATION_BUILD=1` build.
 - TypeScript runs in strict mode (`astro/tsconfigs/strict`, Preact JSX), and `npx astro check` is the type check.
 - The site uses npm and npx, which the Justfile and the Jenkinsfile depend on.
 - Naming:
