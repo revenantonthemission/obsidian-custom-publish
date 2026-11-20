@@ -81,7 +81,9 @@ describe('homepage built in a week without a post (AC3.4.1)', () => {
   test('the only row is the "모든 글 보기" link', () => {
     const section = weekSection();
     expect(section.match(/class="grouped-row"/g) ?? []).toHaveLength(1);
-    expect(section).toMatch(new RegExp(`href="${ALL_POSTS_HREF}"[^>]*data-testid="all-posts-link"`));
+    expect(section).toMatch(
+      new RegExp(`href="${ALL_POSTS_HREF}"[^>]*data-testid="all-posts-link"`)
+    );
     expect(section).not.toContain('href="/posts/');
   });
 
