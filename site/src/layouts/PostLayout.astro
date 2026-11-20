@@ -8,7 +8,8 @@ import LocalGraph from '../islands/LocalGraph.tsx';
 import { ListTree, X } from 'lucide-static';
 import { decorativeIcon } from '../lib/icons';
 import { extractToc } from '../lib/toc';
-import { sanitizeTag, getLocalGraph, getPostMeta, getAllPostMeta, formatDateKo } from '../lib/data';
+import { getLocalGraph, getPostMeta, getAllPostMeta, formatDateKo } from '../lib/data';
+import { tagHref } from '../lib/tag-urls.mjs';
 import type { PostMeta } from '../lib/types';
 // KaTeX's stylesheet and fonts, self-hosted from the installed package (NFR4).
 import 'katex/dist/katex.min.css';
@@ -77,7 +78,7 @@ if (meta.hub_parent) {
           <ul class="tag-chips" aria-label="태그">
             {meta.tags.map((tag) => (
               <li>
-                <a href={`/tags/${sanitizeTag(tag)}`} class="tag-chip">
+                <a href={tagHref(tag)} class="tag-chip">
                   <span class="tag-chip-mark" aria-hidden="true">
                     #
                   </span>

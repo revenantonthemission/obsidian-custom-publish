@@ -1,0 +1,19 @@
+---
+import { ChevronLeft } from 'lucide-static';
+import { decorativeIcon } from '../../lib/icons';
+
+// The one "‹ Writing" back link (U3 BR1.2; mockups M3, M4): the markup, class
+// and test id /writing/all has used since U2, shared by /writing/all and the
+// three pages U3 moved under /writing. Its rules live in grouped.css, which
+// all four pages already load, so no page gains a stylesheet request.
+interface Props {
+  href?: string;
+}
+
+const { href = '/writing' } = Astro.props;
+---
+
+<a href={href} class="back-link" data-testid="back-link">
+  <span class="back-link-chevron" set:html={decorativeIcon(ChevronLeft, 18)} />
+  Writing
+</a>

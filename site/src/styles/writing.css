@@ -58,26 +58,11 @@ body[data-surface='grouped'] .week-posts .grouped-list {
   font-size: var(--text-subheadline);
 }
 
-/* ── /writing/all: back link, sticky year headers, compact rows ── */
+/* ── /writing/all: sticky year headers, compact rows ──
+ * The back link's rules live in grouped.css since U3 (BR1.2). */
 .writing-all {
   /* The header's minimum block size: one 44 px target plus its padding. */
   --year-header-height: calc(var(--target) + var(--space-2));
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  align-self: flex-start;
-  min-block-size: var(--target);
-  min-inline-size: var(--target);
-  padding-inline-end: var(--space-2);
-  font-size: var(--text-subheadline);
-  text-decoration: none;
-}
-
-.back-link-chevron {
-  display: inline-flex;
 }
 
 /* Sticks just under the floating bar on thick glass (BR2.4). The data-material

@@ -4,12 +4,14 @@ import RecentPosts from '../../components/writing/RecentPosts.astro';
 import TopicList from '../../components/writing/TopicList.astro';
 import { getAllPostMeta, getPreviewSummary } from '../../lib/data';
 import { recentPosts, topics } from '../../lib/writing-lists';
+import { graphPath, tagIndexPath } from '../../lib/tag-urls.mjs';
 import '../../styles/grouped.css';
 import '../../styles/writing.css';
 
 // The Writing landing (mockups M2; BR2.2): one Large Title, the Tags and
-// Graph capsules at their current addresses (C3; U3 repoints them), "최근 글"
-// with the five newest dated ordinary posts, and "주제" with one row per hub.
+// Graph capsules, "최근 글" with the five newest dated ordinary posts, and
+// "주제" with one row per hub. The capsules point at /writing/tags and
+// /writing/graph through the address module (U3 BR2.1, BR2.3; AC4.1.5).
 // Static markup only: no island, no client state.
 const meta = getAllPostMeta();
 const recent = recentPosts(meta, 5);
@@ -24,10 +26,10 @@ const topicRows = topics(meta);
     <h1>Writing</h1>
   </header>
   <nav class="writing-capsules" aria-label="태그와 그래프">
-    <a href="/tags" class="capsule">
+    <a href={tagIndexPath()} class="capsule">
       Tags
     </a>
-    <a href="/graph" class="capsule">
+    <a href={graphPath()} class="capsule">
       Graph
     </a>
   </nav>

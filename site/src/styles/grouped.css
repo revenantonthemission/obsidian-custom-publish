@@ -31,6 +31,26 @@
   font-size: var(--text-subheadline);
 }
 
+/* ── Back link: "‹ Writing" above the Large Title, a 44 px target ──
+ * U3 (BR1.2, BR4.1): here rather than in writing.css, because the pages moved
+ * under /writing load only this stylesheet. It is inlined into every page, so
+ * it must stay under the 4096-byte inline limit (legacy-redirects-build test). */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  min-block-size: var(--target);
+  min-inline-size: var(--target);
+  padding-inline-end: var(--space-2);
+  font-size: var(--text-subheadline);
+  text-decoration: none;
+}
+
+.back-link-chevron {
+  display: inline-flex;
+}
+
 /* ── Inset grouped list ── */
 .grouped-list {
   margin: 0 0 var(--space-8);

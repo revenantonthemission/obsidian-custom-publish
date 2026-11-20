@@ -1,9 +1,8 @@
 ---
-import { ChevronLeft } from 'lucide-static';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import BackLink from '../../components/writing/BackLink.astro';
 import YearGroup from '../../components/writing/YearGroup.astro';
 import { getOrdinaryPosts } from '../../lib/data';
-import { decorativeIcon } from '../../lib/icons';
 import { postsByYear } from '../../lib/writing-lists';
 import '../../styles/grouped.css';
 import '../../styles/writing.css';
@@ -19,10 +18,7 @@ const count = groups.reduce((total, group) => total + group.posts.length, 0);
 <BaseLayout title="모든 글" surface="grouped">
   <div class="writing-all">
     <header class="listing-header">
-      <a href="/writing" class="back-link" data-testid="back-link">
-        <span class="back-link-chevron" set:html={decorativeIcon(ChevronLeft, 18)} />
-        Writing
-      </a>
+      <BackLink />
       <h1>모든 글</h1>
       <p class="listing-count">글 {count}개</p>
     </header>
