@@ -3,7 +3,10 @@ import path from 'node:path';
 import type { PostMeta, GraphData } from './types';
 import { sanitizeTag } from './tag-urls.mjs';
 
-const CONTENT_DIR = path.resolve('../content');
+// CONTENT_DIR_OVERRIDE is test-only (U2 plan Step 12; AC4.1.3): an isolated
+// unit-test build points it at a temporary content tree. Jenkins, `just deploy`
+// and the HIG runner never set it, so production always reads ../content.
+const CONTENT_DIR = path.resolve(process.env.CONTENT_DIR_OVERRIDE || '../content');
 
 // Module-level caches to avoid redundant filesystem reads during SSG builds
 let _allPostMeta: PostMeta[] | null = null;

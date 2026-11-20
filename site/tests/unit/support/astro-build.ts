@@ -37,10 +37,15 @@ async function acquireLock(): Promise<void> {
   }
 }
 
-/** Builds the site into `outDir`, one build at a time per checkout. */
+/**
+ * Builds the site into `outDir`, one build at a time per checkout. `env` adds
+ * variables to the build's environment only (for example the test-only
+ * `CONTENT_DIR_OVERRIDE`), never to this process.
+ */
 export async function buildSiteInto(
   outDir: string,
-  timeoutMs = 60_000
+  timeoutMs = 60_000,
+  env: Readonly<Record<string, string>> = {}
 ): Promise<SpawnSyncReturns<string>> {
   await acquireLock();
   try {
@@ -48,6 +53,7 @@ export async function buildSiteInto(
       cwd: ROOT,
       encoding: 'utf8',
       timeout: timeoutMs,
+      env: { ...process.env, ...env },
     });
   } finally {
     await rm(LOCK, { recursive: true, force: true });

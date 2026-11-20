@@ -46,6 +46,7 @@ Image attachments live in each folder's own `attachment/` (`Areas/Notes/attachme
 - `assets/` holds post images and diagrams; `assets/pages/` holds site-page images and diagrams, and page bodies point at `/assets/pages/…`. An embed is reduced to its file name, so `![[../x.png]]` can never write outside OUTPUT
 - `graph.json`, `search-index.json`, `previews.json`, `nav-tree.json`, `manifest.json` (sorted, lists `pages/*`, never `homepage/*`)
 - The site's data layer fails closed with `WR001 <path>: content manifest missing — run the preprocessor` or `WR001 <path>: meta files differ from manifest` when `content/meta` disagrees with the preprocessor's `manifest.json`; `getAllPostMeta()` takes an optional content folder as a test seam
+- `CONTENT_DIR_OVERRIDE=<folder>` is test-only: it points `src/lib/data.ts` at another content tree for an isolated unit-test build (`buildSiteInto(outDir, timeout, { CONTENT_DIR_OVERRIDE })`, as `tests/unit/writing-empty-build.test.ts` does for the empty `/writing`). Jenkins, `just deploy` and the HIG runner never set it
 - No `homepage/` is written; a stale one from an older run is removed with the other managed namespaces. The site has no homepage artifact reader, and HP001–HP004 and the profile slot are gone
 
 ## Local Serving (AWS fully decommissioned 2026-08-17)
