@@ -11,7 +11,7 @@ use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 
-use common::{hash_tree, put, run_press, stderr_of, stdout_of};
+use common::{hash_tree, put, run_press, shown, stderr_of, stdout_of};
 use obsidian_press::catalog::PublicationCatalog;
 use obsidian_press::output::write_output;
 use obsidian_press::scanner::scan_sources;
@@ -344,6 +344,49 @@ fn image_lookup_never_leaves_the_source_root() {
         "{}",
         stderr_of(&run)
     );
+}
+
+/// BR5.2 (review R-02, decided in loop-back 1): a site page that embeds a post
+/// does not support that post's Markdown images. The page body points at
+/// `/assets/pages/<name>`, the lookup stays inside PAGES, so the image is not
+/// copied; the run still exits 0 and the warning names both the image and the
+/// embedding page, so the owner can find the broken image.
+#[test]
+fn an_embedded_posts_image_on_a_site_page_is_unsupported_and_named() {
+    let tmp = TempDir::new().unwrap();
+    let notes = tmp.path().join("Vault/Notes");
+    let pages = tmp.path().join("Vault/Pages");
+    let out = tmp.path().join("out");
+    put(
+        &notes,
+        "Delta.md",
+        "---\npublished: 2024-04-01\n---\n델타 글.\n\n![도표](diagram.png)\n",
+    );
+    put(&notes, "attachment/diagram.png", "post diagram");
+    put(&pages, "Colophon.md", "## 만든 방법\n\n![[Delta]]\n");
+
+    let run = run_press(&[
+        notes.as_os_str(),
+        out.as_os_str(),
+        OsStr::new("--pages"),
+        pages.as_os_str(),
+    ]);
+
+    let stderr = stderr_of(&run);
+    assert_eq!(run.status.code(), Some(0), "stderr: {stderr}");
+    let expected = format!(
+        "warning: attachment not found: diagram.png (site page {})",
+        shown(&pages.join("Colophon.md"))
+    );
+    assert!(
+        stderr.lines().any(|l| l == expected),
+        "expected `{expected}` in stderr:\n{stderr}"
+    );
+    // The post itself keeps its image; the page's copy is never made.
+    assert_eq!(read(&out, "assets/diagram.png"), "post diagram");
+    assert!(!out.join("assets/pages/diagram.png").exists());
+    assert!(!manifest(&out).contains(&"assets/pages/diagram.png".to_string()));
+    assert!(read(&out, "pages/colophon.md").contains("/assets/pages/diagram.png"));
 }
 
 /// NFR5.3: an attachment that is a symbolic link is treated as missing.
