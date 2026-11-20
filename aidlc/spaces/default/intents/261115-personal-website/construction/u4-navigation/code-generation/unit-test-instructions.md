@@ -60,5 +60,12 @@ The 80 % line-coverage scope floor is measured by Build and Test on the full sui
 ## Test data
 
 - **Fixture vault:** unchanged. U4 adds, removes and rewrites no fixture note; the `/writing` routes come from U2's branch.
-- **Paths:** the marker table is exercised with literal paths (`/writing`, `/writing/all`, `/writing/tags/<tag>`, `/writing-old`, `/Writing`, `/WRITING/all`, a percent-encoded Korean tag, an invalid percent escape, an encoded slash, a double slash and a control character); the property's arbitrary generates `/writing` and `/writing/<segment>` cases.
+- **Paths:** `tests/unit/profile-metadata-navigation.test.ts` exercises exactly these literal paths:
+  - marker `page`: `/writing`, `/writing/`, `/writing?ref=nav#top`;
+  - marker `section`: `/writing/all`, `/writing/all/`, `/writing/all?from=writing`, `/writing/tags`, `/writing/tags/%EC%9A%B4%EC%98%81%EC%B2%B4%EC%A0%9C` (a percent-encoded Korean tag), `/writing/graph`;
+  - no marker: `/`, `/writing-old`, `/writingold`, `/Writing`, `/WRITING/all`, `/resume`, `/portfolio`, `/posts/post-with-code`; the profile local state on `/portfolio/example`;
+  - fail closed with `navigation.current.invalid@profile.navigation.current` (NFR5.21's five classes): an encoded slash `/writing%2fhidden`; a double slash `/writing//all`; control or whitespace characters `/writing` + NUL (U+0000), `/writing` + tab + `all`, `/writing all` (a space), `/writing/all` + DEL (U+007F); bad percent escapes `/writing%zz`, `/writing/all%E`, `/writing%`; backslashes `/writing\all` and its encoded form `/writing%5Call`;
+  - hostile primary models, fed to `getNavigationState` (the validation `getPrimaryNavigationState` and so `Header.astro` build through) on `/writing`, each failing with `navigation.model.invalid@profile.navigation.model`: the model plus a second item (`/extra` and `/tags`), Writing → `/blog`, Writing → `/writing/all`, `/writing` relabelled `Blog`, and an empty model.
+
+  The property's arbitrary generates `/writing` and `/writing/<segment>` cases.
 - **Real content:** no real-content measurement belongs to this unit; the fixture build is the measurement target.
