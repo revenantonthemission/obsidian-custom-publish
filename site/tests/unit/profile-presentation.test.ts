@@ -16,7 +16,7 @@ import type { ProfileData, ValidatedProfile } from '../../src/lib/profile/types.
 import { validateProfile } from '../../src/lib/profile/validation.js';
 import { cloneProfileFixture } from '../fixtures/profile-fixtures.js';
 
-const PRIMARY_NAVIGATION = ['/tags', '/graph', '/resume', '/portfolio'];
+const PRIMARY_NAVIGATION = ['/writing'];
 const PRODUCT_ENGINEER_PATH = '/portfolio/product-engineer';
 const PRODUCT_ENGINEER_PROJECTS = ['docsuri'] as const;
 const INFRA_ENGINEER_PATH = '/portfolio/infra-engineer';
@@ -262,6 +262,8 @@ describe('production Astro profile output', () => {
   let portfolioHtml = '';
   let productEngineerHtml = '';
   let infraEngineerHtml = '';
+  let writingHtml = '';
+  let writingAllHtml = '';
   let searchIndex: unknown;
   let navTree: unknown;
 
@@ -283,21 +285,33 @@ describe('production Astro profile output', () => {
       );
     }
 
-    const [searchIndexText, navTreeText, resume, portfolio, productEngineer, infraEngineer] =
-      await Promise.all([
-        readFile(join(outputRoot, 'search-index.json'), 'utf8'),
-        readFile(join(outputRoot, 'nav-tree.json'), 'utf8'),
-        readFile(join(outputRoot, 'resume', 'index.html'), 'utf8'),
-        readFile(join(outputRoot, 'portfolio', 'index.html'), 'utf8'),
-        readFile(join(outputRoot, 'portfolio', 'product-engineer', 'index.html'), 'utf8'),
-        readFile(join(outputRoot, 'portfolio', 'infra-engineer', 'index.html'), 'utf8'),
-      ]);
+    const [
+      searchIndexText,
+      navTreeText,
+      resume,
+      portfolio,
+      productEngineer,
+      infraEngineer,
+      writing,
+      writingAll,
+    ] = await Promise.all([
+      readFile(join(outputRoot, 'search-index.json'), 'utf8'),
+      readFile(join(outputRoot, 'nav-tree.json'), 'utf8'),
+      readFile(join(outputRoot, 'resume', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'portfolio', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'portfolio', 'product-engineer', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'portfolio', 'infra-engineer', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'writing', 'index.html'), 'utf8'),
+      readFile(join(outputRoot, 'writing', 'all', 'index.html'), 'utf8'),
+    ]);
     searchIndex = JSON.parse(searchIndexText);
     navTree = JSON.parse(navTreeText);
     resumeHtml = resume;
     portfolioHtml = portfolio;
     productEngineerHtml = productEngineer;
     infraEngineerHtml = infraEngineer;
+    writingHtml = writing;
+    writingAllHtml = writingAll;
   }, 75_000);
 
   afterAll(async () => {
@@ -586,6 +600,16 @@ describe('production Astro profile output', () => {
       ]);
     }
   });
+
+  test('marks the Writing route and its sections in the bar', () => {
+    // The bar link carries the route itself as 'page' and every section below
+    // it as 'true' (BR1.3), and no other route is marked. Each surface marks
+    // at most one link (NFR1.11).
+    expect(barAriaCurrents(writingHtml)).toEqual(['page']);
+    expect(barAriaCurrents(writingAllHtml)).toEqual(['true']);
+    expect(barAriaCurrents(resumeHtml)).toEqual([]);
+    expect(barAriaCurrents(portfolioHtml)).toEqual([]);
+  });
 });
 
 function exampleCertification(id: string, title: string, issuer: string) {
@@ -669,8 +693,10 @@ function assertNavigation(html: string, currentHref: string): void {
 
   expect(anchorHrefs(desktop)).toEqual(PRIMARY_NAVIGATION);
   expect(anchorHrefs(mobile)).toEqual(PRIMARY_NAVIGATION);
-  expect(currentAnchorHrefs(desktop)).toEqual([currentHref]);
-  expect(currentAnchorHrefs(mobile)).toEqual([currentHref]);
+  // The primary navigation marks only the Writing route family (BR1.2), so it
+  // carries no current anchor on the profile routes (BR1.5).
+  expect(currentAnchorHrefs(desktop)).toEqual([]);
+  expect(currentAnchorHrefs(mobile)).toEqual([]);
   expect(anchorHrefs(local)).toEqual(['/', '/resume', '/portfolio']);
   expect(currentAnchorHrefs(local)).toEqual([currentHref]);
 
@@ -815,6 +841,14 @@ function currentAnchorHrefs(html: string): string[] {
   return openingTags(html, 'a').flatMap((tag) =>
     attribute(tag, 'aria-current') === 'page' ? [attribute(tag, 'href')!] : []
   );
+}
+
+function barAriaCurrents(html: string): string[] {
+  const desktop = elementByClass(html, 'nav', 'desktop-nav');
+
+  return openingTags(desktop, 'a')
+    .map((tag) => attribute(tag, 'aria-current'))
+    .filter((value): value is string => value !== undefined);
 }
 
 function openingTags(html: string, tag: string): string[] {

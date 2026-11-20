@@ -13,7 +13,9 @@ const VIEWPORTS = [
   { width: 1440, height: 900 },
 ] as const;
 
-const CORE_NAV_TARGETS = ['/resume', '/portfolio', '/tags', '/graph'] as const;
+// The bar carries one primary target (U4); the homepage's own capsules and
+// the in-content links cover the rest of the site.
+const CORE_NAV_TARGETS = ['/writing'] as const;
 
 for (const viewport of VIEWPORTS) {
   test.describe(`no-JS core navigation ${viewport.width}x${viewport.height}`, () => {

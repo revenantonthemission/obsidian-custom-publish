@@ -1,0 +1,19 @@
+{
+  "stage": "code-generation",
+  "unit": "u4-navigation",
+  "version": 1,
+  "writes": [
+    { "path": "site/src/lib/navigation.ts" },
+    { "path": "site/src/components/Header.astro" },
+    { "path": "site/src/islands/MobileNav.tsx" },
+    { "path": "site/src/styles/chrome.css" },
+    { "path": "site/tests/unit/profile-metadata-navigation.test.ts" },
+    { "path": "site/tests/unit/profile-presentation.test.ts" },
+    { "path": "site/tests/pbt/u1/arbitraries/metadata.ts" },
+    { "path": "site/tests/pbt/u1/profile-metadata-navigation.pbt.test.ts" },
+    { "path": "site/tests/e2e/hig-chrome.spec.ts" },
+    { "path": "site/tests/e2e/homepage.spec.ts" },
+    { "path": "site/tests/e2e/crossunit.spec.ts" },
+    { "path": "CLAUDE.md" }
+  ]
+}

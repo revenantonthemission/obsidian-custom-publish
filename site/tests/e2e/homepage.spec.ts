@@ -57,10 +57,16 @@ for (const viewport of VIEWPORTS) {
 
     test('shared header navigation is preserved (FE-P-U2-06, AC-U01-03)', async ({ page }) => {
       await page.goto('/');
-      for (const href of ['/tags', '/graph', '/resume', '/portfolio']) {
-        expect(await page.locator(`a[href="${href}"]`).count(), `nav link ${href}`).toBeGreaterThan(
-          0
-        );
+      // The bar carries the single Writing link (U4); the homepage's own
+      // Résumé and Portfolio capsules stay, so the profile routes remain
+      // reachable from the opening.
+      expect(await page.locator('.desktop-nav a').count(), 'the bar carries one link').toBe(1);
+      expect(await page.locator('.desktop-nav a[href="/writing"]').count()).toBe(1);
+      for (const href of ['/resume', '/portfolio']) {
+        expect(
+          await page.locator(`.home-opening a[href="${href}"]`).count(),
+          `the opening keeps its ${href} capsule`
+        ).toBeGreaterThan(0);
       }
     });
 

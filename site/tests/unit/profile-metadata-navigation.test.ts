@@ -12,6 +12,7 @@ import {
   getPrimaryNavigationState,
   getProfileLocalNavigation,
   getProfileLocalNavigationState,
+  resolveNavigationMarker,
 } from '../../src/lib/navigation.js';
 import {
   buildPortfolioMetadataForTest,
@@ -166,51 +167,80 @@ describe('JSON-LD host boundary', () => {
 });
 
 describe('shared navigation contracts', () => {
-  test('keeps exact primary and profile-local labels, hrefs and order', () => {
-    expect(getPrimaryNavigation()).toEqual([
-      { href: '/tags', label: 'Tags' },
-      { href: '/graph', label: 'Graph' },
-      { href: '/resume', label: 'Résumé' },
-      { href: '/portfolio', label: 'Portfolio' },
-    ]);
+  test('keeps the one-item primary model and the unchanged profile-local model', () => {
+    expect(getPrimaryNavigation()).toEqual([{ href: '/writing', label: 'Writing' }]);
     expect(getProfileLocalNavigation()).toEqual([
       { href: '/', label: '홈' },
       { href: '/resume', label: 'Résumé' },
       { href: '/portfolio', label: 'Portfolio' },
     ]);
+    expect(Object.isFrozen(getPrimaryNavigation())).toBe(true);
+    expect(getPrimaryNavigation().every((item) => Object.isFrozen(item))).toBe(true);
+    expect(Object.isFrozen(getProfileLocalNavigation())).toBe(true);
   });
 
   test.each([
-    ['/resume', '/resume'],
-    ['/resume/', '/resume'],
-    ['/resume/projects?view=all#one', '/resume'],
-    ['/portfolio/case-study', '/portfolio'],
-    ['/resume-old', null],
-    ['/unknown', null],
-  ])('matches %s segment-aware without prefix collisions', (pathname, expectedHref) => {
-    const states = expectSuccess(getPrimaryNavigationState(pathname));
-    expect(states.find(({ current }) => current)?.href ?? null).toBe(expectedHref);
-    expect(states.filter(({ current }) => current)).toHaveLength(expectedHref === null ? 0 : 1);
+    ['/writing', 'page'],
+    ['/writing/', 'page'],
+    ['/writing?ref=nav#top', 'page'],
+    ['/writing/all', 'section'],
+    ['/writing/all/', 'section'],
+    ['/writing/all?from=writing', 'section'],
+    ['/writing/tags', 'section'],
+    ['/writing/tags/%EC%9A%B4%EC%98%81%EC%B2%B4%EC%A0%9C', 'section'],
+    ['/writing/graph', 'section'],
+    ['/', null],
+    ['/writing-old', null],
+    ['/writingold', null],
+    ['/Writing', null],
+    ['/WRITING/all', null],
+    ['/resume', null],
+    ['/portfolio', null],
+    ['/posts/post-with-code', null],
+  ])('resolves the Writing marker for %s', (pathname, expectedMarker) => {
+    expect(resolveNavigationMarker(pathname)).toBe(expectedMarker);
+  });
+
+  test('carries the marker vocabulary on the primary state', () => {
+    expect(expectSuccess(getPrimaryNavigationState('/writing'))).toEqual([
+      { href: '/writing', label: 'Writing', current: true, ariaCurrent: 'page' },
+    ]);
+    expect(expectSuccess(getPrimaryNavigationState('/writing/all'))).toEqual([
+      { href: '/writing', label: 'Writing', current: true, ariaCurrent: 'true' },
+    ]);
+    expect(expectSuccess(getPrimaryNavigationState('/resume'))).toEqual([
+      { href: '/writing', label: 'Writing', current: false, ariaCurrent: null },
+    ]);
   });
 
   test('marks only the current profile-local route and never the home item on descendants', () => {
     const states = expectSuccess(getProfileLocalNavigationState('/portfolio/example'));
 
-    expect(states.map(({ href, current }) => [href, current])).toEqual([
-      ['/', false],
-      ['/resume', false],
-      ['/portfolio', true],
+    expect(states.map(({ href, current, ariaCurrent }) => [href, current, ariaCurrent])).toEqual([
+      ['/', false, null],
+      ['/resume', false, null],
+      ['/portfolio', true, 'page'],
     ]);
   });
 
   test('fails closed for altered models and unsafe paths', () => {
-    const reversed = [...getPrimaryNavigation()].reverse();
-    expect(failureKeys(getNavigationState(reversed, '/resume'))).toContain(
+    const altered = [...getPrimaryNavigation(), { href: '/extra', label: 'Extra' }];
+    expect(failureKeys(getNavigationState(altered, '/writing'))).toContain(
       'navigation.model.invalid@profile.navigation.model'
     );
-    expect(failureKeys(getPrimaryNavigationState('/resume%2fhidden'))).toContain(
+    expect(failureKeys(getPrimaryNavigationState('/writing%2fhidden'))).toContain(
       'navigation.current.invalid@profile.navigation.current'
     );
+    expect(failureKeys(getPrimaryNavigationState('/writing//all'))).toContain(
+      'navigation.current.invalid@profile.navigation.current'
+    );
+  });
+
+  test('keeps the models and the states frozen', () => {
+    const states = expectSuccess(getPrimaryNavigationState('/writing'));
+
+    expect(Object.isFrozen(states)).toBe(true);
+    expect(states.every((state) => Object.isFrozen(state))).toBe(true);
   });
 });
 

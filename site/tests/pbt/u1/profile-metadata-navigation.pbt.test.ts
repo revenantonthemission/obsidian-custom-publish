@@ -160,10 +160,7 @@ test.prop([navigationPathCaseArbitrary])(
     expect(primary.value).toEqual(primaryFromModel.value);
     expect(local.value).toEqual(localFromModel.value);
     expect(primary.value.map(({ label, href }) => ({ label, href }))).toEqual([
-      { label: 'Tags', href: '/tags' },
-      { label: 'Graph', href: '/graph' },
-      { label: 'Résumé', href: '/resume' },
-      { label: 'Portfolio', href: '/portfolio' },
+      { label: 'Writing', href: '/writing' },
     ]);
     expect(local.value.map(({ label, href }) => ({ label, href }))).toEqual([
       { label: '홈', href: '/' },
@@ -172,6 +169,10 @@ test.prop([navigationPathCaseArbitrary])(
     ]);
 
     expect(currentHref(primary.value)).toBe(pathCase.primaryCurrentHref);
+    expect(primary.value[0]?.ariaCurrent).toBe(pathCase.primaryAriaCurrent);
+    expect(local.value.find((item) => item.current)?.ariaCurrent ?? null).toBe(
+      pathCase.localCurrentHref === null ? null : 'page'
+    );
     expect(currentHref(local.value)).toBe(pathCase.localCurrentHref);
     expect(primary.value.filter((item) => item.current).length).toBeLessThanOrEqual(1);
     expect(local.value.filter((item) => item.current).length).toBeLessThanOrEqual(1);

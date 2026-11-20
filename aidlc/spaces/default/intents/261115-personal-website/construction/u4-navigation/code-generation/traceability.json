@@ -1,0 +1,182 @@
+{
+  "stage": "code-generation",
+  "unit": "u4-navigation",
+  "upstream_ids": [
+    "AC6.1.1",
+    "AC6.1.2",
+    "AC6.1.3",
+    "AC6.1.4",
+    "AC6.1.5",
+    "AC6.2.1",
+    "AC7.1.1",
+    "AC7.1.2",
+    "AC7.1.3",
+    "AC7.1.4",
+    "NFR4.8",
+    "NFR6.11",
+    "NFR1.14",
+    "NFR5.21",
+    "NFR1.11",
+    "NFR1.12",
+    "NFR2.3",
+    "NFR3.3",
+    "NFR6.10",
+    "BR1.1",
+    "BR1.2",
+    "BR1.3",
+    "BR1.4",
+    "BR1.5",
+    "BR2.1",
+    "BR2.2",
+    "BR2.3",
+    "BR2.4",
+    "BR2.5"
+  ],
+  "coverage": [
+    {
+      "id": "AC6.1.1",
+      "status": "OK",
+      "target": "site/src/components/Header.astro"
+    },
+    {
+      "id": "AC6.1.2",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "AC6.1.3",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "AC6.1.4",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "AC6.1.5",
+      "status": "OK",
+      "target": "site/src/islands/MobileNav.tsx"
+    },
+    {
+      "id": "AC6.2.1",
+      "status": "OK",
+      "target": "site/src/components/profile/ProfileLocalNavigation.astro"
+    },
+    {
+      "id": "AC7.1.1",
+      "status": "OK",
+      "target": "site/tests/e2e/hig-chrome.spec.ts"
+    },
+    {
+      "id": "AC7.1.2",
+      "status": "OK",
+      "target": "site/tests/e2e/hig-performance.spec.ts"
+    },
+    {
+      "id": "AC7.1.3",
+      "status": "OK",
+      "target": "site/scripts/crossunit/link-sweep.mjs"
+    },
+    {
+      "id": "AC7.1.4",
+      "status": "OK",
+      "target": "site/tests/unit/profile-metadata-navigation.test.ts"
+    },
+    {
+      "id": "NFR4.8",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "NFR6.11",
+      "status": "OK",
+      "target": "site/src/components/Header.astro"
+    },
+    {
+      "id": "NFR1.14",
+      "status": "OK",
+      "target": "site/src/styles/chrome.css"
+    },
+    {
+      "id": "NFR5.21",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "NFR1.11",
+      "status": "OK",
+      "target": "site/tests/e2e/hig-chrome.spec.ts"
+    },
+    {
+      "id": "NFR1.12",
+      "status": "OK",
+      "target": "site/tests/e2e/hig-chrome.spec.ts"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "site/tests/e2e/hig-performance.spec.ts"
+    },
+    {
+      "id": "NFR3.3",
+      "status": "OK",
+      "target": "site/tests/e2e/crossunit.spec.ts"
+    },
+    {
+      "id": "NFR6.10",
+      "status": "OK",
+      "target": "site/tests/unit/profile-presentation.test.ts"
+    },
+    {
+      "id": "BR1.1",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "BR1.2",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "BR1.3",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "BR1.4",
+      "status": "OK",
+      "target": "site/src/lib/navigation.ts"
+    },
+    {
+      "id": "BR1.5",
+      "status": "OK",
+      "target": "site/src/components/profile/ProfileLocalNavigation.astro"
+    },
+    {
+      "id": "BR2.1",
+      "status": "OK",
+      "target": "site/src/components/Header.astro"
+    },
+    {
+      "id": "BR2.2",
+      "status": "OK",
+      "target": "site/src/islands/MobileNav.tsx"
+    },
+    {
+      "id": "BR2.3",
+      "status": "OK",
+      "target": "site/tests/e2e/hig-chrome.spec.ts"
+    },
+    {
+      "id": "BR2.4",
+      "status": "OK",
+      "target": "site/scripts/crossunit/link-sweep.mjs"
+    },
+    {
+      "id": "BR2.5",
+      "status": "OK",
+      "target": "site/tests/pbt/u1/profile-metadata-navigation.pbt.test.ts"
+    }
+  ]
+}

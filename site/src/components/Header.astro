@@ -38,7 +38,7 @@ const primaryNavigation = navigationResult.value;
         <a
           href={item.href}
           class="site-nav-link"
-          aria-current={item.current ? 'page' : undefined}
+          aria-current={item.ariaCurrent ?? undefined}
           data-testid={`primary-navigation-link-${item.href.slice(1)}`}
         >
           {item.label}
