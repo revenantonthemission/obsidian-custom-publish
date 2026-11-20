@@ -5,16 +5,51 @@
 //
 // Usage: node local-server.mjs [webroot]
 //   PORT (default 8080), HOST (default 127.0.0.1) via environment.
+//
+// U3 (BR3.2–BR3.6): before the file lookup, the old Tags and Graph addresses
+// are answered 301 from the build-written `_redirects.json` (see
+// redirect-table.mjs), and a path that resolves to a directory is served by
+// that directory's index.html. The handler never throws: an uncaught exception
+// would exit the process and keep the blog down until launchd restarts it.
 
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createGzip } from 'node:zlib';
 import { extname, join, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
+import {
+  REDIRECT_TABLE_FILE,
+  isHeaderValueSafe,
+  isHostileQuery,
+  loadRedirectTable,
+  matchRedirect,
+  redirectLocation,
+} from './redirect-table.mjs';
 
 const WEB_ROOT = resolve(process.argv[2] ?? join(homedir(), 'Sites', 'obsidian-blog'));
 const PORT = Number(process.env.PORT ?? 8080);
 const HOST = process.env.HOST ?? '127.0.0.1';
+
+/** The table state as the start-up line and the change lines name it. */
+function describeRedirects(state) {
+  if (state.status === 'loaded') {
+    return `${state.rules.length} rule${state.rules.length === 1 ? '' : 's'}`;
+  }
+  return state.status === 'rejected' ? 'table rejected' : 'none';
+}
+
+let started = false;
+// Read once now and again only when the file appears, changes or disappears
+// (BR3.5); one log line per read, never per request (BR3.4).
+const redirects = loadRedirectTable(join(WEB_ROOT, REDIRECT_TABLE_FILE), {
+  onRead: (state) => {
+    if (state.status === 'rejected') {
+      console.error(`obsidian-blog redirect table rejected: ${state.error.message}`);
+    } else if (started) {
+      console.log(`obsidian-blog redirects: ${describeRedirects(state)}`);
+    }
+  },
+});
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -69,6 +104,60 @@ function resolvePath(uri) {
   // Containment check — decoded Korean slugs are fine, `..` traversal is not.
   if (candidate !== WEB_ROOT && !candidate.startsWith(WEB_ROOT + sep)) return null;
   return candidate;
+}
+
+function isFile(path) {
+  return path !== null && existsSync(path) && statSync(path).isFile();
+}
+
+/**
+ * The file a decoded path is served from, or null for the 404 page. Beyond
+ * the clean-URL rewrite, a path that resolves to a directory is served by its
+ * index.html whatever its shape (BR3.6), so a dotted tag key such as
+ * `/writing/tags/node.js` is reachable; the containment check still applies.
+ */
+function resolveFile(uri) {
+  const rewritten = resolvePath(rewriteUri(uri));
+  if (isFile(rewritten)) return rewritten;
+  const directory = resolvePath(uri);
+  if (directory === null || !existsSync(directory) || !statSync(directory).isDirectory()) {
+    return null;
+  }
+  const index = resolvePath(join(uri, 'index.html'));
+  return isFile(index) ? index : null;
+}
+
+function refuse(res, status) {
+  if (!res.headersSent) res.writeHead(status, { 'Content-Length': 0 });
+  res.end();
+}
+
+/**
+ * A matched old address (BR3.3; security-design.md §2–§4): 400 for a raw
+ * query carrying an encoded control byte, otherwise 301 to the target encoded
+ * once plus the raw query byte for byte. `no-cache` lets a browser revalidate
+ * the redirect, so a rollback undoes it (NFR design diary 2026-11-20T00:55).
+ */
+function answerRedirect(res, uri, target, rawQuery) {
+  if (isHostileQuery(rawQuery)) {
+    console.error(
+      `obsidian-blog refused a redirect query with a control byte: ${JSON.stringify(uri)}`
+    );
+    refuse(res, 400);
+    return;
+  }
+  try {
+    const location = redirectLocation(target, rawQuery);
+    if (!isHeaderValueSafe(location)) {
+      refuse(res, 400);
+      return;
+    }
+    res.writeHead(301, { Location: location, 'Cache-Control': 'no-cache', 'Content-Length': 0 });
+    res.end();
+  } catch {
+    // ERR_INVALID_CHAR or an unencodable target: answered, never thrown.
+    refuse(res, 400);
+  }
 }
 
 function send(req, res, filePath, status) {
@@ -149,14 +238,32 @@ const server = createServer((req, res) => {
     return;
   }
 
-  const filePath = resolvePath(rewriteUri(uri));
-  if (!filePath || !existsSync(filePath) || !statSync(filePath).isFile()) {
-    notFound(req, res);
+  // The raw query, byte for byte: never the parsed URL's re-encoded search (§4).
+  const queryAt = req.url.indexOf('?');
+  const rawQuery = queryAt === -1 ? null : req.url.slice(queryAt + 1);
+  const target = matchRedirect(redirects.current().rules, uri);
+  if (target !== null) {
+    answerRedirect(res, uri, target, rawQuery);
     return;
   }
-  send(req, res, filePath, 200);
+
+  try {
+    const filePath = resolveFile(uri);
+    if (filePath === null) {
+      notFound(req, res);
+      return;
+    }
+    send(req, res, filePath, 200);
+  } catch {
+    // A path the file system refuses (or a file gone mid-request).
+    refuse(res, 500);
+  }
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`obsidian-blog serving ${WEB_ROOT} at http://${HOST}:${PORT}`);
+  const state = redirects.current();
+  started = true;
+  console.log(
+    `obsidian-blog serving ${WEB_ROOT} at http://${HOST}:${PORT} (redirects: ${describeRedirects(state)})`
+  );
 });
