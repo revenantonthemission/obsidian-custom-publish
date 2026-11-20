@@ -27,7 +27,7 @@ const PORTFOLIO_ROUTES = [
   '/portfolio/infra-engineer',
 ] as const;
 /** Routes whose shared stylesheets define what every page loads anyway. */
-const BASELINE_ROUTES = ['/404', '/tags', '/graph'] as const;
+const BASELINE_ROUTES = ['/404', '/writing/tags', '/writing/graph'] as const;
 const PROFILE_CSS_GZIP_LIMIT = 24 * 1024;
 const CONTROLS = '.profile-shell :is(nav a, .profile-actions a, summary, .resume-project-link)';
 

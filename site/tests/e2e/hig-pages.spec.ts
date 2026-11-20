@@ -170,12 +170,12 @@ test.describe('hub and tag pages (W6, W7)', () => {
   });
 
   test('the tag index shows 44 px chips whose names include the post count', async ({ page }) => {
-    await gotoSettled(page, '/tags');
+    await gotoSettled(page, '/writing/tags');
     expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
     await expect(page.getByRole('heading', { level: 1, name: '태그' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'test, 글 11개' })).toHaveAttribute(
       'href',
-      '/tags/test'
+      '/writing/tags/test'
     );
     const chips = await measureTargets(page, '.tag-chip');
     expect(chips.length).toBeGreaterThan(5);
@@ -183,7 +183,7 @@ test.describe('hub and tag pages (W6, W7)', () => {
   });
 
   test('a tag page lists its posts as grouped rows without nested tag links', async ({ page }) => {
-    await gotoSettled(page, '/tags/test');
+    await gotoSettled(page, '/writing/tags/test');
     expect(await pageBackground(page)).toBe(LIGHT.bgGrouped);
     await expect(page.getByRole('heading', { level: 1, name: '#test' })).toBeVisible();
     await expect(page.getByText('11개 글')).toBeVisible();
@@ -223,7 +223,7 @@ test.describe('graph page (W8; FR5.6)', () => {
     page,
     browserName,
   }) => {
-    await gotoSettled(page, '/graph');
+    await gotoSettled(page, '/writing/graph');
     await expect(page.getByRole('heading', { level: 1, name: '그래프' })).toBeVisible();
     const graphTab = page.getByRole('tab', { name: '그래프' });
     const listTab = page.getByRole('tab', { name: '목록' });
@@ -255,7 +255,7 @@ test.describe('graph page (W8; FR5.6)', () => {
   test('legend chips pair a shape and a color with a Korean label, and filter with aria-pressed', async ({
     page,
   }) => {
-    await gotoSettled(page, '/graph');
+    await gotoSettled(page, '/writing/graph');
     const legend = page.getByRole('group', { name: '그래프 범례 및 필터' });
     const expected = [
       ['운영체제', 'circle'],
@@ -281,7 +281,7 @@ test.describe('graph page (W8; FR5.6)', () => {
       page,
     }) => {
       await page.emulateMedia({ colorScheme: scheme });
-      await gotoSettled(page, '/graph');
+      await gotoSettled(page, '/writing/graph');
       const nodes = page.locator('svg .graph-node');
       await expect(nodes).toHaveCount(await graphNodeCount(page));
       const facts = await nodes.evaluateAll((elements) =>
@@ -319,7 +319,7 @@ test.describe('graph page (W8; FR5.6)', () => {
   }
 
   test('the graph image names itself and points to the list view', async ({ page }) => {
-    await gotoSettled(page, '/graph');
+    await gotoSettled(page, '/writing/graph');
     const image = page.getByRole('img', { name: GRAPH_IMAGE });
     await expect(image).toBeVisible();
     await expect(image).toHaveAccessibleDescription(/목록/);
@@ -334,7 +334,7 @@ test.describe('graph page (W8; FR5.6)', () => {
       await gate;
       await route.continue();
     });
-    await page.goto('/graph');
+    await page.goto('/writing/graph');
     await expect(page.getByText('그래프를 불러오는 중')).toBeVisible();
     release();
     await expect(page.getByRole('img', { name: GRAPH_IMAGE })).toBeVisible();
@@ -343,7 +343,7 @@ test.describe('graph page (W8; FR5.6)', () => {
   test('shows an error with retry when graph.json fails (FR4.5)', async ({ page }) => {
     let fail = true;
     await page.route('**/graph.json', (route) => (fail ? route.abort() : route.continue()));
-    await page.goto('/graph');
+    await page.goto('/writing/graph');
     await expect(page.getByText('그래프를 불러오지 못했습니다')).toBeVisible();
     fail = false;
     await page.getByRole('button', { name: '다시 시도' }).click();
@@ -352,7 +352,7 @@ test.describe('graph page (W8; FR5.6)', () => {
 
   test('says so when there is nothing to draw (FR4.5)', async ({ page }) => {
     await page.route('**/graph.json', (route) => route.fulfill({ json: { nodes: [], edges: [] } }));
-    await page.goto('/graph');
+    await page.goto('/writing/graph');
     await expect(page.getByText('표시할 노트가 없습니다')).toBeVisible();
   });
 });
@@ -403,7 +403,7 @@ test.describe('selection states (NFR1; R-05, R-12)', () => {
       page,
     }) => {
       await page.emulateMedia({ colorScheme: scheme });
-      await gotoSettled(page, '/graph');
+      await gotoSettled(page, '/writing/graph');
       const shadow = await page
         .locator('.graph-tabs')
         .evaluate((tabs) => getComputedStyle(tabs, '::before').boxShadow);
@@ -417,7 +417,7 @@ test.describe('selection states (NFR1; R-05, R-12)', () => {
       // interaction-spec.md "Tag Chip" defines the current state, but no route
       // renders it yet, so the test marks one chip current: on the grouped tag
       // index and in a post header on the reading background.
-      for (const path of ['/tags', '/posts/post-with-code']) {
+      for (const path of ['/writing/tags', '/posts/post-with-code']) {
         await gotoSettled(page, path);
         await page
           .locator('.tag-chip')
@@ -473,7 +473,13 @@ test.describe('a highlighted link in a post (NFR1-b; R-17)', () => {
 test.describe('desktop page width', () => {
   test.use({ viewport: viewportFor(1440) });
 
-  for (const path of ['/', '/hubs/hub-page', '/tags', '/tags/test', '/posts/simple-post']) {
+  for (const path of [
+    '/',
+    '/hubs/hub-page',
+    '/writing/tags',
+    '/writing/tags/test',
+    '/posts/simple-post',
+  ]) {
     test(`${path} widens to the floating bar instead of keeping the phone measure`, async ({
       page,
     }) => {
@@ -494,10 +500,10 @@ test.describe('narrow widths', () => {
     '/',
     '/hubs/hub-page',
     '/hubs/empty-hub',
-    '/tags',
-    '/tags/test',
+    '/writing/tags',
+    '/writing/tags/test',
     '/404',
-    '/graph',
+    '/writing/graph',
   ]) {
     test(`${path} never scrolls sideways at 320 px`, async ({ page }) => {
       await gotoSettled(page, path);
@@ -506,4 +512,204 @@ test.describe('narrow widths', () => {
       expect(report.scrollWidth).toBeLessThanOrEqual(report.clientWidth + 1);
     });
   }
+});
+
+// U3: the tag index, a tag page and the graph, moved under /writing (rules.md
+// BR1.1–BR1.3, BR4.1, BR4.2; NFR1.15, NFR2.4, NFR6.14). Each keeps its content
+// and gains one "‹ Writing" back link above the Large Title; the axe matrix,
+// chrome targets and reduced motion reach them through HIG_ROUTES.
+const MOVED_ROUTES = Object.freeze([
+  { path: '/writing/tags', title: '태그' },
+  { path: '/writing/tags/test', title: '#test' },
+  { path: '/writing/graph', title: '그래프' },
+] as const);
+
+const fonts = (subsets: readonly number[]): string[] => subsets.map((n) => `font:${n}`);
+/** The shared chrome's islands and their runtime: theme toggle (load) and search (idle). */
+const CHROME_SCRIPTS = Object.freeze([
+  'js:ThemeToggle',
+  'js:client',
+  'js:preact.module',
+  'js:hooks.module',
+  'js:jsxRuntime.module',
+  'js:createLucideIcon',
+  'js:Search',
+  'js:modal',
+]);
+/**
+ * The logical requests of each moved route (performance-design.md §3.3),
+ * measured on the routes they replace (/tags, /tags/test, /graph) before the
+ * move: the move adds no request and drops none (NFR6.14).
+ */
+const EXPECTED_REQUESTS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  '/writing/tags': [
+    'document',
+    'css:BaseLayout',
+    ...CHROME_SCRIPTS,
+    ...fonts([84, 87, 88, 89, 90, 91]),
+  ],
+  '/writing/tags/test': [
+    'document',
+    'css:BaseLayout',
+    ...CHROME_SCRIPTS,
+    ...fonts([81, 82, 84, 85, 86, 87, 88, 89, 90, 91]),
+  ],
+  '/writing/graph': [
+    'document',
+    'css:BaseLayout',
+    'css:graph',
+    ...CHROME_SCRIPTS,
+    'js:graph.astro_astro_type_script_index_0_lang',
+    'js:GraphView',
+    'js:tabs',
+    'js:graphSim',
+    ...fonts([80, 81, 84, 86, 87, 88, 89, 90, 91]),
+    'data:graph.json',
+  ],
+});
+
+/** One logical resource per request: content hashes are ignored, names are not. */
+function logicalResource(route: string, pathname: string): string {
+  if (pathname === route) return 'document';
+  if (pathname === '/graph.json') return 'data:graph.json';
+  const font = /^\/_astro\/PretendardVariable\.subset\.(\d+)\.[\w-]+\.woff2$/.exec(pathname);
+  if (font) return `font:${font[1]}`;
+  const asset = /^\/_astro\/(.+)\.[\w-]+\.(css|js)$/.exec(pathname);
+  if (asset) return `${asset[2]}:${asset[1]}`;
+  return `other:${pathname}`;
+}
+
+test.describe('moved discovery pages (U3; BR1.1, BR1.2, BR4.1, BR4.2)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  for (const route of MOVED_ROUTES) {
+    test(`${route.path}: one h1, and a 44 px back link to /writing above it`, async ({ page }) => {
+      expect(await gotoSettled(page, route.path)).toBe(200);
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      const back = page.getByTestId('back-link');
+      await expect(back).toHaveCount(1);
+      await expect(back).toHaveAttribute('href', '/writing');
+      await expect(back).toHaveText('Writing');
+      expect(undersized(await measureTargets(page, '[data-testid="back-link"]'), TARGET)).toEqual(
+        []
+      );
+      const backBox = await back.boundingBox();
+      const titleBox = await page.locator('h1').boundingBox();
+      expect(backBox!.y + backBox!.height).toBeLessThanOrEqual(titleBox!.y + 0.5);
+      await back.click();
+      await expect(page).toHaveURL(/\/writing$/);
+    });
+
+    test(`${route.path}: the back link has a visible focus ring`, async ({ page, browserName }) => {
+      await gotoSettled(page, route.path);
+      const back = page.getByTestId('back-link');
+      // WebKit's default Tab skips links, as Safari does; Option-Tab reaches them.
+      const tab = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
+      let reached = false;
+      for (let presses = 0; presses < 40 && !reached; presses += 1) {
+        await page.keyboard.press(tab);
+        reached = await back.evaluate((element) => element === document.activeElement);
+      }
+      expect(reached, 'the back link is in the tab order').toBe(true);
+      const ring = await back.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth) };
+      });
+      expect(ring.style).not.toBe('none');
+      expect(ring.width).toBeGreaterThanOrEqual(2);
+    });
+
+    test(`${route.path}: the bar marks Writing as the current section`, async ({ page }) => {
+      await gotoSettled(page, route.path);
+      const marks = await page
+        .locator('.desktop-nav a')
+        .evaluateAll((links) =>
+          links
+            .map((link) => link.getAttribute('aria-current'))
+            .filter((value): value is string => value !== null)
+        );
+      expect(marks).toEqual(['true']);
+    });
+
+    test(`${route.path}: the same requests as the route it replaces, all on its own origin`, async ({
+      page,
+      baseURL,
+      browserName,
+    }) => {
+      // Which font subsets an engine fetches follows its unicode-range
+      // handling, so the fixed list is Chromium's, as in the performance spec.
+      test.skip(browserName !== 'chromium', 'the request list is measured in Chromium');
+      const own = new URL(baseURL ?? 'http://127.0.0.1:4329').origin;
+      const requests: URL[] = [];
+      page.on('request', (request) => {
+        const url = new URL(request.url());
+        if (url.protocol !== 'data:') requests.push(url);
+      });
+      await gotoSettled(page, route.path);
+      expect(requests.filter((url) => url.origin !== own).map(String)).toEqual([]);
+      const logical = requests.map((url) => logicalResource(route.path, url.pathname));
+      const expected = EXPECTED_REQUESTS[route.path] ?? [];
+      expect([...logical].sort()).toEqual([...expected].sort());
+      expect(logical).toHaveLength(expected.length);
+    });
+  }
+});
+
+// U3: the old addresses over HTTP, against the production server this suite
+// runs (rules.md BR3.2, BR3.3; NFR5.22; contract C5). The 301 carries
+// Cache-Control: no-cache so a rollback can undo it (NFR design diary
+// 2026-11-20T00:55).
+test.describe('old addresses over HTTP (U3; BR3.2, BR3.3)', () => {
+  const REDIRECTS = Object.freeze([
+    ['/tags', '/writing/tags'],
+    ['/tags/', '/writing/tags'],
+    ['/graph', '/writing/graph'],
+    ['/graph/', '/writing/graph'],
+    ['/tags/test', '/writing/tags/test'],
+    ['/tags/test/', '/writing/tags/test'],
+  ] as const);
+
+  test('each old address answers 301 with its new Location and no-cache', async ({ request }) => {
+    for (const [from, to] of REDIRECTS) {
+      const response = await request.get(from, { maxRedirects: 0 });
+      expect(response.status(), from).toBe(301);
+      expect(response.headers()['location'], from).toBe(to);
+      expect(response.headers()['cache-control'], from).toBe('no-cache');
+    }
+  });
+
+  test('the query is kept, byte for byte', async ({ request }) => {
+    for (const [from, to] of [
+      ['/tags?from=post', '/writing/tags?from=post'],
+      ['/tags/test/?q=%ED%95%9C', '/writing/tags/test?q=%ED%95%9C'],
+    ] as const) {
+      const response = await request.get(from, { maxRedirects: 0 });
+      expect(response.status(), from).toBe(301);
+      expect(response.headers()['location'], from).toBe(to);
+    }
+  });
+
+  test('/graph.json is a file, an unknown tag is 404, an encoded control byte is 400', async ({
+    request,
+  }) => {
+    const data = await request.get('/graph.json', { maxRedirects: 0 });
+    expect(data.status()).toBe(200);
+    expect(data.headers()['content-type']).toBe('application/json; charset=utf-8');
+    expect(data.headers()['location']).toBeUndefined();
+    const unknown = await request.get('/tags/nonexistent', { maxRedirects: 0 });
+    expect(unknown.status()).toBe(404);
+    expect(unknown.headers()['location']).toBeUndefined();
+    const hostile = await request.get('/tags?x=%0d%0a', { maxRedirects: 0 });
+    expect(hostile.status()).toBe(400);
+    expect(hostile.headers()['location']).toBeUndefined();
+    // The server keeps answering after the refusal.
+    expect((await request.get('/tags', { maxRedirects: 0 })).status()).toBe(301);
+  });
+
+  test('a browser following an old address lands on the new page', async ({ page }) => {
+    await page.goto('/tags/test?from=post');
+    await expect(page).toHaveURL(/\/writing\/tags\/test\?from=post$/);
+    await expect(page.getByRole('heading', { level: 1, name: '#test' })).toBeVisible();
+  });
 });

@@ -72,7 +72,7 @@ test.describe('search dialog', () => {
   });
 
   test('⌘K or Ctrl K opens it from anywhere', async ({ page }) => {
-    await gotoSettled(page, '/tags');
+    await gotoSettled(page, '/writing/tags');
     await page.keyboard.press('ControlOrMeta+k');
     const dialog = page.getByRole('dialog', { name: '검색' });
     await expect(dialog).toBeVisible();

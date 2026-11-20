@@ -143,18 +143,21 @@ test.describe('/writing (M2; BR2.2)', () => {
     ).toBe(LIGHT_BG_GROUPED);
   });
 
-  test('the Tags and Graph capsules point at /tags and /graph and open', async ({ page }) => {
+  // U3 (BR2.3, AC4.1.5): the capsules point at the moved pages.
+  test('the Tags and Graph capsules point at /writing/tags and /writing/graph and open', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/writing');
     const main = page.getByRole('main');
     const tags = main.getByRole('link', { name: 'Tags', exact: true });
     const graph = main.getByRole('link', { name: 'Graph', exact: true });
-    await expect(tags).toHaveAttribute('href', '/tags');
-    await expect(graph).toHaveAttribute('href', '/graph');
+    await expect(tags).toHaveAttribute('href', '/writing/tags');
+    await expect(graph).toHaveAttribute('href', '/writing/graph');
     await tags.click();
-    await expect(page).toHaveURL(/\/tags$/);
+    await expect(page).toHaveURL(/\/writing\/tags$/);
     await page.goBack();
     await graph.click();
-    await expect(page).toHaveURL(/\/graph$/);
+    await expect(page).toHaveURL(/\/writing\/graph$/);
   });
 
   test('"최근 글" holds the five newest dated posts, then "모든 글 보기"', async ({ page }) => {
