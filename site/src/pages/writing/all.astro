@@ -1,0 +1,39 @@
+---
+import { ChevronLeft } from 'lucide-static';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import YearGroup from '../../components/writing/YearGroup.astro';
+import { getOrdinaryPosts } from '../../lib/data';
+import { decorativeIcon } from '../../lib/icons';
+import { postsByYear } from '../../lib/writing-lists';
+import '../../styles/grouped.css';
+import '../../styles/writing.css';
+
+// Every post by year (mockups M3; BR1.5, BR2.3–BR2.6): a back link to
+// /writing, one Large Title with the count, then one section per year, newest
+// first, and "날짜 없음" last. Every ordinary post appears exactly once (NFR8).
+// Static markup only: no island, and the sticky headers are CSS.
+const groups = postsByYear(getOrdinaryPosts());
+const count = groups.reduce((total, group) => total + group.posts.length, 0);
+---
+
+<BaseLayout title="모든 글" surface="grouped">
+  <div class="writing-all">
+    <header class="listing-header">
+      <a href="/writing" class="back-link" data-testid="back-link">
+        <span class="back-link-chevron" set:html={decorativeIcon(ChevronLeft, 18)} />
+        Writing
+      </a>
+      <h1>모든 글</h1>
+      <p class="listing-count">글 {count}개</p>
+    </header>
+    {groups.length === 0 ? (
+      <ul class="grouped-list">
+        <li class="grouped-empty" data-testid="empty-row">
+          아직 발행한 글이 없습니다.
+        </li>
+      </ul>
+    ) : (
+      groups.map((group, index) => <YearGroup group={group} id={`writing-year-${index}`} />)
+    )}
+  </div>
+</BaseLayout>

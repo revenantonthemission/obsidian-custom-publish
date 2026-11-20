@@ -1,0 +1,34 @@
+---
+import { ChevronRight } from 'lucide-static';
+import { decorativeIcon } from '../../lib/icons';
+import type { Topic } from '../../lib/writing-lists';
+
+interface Props {
+  /** One entry per hub, ordered by title (BR1.6). */
+  topics: readonly Topic[];
+}
+
+// "주제" on /writing (M2; BR2.2): one row per hub — title, "글 N개" and a
+// chevron, linking to the hub page. With no hubs the whole section is left
+// out, so there is no empty list to announce.
+const { topics } = Astro.props;
+---
+
+{topics.length > 0 && (
+  <section aria-labelledby="topics-heading">
+    <h2 id="topics-heading" class="writing-section-title">
+      주제
+    </h2>
+    <ul class="grouped-list">
+      {topics.map((topic) => (
+        <li>
+          <a href={`/hubs/${topic.slug}`} class="grouped-row" data-testid="topic-row">
+            <span class="grouped-row-title">{topic.title}</span>
+            <span class="grouped-row-count">글 {topic.count}개</span>
+            <span class="grouped-row-chevron" set:html={decorativeIcon(ChevronRight, 18)} />
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

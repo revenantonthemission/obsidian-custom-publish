@@ -1,6 +1,6 @@
-/* The homepage (U1 W5; BR6.2–BR6.6). A Large Title, then the opening (owner
- * name, short introduction, two equal capsules) and the interim
- * "오늘 발행된 글" list as the same grouped card on the grouped background.
+/* The homepage (U1 W5; BR6.2–BR6.6; U2 BR2.1). A Large Title, then the
+ * opening (owner name, short introduction, two equal capsules). The weekly
+ * "이번 주 글" card is a Writing component, styled in writing.css.
  * Colors are --c- tokens only; the capsules reuse .capsule from grouped.css,
  * both unfilled, so neither reads as the primary action (FR3.3). */
 /* From tablet width up the page widens with the viewport until it matches the
@@ -16,16 +16,14 @@
   margin-block: var(--space-2) var(--space-4);
 }
 
-.home-opening,
-.recent-posts {
+.home-opening {
   margin-block: 0 var(--space-5);
   padding: var(--space-5) var(--space-5) var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--c-surface);
 }
 
-.home-opening > h2,
-.recent-posts > h2 {
+.home-opening > h2 {
   margin-block: 0 var(--space-3);
 }
 
@@ -41,24 +39,4 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-/* The list sits inside its card: no second surface, rows run to the card's edges. */
-.recent-posts .grouped-list {
-  margin: 0 calc(var(--space-5) * -1) calc(var(--space-4) * -1);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  background: transparent;
-}
-
-body[data-surface='grouped'] .recent-posts .grouped-list {
-  background: transparent;
-}
-
-.recent-posts .grouped-row,
-.recent-posts .grouped-empty {
-  padding-inline-start: var(--space-5);
-}
-
-.recent-posts .grouped-list > li + li::before {
-  inset-inline-start: var(--space-5);
 }

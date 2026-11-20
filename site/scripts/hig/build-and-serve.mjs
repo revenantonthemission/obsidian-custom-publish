@@ -21,14 +21,20 @@ const PREPROCESSOR = resolve(REPO_ROOT, 'preprocessor', 'target', 'release', 'ob
 const HOST = '127.0.0.1';
 const PORT = process.env.HIG_PORT ?? '4329';
 const COPIED_JSON = ['search-index.json', 'graph.json', 'previews.json', 'nav-tree.json'];
+// The fixed build date of the HIG build (U2 BR1.2; plan Step 2): a Wednesday
+// whose Monday–Sunday week holds two fixture posts (Post <b>Bold & Co on
+// Tuesday, This Week Post on Thursday), so "이번 주 글" is never empty here.
+// HOMEPAGE_TODAY_OVERRIDE is test-only: Jenkins and `just deploy` never set it.
+// tests/e2e/hig-writing.spec.ts repeats this date; change both together.
+const HIG_BUILD_DATE = '2025-08-13';
 
 function fail(message) {
   console.error(`hig: ${message}`);
   process.exit(1);
 }
 
-function run(command, args, cwd) {
-  const result = spawnSync(command, args, { cwd, stdio: 'inherit', env: process.env });
+function run(command, args, cwd, env = process.env) {
+  const result = spawnSync(command, args, { cwd, stdio: 'inherit', env });
   if (result.error) fail(`${command} could not start: ${result.error.message}`);
   if (result.status !== 0) {
     fail(`${command} ${args.join(' ')} exited with ${result.status ?? result.signal}`);
@@ -57,7 +63,10 @@ function prepareFixtureContent() {
 
 if (process.env.HIG_SKIP_BUILD !== '1') {
   prepareFixtureContent();
-  run('npx', ['astro', 'build'], SITE_ROOT);
+  run('npx', ['astro', 'build'], SITE_ROOT, {
+    ...process.env,
+    HOMEPAGE_TODAY_OVERRIDE: HIG_BUILD_DATE,
+  });
 } else if (!existsSync(resolve(SITE_ROOT, 'dist', 'index.html'))) {
   fail('HIG_SKIP_BUILD=1 needs an existing site/dist build');
 }

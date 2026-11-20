@@ -1,22 +1,26 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/PostCard.astro';
+import WeeklyPostList from '../components/writing/WeeklyPostList.astro';
 import { getOrdinaryPosts, getPreviewSummary } from '../lib/data';
-import { filterTodayPosts, resolveBuildDate } from '../lib/homepage';
 import { getProductionProfileAssembly } from '../lib/profile/production-profile.js';
 import { SITE_NAME } from '../lib/site.js';
+import { resolveKoreanBuildDate, weekPosts } from '../lib/writing-lists';
 import '../styles/grouped.css';
 import '../styles/home.css';
+import '../styles/writing.css';
 
-// The homepage (U1 W5; BR6.1–BR6.6): one Large Title, then an opening with
-// the owner's name, the short introduction and two equal capsules to the
-// profile pages, then the interim "오늘 발행된 글" list, which U2 replaces.
-// Nothing is read from a vault note; the facts come from the approved profile
-// and are rendered as text. The profile headline is never shown here (FR3.2).
+// The homepage (U1 W5; BR6.1–BR6.6; U2 BR2.1): one Large Title, then an
+// opening with the owner's name, the short introduction and two equal capsules
+// to the profile pages, then "이번 주 글" — the ordinary posts of the build's
+// Korean week. Nothing is read from a vault note; the facts come from the
+// approved profile and are rendered as text. The profile headline is never
+// shown here (FR3.2).
 const owner = getProductionProfileAssembly().homepage;
 
-const today = resolveBuildDate(process.env);
-const recentPosts = filterTodayPosts(getOrdinaryPosts(), today);
+const week = weekPosts(getOrdinaryPosts(), resolveKoreanBuildDate(process.env));
+const summaries = Object.freeze(
+  Object.fromEntries(week.map((post) => [post.slug, getPreviewSummary(post.slug)]))
+);
 ---
 
 <BaseLayout title={SITE_NAME} surface="grouped">
@@ -35,14 +39,5 @@ const recentPosts = filterTodayPosts(getOrdinaryPosts(), today);
       </a>
     </nav>
   </section>
-  <section class="recent-posts" aria-labelledby="recent-posts-heading">
-    <h2 id="recent-posts-heading">오늘 발행된 글</h2>
-    <ul class="grouped-list">
-      {recentPosts.length > 0 ? (
-        recentPosts.map((post) => <PostCard post={post} summary={getPreviewSummary(post.slug)} />)
-      ) : (
-        <li class="grouped-empty">오늘 발행된 글이 없습니다.</li>
-      )}
-    </ul>
-  </section>
+  <WeeklyPostList posts={week} summaries={summaries} allHref="/writing/all" />
 </BaseLayout>

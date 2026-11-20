@@ -1,0 +1,45 @@
+---
+import { ChevronRight } from 'lucide-static';
+import { decorativeIcon } from '../../lib/icons';
+import type { PostMeta } from '../../lib/types';
+import type { YearGroup } from '../../lib/writing-lists';
+
+interface Props {
+  group: YearGroup<PostMeta>;
+  /** Unique per page; names the section after its heading. */
+  id: string;
+}
+
+// One year of /writing/all (BR2.3, BR2.4; interaction-spec.md "Compact Post
+// Row and Sticky Year Header"): a section named by its sticky h2, then compact
+// rows of title and month-day date. The <time> carries the full date; undated
+// rows have none. Titles are text expressions, never HTML (NFR5.20).
+const { group, id } = Astro.props;
+const headingId = `${id}-heading`;
+
+function monthDay(iso: string): string {
+  const [, month, day] = iso.split('-');
+  return `${Number(month)}월 ${Number(day)}일`;
+}
+---
+
+<section class="year-group" aria-labelledby={headingId} data-testid="year-group">
+  <h2 id={headingId} class="year-header" data-material="thick">
+    {group.label}
+  </h2>
+  <ul class="grouped-list">
+    {group.posts.map((post) => (
+      <li>
+        <a href={`/posts/${post.slug}`} class="grouped-row compact-row" data-testid="compact-row">
+          <span class="compact-row-title">{post.title}</span>
+          {post.published && (
+            <time class="compact-row-date" datetime={post.published}>
+              {monthDay(post.published)}
+            </time>
+          )}
+          <span class="grouped-row-chevron" set:html={decorativeIcon(ChevronRight, 18)} />
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>

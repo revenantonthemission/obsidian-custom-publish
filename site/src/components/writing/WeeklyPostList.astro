@@ -1,0 +1,41 @@
+---
+import { ChevronRight } from 'lucide-static';
+import { decorativeIcon } from '../../lib/icons';
+import type { PostMeta } from '../../lib/types';
+import PostCard from '../PostCard.astro';
+
+interface Props {
+  /** The build week's ordinary posts (BR1.3), newest first. */
+  posts: readonly PostMeta[];
+  /** slug → preview summary, so a row keeps its two-line summary. */
+  summaries: Readonly<Record<string, string>>;
+  allHref: string;
+}
+
+// "이번 주 글" on the homepage (mockups M1; BR2.1): full post rows for the
+// build's Monday–Sunday week, or one plain-text empty row, and always the
+// "모든 글 보기" row.
+const { posts, summaries, allHref } = Astro.props;
+---
+
+<section class="week-posts" data-testid="week-list" aria-labelledby="week-heading">
+  <h2 id="week-heading" class="writing-section-title">
+    이번 주 글
+  </h2>
+  <ul class="grouped-list">
+    {posts.map((post) => (
+      <PostCard post={post} summary={summaries[post.slug]} />
+    ))}
+    {posts.length === 0 && (
+      <li class="grouped-empty" data-testid="empty-row">
+        이번 주에 발행한 글이 없습니다.
+      </li>
+    )}
+    <li>
+      <a href={allHref} class="grouped-row" data-testid="all-posts-link">
+        <span class="grouped-row-title">모든 글 보기</span>
+        <span class="grouped-row-chevron" set:html={decorativeIcon(ChevronRight, 18)} />
+      </a>
+    </li>
+  </ul>
+</section>
