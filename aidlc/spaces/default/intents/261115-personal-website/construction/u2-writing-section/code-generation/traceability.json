@@ -7,7 +7,7 @@
     { "id": "AC3.3.2", "status": "OK", "target": "site/tests/unit/writing-lists.test.ts" },
     { "id": "AC3.3.3", "status": "OK", "target": "site/tests/unit/writing-lists.test.ts" },
     { "id": "AC3.3.4", "status": "OK", "target": "site/tests/e2e/hig-writing.spec.ts" },
-    { "id": "AC3.4.1", "status": "Deferred", "target": "site/tests/e2e/homepage.spec.ts empty-week test is written but runs only under npm run test:e2e, which is blocked on the end-of-release accessibility review" },
+    { "id": "AC3.4.1", "status": "OK", "target": "site/tests/unit/homepage-empty-week.test.ts (isolated build with HOMEPAGE_TODAY_OVERRIDE=2025-08-20; the sealed npm run test:e2e copy stays for the end-of-release accessibility review)" },
     { "id": "AC4.1.1", "status": "OK", "target": "site/tests/e2e/hig-writing.spec.ts" },
     { "id": "AC4.1.2", "status": "OK", "target": "site/tests/unit/writing-lists.test.ts" },
     { "id": "AC4.1.3", "status": "OK", "target": "site/tests/unit/writing-empty-build.test.ts" },

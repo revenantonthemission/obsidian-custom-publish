@@ -32,10 +32,10 @@ Run from the repository root. Every command is scoped to U1's test files.
 
 4. Vitest (property): none remain for this unit. U1's homepage-composition module (`site/src/lib/homepage.ts`) and both of its tests (`tests/unit/homepage-composition.test.ts`, `tests/pbt/u2/homepage-composition.pbt.test.ts`) were deleted by U2 (commit `806c6ac`), when the homepage opening became U2's weekly card. The behaviour is now covered by U2's `tests/unit/writing-lists.test.ts` and `tests/pbt/u2/writing-lists.pbt.test.ts` (Build and Test loop-back 1).
 
-5. Playwright (homepage W5 block, NFR1-b highlight, homepage and crossunit specs):
+5. Playwright (homepage W5 block, NFR1-b highlight, discovery surfaces and crossunit specs):
 
    ```
-   cd site && npx playwright test --config playwright.hig.config.ts tests/e2e/hig-pages.spec.ts
+   cd site && npx playwright test --config playwright.hig.config.ts tests/e2e/hig-pages.spec.ts tests/e2e/hig-discovery.spec.ts
    ```
 
 The full gate (Step 16) is the recorded verification command. It is not a unit-scoped command and runs once, in Step 16 and in Build and Test.
@@ -55,7 +55,7 @@ The full gate (Step 16) is the recorded verification command. It is not a unit-s
   | Output | 12 examples + 1 property |
   | Asset sync | 5 |
   | Data layer | 6 |
-  | Homepage | 5 Playwright, plus the axe matrix and the moved NFR1-b test |
+  | Homepage | 5 Playwright, plus the axe matrix, the moved NFR1-b test and the discovery-surface spec |
 
 - **Coverage:** the whole project's coverage is reported by Build and Test on the full suite (`npm run test:coverage` for the site; Rust coverage is reported with `cargo llvm-cov`). The team posture reports coverage without enforcing a percentage, so no threshold is set, lowered or disabled here. The maintainer confirmed on 2026-11-20, as a human-made requirement change, that this posture governs the scope's coverage floor.
 

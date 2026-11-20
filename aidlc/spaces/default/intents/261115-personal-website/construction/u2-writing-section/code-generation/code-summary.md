@@ -108,6 +108,7 @@ Exit 0.
 ## Tests written but not executed
 
 - `site/tests/e2e/homepage.spec.ts` empty-week test (AC3.4.1). It runs under `npm run test:e2e`, which the plan excludes until the owner's end-of-release accessibility review restores the manual record; the HIG run skips it via `test.skip(Boolean(HOMEPAGE_TODAY_OVERRIDE))`.
+- **Closed later (Build and Test run 5, 2026-11-20):** the same empty-week check now also runs in the unit suite, as `site/tests/unit/homepage-empty-week.test.ts` — an isolated build with `HOMEPAGE_TODAY_OVERRIDE=2025-08-20` that asserts the empty-week row, the "모든 글 보기" link and the muted text colour. The sealed Playwright copy stays for the end-of-release review.
 - The axe matrix for `/writing` and `/writing/all` runs inside the HIG suite, so it did execute.
 
 ## Deviations from the plan

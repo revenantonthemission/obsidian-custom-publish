@@ -136,6 +136,7 @@ The same machine and day were used for both measurements. Real-vault runs used a
 ## Tests written but not executed
 
 - `site/tests/e2e/homepage.spec.ts` (updated). It runs under `npm run test:e2e`, which the plan excludes until the owner's end-of-release 16-state accessibility review restores the manual record.
+- **Closed later (Build and Test run 5, 2026-11-20):** the FR2.2 rendered-site checks now also run in the unsealed HIG suite, as `site/tests/e2e/hig-discovery.spec.ts` — the retired homepage note has no route, no RSS entry and no sitemap entry. The sealed copy stays for the end-of-release review.
 
 ## Deviations from the plan
 

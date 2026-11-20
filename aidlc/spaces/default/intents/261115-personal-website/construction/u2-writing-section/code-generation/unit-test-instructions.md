@@ -18,7 +18,7 @@ U2 adds no new framework.
    ```
 2. Unit tests:
    ```
-   cd site && npx vitest run --config vitest.config.ts tests/unit/writing-lists.test.ts tests/unit/content-data.test.ts
+   cd site && npx vitest run --config vitest.config.ts tests/unit/writing-lists.test.ts tests/unit/content-data.test.ts tests/unit/homepage-empty-week.test.ts
    ```
 3. Property tests:
    ```
@@ -40,6 +40,7 @@ The full gate is the recorded verification command, run once in Step 9 and again
 | `/writing/all` | about 10 Playwright tests |
 | `/writing` | about 7 Playwright tests |
 | Homepage weekly section | about 4 Playwright tests |
+| Homepage empty week | 5 Vitest cases over an isolated build (`homepage-empty-week.test.ts`) |
 | Axe matrix | 2 new routes at 4 widths × 2 themes, plus reduced motion |
 
 Coverage on the whole project is reported by Build and Test on the full suite; no minimum percentage is enforced (team.md Testing Posture; maintainer decision 2026-11-20, human-made requirement change). No threshold is changed here.
@@ -52,5 +53,5 @@ Coverage on the whole project is reported by Build and Test on the full suite; n
 ## Test data
 
 - **Fixture vault:** `fixtures/vault/Notes/` gains `Undated Post.md`, `Post <b>Bold</b> & Co.md` and `This Week Post.md`. None is tagged `test`. An existing note dated 2024 provides the second year.
-- **Weekly list:** the HIG runner's override date puts two fixture posts in "이번 주 글". A second Playwright project, or an environment override, builds an empty week for AC3.4.1.
+- **Weekly list:** the HIG runner's override date puts two fixture posts in "이번 주 글". The empty week for AC3.4.1 is built by the unit suite: `site/tests/unit/homepage-empty-week.test.ts` runs an isolated build with `HOMEPAGE_TODAY_OVERRIDE=2025-08-20`, so the check no longer waits for the sealed `npm run test:e2e` provider.
 - **Real content:** real-content measurements use a temporary copy of `Areas/Notes` and are never stamped. Run `just preprocess` afterwards to restore the fixture content.
