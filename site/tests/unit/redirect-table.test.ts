@@ -6,6 +6,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  isHeaderValueSafe,
   isHostileQuery,
   loadRedirectTable,
   matchRedirect,
@@ -136,6 +137,40 @@ describe('lookup (BR3.2, BR3.3; security-design.md §3, §4)', () => {
     for (const query of ['x=%20', 'x=%2F', 'q=%ED%95%9C%EA%B8%80', 'x=a b', '', null]) {
       expect(isHostileQuery(query), String(query)).toBe(false);
     }
+  });
+});
+
+// Review R-02 (NFR5.22; security-design.md §4): the two last-resort guards the
+// server keeps "because the checks above can be wrong". The grammar (G1–G8)
+// accepts a lone surrogate in `to`, so these are reachable from a valid table.
+describe('last-resort guards (NFR5.22; security-design.md §4)', () => {
+  test('isHeaderValueSafe accepts an ordinary encoded Location, tab, space and 0x80–0xff', () => {
+    for (const value of [
+      '/writing/tags',
+      '/writing/tags/%EC%9A%B4%EC%98%81%EC%B2%B4%EC%A0%9C?q=%ED%95%9C&x=a b',
+      '/writing/tags?x=a\tb',
+      '/writing/tags/\u0080\u00ff',
+    ]) {
+      expect(isHeaderValueSafe(value), JSON.stringify(value)).toBe(true);
+    }
+  });
+
+  test('isHeaderValueSafe refuses CR, LF, NUL and DEL', () => {
+    for (const value of [
+      '/writing/tags\r',
+      '/writing/tags\nLocation: //evil.example',
+      '/writing/tags\u0000',
+      '/writing/tags\u007f',
+    ]) {
+      expect(isHeaderValueSafe(value), JSON.stringify(value)).toBe(false);
+    }
+  });
+
+  test('a lone-surrogate `to` passes the grammar but redirectLocation throws on it', () => {
+    const loneSurrogate = '/writing/tags/\ud800';
+    const result = validateRedirectTable(table([{ from: '/tags/x', to: loneSurrogate }]));
+    expect(result.ok).toBe(true);
+    expect(() => redirectLocation(loneSurrogate, null)).toThrow(URIError);
   });
 });
 

@@ -265,6 +265,33 @@ describe('redirects and files on a seeded web root', () => {
   });
 });
 
+describe('a rule whose target cannot be encoded (NFR5.22; review R-02)', () => {
+  test('answers 400 from the guarded write, and the server keeps answering', async () => {
+    // A lone surrogate is legal JSON and passes G1–G8, but encodeURIComponent
+    // throws on it: only answerRedirect's catch keeps the handler from throwing.
+    const root = seedRoot('u3-server-surrogate-');
+    let server: RunningServer | null = null;
+    try {
+      writeTable(root, [
+        { from: '/tags', to: '/writing/tags' },
+        { from: '/tags/broken', to: '/writing/tags/\ud800' },
+      ]);
+      server = await startServer(root);
+      expect(server.startupLine).toContain('redirects: 2 rules');
+      const refused = await get(server.port, '/tags/broken');
+      expect(refused.status).toBe(400);
+      expect(refused.headers.location).toBeUndefined();
+      const next = await get(server.port, '/tags');
+      expect(next.status).toBe(301);
+      expect(next.headers.location).toBe('/writing/tags');
+      expect((await get(server.port, '/writing/tags/test')).status).toBe(200);
+    } finally {
+      if (server !== null) await stopServer(server.child);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('a table that arrives after start (BR3.5)', () => {
   test('is picked up without a restart', async () => {
     const root = seedRoot('u3-server-late-');
