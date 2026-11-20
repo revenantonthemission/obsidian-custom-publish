@@ -26,8 +26,7 @@ site-build:
     cd {{site_dir}} && npx astro build
 
 deploy: deploy-preprocess site-build
-    mkdir -p "{{web_root}}"
-    rsync -a --delete {{site_dir}}/dist/ "{{web_root}}/"
+    bash {{site_dir}}/scripts/publish-dist.sh {{site_dir}}/dist "{{web_root}}"
 
 # Foreground run of the local server (launchd runs the same script as dev.rvnnt.blog)
 serve:
