@@ -50,7 +50,7 @@ The full gate is the recorded verification command, run once in Step 9 and again
 | No-JS header (`site/tests/e2e/crossunit.spec.ts`) | 1 rewritten expectation |
 | Axe matrix | the existing `HIG_ROUTES` matrix at 4 widths × 2 themes, plus reduced motion |
 
-The 80 % line-coverage scope floor is measured by Build and Test on the full suite. No threshold is changed here.
+Coverage on the whole project is reported by Build and Test on the full suite; no minimum percentage is enforced (team.md Testing Posture; maintainer decision 2026-11-20, human-made requirement change). No threshold is changed here.
 
 ## Mocking and stubbing
 
