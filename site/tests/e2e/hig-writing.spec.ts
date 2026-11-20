@@ -3,6 +3,7 @@
 // the HIG fixture build, whose build date is fixed at HIG_BUILD_DATE by
 // scripts/hig/build-and-serve.mjs. The axe matrix, 44 px chrome targets,
 // reduced motion and overflow checks for these routes come from HIG_ROUTES.
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -117,7 +118,35 @@ test.describe('Writing pages load no new script (NFR1.5)', () => {
       expect(await scriptSet(page, path), path).toEqual(reference);
     }
   });
+
+  // Loop-back 2 repair (plan Step 16; review-02 R-06): a script written inline
+  // makes no request, so the request check above cannot see it. Compare the
+  // inline <script> elements too: their count and the SHA-256 of each body.
+  test('/writing and /writing/all carry the same inline scripts as /writing/tags', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'one engine is enough to compare script sets');
+    const reference = await inlineScriptSet(page, '/writing/tags');
+    expect(reference.count).toBeGreaterThan(0);
+    for (const path of ['/writing', '/writing/all']) {
+      expect(await inlineScriptSet(page, path), path).toEqual(reference);
+    }
+  });
 });
+
+/** The inline (no `src`) scripts of a settled page: their count and sorted body hashes. */
+async function inlineScriptSet(
+  page: Page,
+  path: string
+): Promise<{ count: number; sha256: string[] }> {
+  await gotoSettled(page, path);
+  const bodies = await page.evaluate(() =>
+    [...document.querySelectorAll('script:not([src])')].map((script) => script.textContent ?? '')
+  );
+  const sha256 = bodies.map((body) => createHash('sha256').update(body).digest('hex')).sort();
+  return { count: bodies.length, sha256 };
+}
 
 test.describe('homepage "이번 주 글" (M1; BR2.1)', () => {
   test.use({ viewport: viewportFor(1024) });
