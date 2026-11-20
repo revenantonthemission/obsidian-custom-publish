@@ -1,16 +1,19 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostCard from '../../components/PostCard.astro';
-import { getTagIndex, getPreviewSummary } from '../../lib/data';
-import '../../styles/grouped.css';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BackLink from '../../../components/writing/BackLink.astro';
+import PostCard from '../../../components/PostCard.astro';
+import { getTagIndex, getPreviewSummary } from '../../../lib/data';
+import '../../../styles/grouped.css';
 
 export function getStaticPaths() {
   const tagIndex = getTagIndex();
   return Object.keys(tagIndex).map((tag) => ({ params: { tag } }));
 }
 
-// A tag page (mockups W6; FR4.3, FR4.5): the posts carrying the tag as one
-// inset grouped list on the grouped background.
+// A tag page (mockups W6, M4; FR4.3, FR4.5), at /writing/tags/<key> since U3
+// (BR1.1): the "‹ Writing" back link, then the posts carrying the tag as one
+// inset grouped list on the grouped background. The key is the address
+// module's (BR2.1), the same key the tag index and the redirect table use.
 const { tag } = Astro.params;
 const tagIndex = getTagIndex();
 const posts = tagIndex[tag!] || [];
@@ -18,6 +21,7 @@ const posts = tagIndex[tag!] || [];
 
 <BaseLayout title={`#${tag}`} surface="grouped">
   <header class="listing-header">
+    <BackLink />
     <h1>#{tag}</h1>
     <p class="listing-count">{posts.length}개 글</p>
   </header>

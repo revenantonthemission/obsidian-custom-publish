@@ -57,6 +57,42 @@ for (const viewport of VIEWPORTS) {
       expect(await page.locator('main astro-island').count()).toBe(0);
     });
 
+    // U3 (BR4.3; NFR3.4): the moved Tags and Graph pages are static markup;
+    // with JavaScript off they show their content, the graph's list panel is
+    // the whole page, and the back link leads to /writing.
+    test('/writing/tags renders its chips and its back link works without JavaScript', async ({
+      page,
+    }) => {
+      await page.goto('/writing/tags');
+      await expect(page.getByRole('heading', { level: 1, name: '태그' })).toBeVisible();
+      const chip = page.getByRole('link', { name: 'test, 글 11개' });
+      await expect(chip).toHaveAttribute('href', '/writing/tags/test');
+      await expect(page.locator('main a[href^="/tags"], main a[href^="/graph"]')).toHaveCount(0);
+      await page.getByTestId('back-link').click();
+      await expect(page).toHaveURL(/\/writing$/);
+      await expect(page.getByRole('heading', { level: 1, name: 'Writing' })).toBeVisible();
+    });
+
+    test('/writing/tags/test lists its posts without JavaScript', async ({ page }) => {
+      await page.goto('/writing/tags/test');
+      await expect(page.getByRole('heading', { level: 1, name: '#test' })).toBeVisible();
+      expect(await page.locator('main .grouped-list > li a').count()).toBe(11);
+      await expect(page.getByTestId('back-link')).toHaveAttribute('href', '/writing');
+    });
+
+    test('/writing/graph shows its list panel and its back link works without JavaScript', async ({
+      page,
+    }) => {
+      await page.goto('/writing/graph');
+      await expect(page.getByRole('heading', { level: 1, name: '그래프' })).toBeVisible();
+      const list = page.locator('#graph-panel-list');
+      await expect(list).toBeVisible();
+      expect(await list.locator('.graph-list-note').count()).toBeGreaterThan(0);
+      await expect(list.getByRole('link', { name: 'Hub Page', exact: true }).first()).toBeVisible();
+      await page.getByTestId('back-link').click();
+      await expect(page).toHaveURL(/\/writing$/);
+    });
+
     test('header exposes every core navigation target without JavaScript', async ({ page }) => {
       await page.goto('/');
       for (const target of CORE_NAV_TARGETS) {

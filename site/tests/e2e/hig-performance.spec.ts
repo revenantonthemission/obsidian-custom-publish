@@ -13,17 +13,18 @@ const CWV_ROUTES = [
   '/',
   '/posts/post-with-code',
   '/posts/post-with-diagrams',
-  '/graph',
+  '/writing/graph',
   '/resume',
 ] as const;
-// NFR2's pages (the homepage, a long post with diagrams and math, /graph and
-// /resume) plus the code post, where code panels are wrapped after load.
+// NFR2's pages (the homepage, a long post with diagrams and math, the graph,
+// at /writing/graph since U3, and /resume) plus the code post, where code
+// panels are wrapped after load.
 const MOBILE_NETWORK_ROUTES = [
   '/',
   '/posts/post-with-diagrams',
   '/posts/post-with-math',
   '/posts/post-with-code',
-  '/graph',
+  '/writing/graph',
   '/resume',
 ] as const;
 const CPU_SLOWDOWN = 4;

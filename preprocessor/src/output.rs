@@ -189,7 +189,7 @@ fn write_posts(
         fs::write(&md_path, &content).map_err(|e| pub007(&md_path, e))?;
         manifest.push(format!("posts/{}.md", post.slug));
 
-        copy_referenced_images(post, &images, dirs.assets, "assets", manifest);
+        copy_referenced_images(post, &images, dirs.assets, "assets", "", manifest);
 
         const WORDS_PER_MINUTE: usize = 200;
         let word_count = count_words(&content);
@@ -260,7 +260,18 @@ fn write_site_pages(
         fs::write(&md_path, &content).map_err(|e| pub007(&md_path, e))?;
         manifest.push(format!("pages/{}.md", page.slug));
 
-        copy_referenced_images(page, &images, &page_assets_dir, "assets/pages", manifest);
+        // BR5.2 (review R-02): a post embedded in a page keeps its images
+        // under NOTES, which this lookup never reads, so they are unsupported
+        // on pages; the warning names the page so the broken image is found.
+        let origin = format!(" (site page {})", page.file_path.display());
+        copy_referenced_images(
+            page,
+            &images,
+            &page_assets_dir,
+            "assets/pages",
+            &origin,
+            manifest,
+        );
 
         let meta = SitePageMeta {
             slug: page.slug.clone(),
@@ -277,11 +288,14 @@ fn write_site_pages(
 /// Copy referenced images found by the bounded lookup into `dest_dir`,
 /// listing each as `<manifest_prefix>/<name>`. `images` already holds final
 /// file-name components only, so the destination never leaves `dest_dir`.
+/// `origin` is appended to the not-found warning (empty for posts, the page
+/// path for site pages).
 fn copy_referenced_images(
     note: &PostMeta,
     images: &[String],
     dest_dir: &Path,
     manifest_prefix: &str,
+    origin: &str,
     manifest: &mut Vec<String>,
 ) {
     for image_filename in images {
@@ -290,7 +304,7 @@ fn copy_referenced_images(
             continue;
         }
         let Some(src) = find_attachment(note, image_filename) else {
-            eprintln!("warning: attachment not found: {image_filename}");
+            eprintln!("warning: attachment not found: {image_filename}{origin}");
             continue;
         };
         match fs::copy(&src, &dest) {

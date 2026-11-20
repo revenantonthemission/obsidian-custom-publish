@@ -141,3 +141,50 @@ describe('content seam and WR001 (NFR5.19)', () => {
     expect(getAllPostMeta(dir)).toEqual([]);
   });
 });
+
+// U2 WR002 (NFR5.19; review-02 R-05; loop-back 2 repair, plan Step 15): the
+// test-only CONTENT_DIR_OVERRIDE is honoured only in a Vitest run. Anywhere
+// else a set override fails the build closed with a coded error naming the
+// variable, so a stray value in a Jenkins or maintainer shell can never build
+// (and rsync --delete publish) the site from another content tree. The
+// resolver takes the environment as an argument, so a non-Vitest run is
+// simulated here by an environment without the VITEST marker.
+describe('content folder override is test-only (WR002; NFR5.19)', () => {
+  const DEFAULT_CONTENT = resolve('../content');
+  const resolveContentDir = (
+    data as unknown as {
+      resolveContentDir?: (env: Readonly<Record<string, string | undefined>>) => string;
+    }
+  ).resolveContentDir;
+
+  test('the data module exports a content folder resolver', () => {
+    expect(typeof resolveContentDir).toBe('function');
+  });
+
+  test('outside a Vitest run, a set override throws WR002 naming the variable', () => {
+    expect(() => resolveContentDir!({ CONTENT_DIR_OVERRIDE: '/tmp/elsewhere' })).toThrow(
+      /^WR002 CONTENT_DIR_OVERRIDE: /
+    );
+    expect(() =>
+      resolveContentDir!({ CONTENT_DIR_OVERRIDE: '/tmp/elsewhere', NODE_ENV: 'production' })
+    ).toThrow('WR002 CONTENT_DIR_OVERRIDE: set outside a Vitest run');
+  });
+
+  test('outside a Vitest run, no override (or an empty one) reads ../content', () => {
+    expect(resolveContentDir!({})).toBe(DEFAULT_CONTENT);
+    expect(resolveContentDir!({ CONTENT_DIR_OVERRIDE: '' })).toBe(DEFAULT_CONTENT);
+  });
+
+  test('in a Vitest run, the override points at the given folder', () => {
+    expect(resolveContentDir!({ VITEST: 'true', CONTENT_DIR_OVERRIDE: 'tmp/empty-tree' })).toBe(
+      resolve('tmp/empty-tree')
+    );
+    expect(resolveContentDir!({ VITEST: 'true' })).toBe(DEFAULT_CONTENT);
+  });
+
+  test('a VITEST marker that is empty does not count as a Vitest run', () => {
+    expect(() => resolveContentDir!({ VITEST: '', CONTENT_DIR_OVERRIDE: '/tmp/x' })).toThrow(
+      /^WR002 CONTENT_DIR_OVERRIDE: /
+    );
+  });
+});

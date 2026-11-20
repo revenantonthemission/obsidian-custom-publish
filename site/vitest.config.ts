@@ -11,6 +11,10 @@ export default getViteConfig({
       'tests/pbt/framework-selection.pbt.test.ts',
     ],
     retry: 0,
+    // Sets the run token for the one shared default site build that the
+    // built-output tests read, and removes that build when the run ends. It
+    // builds nothing itself (tests/unit/support/astro-build.ts; U1-NFR6.6).
+    globalSetup: ['tests/unit/support/shared-build-setup.ts'],
     // Nightly CI runs right after a fresh `npm ci` on a loaded machine; cold
     // caches make first-in-file init (Shiki/KaTeX, nested vitest boot) blow
     // the 5s default. Cap workers so subprocess-spawning test files don't

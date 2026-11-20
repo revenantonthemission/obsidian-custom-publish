@@ -42,9 +42,11 @@ export const HIG_ROUTES: readonly HigRoute[] = Object.freeze([
   { path: '/posts/post-with-diagrams', kind: 'post' },
   { path: '/posts/post-with-math', kind: 'post' },
   { path: '/hubs/hub-page', kind: 'hub' },
-  { path: '/tags', kind: 'tags' },
-  { path: '/tags/test', kind: 'tag' },
-  { path: '/graph', kind: 'graph' },
+  // U3 (BR1.1, BR4.1): Tags and Graph live under /writing; the old addresses
+  // are 301s now, checked over HTTP in hig-pages.spec.ts.
+  { path: '/writing/tags', kind: 'tags' },
+  { path: '/writing/tags/test', kind: 'tag' },
+  { path: '/writing/graph', kind: 'graph' },
   // U2 (C3): the Writing section; a blog route, so under the 30 KiB CSS budget.
   { path: '/writing', kind: 'writing' },
   { path: '/writing/all', kind: 'writing' },
@@ -141,8 +143,8 @@ export const OPEN_STATES: readonly OpenState[] = Object.freeze([
     },
   },
   {
-    name: '/graph list',
-    path: '/graph',
+    name: '/writing/graph list',
+    path: '/writing/graph',
     opener: (page) => page.getByRole('tab', { name: '목록' }),
     open: async (page) => {
       await page.getByRole('tab', { name: '목록' }).click();

@@ -24,7 +24,9 @@ export default defineConfig({
   webServer: {
     // --host pins IPv4: astro preview may otherwise bind only ::1, which
     // passes a bare port-readiness check while 127.0.0.1 connections fail.
-    command: `npx astro preview --host 127.0.0.1 --port ${PORT}`,
+    // --ignore-lock keeps it in the foreground: Astro 7.4 backgrounds `astro preview`
+    // when it detects an AI agent, so webServer saw the command exit early.
+    command: `npx astro preview --host 127.0.0.1 --port ${PORT} --ignore-lock`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: true,
   },

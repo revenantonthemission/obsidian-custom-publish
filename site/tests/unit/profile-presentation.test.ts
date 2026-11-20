@@ -1,8 +1,7 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { buildSiteInto } from './support/astro-build.js';
+import { beforeAll, describe, expect, test } from 'vitest';
+import { sharedDefaultBuild } from './support/astro-build.js';
 import { getResumeDocumentLink } from '../../src/lib/profile/document-boundary.js';
 import { getCurrentResumeDocumentLink } from '../../src/lib/profile/current-resume-document.js';
 import { getProductionProfileAssembly } from '../../src/lib/profile/production-profile.js';
@@ -268,22 +267,8 @@ describe('production Astro profile output', () => {
   let navTree: unknown;
 
   beforeAll(async () => {
-    outputRoot = await mkdtemp(join(tmpdir(), 'obsidian-profile-output-'));
-    // Builds take turns with other built-HTML tests (support/astro-build.ts).
-    const result = await buildSiteInto(outputRoot);
-
-    if (result.status !== 0 || result.error !== undefined) {
-      throw new Error(
-        [
-          'The isolated Astro profile build failed.',
-          result.error?.message ?? '',
-          result.stdout,
-          result.stderr,
-        ]
-          .filter(Boolean)
-          .join('\n')
-      );
-    }
+    // The run's one shared default build, read only (support/astro-build.ts).
+    outputRoot = await sharedDefaultBuild();
 
     const [
       searchIndexText,
@@ -313,12 +298,6 @@ describe('production Astro profile output', () => {
     writingHtml = writing;
     writingAllHtml = writingAll;
   }, 75_000);
-
-  afterAll(async () => {
-    if (outputRoot !== '') {
-      await rm(outputRoot, { force: true, recursive: true });
-    }
-  });
 
   test('renders the résumé shell, closed disclosures and static navigation', async () => {
     assertProfileShell(resumeHtml, 'resume', 'Résumé');

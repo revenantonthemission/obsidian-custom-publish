@@ -3,6 +3,7 @@
 // the HIG fixture build, whose build date is fixed at HIG_BUILD_DATE by
 // scripts/hig/build-and-serve.mjs. The axe matrix, 44 px chrome targets,
 // reduced motion and overflow checks for these routes come from HIG_ROUTES.
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -83,6 +84,70 @@ async function trackForeignRequests(page: Page, baseURL: string | undefined): Pr
   return foreign;
 }
 
+/** `/_astro/Search.Bx1_c-9Z.js` → `/_astro/Search`: drops the build hash so two builds compare. */
+function logicalScriptName(url: string): string {
+  const { pathname } = new URL(url);
+  return pathname.replace(/\.[A-Za-z0-9_-]+\.js$/, '');
+}
+
+/** The logical names of every script the page requests while it loads and settles. */
+async function scriptSet(page: Page, path: string): Promise<string[]> {
+  const scripts = new Set<string>();
+  const record = (request: { resourceType(): string; url(): string }) => {
+    if (request.resourceType() === 'script') scripts.add(logicalScriptName(request.url()));
+  };
+  page.on('request', record);
+  await gotoSettled(page, path);
+  page.off('request', record);
+  return [...scripts].sort();
+}
+
+// NFR1.5 (review R-04): the Writing pages add no script of their own; they load
+// exactly the scripts an existing Writing page (/writing/tags) already loads.
+test.describe('Writing pages load no new script (NFR1.5)', () => {
+  test.use({ viewport: viewportFor(1024) });
+
+  test('/writing and /writing/all request the same scripts as /writing/tags', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'one engine is enough to compare script sets');
+    const reference = await scriptSet(page, '/writing/tags');
+    expect(reference.length).toBeGreaterThan(0);
+    for (const path of ['/writing', '/writing/all']) {
+      expect(await scriptSet(page, path), path).toEqual(reference);
+    }
+  });
+
+  // Loop-back 2 repair (plan Step 16; review-02 R-06): a script written inline
+  // makes no request, so the request check above cannot see it. Compare the
+  // inline <script> elements too: their count and the SHA-256 of each body.
+  test('/writing and /writing/all carry the same inline scripts as /writing/tags', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'one engine is enough to compare script sets');
+    const reference = await inlineScriptSet(page, '/writing/tags');
+    expect(reference.count).toBeGreaterThan(0);
+    for (const path of ['/writing', '/writing/all']) {
+      expect(await inlineScriptSet(page, path), path).toEqual(reference);
+    }
+  });
+});
+
+/** The inline (no `src`) scripts of a settled page: their count and sorted body hashes. */
+async function inlineScriptSet(
+  page: Page,
+  path: string
+): Promise<{ count: number; sha256: string[] }> {
+  await gotoSettled(page, path);
+  const bodies = await page.evaluate(() =>
+    [...document.querySelectorAll('script:not([src])')].map((script) => script.textContent ?? '')
+  );
+  const sha256 = bodies.map((body) => createHash('sha256').update(body).digest('hex')).sort();
+  return { count: bodies.length, sha256 };
+}
+
 test.describe('homepage "이번 주 글" (M1; BR2.1)', () => {
   test.use({ viewport: viewportFor(1024) });
 
@@ -143,18 +208,21 @@ test.describe('/writing (M2; BR2.2)', () => {
     ).toBe(LIGHT_BG_GROUPED);
   });
 
-  test('the Tags and Graph capsules point at /tags and /graph and open', async ({ page }) => {
+  // U3 (BR2.3, AC4.1.5): the capsules point at the moved pages.
+  test('the Tags and Graph capsules point at /writing/tags and /writing/graph and open', async ({
+    page,
+  }) => {
     await gotoSettled(page, '/writing');
     const main = page.getByRole('main');
     const tags = main.getByRole('link', { name: 'Tags', exact: true });
     const graph = main.getByRole('link', { name: 'Graph', exact: true });
-    await expect(tags).toHaveAttribute('href', '/tags');
-    await expect(graph).toHaveAttribute('href', '/graph');
+    await expect(tags).toHaveAttribute('href', '/writing/tags');
+    await expect(graph).toHaveAttribute('href', '/writing/graph');
     await tags.click();
-    await expect(page).toHaveURL(/\/tags$/);
+    await expect(page).toHaveURL(/\/writing\/tags$/);
     await page.goBack();
     await graph.click();
-    await expect(page).toHaveURL(/\/graph$/);
+    await expect(page).toHaveURL(/\/writing\/graph$/);
   });
 
   test('"최근 글" holds the five newest dated posts, then "모든 글 보기"', async ({ page }) => {

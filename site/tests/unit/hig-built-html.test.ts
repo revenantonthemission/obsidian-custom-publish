@@ -1,15 +1,15 @@
 // C-12 and C-13 (accessibility-checklist.md) over the built HTML, plus the
-// static half of FR5.9 and FR5.10. Like profile-presentation.test.ts, it builds
-// the site into its own temporary directory, so it never depends on site/dist
-// and runs wherever test:unit runs (including the Jenkins Verify stage).
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+// static half of FR5.9 and FR5.10. Like profile-presentation.test.ts, it reads
+// the run's shared default build (support/astro-build.ts) and only reads it,
+// so it never depends on site/dist and runs wherever test:unit runs (including
+// the Jenkins Verify stage).
+import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import type { Element, Root, RootContent } from 'hast';
 import rehypeParse from 'rehype-parse';
 import { unified } from 'unified';
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { buildSiteInto } from './support/astro-build.js';
+import { beforeAll, describe, expect, test } from 'vitest';
+import { sharedDefaultBuild } from './support/astro-build.js';
 
 const HANGUL = /[가-힣]/;
 
@@ -73,18 +73,7 @@ describe('built HTML: Korean names and hidden decoration', () => {
   let pages: Page[] = [];
 
   beforeAll(async () => {
-    outputRoot = await mkdtemp(join(tmpdir(), 'obsidian-hig-output-'));
-    const result = await buildSiteInto(outputRoot);
-    if (result.status !== 0 || result.error !== undefined) {
-      throw new Error(
-        [
-          'The isolated Astro build failed.',
-          result.error?.message ?? '',
-          result.stdout,
-          result.stderr,
-        ].join('\n')
-      );
-    }
+    outputRoot = await sharedDefaultBuild();
     const parser = unified().use(rehypeParse);
     pages = await Promise.all(
       (await htmlFiles(outputRoot)).map(async (file) => ({
@@ -93,10 +82,6 @@ describe('built HTML: Korean names and hidden decoration', () => {
       }))
     );
   }, 75_000);
-
-  afterAll(async () => {
-    if (outputRoot !== '') await rm(outputRoot, { force: true, recursive: true });
-  });
 
   test('every aria-label on every built route is Korean (C-12)', () => {
     expect(pages.length).toBeGreaterThan(20);

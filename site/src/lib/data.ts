@@ -1,8 +1,30 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { PostMeta, GraphData } from './types';
+import { sanitizeTag } from './tag-urls.mjs';
 
-const CONTENT_DIR = path.resolve('../content');
+/**
+ * The content folder the site reads. CONTENT_DIR_OVERRIDE is test-only (U2 plan
+ * Step 12; AC4.1.3): an isolated unit-test build points it at a temporary
+ * content tree. It is honoured only in a Vitest run, marked by a non-empty
+ * VITEST (Vitest sets it, and `buildSiteInto` children inherit it). Anywhere
+ * else a set override fails closed with WR002 (NFR5.19; U2 review-02 R-05), so
+ * a stray value in a Jenkins or maintainer shell can never build, and publish,
+ * the site from another tree. The override moves only this module's reads, not
+ * render.ts's assets folder.
+ */
+export function resolveContentDir(env: Readonly<Record<string, string | undefined>>): string {
+  const override = env.CONTENT_DIR_OVERRIDE;
+  if (!override) return path.resolve('../content');
+  if (!env.VITEST) {
+    throw new Error(
+      'WR002 CONTENT_DIR_OVERRIDE: set outside a Vitest run — unset it; it is test-only'
+    );
+  }
+  return path.resolve(override);
+}
+
+const CONTENT_DIR = resolveContentDir(process.env);
 
 // Module-level caches to avoid redundant filesystem reads during SSG builds
 let _allPostMeta: PostMeta[] | null = null;
@@ -126,10 +148,9 @@ export function getOrdinaryPosts(): readonly PostMeta[] {
   return Object.freeze(getAllPostMeta().filter((p) => !p.is_hub));
 }
 
-/** Sanitize a tag for use as a URL path segment. */
-export function sanitizeTag(tag: string): string {
-  return tag.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
-}
+// The tag key rule has one owner, the address module (U3 BR2.1); it is
+// re-exported here so existing callers keep their import.
+export { sanitizeTag };
 
 export function getTagIndex(): Record<string, PostMeta[]> {
   const all = getAllPostMeta();

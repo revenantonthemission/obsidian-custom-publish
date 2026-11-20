@@ -85,6 +85,34 @@ for (const width of [320, 1024] as const) {
   });
 }
 
+// NFR1.11, BR2.1 (review R-03): the bar holds exactly one link, to /writing,
+// on every route the chrome block visits, and each surface (bar, sheet)
+// carries at most one aria-current. Only one surface renders at a given
+// width — the bar from 768 px, the sheet below — so the rendered page exposes
+// one marked item; the sheet's rows stay in the DOM of the closed <details>
+// and are counted there.
+test.describe('one Writing link in the bar', () => {
+  test.use({ viewport: viewportFor(1024) });
+  for (const route of HIG_ROUTES) {
+    test(`the bar holds one /writing link and each surface marks at most one item on ${route.path}`, async ({
+      page,
+    }) => {
+      expect(await gotoSettled(page, route.path)).toBe(expectedStatus(route));
+      const barLinks = page.locator('.desktop-nav a');
+      await expect(barLinks).toHaveCount(1);
+      await expect(barLinks).toHaveAttribute('href', '/writing');
+      expect(
+        (await markedAriaCurrents(page, '.desktop-nav a')).length,
+        'the bar marks at most one item'
+      ).toBeLessThanOrEqual(1);
+      expect(
+        (await markedAriaCurrents(page, 'nav.mobile-nav-dropdown a')).length,
+        'the sheet marks at most one item'
+      ).toBeLessThanOrEqual(1);
+    });
+  }
+});
+
 test.describe('navigation sheet and bar on phones', () => {
   test.use({ viewport: viewportFor(320) });
 

@@ -236,6 +236,63 @@ describe('shared navigation contracts', () => {
     );
   });
 
+  // NFR5.21 (review R-02): the remaining unnormalisable path classes. Each is
+  // rejected with the coded diagnostic, never guessed into a marker.
+  test.each([
+    ['a NUL control character', '/writing\u0000'],
+    ['a tab', '/writing\tall'],
+    ['a space', '/writing all'],
+    ['a DEL control character', '/writing/all\u007f'],
+  ])('fails closed for a path with %s', (_label, pathname) => {
+    expect(failureKeys(getPrimaryNavigationState(pathname))).toEqual([
+      'navigation.current.invalid@profile.navigation.current',
+    ]);
+    expect(resolveNavigationMarker(pathname)).toBeNull();
+  });
+
+  test.each([['/writing%zz'], ['/writing/all%E'], ['/writing%']])(
+    'fails closed for the bad percent escape in %s',
+    (pathname) => {
+      expect(failureKeys(getPrimaryNavigationState(pathname))).toEqual([
+        'navigation.current.invalid@profile.navigation.current',
+      ]);
+      expect(resolveNavigationMarker(pathname)).toBeNull();
+    }
+  );
+
+  test.each([['/writing\\all'], ['/writing%5Call']])(
+    'fails closed for the backslash in %s',
+    (pathname) => {
+      expect(failureKeys(getPrimaryNavigationState(pathname))).toEqual([
+        'navigation.current.invalid@profile.navigation.current',
+      ]);
+      expect(resolveNavigationMarker(pathname)).toBeNull();
+    }
+  );
+
+  // NFR5.21's hostile-model check. The site build reaches the navigation
+  // model only through getPrimaryNavigationState (Header.astro), which
+  // validates through getNavigationState and throws on a failed result, so a
+  // hostile model fed to that same validation entry fails the build with the
+  // coded diagnostic.
+  test.each([
+    ['two items', [...getPrimaryNavigation(), { href: '/tags', label: 'Tags' }]],
+    ['Writing pointing at /blog', [{ href: '/blog', label: 'Writing' }]],
+    ['Writing pointing at a descendant', [{ href: '/writing/all', label: 'Writing' }]],
+    ['a relabelled Writing item', [{ href: '/writing', label: 'Blog' }]],
+    ['no items', []],
+  ])('rejects a hostile primary model with %s', (_label, hostileModel) => {
+    expect(failureKeys(getNavigationState(hostileModel, '/writing'))).toEqual([
+      'navigation.model.invalid@profile.navigation.model',
+    ]);
+  });
+
+  test('validates the build entry through the same model check', () => {
+    expect(getPrimaryNavigationState('/writing/all')).toEqual(
+      getNavigationState(getPrimaryNavigation(), '/writing/all')
+    );
+  });
+
   test('keeps the models and the states frozen', () => {
     const states = expectSuccess(getPrimaryNavigationState('/writing'));
 

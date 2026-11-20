@@ -111,8 +111,9 @@ pipeline {
             steps {
                 // Local publish: the launchd service (dev.rvnnt.blog) serves WEB_ROOT,
                 // so a synced tree is live immediately — no invalidation step.
-                sh 'mkdir -p "${WEB_ROOT}"'
-                sh 'rsync -a --delete site/dist/ "${WEB_ROOT}/"'
+                // U3 (NFR5.25): the pages first, then the redirect table, from the
+                // one script the Justfile deploy recipe calls too.
+                sh 'bash site/scripts/publish-dist.sh site/dist "${WEB_ROOT}"'
             }
         }
     }
