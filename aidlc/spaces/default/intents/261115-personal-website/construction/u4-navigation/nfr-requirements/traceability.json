@@ -1,0 +1,15 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "u4-navigation",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    { "id": "NFR1", "status": "OK", "target": "NFR1.11, NFR1.12, NFR1.14" },
+    { "id": "NFR2", "status": "OK", "target": "NFR2.3" },
+    { "id": "NFR3", "status": "OK", "target": "NFR3.3" },
+    { "id": "NFR4", "status": "OK", "target": "NFR4.8" },
+    { "id": "NFR5", "status": "OK", "target": "NFR5.21" },
+    { "id": "NFR6", "status": "OK", "target": "NFR6.10, NFR6.11" },
+    { "id": "NFR7", "status": "N/A", "target": "résumé and portfolio one-click reach from the homepage is delivered by U1's homepage opening and the profile local navigation; U4 changes neither" },
+    { "id": "NFR8", "status": "N/A", "target": "post reach from /writing in at most two clicks is delivered by U2's writing pages; U4 only links to /writing and changes no list" }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "u2-writing-section",
+  "upstream_ids": ["NFR1.5","NFR1.8","NFR4.7","NFR6.8","NFR1.6","NFR1.7","NFR5.19","NFR5.20","NFR2.2","NFR3.2","NFR1.9","NFR1.10","NFR6.9"],
+  "coverage": [
+    { "id": "NFR1.5", "status": "OK", "target": "cicd-pipeline §3 HIG suite; infrastructure-specification: static routes, no server change" },
+    { "id": "NFR1.6", "status": "N/A", "target": "CSS-only design property; no infrastructure" },
+    { "id": "NFR1.7", "status": "OK", "target": "monitoring-design Metrics: /writing/all HTML size measured in Build and Test" },
+    { "id": "NFR1.8", "status": "OK", "target": "infrastructure-specification change list: HIG runner fixed build date makes the weekly rows measurable" },
+    { "id": "NFR4.7", "status": "N/A", "target": "algorithmic property of the list module; no infrastructure" },
+    { "id": "NFR6.8", "status": "OK", "target": "cicd-pipeline §1 local gate; build-time comparison in Build and Test" },
+    { "id": "NFR5.19", "status": "OK", "target": "monitoring-design Alerts: build failure on WR001 stops deploy; count check" },
+    { "id": "NFR5.20", "status": "OK", "target": "infrastructure-specification change list: hostile-title fixture post" },
+    { "id": "NFR2.2", "status": "OK", "target": "infrastructure-specification: no new service or origin" },
+    { "id": "NFR3.2", "status": "OK", "target": "cicd-pipeline §3 crossunit JS-off on the three pages" },
+    { "id": "NFR1.9", "status": "OK", "target": "infrastructure-specification change list: HIG_ROUTES extended" },
+    { "id": "NFR1.10", "status": "OK", "target": "cicd-pipeline §3 HIG suite structure checks" },
+    { "id": "NFR6.9", "status": "OK", "target": "cicd-pipeline §1 recorded verification command as merge gate" }
+  ]
+}

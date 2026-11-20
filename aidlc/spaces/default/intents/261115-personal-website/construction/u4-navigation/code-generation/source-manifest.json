@@ -8,6 +8,7 @@
     { "path": "site/src/islands/MobileNav.tsx" },
     { "path": "site/src/styles/chrome.css" },
     { "path": "site/tests/unit/profile-metadata-navigation.test.ts" },
+    { "path": "site/tests/unit/header-navigation-failure.test.ts" },
     { "path": "site/tests/unit/profile-presentation.test.ts" },
     { "path": "site/tests/pbt/u1/arbitraries/metadata.ts" },
     { "path": "site/tests/pbt/u1/profile-metadata-navigation.pbt.test.ts" },
