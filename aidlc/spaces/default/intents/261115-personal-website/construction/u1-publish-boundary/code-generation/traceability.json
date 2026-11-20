@@ -13,7 +13,7 @@
     { "id": "AC1.3.3", "status": "OK", "target": "preprocessor/tests/publication_catalog.rs" },
     { "id": "AC2.1.1", "status": "OK", "target": "preprocessor/tests/publication_catalog.rs" },
     { "id": "AC2.1.2", "status": "OK", "target": "site/tests/unit/content-data.test.ts" },
-    { "id": "AC2.2.1", "status": "OK", "target": "preprocessor/tests/publication_output.rs; the rendered-site half runs in site/tests/e2e/hig-discovery.spec.ts (no /posts/fixture-homepage/ route, no RSS or sitemap entry)" },
+    { "id": "AC2.2.1", "status": "OK", "target": "preprocessor/tests/publication_output.rs" },
     { "id": "AC2.2.2", "status": "OK", "target": "preprocessor/tests/publication_catalog.rs" },
     { "id": "AC3.1.1", "status": "OK", "target": "site/tests/e2e/hig-pages.spec.ts" },
     { "id": "AC3.1.2", "status": "OK", "target": "site/tests/e2e/hig-pages.spec.ts" },
