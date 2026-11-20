@@ -1,6 +1,6 @@
 /* The homepage (U1 W5; BR6.2–BR6.6; U2 BR2.1). A Large Title, then the
- * opening (owner name, short introduction, two equal capsules). The weekly
- * "이번 주 글" card is a Writing component, styled in writing.css.
+ * opening (owner name, short introduction, two equal capsules), then the
+ * weekly "이번 주 글" card, a Writing component whose card rules live here.
  * Colors are --c- tokens only; the capsules reuse .capsule from grouped.css,
  * both unfilled, so neither reads as the primary action (FR3.3). */
 /* From tablet width up the page widens with the viewport until it matches the
@@ -39,4 +39,38 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+/* ── The weekly "이번 주 글" card (U2 BR2.1; mockups M1) ──
+ * Here rather than in writing.css, since only the homepage uses it (review
+ * R-01); its section title's base rule stays in writing.css. */
+.week-posts {
+  margin-block: 0 var(--space-5);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.week-posts > .writing-section-title {
+  margin-block: 0 var(--space-3);
+}
+
+/* The list sits inside its card: no second surface, rows run to the card's edges. */
+.week-posts .grouped-list {
+  margin: 0 calc(var(--space-5) * -1) calc(var(--space-4) * -1);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: transparent;
+}
+
+body[data-surface='grouped'] .week-posts .grouped-list {
+  background: transparent;
+}
+
+.week-posts .grouped-row,
+.week-posts .grouped-empty {
+  padding-inline-start: var(--space-5);
+}
+
+.week-posts .grouped-list > li + li::before {
+  inset-inline-start: var(--space-5);
 }

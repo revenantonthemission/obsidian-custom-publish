@@ -1,0 +1,82 @@
+/* /writing/all only (U2; mockups M3; BR2.3–BR2.6): sticky year headers and
+ * compact rows. Split out of writing.css so that file stays within its 3 KiB
+ * design target (review R-01); loaded after writing.css, so the cascade is
+ * the one the rules had there. Colours are --c- tokens only.
+ * The back link's rules live in grouped.css since U3 (BR1.2). */
+.writing-all {
+  /* The header's minimum block size: one 44 px target plus its padding. */
+  --year-header-height: calc(var(--target) + var(--space-2));
+}
+
+/* Sticks just under the floating bar on thick glass (BR2.4). The data-material
+ * rules in base.css give the glass; this override drops the floating shadow
+ * from a strip that spans the column. */
+.year-header {
+  position: sticky;
+  inset-block-start: calc(var(--bar-inset) * 2 + var(--bar-height));
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-block-size: var(--year-header-height);
+  margin-block: var(--space-6) var(--space-2);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-title-3);
+}
+
+.year-header[data-material] {
+  box-shadow: var(--c-glass-edge);
+}
+
+/* The three material fallbacks use the solid grouped background (plan
+ * resolution "Glass fallbacks"), not the material's default --c-surface. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .year-header[data-material] {
+    background-color: var(--c-bg-grouped);
+    box-shadow: 0 0 0 1px var(--c-control-border);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .year-header[data-material] {
+    background-color: var(--c-bg-grouped);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: 0 0 0 1px var(--c-control-border);
+  }
+}
+
+.year-group:first-of-type .year-header {
+  margin-block-start: 0;
+}
+
+.year-group .grouped-list {
+  margin-block-end: var(--space-4);
+}
+
+/* A focused row is scrolled clear of the bar and a stuck header (WCAG 2.2
+ * 2.4.11): the margin sits on the focusable link itself. */
+.compact-row {
+  flex-wrap: wrap;
+  min-block-size: var(--target);
+  padding-block: var(--space-2);
+  scroll-margin-block-start: calc(
+    var(--bar-inset) * 2 + var(--bar-height) + var(--year-header-height)
+  );
+}
+
+.compact-row-title {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  font-size: var(--text-headline);
+  font-weight: 600;
+  line-height: var(--leading-headline);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.compact-row-date {
+  margin-inline-start: auto;
+  color: var(--c-text-secondary);
+  font-size: var(--text-subheadline);
+}
