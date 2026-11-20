@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { PostMeta, GraphData } from './types';
+import { sanitizeTag } from './tag-urls.mjs';
 
 const CONTENT_DIR = path.resolve('../content');
 
@@ -126,10 +127,9 @@ export function getOrdinaryPosts(): readonly PostMeta[] {
   return Object.freeze(getAllPostMeta().filter((p) => !p.is_hub));
 }
 
-/** Sanitize a tag for use as a URL path segment. */
-export function sanitizeTag(tag: string): string {
-  return tag.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
-}
+// The tag key rule has one owner, the address module (U3 BR2.1); it is
+// re-exported here so existing callers keep their import.
+export { sanitizeTag };
 
 export function getTagIndex(): Record<string, PostMeta[]> {
   const all = getAllPostMeta();
