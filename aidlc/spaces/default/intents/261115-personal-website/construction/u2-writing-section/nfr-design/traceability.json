@@ -1,0 +1,20 @@
+{
+  "stage": "nfr-design",
+  "unit": "u2-writing-section",
+  "upstream_ids": ["NFR1.5","NFR1.6","NFR1.7","NFR1.8","NFR4.7","NFR6.8","NFR5.19","NFR5.20","NFR2.2","NFR3.2","NFR1.9","NFR1.10","NFR6.9"],
+  "coverage": [
+    { "id": "NFR1.5", "status": "OK", "target": "performance-design §1: BaseLayout-only pages, script set equals /tags" },
+    { "id": "NFR1.6", "status": "OK", "target": "performance-design §1: CSS-only sticky header on data-material glass, no animation" },
+    { "id": "NFR1.7", "status": "OK", "target": "performance-design §1 and §3: compact rows, ≤ 2,048 B per post, ≤ 350 KB, measured on real content" },
+    { "id": "NFR1.8", "status": "OK", "target": "performance-design §1: / ≤ 255,387 B, the measured value; the maintainer reset the budget from 229,036 B + 4,096 B per weekly row on 2026-11-20 (human-made requirement change) because the weekly rows pull one extra 25,716 B Pretendard subset" },
+    { "id": "NFR4.7", "status": "OK", "target": "performance-design §1: one stable sort plus linear grouping" },
+    { "id": "NFR6.8", "status": "OK", "target": "performance-design §1 and §3: median-of-3 build ≤ 1.10 × U1" },
+    { "id": "NFR5.19", "status": "OK", "target": "security-design §1: ordinary-post input boundary and WR001 fail-closed; NFR8 equality test" },
+    { "id": "NFR5.20", "status": "OK", "target": "security-design §1: text-only rendering; hostile-title e2e test" },
+    { "id": "NFR2.2", "status": "OK", "target": "security-design §1: no new origins; request-log test" },
+    { "id": "NFR3.2", "status": "OK", "target": "security-design §2: crossunit JS-off extended to /writing and /writing/all" },
+    { "id": "NFR1.9", "status": "OK", "target": "security-design §1 and §2: HIG_ROUTES axe matrix; scroll-margin focus visibility" },
+    { "id": "NFR1.10", "status": "OK", "target": "security-design §1: one h1, h2 per section, 44 px targets" },
+    { "id": "NFR6.9", "status": "OK", "target": "logical-components: interim-list code and its tests replaced in the same change" }
+  ]
+}

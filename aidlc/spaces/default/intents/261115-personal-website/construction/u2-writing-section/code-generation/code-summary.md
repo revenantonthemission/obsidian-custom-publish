@@ -81,11 +81,11 @@ Same machine, same day. The real-content run used a copy of `Areas/Notes` under 
 | Measure | Value | Target | Result |
 |---|---|---|---|
 | Fixture `npx astro build` (median of 3) | 3.63 s (runs 4.75, 3.59, 3.63) | < 10 % over the U1 build (NFR6.8) | Not gradable here: the Step 1 baseline was not recorded (see Deviations); Build and Test re-measures |
-| `/` wire bytes, HIG fixture build (2 post rows + all row) | 255,351 B (decoded 334,567 B, 18 requests) | ≤ 229,036 + 4,096 × 2 = 237,228 B (NFR1.8) | **Not met**: +18,123 B (7.6 %). One extra Pretendard woff2 subset (`.subset.86.XG7lTN_6.woff2`, 25,716 B) is requested by the Korean row text, and the row markup adds 538 B wire. No new stylesheet beyond `writing.css` |
+| `/` wire bytes, HIG fixture build (2 post rows + all row) | 255,351 B (decoded 334,567 B, 18 requests) | ≤ 229,036 + 4,096 × 2 = 237,228 B (NFR1.8, the budget in force when this was measured) | **Not met at the time**: +18,123 B (7.6 %). One extra Pretendard woff2 subset (`.subset.86.XG7lTN_6.woff2`, 25,716 B) is requested by the Korean row text, and the row markup adds 538 B wire. No new stylesheet beyond `writing.css`. The maintainer reset the budget to the measured 255,387 B on 2026-11-20 (human-made requirement change); against the reset budget the measurement meets it |
 | `/` wire bytes, empty-week build of the same code | 229,097 B | 229,036 B (U1) | +61 B: U1's interim section replaced by the empty weekly card |
 | `/writing/all` HTML, real-content build | 107,795 B for 137 rows = 787 B/row | ≤ 2 KB/row and ≤ 350 KB uncompressed (NFR1.7) | Met |
 
-- **Delta breakdown**: 255,351 − 229,097 = 26,254 B wire (27,118 B decoded) = 25,716 B extra font subset + 538 B wire row markup. The budget's 4,096 B per row covers markup, not the one-time Hangul coverage subset the new rows need; the cost is inherent to rendering real Korean titles and dates.
+- **Delta breakdown**: 255,351 − 229,097 = 26,254 B wire (27,118 B decoded) = 25,716 B extra font subset + 538 B wire row markup. The budget's 4,096 B per row covers markup, not the one-time Hangul coverage subset the new rows need; the cost is inherent to rendering real Korean titles and dates. The maintainer reset the budget to the measured 255,387 B on 2026-11-20 (human-made requirement change) instead of adding a custom font subset; the subset work stays a follow-up.
 - **Post count**: the vault copy held 137 published posts on this run (the vault has changed since U1's 155). Rows on `/writing/all` = 137.
 - **Origins**: one origin on every page, before and after.
 
