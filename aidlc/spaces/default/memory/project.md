@@ -76,7 +76,7 @@
 
 - NEVER commit nested worktree checkouts such as `.claude/worktrees/`. (affirmed 2026-10-20)
 
-- NEVER run the preprocessor against the whole vault. `VAULT_PATH` must point at `Areas/Notes`, the only published folder. (affirmed 2026-10-20)
+- NEVER run the preprocessor against the whole vault. `VAULT_PATH` must point at `Areas/Notes` and `PAGES_PATH` at `Areas/Pages`; those are the only published folders. (affirmed 2026-11-20)
 
 - NEVER slice Korean text by bytes in Rust. Truncate it with `char_indices()`. (affirmed 2026-10-20)
 
