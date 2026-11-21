@@ -1,0 +1,23 @@
+{
+  "blogPlist": {
+    "path": "Library/LaunchAgents/dev.rvnnt.blog.plist",
+    "contains": [
+      "<string>127.0.0.1</string>",
+      "<string>8080</string>",
+      "site/scripts/local-server.mjs",
+      "Sites/obsidian-blog"
+    ]
+  },
+  "jenkinsPlist": {
+    "path": "Library/LaunchAgents/homebrew.mxcl.jenkins.plist",
+    "contains": ["--httpListenAddress=127.0.0.1", "--httpPort=8081"]
+  },
+  "tunnelConfig": {
+    "path": ".cloudflared/obsidian-blog.yml",
+    "contains": ["hostname: rvnnt.dev", "service: http://127.0.0.1:8080"]
+  },
+  "webRoot": {
+    "expected": ["_redirects.json", "index.html", "posts", "writing"],
+    "forbidden": ["tags", "graph"]
+  }
+}

@@ -44,6 +44,10 @@ deploy-preprocess:
 test:
     cd preprocessor && cargo test
 
+# F-6: compare launchd/tunnel settings and the web root with the recorded baseline.
+drift:
+    node {{site_dir}}/scripts/check-drift.mjs
+
 # U3 cross-unit gate (LC-U3-06/07). Lives here, not in site/package.json:
 # that file is a review subject — any edit moves the accessibility-record
 # digest and fails test:e2e closed. Requires an existing site build.
