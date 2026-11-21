@@ -125,7 +125,7 @@ Grafana 공식 절차(`Configure Slack for Alerting`, `Configure Grafana-managed
 | **보존 기간** | **14일** | metrics 13개월, logs 30일 |
 | 지원 | Community | 8×5 email |
 
-**충돌 기록**: 이전 설계(`Q3 B`)는 로그 30일 보존을 결정했지만, Grafana Cloud Free tier는 **14일**만 제공합니다. 30일 보존이 필요하면 **Pro 플랜($19/월)** 으로 올려야 합니다. 유지관리자가 플랜을 결정할 때까지 Free tier에서는 14일로 운영하고, 30일은 로컬 파일 정리 정책(월 1회)으로만 맞춥니다.
+**결정(2026-11-21)**: **Free 플랜 유지**. Grafana Cloud 보존 기간은 **14일**을 그대로 수용하고, Pro($19/월)로 올리지 않습니다. 이전 설계(`Q3 B`)의 30일 보존은 클라우드 쪽에서 포기하고, **로컬 로그 파일만 월 1회 정리로 30일**을 맞춥니다. 대시보드의 보존 기간 표기도 14일 기준으로 둡니다.
 
 Grafana Loki 자체 호스팅이라면 `limits_config.retention_period: 720h`(30일)와 `compactor.retention_enabled: true`가 필요하고, 인덱스 period는 24h여야 합니다. Grafana Cloud tenant는 self-serve API/Support로 보존 기간을 조정합니다(로컬 Loki 설정 파일이 아님).
 
@@ -135,7 +135,7 @@ Grafana Loki 자체 호스팅이라면 `limits_config.retention_period: 720h`(30
 
 | 항목 | 기준선 | 기록 위치 |
 |---|---|---|
-| Grafana Cloud | Free $0 → Pro $19/월 검토 | 아래 장부 |
+| Grafana Cloud | Free $0 (Pro 전환 안 함) | 아래 장부 |
 | Slack | 무료 플랜 | 아래 장부 |
 | 도메인 `rvnnt.dev` | 기존 소유, 변경 없음 | 아래 장부 |
 
