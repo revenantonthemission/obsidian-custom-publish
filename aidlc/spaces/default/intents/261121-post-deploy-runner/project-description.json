@@ -1,0 +1,1 @@
+"자동 post-deploy 러너를 구현합니다. 배포 후 H1(홈 HTTP 200), H2(글 하나 200), H3(/tags 301과 Cache-Control: no-cache 및 대상 200)를 자동으로 확인하고 결과를 기록합니다. Jenkins 배포 단계와 로컬 just deploy 경로에서 모두 동작해야 하며, 실패 시 rollback-runbook.md의 트리거 T1/T2로 연결합니다. 완료된 personal-website 인텐트의 F-7 후속 작업입니다."

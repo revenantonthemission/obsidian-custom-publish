@@ -38,3 +38,15 @@
 ## Direction (active intent `personal-website`)
 
 The approved first release turns the blog into a personal website: publish "site pages" from a named vault folder outside `Areas/Notes` and keep them out of post lists; add a Writing section (recent posts, topics, every post by date); replace the vault homepage note with a site-built homepage; move Tags and Graph under `/writing/...` with redirects from `/tags`, `/tags/<tag>` and `/graph`. Later rounds add About, Contact, Projects (with profile facts moved into the vault, including the résumé and PDF résumé) and Now.
+
+## 현재 인텐트: post-deploy-runner (금번 집중 스캔)
+
+완료된 `personal-website` 인텐트의 F-7 후속 작업이다. 배포가 끝난 뒤 실제 서비스가 살아 있는지를 자동으로 확인하고, 실패하면 rollback-runbook의 트리거에 연결하는 것이 목적이다. 확인 항목은 이 문서에서 한 번만 정의한다(다른 산출물은 여기를 교차 참조한다).
+
+| 검사 | 기대값 | 비고 |
+|---|---|---|
+| H1 | 홈 `/` 가 HTTP 200 |야간/로컬 두 배포 경로 모두에서 확인 |
+| H2 | 게시글 하나가 HTTP 200 | 글 하나의 URL만 확인하면 충분 |
+| H3 | `/tags` 가 HTTP 301 + `Cache-Control: no-cache`, 리다이렉트 대상이 HTTP 200 | 리다이렉트 테이블 메커니즘은 `api-documentation.md` 참조 |
+
+적용 범위는 두 갈래다. Jenkins의 Deploy 스테이지(`Jenkinsfile:107-118`)와 로컬 `just deploy`(`Justfile:28-29`)은 모두 `site/scripts/publish-dist.sh`를 호출하므로, 러너는 이 공통 게시 단계 뒤에 붙일 수 있다. 실패 시 연결 대상인 rollback-runbook의 T1/T2 트리거 정의는 아직 재검증되지 않았다(요구사항 단계에서 확인). 상세 증거는 `developer-scan.md`의 `## Handoff Summary`에 있다.

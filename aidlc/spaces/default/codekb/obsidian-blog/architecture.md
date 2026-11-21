@@ -104,6 +104,8 @@ Text fallback: the vault's `Areas/Notes` feeds the preprocessor CLI. The scanner
 - Add redirect support (Astro `redirects` or server rules) and a post-deploy HTTP smoke check to the pipeline.
 - Generate `site/src/lib/types.ts` from the Rust types, or add a contract test over `content/`.
 
+보완(금번 스캔): 위 4번 항목 중 리다이렉트 지원은 이후 `_redirects.json` 테이블과 `publish-dist.sh`의 2-copy 게시로 구현되었다(`site/scripts/publish-dist.sh:34-44`). 그러나 **배포 후 HTTP 상태 검사는 여전히 없다**(`Jenkinsfile:121-124`의 `echo`만 존재) — 이번 인텐트의 대상이다.
+
 ## Interaction Diagrams
 
 ### Nightly publish (vault → preprocessor → content → Astro build → deploy)
@@ -193,3 +195,36 @@ flowchart TD
 ```
 
 Text fallback: the homepage page reads the homepage artifact (failing with HP001/HP002), requires exactly one profile slot (HP003/HP004), renders it, splits the HTML at the slot and at the legacy recent-posts heading, and wraps each H2 section as a card. It inserts posts whose `published` equals the build date (overridable by `HOMEPAGE_TODAY_OVERRIDE`) and a profile card built from the approved profile.
+
+### 배포 후 검증 흐름 (제안 — 아직 구현되지 않음)
+
+`publish-dist.sh` 호출 뒤에 붙일 러너의 개념 흐름이다. H1/H2/H3의 정의는 `business-overview.md`, HTTP 계약은 `api-documentation.md`에 한 번만 기록되어 있다.
+
+```mermaid
+sequenceDiagram
+  participant D as Deploy 호출자 (Jenkins 또는 just deploy)
+  participant P as publish-dist.sh
+  participant W as Web root / 정적 서버
+  participant R as post-deploy 러너 (신규)
+  participant RB as rollback-runbook
+
+  D->>P: publish-dist.sh site/dist WEB_ROOT
+  P->>P: rsync --delete (리다이렉트 테이블 제외)
+  P->>W: _redirects.json 임시 복사 후 mv -f (원자적 교체)
+  P-->>D: 게시 완료
+  D->>R: H1/H2/H3 검사 시작
+  R->>W: GET /  → 200 기대 (H1)
+  R->>W: GET /posts/<slug>  → 200 기대 (H2)
+  R->>W: GET /tags  → 301 + no-cache 기대 (H3-1)
+  R->>W: GET /writing/tags (대상)  → 200 기대 (H3-2)
+  alt 모든 검사 통과
+    R-->>D: PASS 기록
+  else 하나라도 실패
+    R->>RB: 트리거 T1/T2 연결
+    R-->>D: FAIL 기록 (배포 실패로 표시)
+  end
+```
+
+Text fallback: 두 배포 경로가 공통으로 `publish-dist.sh`를 호출해 페이지를 먼저 미러링하고 리다이렉트 테이블을 마지막에 원자적으로 교체한다. 게시가 끝나면 신규 러너가 홈(200), 글 하나(200), `/tags`(301 + `no-cache`)와 리다이렉트 대상(200)을 순서대로 확인한다. 모두 통과하면 PASS를 기록하고, 하나라도 실패하면 rollback-runbook의 T1/T2 트리거에 연결한 뒤 배포 실패로 표시한다. 테이블 교체 직후 서버 재읽기 지연 가능성 때문에 실제 구현에는 재시도/poll이 필요하다(서버측 동작은 스냅샷 범위 밖이라 미검증).
+
+위 다이어그램은 `flowchart`/`sequenceDiagram` 문법만 사용했고, 파일을 다시 읽어 노드·화살표·`alt` 블록의 대응을 확인했다.

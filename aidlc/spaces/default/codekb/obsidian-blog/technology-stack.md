@@ -2,6 +2,8 @@
 
 Versions are the resolved versions in `preprocessor/Cargo.lock` and `site/package-lock.json` at commit `db7ecae`, with the declared range in parentheses where it differs.
 
+금번 집중 스캔에서는 lockfile을 열지 않았으므로 위 버전 목록은 이전 기록의 보존된 값이다. `site/package.json`의 선언 범위만 새로 확인했고(전체는 `dependencies.md` 참조), 그 결과는 아래 "금번 확인" 항목에 정리했다.
+
 ## Languages
 
 | Language | Where | Notes |
@@ -14,6 +16,7 @@ Versions are the resolved versions in `preprocessor/Cargo.lock` and `site/packag
 | Groovy (declarative) | `Jenkinsfile` | |
 | just | `Justfile` | |
 | Korean | all UI strings, vault content | |
+| Bash (`set -eu`) | `site/scripts/publish-dist.sh` | 게시 스크립트. `rsync`/`cp`/`mv`/`mkdir`만 사용하며 npm 의존성 없음(금번 확인). |
 
 ## Runtimes and Platforms
 
@@ -77,9 +80,20 @@ Versions are the resolved versions in `preprocessor/Cargo.lock` and `site/packag
 | `mmdc` (Mermaid CLI) | `mermaid.rs` | Needs Chrome via puppeteer: `PUPPETEER_EXECUTABLE_PATH` or `.puppeteer-config.json`; Jenkins prefers chrome-headless-shell. |
 | `typst` | `typst_render.rs` | SVG compile. |
 | `git` | `scanner.rs` | Last-commit dates for `updated`. |
-| `rsync` | Justfile, Jenkinsfile | Deploy to the web root. |
+| `rsync` | Justfile, Jenkinsfile, `publish-dist.sh` | Deploy to the web root (`-a --delete`, 리다이렉트 테이블 제외). |
 | Jenkins, launchd, cloudflared | operations | Nightly publish, serving, tunnel. |
 
 ## Agent Tooling Configured in the Repo
 
 `.mcp.json` declares MCP servers for the maintainer's coding agents (context7 over HTTP; AWS MCP proxy, pricing, IaC and serverless servers through `uvx`). They are not part of the build or the site.
+
+## 금번 확인: `site/package.json` 선언 범위
+
+| 구분 | 값 |
+|---|---|
+| 패키지 | `site`, ESM(`"type": "module"`), version `0.0.1` |
+| 엔진 | Node `^22.22.0 \|\| >=24.0.0` |
+| 의존성 수 | runtime 29개 선언(`astro ^7.4.1`, `@astrojs/*`, unified/remark/rehype, Shiki, KaTeX, d3, lucide, pretendard `1.3.9` 고정 등), dev 19개(`@playwright/test 1.61.1`, `@axe-core/playwright 4.12.1`, `prettier 3.9.9`, `vite 8.3.5`, `pdfjs-dist 5.4.624` 등 pinned 다수) |
+| override | `sharp ^0.35.5` |
+| 명령 | `dev`, `build`, `preview`, `astro`, `format`, `format:check`, 5개 프로필 CLI 위임 명령, `test:pbt:framework`, `test:coverage` |
+| 주의 | review subject — 변경 시 accessibility review record 다이제스트가 무효화된다(`Justfile:46-48`). 새 배포/검사 명령은 여기에 넣지 않는다. |

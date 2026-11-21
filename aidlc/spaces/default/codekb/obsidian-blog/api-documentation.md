@@ -80,6 +80,8 @@ All discovery artifacts are built from the posts-only view: the homepage never a
 
 There are no redirects anywhere today: Astro config has no `redirects`, and the local server cannot issue 3xx responses.
 
+보완(금번 스캔): 위 문장은 빌드 시점의 라우트 정의에 관한 기존 기록이다. 현재 배포 경로에는 빌드 산출물이 생성하는 **`_redirects.json` 테이블**이 추가되어 있다(`site/scripts/publish-dist.sh:34-44`). 테이블은 `rsync` 단계에서 제외되고, 게시의 마지막에 임시 이름(`.redirects.json.tmp`)으로 복사된 뒤 `mv -f`로 원자적으로 교체된다. 스크립트 주석(`10-14`)에 따르면 서버는 파일의 존재/mtime 변경을 감지해 테이블을 다시 읽는다. 따라서 3xx 자체는 서버/테이블 계약의 영역이며, 이 스캔에서는 서버 구현 파일이 범위 밖이라 실제 301 emitting과 `Cache-Control` 헤더를 검증하지 않았다.
+
 ### Local server behaviour (`site/scripts/local-server.mjs`)
 
 - `GET`/`HEAD` only (405 otherwise); URL decoded (400 on bad encoding).
@@ -128,3 +130,17 @@ Client scripts: `link-preview.ts` fetches `/previews.json` for `.post-content a[
 | `npm run test:unit` / `test:pbt` / `test:e2e` / `resume:pdf` / `resume:pdf:verify` | The profile CLI's closed set of five stable commands (CI may run the four read-only ones, never `resume:pdf`). |
 | `npm run format` / `format:check` / `test:coverage` / `test:pbt:framework` | Prettier; coverage (reported, not enforced); PBT tool-selection evidence. |
 | `npx playwright test --config playwright.hig.config.ts` | HIG browser checks (fixture build served on 127.0.0.1:4329). |
+
+## 9. 배포 게시 계약 (금번 스캔에서 확인)
+
+`Jenkinsfile:116`과 `Justfile:29`가 동일하게 호출하는 유일한 게시 진입점이다.
+
+| 항목 | 계약 |
+|---|---|
+| 호출 | `bash site/scripts/publish-dist.sh <dist-dir> <web-root>` |
+| 인자 검증 | 인자 수 ≠ 2 또는 빈 값이면 사용법 출력 후 exit 2; `DIST`가 디렉터리가 아니면 exit 1 (`publish-dist.sh:17-32`) |
+| 1단계 | `mkdir -p "$WEB_ROOT"` 후 `rsync -a --delete --exclude="/_redirects.json" --exclude="/.redirects.json.tmp" "$DIST/" "$WEB_ROOT/"` |
+| 2단계 | 빌드에 `_redirects.json`이 있으면 `$WEB_ROOT/.redirects.json.tmp`로 복사한 뒤 `mv -f`로 원자적 교체; 없으면 웹 루트의 테이블과 임시 파일을 제거 (`publish-dist.sh:34-44`) |
+| 셸 계약 | `set -eu`; 외부 npm 의존성 없음(`rsync`/`cp`/`mv`/`mkdir`만 사용) |
+
+H1/H2/H3 검사값의 정의는 `business-overview.md`의 "현재 인텐트" 표에 한 번만 기록되어 있다. 이 절은 게시 계약만 설명하며 검사 결과 기록 형식은 아직 정의되지 않았다(요구사항 단계 대상).

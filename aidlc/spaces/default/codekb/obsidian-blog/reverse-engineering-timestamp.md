@@ -2,33 +2,45 @@
 
 ## Run Record
 
-- Date: 2026-11-15
-- Commit: db7ecae13f9d90368ff32d1956c71f957753cfcd
-- Branch: develop
-- Intent: personal-website
-- Run: full rescan of the whole repository at Standard depth, performed by the developer agent alone (scan and synthesis), static reading only; no tests, builds or programs were run.
-- Result: this knowledge base replaces the previous one wholesale. The scope is recorded as partial because the profile domain and tooling (about 30k lines), the styles, the post-page scripts and most test files were skimmed rather than read in depth; the preprocessor, the site's content, routing, layout, navigation, homepage and serving code, and the build and CI files were analyzed deeply.
-- Shallow by nature (recorded under shallow paths): lockfiles, binary files (`site/public/resume.pdf`, icons, fixture images), content-only documents (`docs/`, `fixtures/vault/` notes, `site/README.md`) and tracked approval records.
-- Left out without opening: `node_modules/`, `site/dist/`, `preprocessor/target/`, `content/`, `site/.astro/`, `site/.generated/`, `site/.artifacts/`, `site/public/*.json`, `site/public/assets/`, `.playwright-mcp/`, `output/`, `tmp/`, and the AI-DLC install and workspace (`.claude/`, `.kiro/`, `.codex/`, `.cursor/`, `.opencode/`, `.aidlc/`, `aidlc/`).
+- Date: 2026-11-21
+- Commit: c637556ad51d4f69f7f93e85970e89b7948ee703
+- Intent: post-deploy-runner
+- Store generation (스냅샷): `sha256:66129e0f0ddf4f72015749a7d7fadd6de75bb76e6fc2e926fc84abe2dd8009b5`
+- Source fingerprint (스냅샷): `git:e5f808bc3b3e2b2c93eb182e3524e91a959344dd`
+- Run: express 범위 / Minimal depth의 집중 스캔. 개발자 링크가 스캔과 산출물 합성을 모두 수행했고, 파일 도구로 코드를 정적 독해했다. 테스트·빌드·프로그램 실행은 하지 않았다.
+- Store 판정: UNVERIFIED(지문 계산 불가). 따라서 이전 저장소의 깊은 분석 경로는 전부 `shallow.paths`로 강등하고, 아래 `analyzed.paths`에는 이번 스냅샷 고정 경로만 기록했다. 범위 밖 기존 prose는 보존했다.
+- Analyzed: `Jenkinsfile`, `Justfile`, `site/scripts/publish-dist.sh`, `site/scripts/crossunit/`, `site/scripts/hig/`, `site/package.json` (이 6경로만 심독).
+- Handoff: 상세 스캔 결과는 인텐트 레코드의 `inception/reverse-engineering/developer-scan.md`에 있다.
 
 ## Scope of Analysis
 
 ```yaml
 scope_version: 1
 kind: partial
-intent: personal-website
-fingerprint: 77265d927bb8600bb3f1897a07ad088eca1ec2e3
+intent: post-deploy-runner
+fingerprint: e5f808bc3b3e2b2c93eb182e3524e91a959344dd
 analyzed:
+  paths:
+    - Jenkinsfile
+    - Justfile
+    - site/scripts/publish-dist.sh
+    - site/scripts/crossunit/
+    - site/scripts/hig/
+    - site/package.json
+  components:
+    - Build Orchestration
+    - Nightly Pipeline
+    - Publish-Dist Deploy Script
+    - Cross-unit Gate
+    - HIG Browser Harness
+    - Site Command Surface
+shallow:
   paths:
     - CLAUDE.md
     - .gitignore
     - .mcp.json
-    - Justfile
-    - Jenkinsfile
     - preprocessor/Cargo.toml
     - preprocessor/src/
-    - preprocessor/tests/common/
-    - site/package.json
     - site/astro.config.mjs
     - site/tsconfig.json
     - site/tsconfig.profile-tools.json
@@ -61,40 +73,6 @@ analyzed:
     - site/src/lib/site.ts
     - site/src/lib/types.ts
     - site/scripts/local-server.mjs
-    - site/scripts/crossunit/
-    - site/scripts/hig/
-    - site/scripts/profile/homepage-fixture-content.mjs
-    - site/scripts/profile/accessibility-review-contract.mjs
-  components:
-    - Preprocessor CLI
-    - Vault Scanner
-    - Publication Catalog
-    - Link Resolver
-    - Transform Pipeline
-    - Diagram Renderers
-    - Discovery Index Builders
-    - Output Writer
-    - Shared Syntax
-    - Core Types
-    - Content Data Access
-    - Markdown Renderer
-    - Homepage Composition
-    - Site Identity
-    - Primary Navigation
-    - BaseLayout
-    - PostLayout
-    - HubLayout
-    - Header
-    - Discovery Pages
-    - Listing Components
-    - Client Islands
-    - Local Static Server
-    - Cross-unit Gate
-    - HIG Browser Harness
-    - Build Orchestration
-    - Nightly Pipeline
-shallow:
-  paths:
     - preprocessor/tests/
     - preprocessor/Cargo.lock
     - preprocessor/.astro/

@@ -84,8 +84,21 @@ anyhow, clap, serde, serde_json, serde_yml, walkdir, regex, chrono, tempfile, li
 
 ## Dependencies Relevant to the Active Intent
 
+### 이전 인텐트(personal-website)의 기록 — 보존
+
 - B1 site pages: Vault Scanner, Publication Catalog, Output Writer, Discovery Index Builders, `data.ts`, Justfile `publish_vault`, Jenkins `VAULT_PATH`, `stamp_published_dates`, `find_attachment`.
 - B2 Writing section: `data.ts` (`getAllPostMeta`, `getTagIndex`, `getPreviewSummary`), `PostCard.astro`, new pages under `site/src/pages/writing/`.
 - B3 site-built homepage: `catalog.rs` (PUB002 cardinality), `output.rs` `write_homepage`, `data.ts` `getHomepage`, `homepage.ts`, `index.astro`, fixture materializers, Jenkins Verify, U2 tests.
 - B4 Tags/Graph move and redirects: `pages/tags/*`, `pages/graph.astro`, `navigation.ts` (review subject), PostLayout/HubLayout tag links, `local-server.mjs` (no redirects), link sweep, HIG/crossunit/homepage specs and the navigation PBT arbitraries.
 - Later rounds: `lib/profile/*` and `scripts/profile/*` (facts source, approval receipt, résumé release).
+
+### 현재 인텐트(post-deploy-runner) — 금번 스캔에서 확인
+
+| 의존 대상 | 왜 필요한가 | 미검증/리스크 |
+|---|---|---|
+| `site/scripts/publish-dist.sh` | 두 배포 경로가 공유하는 유일한 게시 진입점(`Jenkinsfile:116`, `Justfile:29`). 러너의 삽입점. | 없음(44줄 심독). |
+| 리다이렉트 테이블 `_redirects.json` | H3의 301이 이 테이블에서 나온다고 가정. 테이블은 `rsync`에서 제외되고 마지막에 원자적 교체됨(`publish-dist.sh:34-44`). | 테이블을 소비하는 서버 구현(`local-server.mjs`, `redirect-table.mjs`)은 스냅샷 범위 밖이라 미검증. |
+| `site/scripts/sync-public-assets.mjs` | 두 배포 경로와 HIG 하네스가 모두 호출(`Jenkinsfile:97`, `Justfile:20,41`, `hig/build-and-serve.mjs:60`). | 폴더 목록으로 존재만 확인. |
+| `rollback-runbook.md` (이전 인텐트 레코드) | 실패 시 T1/T2 트리거 연결 대상. | 파일 목록으로 위치만 확인, 내용 미독 — 트리거 정의는 요구사항 단계에서 재확인. |
+| `site/package.json` | 명령 추가 시 review subject 충돌. | 새 명령은 `Justfile`/`site/scripts/`에 둘 것. |
+| 웹 루트 `~/Sites/obsidian-blog` + 정적 서버 :8080 | H1/H2/H3 요청 대상. | 서버 재읽기 타이밍(테이블 교체 직후)으로 인한 일시 실패 가능성. |

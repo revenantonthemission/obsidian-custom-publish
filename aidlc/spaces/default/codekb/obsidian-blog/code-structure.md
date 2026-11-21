@@ -98,3 +98,20 @@ obsidian-blog/
 - `site/tests/unit/`: 36 Vitest files (rendering, homepage composition, HIG tokens and built HTML/assets, search, appearance, profile domain and tooling, résumé release, site identity, graph view); `support/astro-build.ts` serializes isolated Astro builds through a lock directory.
 - `site/tests/pbt/`: `u1/` profile properties (+ `arbitraries/`, `mutations.ts`, `setup.ts`), `u2/homepage-composition.pbt.test.ts`, `framework-selection.pbt.test.ts`.
 - `site/tests/e2e/`: `hig-*.spec.ts` (7), `profile-*.spec.ts` (7), `portfolio-*.spec.ts` (2), `homepage.spec.ts`, `crossunit.spec.ts`; `support/` (environment, evidence, global setup/teardown, HIG route table, matrix, profile page helpers).
+
+## 금번 집중 스캔에서 심독한 배포·검증 영역
+
+아래는 스냅샷 고정 경로만 심독한 결과이며, 컴포넌트별 상세 책임은 `component-inventory.md`에 한 번만 기록했다.
+
+| 경로 | 분류 | 심독 범위 |
+|---|---|---|
+| `Jenkinsfile` | Configuration (CI) | 125줄 전체. Verify/Preprocess/Build Site/Deploy 스테이지와 `RUN_DEPLOY` 파라미터 확인. |
+| `Justfile` | Configuration (local orchestration) | 56줄 전체. `deploy`, `deploy-preprocess`, `crossunit` 레시피 확인. |
+| `site/scripts/publish-dist.sh` | Utility (deploy) | 44줄 전체. bash, `set -eu`, 2-copy 게시와 리다이렉트 테이블의 원자적 교체. |
+| `site/scripts/crossunit/link-sweep.mjs` | Utility (verification) | 167줄 전체. `sweep`/`loadKnownBroken` export, coded error `LINK001`. |
+| `site/scripts/crossunit/ensure-fixture-content.mjs` | Utility (fixture) | 9줄 전체. `ensureE2eFixtureContent()` 위임. |
+| `site/scripts/crossunit/known-broken-links.json` | Test fixture data | 7줄 전체. 의도적으로 깨진 이미지 1건 선언. |
+| `site/scripts/hig/build-and-serve.mjs` | Tooling (harness) | 85줄 전체. 픽스처 전처리→빌드→4329포트 서버. |
+| `site/package.json` | Configuration (npm) | 77줄 전체. 닫힌 명령 집합, pinned 버전, review subject 지위. |
+
+`site/scripts/sync-public-assets.mjs`와 `site/scripts/redirect-table.mjs`(`.d.mts` 포함)는 폴더 목록으로 존재만 확인했고 내용은 읽지 않았다(스냅샷 범위 밖). 리다이렉트 테이블의 서버측 소비 경로도 미검증이다.

@@ -47,6 +47,14 @@ Static reading only; no test, build or lint was run in this scan.
 - No post-deploy smoke check in the Jenkinsfile, although the team's deployment practice describes an HTTP 200 check on `/` and one post after every deploy.
 - No release tags or retained previous builds; rollback is a revert on `develop` plus a rebuild.
 
+금번 스캔으로 확인한 CI/CD 보완(위 기록과 함께 읽을 것):
+
+- Deploy 스테이지는 `bash site/scripts/publish-dist.sh site/dist "${WEB_ROOT}"` 한 줄로 끝나고, `post.success`는 `echo 'Blog deployed successfully.'`만 출력한다(`Jenkinsfile:107-124`). 위 "No post-deploy smoke check"는 현재도 정확하다. H1/H2/H3 정의는 `business-overview.md` 참조.
+- 로컬 `just deploy`도 `deploy-preprocess` → `site-build` → 동일 스크립트 호출 순서이며(`Justfile:28-29`), 게시 후 검사는 없다. 즉 두 경로 모두에 동일한 사각지대가 있다.
+- `publish-dist.sh`는 `set -eu`와 인자 검증(exit 2/1)을 갖추고, 리다이렉트 테이블을 마지막에 원자적으로 교체한다(`publish-dist.sh:17-44`). 게시 자체의 실패 전파는 적절하나, 게시 "이후"의 상태 확인은 없다.
+- `crossunit`/`hig` 검증 스크립트는 fail-closed 패턴을 잘 따른다(`LINK001`, `hig: ...` + exit 1). 새 러너도 같은 오류 전파 스타일을 따르는 것이 적합하다.
+- 금번 링크는 정적 독해만 수행했으므로 위 테스트 수치·커버리지·린트 결과를 새로 검증하지 않았다(이전 기록 보존값).
+
 ## Documentation
 
 - `CLAUDE.md`: accurate, dense overview of architecture, commands, serving, gotchas and test commands. Stale detail: "Astro 6" (installed 7.4.1).
