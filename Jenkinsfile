@@ -114,6 +114,8 @@ pipeline {
                 // U3 (NFR5.25): the pages first, then the redirect table, from the
                 // one script the Justfile deploy recipe calls too.
                 sh 'bash site/scripts/publish-dist.sh site/dist "${WEB_ROOT}"'
+                // F-7: H1/H2/H3 on both origins; failure maps to T1/T2 and recovers.
+                sh 'node site/scripts/post-deploy-check.mjs'
             }
         }
     }

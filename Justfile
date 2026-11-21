@@ -27,6 +27,7 @@ site-build:
 
 deploy: deploy-preprocess site-build
     bash {{site_dir}}/scripts/publish-dist.sh {{site_dir}}/dist "{{web_root}}"
+    node {{site_dir}}/scripts/post-deploy-check.mjs
 
 # Foreground run of the local server (launchd runs the same script as dev.rvnnt.blog)
 serve:
