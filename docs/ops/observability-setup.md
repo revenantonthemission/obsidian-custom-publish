@@ -25,6 +25,12 @@
 
 **주의**: Alloy River에서 환경 변수는 `env("NAME")`이 아니라 **`sys.env("NAME")`** 입니다. Grafana Alloy 문서의 managed-service 예제도 `sys.env(...)`를 사용합니다.
 
+**실제 동작하는 구성(2026-11-21 확인)**: launchd 서비스(`sh.brew.alloy`)는 `.zshrc`의 환경 변수를 상속하지 않아 `sys.env(...)`가 빈 값이 되었습니다. 그래서 설정 파일(`/opt/homebrew/etc/alloy/config.alloy`)의 토큰은 `password_file`로 바꾸고, 권한 600인 토큰 파일 두 개를 사용합니다.
+- `~/.config/alloy/fleet.token` — Fleet Management용, scope `set:alloy-data-write`
+- `~/.config/alloy/cloud.token` — Loki/Prometheus 전송용, scope `metrics:write` + `logs:write`
+- 토큰 스코프가 부족하면 `remotecfg`는 `invalid scope requested`, 전송은 401 `invalid scope requested`, 빈 값이면 `invalid token`이 납니다.
+- 설정 변경 후 재시작: `launchctl kickstart -k gui/$(id -u)/sh.brew.alloy`
+
 ### 2. Alloy 설정(`~/.config/alloy/config.alloy`)
 
 ```hcl
@@ -69,14 +75,30 @@ prometheus.remote_write "default" {
 
 **체크 기록**: `~/Library/Logs/obsidian-blog/checks.jsonl`은 아직 생성하는 코드가 없습니다(F-7 러너는 표준 출력만 하고 파일 기록은 미구현). 가용성 게이지를 채우려면 이 내보내기를 먼저 구현해야 합니다.
 
-### 3. Slack contact point
+### 3. Slack contact point와 알림 규칙 (최신 UI)
 
-Grafana 공식 절차(`Configure Slack for Alerting`):
+Grafana 공식 절차(`Configure Slack for Alerting`, `Configure Grafana-managed alert rules`) 기준입니다. 예전 문서의 "Configure labels and notifications → Select contact point"는 현재 UI에 없습니다.
+
+**Contact point 만들기**
 
 1. Slack 앱에서 Incoming Webhook을 만들고 `https://hooks.slack.com/services/...` URL을 복사합니다.
-2. Grafana → **Alerts & IRM → Alerting → Notification configuration → Contact points → + Add contact point**.
-3. Integration으로 **Slack** 선택 → Webhook 필드에 URL 입력 → **Test** → **Save contact point**.
-4. Alert rule의 *Configure labels and notifications* → *Select contact point*에서 방금 만든 지점을 선택합니다.
+2. Grafana → **Alerts & IRM → Alerting → Notification configuration → Contact points**.
+3. **Choose Alertmanager** 드롭다운에서 Alertmanager 선택(기본: Grafana Alertmanager).
+4. **+ New contact point** → 이름 입력 → **Integration: Slack** → Webhook 필드에 URL 입력 → **Test** → **Save**.
+
+**알림 규칙에서 contact point 연결 (Grafana-managed rule)**
+
+1. Alerts & IRM → Alert rules → **+ New alert rule** → 이름 입력.
+2. **Define query and condition** — 데이터 소스·쿼리·조건 입력(Default 또는 Advanced).
+3. **Set folder and labels** — 폴더 선택, 라벨은 이 별도 섹션에서 추가(선택).
+4. **Configure alert evaluation behavior** — evaluation group과 pending period 지정.
+5. **Configure notifications** ← 여기서 contact point 지정:
+   - **Default**: contact point를 직접 선택. notification policy를 쓰지 않고 이 규칙의 알림이 모두 그 contact point로 감(단순한 구성에 적합).
+   - **Advanced**: notification policy 트리로 라벨 기반 라우팅. `Preview routing`으로 확인 가능.
+6. **Configure notification message** — summary, description, Runbook URL(선택).
+7. **Save rule**.
+
+규칙마다 지정하지 않으려면 **Notification configuration → Notification policies → Default policy → Default contact point**를 Slack contact point로 바꾸면 모든 알림이 그쪽으로 갑니다.
 
 주의 사항:
 - Webhook 방식은 **contact point당 Slack 채널 하나**만 지원합니다.
@@ -125,7 +147,7 @@ Grafana Loki 자체 호스팅이라면 `limits_config.retention_period: 720h`(30
 }
 ```
 
-자동 비용 수집 API는 연결하지 않습니다. 외부 서비스 계정과 자격 증명이 준비된 뒤决定합니다.
+자동 비용 수집 API는 연결하지 않습니다. 외부 서비스 계정과 자격 증명이 준비된 뒤 결정합니다.
 
 ## 참고 문서
 
@@ -133,6 +155,8 @@ Grafana Loki 자체 호스팅이라면 `limits_config.retention_period: 720h`(30
 - https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/
 - https://grafana.com/docs/grafana-cloud/send-data/alloy/reference/components/prometheus/prometheus.remote_write/
 - https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
+- https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
+- https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/
 - https://grafana.com/pricing/
 - https://grafana.com/docs/grafana-cloud/platform/pricing-and-usage/logs/
 - https://grafana.com/docs/loki/latest/operations/storage/retention/
