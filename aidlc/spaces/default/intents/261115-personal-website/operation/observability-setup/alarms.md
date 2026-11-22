@@ -44,6 +44,20 @@ Grafana Alerting ──▶ Slack 웹훅 ──▶ 유지관리자
 
 P1·P2는 운영 단계 규칙에 따라 사후 분석을 남깁니다(사고 48시간 내, 타임라인·원인·재발 방지). 저장소 소유자가 한 명이므로 지정자 없이 본인이 기록합니다.
 
+## 4a. 실제 규칙 쿼리 (PromQL)
+
+Grafana-managed 규칙은 **Query A가 비어 있으면 `DatasourceError`가 발화**합니다(`no expression found in input`). 아래 쿼리를 그대로 넣고, **Configure no data and error handling → No data: OK**로 두세요. 지표 내보내기가 없는 동안 No data를 Alerting으로 두면 규칙 자체가 계속 깨진 상태로 알립니다.
+
+| 용도 | 데이터 소스 | Query A | 조건 | 현재 |
+|---|---|---|---|---|
+| Alloy 자체 감시(지금 바로 사용) | Prometheus(`grafanacloud-prom`) | `up` | `WHEN last() OF A IS BELOW 1` | 동작 — Alloy self metrics가 전송 중 |
+| H1/H2 도달성 실패 | Prometheus | `post_deploy_check_result{check=~"H1|H2"} == 0` | `WHEN last() OF A IS ABOVE 0` | 지표 없음 → No data: OK |
+| H3 구주소 리디렉션 실패 | Prometheus | `post_deploy_check_result{check="H3"} == 0` | `WHEN last() OF A IS ABOVE 0` | 지표 없음 → No data: OK |
+| Jenkins 실패(로그 기반) | Loki | `count_over_time({filename=~"/opt/homebrew/var/log/jenkins/.*"} |= "FAILURE" [5m]) > 0` | `WHEN last() OF A IS ABOVE 0` | 로그 전송 중 — 파일명 라벨 확인 필요 |
+| 가용성 SLO 예산 | Prometheus | `1 - avg_over_time(post_deploy_check_result[30d])` | `WHEN last() OF A IS ABOVE 0.001` | 지표 없음 → No data: OK |
+
+`post_deploy_check_result`는 아직 존재하지 않는 지표입니다. F-7러너가 H1/H2/H3 결과를 내보내는 확장이 필요하며, 그 전까지는 위 규칙들을 **만들지 않거나 비활성**으로 두고 `up` 규칙만 운영합니다. 지표 스키마는 `check`=`H1|H2|H3`, `origin`=`local|public`, 값 0/1로 정합니다.
+
 ## 5. 구현 상태
 
 | 항목 | 상태 |

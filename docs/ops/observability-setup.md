@@ -110,7 +110,7 @@ Grafana 공식 절차(`Configure Slack for Alerting`, `Configure Grafana-managed
 1. Grafana Cloud 계정 생성 → API 키/username/tenant ID 확인.
 2. Slack Incoming Webhook 생성 → `SLACK_WEBHOOK_URL`.
 3. Alloy 설치 후 위 설정 배치, launchd 등록, 로그·지표 전송 확인.
-4. 대시보드 import(`dashboards.md` §3), 알림 규칙 등록(`alarms.md` §2 A1~A8), 테스트 알림 1회.
+4. 대시보드 import(`dashboards.md` §3), 알림 규칙 등록(`alarms.md` §2 A1~A8·§4a 실제 쿼리), 테스트 알림 1회. **Query A가 비어 있으면 `DatasourceError`가 발화**하므로 `alarms.md` §4a의 쿼리를 넣고 No data는 OK로 둡니다. 지금 바로 쓸 수 있는 것은 `up`(Alloy 자체 감시)뿐이고, H1–H3 지표는 F-7 확장 후 사용합니다.
 5. 플랜·보존 기간 결정(아래 F-5) 후 첫 청구월에 비용 기준선 기록.
 
 ## F-5. 비용 추적과 보존 기간
