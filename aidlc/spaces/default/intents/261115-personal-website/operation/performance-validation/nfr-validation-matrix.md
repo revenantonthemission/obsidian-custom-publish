@@ -23,7 +23,7 @@
 | ID | 판정 | 닫는 조건 | 소유 |
 |---|---|---|---|
 | TEAM-E2E-A11Y | Not Met | 16상태 수동 검토 후 `npm run test:e2e` 통과 | 유지관리자 |
-| U1-NFR6.1 | Unverified | 원격 커밋에 대한 Jenkins Verify | 유지관리자(push 후 Jenkins) |
+| U1-NFR6.1 | **Met** | Jenkins build #42, `ad158642` 체크아웃, Verify 초록(단위 602·속성 36·Rust 전 스위트) | `operation/deployment-execution/jenkins-verify-evidence.md` |
 | U1-SLO-NIGHTLY | Unverified | 30일 운영 신호 | observability-setup |
 | U1-SLO-PAGECOUNT | Unverified | 30일 운영 신호 | observability-setup |
 | 부하 테스트(k6) | 미실행 | 도구 설치·승인 후 `load-test-plan.md` 실행 | 유지관리자 |

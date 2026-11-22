@@ -21,7 +21,7 @@
 |---|---|---|---|---|
 | F-1 | `origin/develop` 미push | 이번 작업이 원격에도 반영되지 않음. push = 릴리스 | 유지관리자 | 높음 |
 | F-2 | 16상태 수동 접근성 검토(`TEAM-E2E-A11Y`) | `npm run test:e2e`가 계속 실패 닫힘 | 유지관리자(2–4시간) | 높음 |
-| F-3 | Jenkins Verify on merge commit(`U1-NFR6.1`) | 원격 커밋 검증 미완료 | push 후 Jenkins | 높음 |
+| F-3 | Jenkins Verify on merge commit(`U1-NFR6.1`) | **해결** — 빌드 #42가 `ad158642` 체크아웃 후 Verify 초록(단위 602·속성 36·Rust 전 스위트). 증거: `operation/deployment-execution/jenkins-verify-evidence.md` | 완료 | — |
 | F-4 | Grafana·Slack 계정/웹훅 미준비 | 대시보드·알림이 설계에만 존재 | 유지관리자 | 중간 |
 | F-5 | 비용 모니터링 도구 미도입 | 외부 비용 미추적 | 유지관리자(Q2 C) | 낮음 |
 | F-6 | 외부 드리프트 감지 미도입 | plist 변경 추적 공백 | 유지관리자(Q3 C) | 중간 |
