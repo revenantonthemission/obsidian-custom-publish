@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAllSitePages, getSitePageContent, getSitePageMeta } from '../lib/data';
+import { renderMarkdown } from '../lib/render';
+
+export function getStaticPaths() {
+  return getAllSitePages().map((page) => ({ params: { slug: page.slug } }));
+}
+
+const { slug } = Astro.params;
+const meta = slug ? getSitePageMeta(slug) : null;
+if (!meta) return Astro.redirect('/404');
+const html = await renderMarkdown(getSitePageContent(meta.slug));
+---
+
+<BaseLayout title={meta.title} surface="reading">
+  <article class="site-page">
+    <h1>{meta.title}</h1>
+    <div class="site-page-content" set:html={html} />
+  </article>
+</BaseLayout>

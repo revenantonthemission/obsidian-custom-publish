@@ -102,6 +102,56 @@ export function getPostContent(slug: string): string {
   return fs.readFileSync(filePath, 'utf-8');
 }
 
+export interface SitePageMeta {
+  slug: string;
+  title: string;
+}
+
+function checkedPageFiles(contentDir: string): string[] {
+  const manifestPath = path.join(contentDir, 'manifest.json');
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`WR001 ${manifestPath}: content manifest missing — run the preprocessor`);
+  }
+  const manifest: unknown = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  if (!Array.isArray(manifest) || !manifest.every((entry) => typeof entry === 'string')) {
+    throw new Error(`WR001 ${manifestPath}: content manifest is not a list of paths`);
+  }
+  const entries = manifest.filter((entry: string) => /^pages\/[^/]+\.(json|md)$/.test(entry));
+  for (const entry of entries) {
+    const file = path.join(contentDir, entry);
+    if (!fs.existsSync(file)) throw new Error(`WR001 ${file}: site page in manifest is missing`);
+  }
+  return entries
+    .filter((entry: string) => entry.endsWith('.json'))
+    .map((entry: string) => entry.slice('pages/'.length))
+    .sort();
+}
+
+export function getAllSitePages(contentDir: string = CONTENT_DIR): readonly SitePageMeta[] {
+  const files = checkedPageFiles(contentDir);
+  return Object.freeze(
+    files.map(
+      (file) =>
+        JSON.parse(fs.readFileSync(path.join(contentDir, 'pages', file), 'utf-8')) as SitePageMeta
+    )
+  );
+}
+
+export function getSitePageMeta(
+  slug: string,
+  contentDir: string = CONTENT_DIR
+): SitePageMeta | null {
+  const file = path.join(contentDir, 'pages', `${slug}.json`);
+  if (!fs.existsSync(file)) return null;
+  return JSON.parse(fs.readFileSync(file, 'utf-8')) as SitePageMeta;
+}
+
+export function getSitePageContent(slug: string, contentDir: string = CONTENT_DIR): string {
+  const file = path.join(contentDir, 'pages', `${slug}.md`);
+  if (!fs.existsSync(file)) return '';
+  return fs.readFileSync(file, 'utf-8');
+}
+
 export function getGraph(): GraphData {
   if (_graph) return _graph;
 
