@@ -34,6 +34,20 @@ fixtures/vault/Pages/attachment/*.png
 # Playwright MCP session artifacts (snapshots, screenshots).
 .playwright-mcp/
 
+# AI harnesses, their workspace records and local configuration are
+# machine-local tooling state, not project source.
+/.aidlc/
+/.claude/
+/.opencode/
+/.codex/
+/.cursor/
+/.kiro/
+/aidlc/
+/.mcp.json
+/opencode.json
+/CLAUDE.md
+/AGENTS.md
+
 # BEGIN AI-DLC:gitignore
 # AI-DLC: local working files
 aidlc/active-space
@@ -59,5 +73,7 @@ aidlc/spaces/*/knowledge/.sources.local.json
 aidlc/spaces/*/intents/*/runtime-graph.json
 aidlc/spaces/*/intents/*/.aidlc-*
 aidlc/diagnostics/
+.aidlc/worktree-meta.json
+.aidlc/base-source-listing.tsv
 .claude/settings.local.json
 # END AI-DLC:gitignore
