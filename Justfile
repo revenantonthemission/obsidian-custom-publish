@@ -25,9 +25,11 @@ dev: preprocess
 site-build:
     cd {{site_dir}} && npx astro build
 
-deploy: deploy-preprocess site-build
-    bash {{site_dir}}/scripts/publish-dist.sh {{site_dir}}/dist "{{web_root}}"
+deploy: deploy-no-check
     node {{site_dir}}/scripts/post-deploy-check.mjs
+
+deploy-no-check: deploy-preprocess site-build
+    bash {{site_dir}}/scripts/publish-dist.sh {{site_dir}}/dist "{{web_root}}"
 
 # Foreground run of the local server (launchd runs the same script as dev.rvnnt.blog)
 serve:

@@ -5,6 +5,7 @@ export const DEFAULT_PUBLIC_ORIGIN = 'https://rvnnt.dev';
 export const DEFAULT_RETRIES = 5;
 export const DEFAULT_RETRY_DELAY_MS = 1000;
 export const REQUEST_TIMEOUT_MS = 5000;
+export const POST_INDEX_PATH = '/writing/all';
 
 export function parseArgs(argv = []) {
   const opts = {
@@ -30,6 +31,17 @@ export function parseFirstPostLink(html) {
   const match = /href="(\/posts\/[^"#?]+)"/.exec(html ?? '');
   if (!match) return null;
   return match[1];
+}
+
+export async function discoverPostPath(fetchImpl, localOrigin) {
+  for (const path of ['/', POST_INDEX_PATH]) {
+    try {
+      const response = await request(fetchImpl, `${localOrigin}${path}`);
+      const postPath = parseFirstPostLink(await response.text());
+      if (postPath) return postPath;
+    } catch {}
+  }
+  return null;
 }
 
 export function mapFailureToTrigger(check) {
@@ -120,13 +132,7 @@ export async function runChecks({
     { name: 'public', base: publicOrigin },
   ];
 
-  let postPath = null;
-  try {
-    const response = await request(fetchImpl, `${localOrigin}/`);
-    postPath = parseFirstPostLink(await response.text());
-  } catch {
-    postPath = null;
-  }
+  const postPath = await discoverPostPath(fetchImpl, localOrigin);
 
   for (const origin of origins) {
     const h1 = await checkStatus(fetchImpl, `${origin.base}/`, 200);
@@ -181,11 +187,11 @@ export function latestMergeCommit() {
   }
 }
 
-export function autoRecover() {
-  const sha = latestMergeCommit();
+export function autoRecover({ runImpl = run, mergeCommit = null } = {}) {
+  const sha = mergeCommit ?? latestMergeCommit();
   if (!sha) return { attempted: false, reason: '되돌릴 병합 커밋을 찾지 못함' };
-  run('git', ['revert', '-m', '1', '--no-edit', sha]);
-  run('just', ['deploy', '--no-post-check']);
+  runImpl('git', ['revert', '-m', '1', '--no-edit', sha]);
+  runImpl('just', ['deploy-no-check']);
   return { attempted: true, reverted: sha };
 }
 

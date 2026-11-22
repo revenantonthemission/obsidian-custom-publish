@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  autoRecover,
   checkLegacyRedirect,
   checkStatus,
   formatResults,
@@ -106,6 +107,45 @@ describe('post-deploy-check', () => {
     expect(results.every((r) => r.ok)).toBe(true);
     expect(results.filter((r) => r.origin === 'local')).toHaveLength(3);
     expect(results.filter((r) => r.origin === 'public')).toHaveLength(3);
+  });
+
+  it('finds a post on the writing index when the homepage has no post link', async () => {
+    const fetchImpl = vi.fn(async (url) => {
+      const target = String(url);
+      if (target === 'http://local/' || target === 'https://public/') {
+        return response(200, {}, '<a href="/writing">Writing</a>');
+      }
+      if (target === 'http://local/writing/all') {
+        return response(200, {}, '<a href="/posts/sample">Sample</a>');
+      }
+      if (target.endsWith('/tags')) {
+        return response(301, { location: '/writing/tags', 'cache-control': 'no-cache' });
+      }
+      return response(200);
+    });
+    const results = await runChecks({
+      fetchImpl,
+      localOrigin: 'http://local',
+      publicOrigin: 'https://public',
+      retries: 0,
+      retryDelayMs: 0,
+    });
+    const h2 = results.filter((r) => r.check === 'H2');
+    expect(h2).toHaveLength(2);
+    expect(h2.every((r) => r.ok && r.path === '/posts/sample')).toBe(true);
+  });
+
+  it('redeploys with the no-recursion recipe after reverting', () => {
+    const calls: Array<[string, string[]]> = [];
+    const runImpl = vi.fn((command: string, args: string[]) => {
+      calls.push([command, args]);
+      return '';
+    });
+    autoRecover({ runImpl, mergeCommit: 'abc123' });
+    expect(calls).toEqual([
+      ['git', ['revert', '-m', '1', '--no-edit', 'abc123']],
+      ['just', ['deploy-no-check']],
+    ]);
   });
 
   it('formats results with status and retry count', () => {
